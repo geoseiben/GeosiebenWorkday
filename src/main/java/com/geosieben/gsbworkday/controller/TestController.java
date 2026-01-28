@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 @RestController
 public class TestController {
     @Autowired
@@ -90,6 +91,19 @@ return leaveServices.fetchPendingLeaves();
     public ResponseEntity<Map<String,String>> addDept(@RequestParam String name,@RequestParam String shortName,@RequestParam  String code ){
         return departmentService.addDepartment(name,shortName,code);
     }
+    @GetMapping("/it/activetickets")
+    public List<ActiveTickets> getActiveTickets() {
+               
+        return itTicketService.fetchActiveTickets();
+    }
+    @PostMapping("/it/update")
+    public ResponseEntity<Map<String,String>> fetchupdateTicketcket(@RequestParam Integer ticketid,@RequestParam Integer status,@RequestParam String  remarks) throws UnsupportedEncodingException, MessagingException {
+       
+        
+        return itTicketService.updateTicket(ticketid, status, remarks);
+    }
+    
+    
 
 
 }

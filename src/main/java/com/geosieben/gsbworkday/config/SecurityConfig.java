@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")                // endpoint for logout
                         .logoutSuccessUrl("/login?logout")   // redirect after logout
-                        .invalidateHttpSession(true)         // clear session
+                        .invalidateHttpSession(true)         // clear sessiongti 
                         .deleteCookies("JSESSIONID")         // remove cookies
                         .permitAll()
                 );

@@ -315,7 +315,6 @@
         method: 'POST',
         headers: {
           [csrfHeader]: csrfToken
-          // No need for Content-Type, fetch will set it automatically for URLSearchParams
         },
         body: params
       });

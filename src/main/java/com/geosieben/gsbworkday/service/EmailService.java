@@ -61,6 +61,7 @@ public class EmailService {
         helper.setText(html, true); // true enables HTML
         mailSender.send(message);
 
+        
     }
 
     public  void raiseTicket(String toname,String tomail,String employeename,String issue,String descriptin,String priority,LocalDate raisedOn) throws MessagingException, UnsupportedEncodingException {
@@ -91,7 +92,56 @@ public class EmailService {
         helper.setText(html, true); // true enables HTML
         mailSender.send(message);
     }
+public void closeticket(String toname,String tomail,int ticketid,String remarks,String issue) throws MessagingException, UnsupportedEncodingException{
+    String html = """
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; border: 1px solid #f0f0f0; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #059669;">Ticket Closed</h2>
+        <p>Hello <strong>%s</strong>,</p>
+        <p>Great news! Your IT Ticket has been marked as <strong>Resolved</strong>. Please see the closure summary below:</p>
+        
+        <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; border-left: 4px solid #059669;">
+            <strong>Ticket Details:</strong><br>
+            <span style="color: #666;">Issue:</span> %s <br>
+            <span style="color: #666;">Closed On:</span> %s <br>
+            <hr style="border:none; border-top:1px solid #ddd; margin: 10px 0;" />
+            <strong>Resolution Summary:</strong><br>
+            %s
+        </div>
 
+        <p>If you feel this issue is not fully resolved, you can reopen it or submit a new request via the portal:</p>
+        <p style="margin-top: 20px;">
+            <a href="https://www.geosieben.org/itticket" 
+               style="background-color: #059669; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+               Go to Portal
+            </a>
+        </p>
+        
+        <p style="margin-top: 30px; border-top: 1px solid #eee; pt-10px;">
+            Regards,<br>
+            <strong>IT Support Team</strong><br>
+            Geosieben Consulting Private Limited
+        </p>
+        
+        <small style="color:#999; display: block; margin-top: 20px; font-size: 11px;">
+            &copy; %d Geosieben Consulting Private Limited. This is an automated notification.
+        </small>
+    </div>
+    """.formatted(
+        toname,                        // The person who opened the ticket
+        issue,                               // Original issue title
+        AddonServ.formatDate(LocalDate.now()),  // The date it was closed
+        remarks,                     // What was done to fix it
+        LocalDate.now().getYear()
+    );
+            MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setFrom(from.trim(), fromname);
+        helper.setTo(tomail.trim());
+        helper.setSubject("IT Ticket Closed For The Reference ID :"+ticketid);
+        helper.setText(html, true); // true enables HTML
+        mailSender.send(message);
+
+}
 
 
 }

@@ -9,4 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Repository
 public interface JoiningInfoRepository extends JpaRepository<EmployeeJoiningInfo,String> {
+    EmployeeJoiningInfo  findByEmployeeBasicInfo_EID(String eid);
 }
+
+

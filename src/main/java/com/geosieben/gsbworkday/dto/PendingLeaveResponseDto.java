@@ -1,7 +1,4 @@
 package com.geosieben.gsbworkday.dto;
-
-import com.sun.source.doctree.SeeTree;
-
 import java.time.LocalDate;
 
 public class PendingLeaveResponseDto {

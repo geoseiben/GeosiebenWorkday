@@ -88,4 +88,10 @@ public  String activeEmployees(Model model, HttpSession httpSession){
     public String departments(){
         return "managedepartments";
     }
+
+    @GetMapping("/it/dashboard")
+    public String getitdashboard() {
+       return "itdashboard";
+    }
+    
 }

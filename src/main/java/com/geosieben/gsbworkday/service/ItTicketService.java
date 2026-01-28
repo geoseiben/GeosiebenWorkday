@@ -1,10 +1,14 @@
 package com.geosieben.gsbworkday.service;
 
+import com.geosieben.gsbworkday.dto.ActiveTickets;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
+import com.geosieben.gsbworkday.entity.EmployeeJoiningInfo;
 import com.geosieben.gsbworkday.entity.ItTicket;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.repository.ItTicketRepository;
+import com.geosieben.gsbworkday.repository.JoiningInfoRepository;
+
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +36,8 @@ private ItTicketRepository itTicketRepository;
     @Autowired
     private HttpSession httpSession;
     @Autowired
+    JoiningInfoRepository joiningInfoRepository;
+    @Autowired
     private EmailService emailService;
     @Override
     public ResponseEntity<Map<String, String>> raiseTicket(String issue, String description, String priority, String hostname, String anydeskid) throws MessagingException, UnsupportedEncodingException {
@@ -57,5 +63,37 @@ private ItTicketRepository itTicketRepository;
     public List<ItTicket> getMyTickets() {
         String empid= (String) httpSession.getAttribute("eid");
      return   itTicketRepository.findByEmployeeBasicInfo_EID(empid);
+    }
+
+    @Override
+    public List<ActiveTickets> fetchActiveTickets() {
+return itTicketRepository.activeTickets();
+    }
+
+    @Override
+    public ResponseEntity<Map<String, String>> updateTicket(Integer ticketid,Integer status,String remarks) throws UnsupportedEncodingException, MessagingException { 
+        Optional<ItTicket> itTicket= itTicketRepository.findById(ticketid);
+        Map<String,String> response=new HashMap<>();
+if (itTicket.isPresent()) {
+    ItTicket ticket = itTicket.get();
+         EmployeeJoiningInfo employeeJoiningInfo=joiningInfoRepository.findByEmployeeBasicInfo_EID(ticket.getEmployeeBasicInfo().getEID());
+
+    ticket.setStatus(status);
+    ticket.setAdminRemarks(remarks);
+
+    itTicketRepository.save(ticket); // <-- use save, not MERGE
+   
+if(status==3){
+    emailService.closeticket(employeeJoiningInfo.getEmployeeBasicInfo().getFirstName(),employeeJoiningInfo.getWorkmail(),ticketid, remarks, ticket.getIssue());
+}
+    response.put("status", "success");
+    response.put("message", "Ticket updated successfully");
+} else {
+    response.put("status", "error");
+    response.put("message", "Ticket not found");
+}
+
+
+        return ResponseEntity.ok(response);
     }
 }
