@@ -1,0 +1,100 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Registration</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            body {
+                background-color: #f3f4f6;
+            }
+            .form-card {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            }
+        </style>
+    </head>
+    <body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl p-8 form-card">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Create Account</h1>
+            <p class="text-gray-500 mt-2">Please fill in your details to register</p>
+        </div>
+
+        <form method="post" action="/register" class="space-y-5">
+            <!-- Username Field -->
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        placeholder="johndoe123"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                >
+            </div>
+
+            <!-- Email Field -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        placeholder="john@example.com"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                >
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <!-- Password Field -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        placeholder="••••••••"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                >
+            </div>
+
+            <!-- Role Select -->
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Select Role</label>
+                <select
+                        id="role"
+                        name="role"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
+                >
+                    <option value="" disabled selected>Choose a role...</option>
+                    <option value="user">User</option>
+                    <option value="hr">HR</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+                    type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg mt-4"
+            >
+                Register
+            </button>
+        </form>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="hidden mt-6 p-4 rounded-lg text-sm text-center"></div>
+
+        <p class="text-center text-xs text-gray-400 mt-8">
+            &copy; 2024 SecurePort Systems. All rights reserved.
+        </p>
+    </div>
+
+
+    </body>
+    </html>

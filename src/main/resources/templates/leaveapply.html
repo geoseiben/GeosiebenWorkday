@@ -1,0 +1,454 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Apply Leave </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- <link rel="icon" href="https://placehold.co/32x32/4f46e5/ffffff?text=L" type="image/x-icon"> -->
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#6366f1',
+                        surface: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f1f5f9; color: #0f172a; }
+
+        /* Modern Select & Input resets */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-input:focus {
+            background: #fff;
+            border-color: #0040ff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Custom Radio Button styling */
+        .session-radio:checked + .session-label {
+            background-color: #0040ff;
+            color: white;
+            border-color: #0040ff;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white;
+            border-radius: 50%; width: 16px; height: 16px;
+            animation: spin 0.8s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0%{ transform: rotate(0) } 100%{ transform: rotate(360deg) } }
+
+        /* Animation for cards */
+        .balance-card { transition: all 0.3s ease; }
+        .balance-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        .view-content {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .view-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dropdown Logic */
+        .dropdown-menu {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+        }
+        .group:hover .dropdown-menu {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            position: relative;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+<head th:replace="includes/header :: header"></head>
+
+
+<main class="flex-grow flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- SIDEBAR: STATS & POLICIES -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white  p-8 shadow-sm border border-slate-200/60">
+                <h2 class="text-xl font-800 text-slate-900 mb-6 flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    Leave Balance
+                </h2>
+
+                <div class="space-y-4">
+                    <!-- Balance Cards -->
+                    <div class="balance-card flex items-center p-4 rounded-2xl bg-slate-50 border border-slate-100" data-type="CL">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4">
+                            <i class="material-icons-round">event_note</i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Casual</p>
+                            <strong class="text-lg font-bold text-slate-800">Loading...</strong>
+                        </div>
+                    </div>
+
+                    <div class="balance-card flex items-center p-4 rounded-2xl bg-slate-50 border border-slate-100" data-type="SL">
+                        <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mr-4">
+                            <i class="material-icons-round">medical_services</i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sick</p>
+                            <strong class="text-lg font-bold text-slate-800">Loading...</strong>
+                        </div>
+                    </div>
+
+                    <div class="balance-card flex items-center p-4 rounded-2xl bg-slate-50 border border-slate-100" data-type="EL">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
+                            <i class="material-icons-round">flight</i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Earned</p>
+                            <strong class="text-lg font-bold text-slate-800">Loading...</strong>
+                        </div>
+                    </div>
+
+                    <div class="balance-card flex items-center p-4 rounded-2xl bg-slate-50 border border-slate-100" data-type="RH">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mr-4">
+                            <i class="material-icons-round">celebration</i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Restricted</p>
+                            <strong class="text-lg font-bold text-slate-800">Loading...</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Policy Alert -->
+            <div class=" p-4 text-white shadow-xl shadow-primary/20 rounded-lg" style="background-color:#0040ff">
+                <i class="material-icons-round text-3xl mb-4 opacity-80">auto_awesome</i>
+                <h3 class="text-lg font-bold mb-4">Quick Tip</h3>
+
+                <ol class="list-decimal list-inside space-y-2 text-sm text-indigo-200 leading-relaxed" id="policyHint">
+                    <li>
+                        Casual Leaves & Restricted Holidays → Apply
+                        <span class="bg-indigo-600 px-2 py-0.5 rounded text-white font-semibold">4 days before</span>
+                    </li>
+                    <li>
+                        Earned Leaves → Apply
+                        <span class="bg-indigo-600 px-2 py-0.5 rounded text-white font-semibold">1 day before</span>
+                    </li>
+                    <li>
+                        Sick Leaves → Apply
+                        <span class="bg-indigo-600 px-2 py-0.5 rounded text-white font-semibold">within 1 day after</span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- MAIN FORM -->
+        <div class="lg:col-span-8">
+            <div class="bg-white  shadow-sm border border-slate-200/60 overflow-hidden">
+                <div class="p-8 sm:p-12">
+                    <div class="mb-5">
+                        <h1 class="text-3xl font-800 text-slate-900 tracking-tight">New Leave Request</h1>
+                        <p class="text-slate-500 mt-2">Fill in the details below to apply for your time off.</p>
+                    </div>
+                    <form id="leaveForm" class="space-y-3">
+                        <!-- Leave Type -->
+                        <div class="group">
+                            <label class="block text-sm font-700 text-slate-700 mb-3">Leave Category</label>
+                            <div class="relative">
+                                <select name="leavetype" id="leavetype" required
+                                        class="glass-input w-full py-4 pl-6 pr-12 rounded-2xl border border-slate-200 appearance-none focus:outline-none font-medium text-slate-800"
+                                >
+                                    <option value="" disabled selected>Select the type of leave</option>
+                                    <option value="CL">Casual Leave (CL)</option>
+                                    <option value="EL">Earned Leave (EL)</option>
+                                    <option value="SL">Sick Leave (SL)</option>
+                                </select>
+                                <i class="material-icons-round absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">unfold_more</i>
+                            </div>
+                        </div>
+
+                        <!-- Date Selection -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Start -->
+                            <div class="space-y-4">
+                                <label class="block text-sm font-700 text-slate-700">From Date</label>
+                                <input type="date" name="from" id="from" required
+                                       class="glass-input w-full py-4 px-6 rounded-2xl border border-slate-200 focus:outline-none font-medium text-slate-800"
+                                />
+                                <div class="flex gap-2 p-1.5 bg-slate-100 rounded-xl">
+                                    <div class="flex-1">
+                                        <input type="radio" name="fromSession" id="fromS1" value="1" checked class="hidden session-radio">
+                                        <label for="fromS1" class="session-label block text-center py-2 px-3 rounded-lg text-xs font-bold cursor-pointer border border-transparent transition-all">S1 (Morning)</label>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="radio" name="fromSession" id="fromS2" value="2" class="hidden session-radio">
+                                        <label for="fromS2" class="session-label block text-center py-2 px-3 rounded-lg text-xs font-bold cursor-pointer border border-transparent transition-all">S2 (Afternoon)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                                                     <div class="space-y-4">
+                                <label class="block text-sm font-700 text-slate-700">To Date</label>
+                                <input type="date" name="to" id="to" required
+                                       class="glass-input w-full py-4 px-6 rounded-2xl border border-slate-200 focus:outline-none font-medium text-slate-800"
+                                />
+                                <div class="flex gap-2 p-1.5 bg-slate-100 rounded-xl">
+                                    <div class="flex-1">
+                                        <input type="radio" name="toSession" id="toS1" value="1" checked class="hidden session-radio">
+                                        <label for="toS1" class="session-label block text-center py-2 px-3 rounded-lg text-xs font-bold cursor-pointer border border-transparent transition-all">S1 (Morning)</label>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="radio" name="toSession" id="toS2" value="2" class="hidden session-radio">
+                                        <label for="toS2" class="session-label block text-center py-2 px-3 rounded-lg text-xs font-bold cursor-pointer border border-transparent transition-all">S2 (Afternoon)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Reason -->
+                        <div>
+                            <label class="block text-sm font-700 text-slate-700 mb-3">Reason for Request</label>
+                            <textarea id="comment" name="comment" required rows="4"
+                                      class="glass-input w-full py-4 px-6 rounded-2xl border border-slate-200 focus:outline-none font-medium text-slate-800 resize-none"
+                                      placeholder="Describe why you need leave..."
+                            ></textarea>
+                        </div>
+
+                        <!-- Footer / Preview -->
+                        <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-slate-100">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-slate-400 font-medium">Total Duration</div>
+                                <div class="bg-indigo-50 px-6 py-3 rounded-2xl border border-indigo-100 flex items-baseline">
+                                    <span id="daysPreview" class="text-3xl font-800 " style="color:#0040ff">0</span>
+                                    <span class="ml-2 font-bold " style="color:#0040ff">Days</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submitBtn"
+                                    class="w-full sm:w-auto px-12 py-5  text-white font-bold rounded-2xl shadow-xl shadow-primary/30 hover:bg-secondary hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center" style=
+                                            "background-color:#0040ff" disabled>
+                                <span>Submit Application</span>
+                                <i class="material-icons-round ml-3 text-xl">send</i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const leaveTypeElem = document.getElementById("leavetype");
+        const fromDateElem = document.getElementById("from");
+        const toDateElem = document.getElementById("to");
+        const submitBtn = document.getElementById("submitBtn");
+        const daysPreview = document.getElementById("daysPreview");
+        const policyHint = document.getElementById("policyHint");
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const todayStr = today.toISOString().split("T")[0];
+
+        fromDateElem.min = todayStr;
+        toDateElem.min = todayStr;
+        let leaveBalances = { CL: 0, SL:0, EL: 0, RH: 0 };
+
+        const policies = {
+            CL: "Casual Leave requires at least 5 days of advance notice.",
+            EL: "Earned Leave requires at least 2 days of advance notice.",
+            SL: "Sick Leave can be applied for current or past dates.",
+            RH: "Restricted Holidays follow the same 5-day rule as Casual Leave."
+        };
+
+        function updateBalanceCards() {
+            document.querySelectorAll(".balance-card").forEach((card) => {
+                const type = card.dataset.type;
+                const balance = Number(leaveBalances[type]) || 0;
+                card.querySelector("strong").textContent = balance + (balance === 1 ? " Day" : " Days");
+            });
+        }
+
+        async function fetchLeaveBalances() {
+            try {
+                const data = await $.ajax({
+                    type: "GET",
+                    url: "/leaves/getbalance",
+                    dataType: 'json'
+                });
+                console.log(data);
+                leaveBalances = { CL: data.casualleaves||0, SL: data.sickleaves||0, EL: data.earnedleaves||0, RH: data.ristrictedleaves||0 };
+                updateBalanceCards();
+            } catch (xhr) {
+                updateBalanceCards();
+            }
+        }
+
+        fetchLeaveBalances();
+
+        function parseDate(val) {
+            const d = new Date(val);
+            if (isNaN(d)) return null;
+            d.setHours(0,0,0,0);
+            return d;
+        }
+
+        function daysDiff(from, to, fromS, toS) {
+            if (!from || !to) return 0;
+            const diffDays = Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1;
+            if (diffDays <= 0) return 0;
+            if (diffDays === 1 && fromS === "2" && toS === "1") return -1;
+            let days = diffDays;
+            if (fromS === "2") days -= 0.5;
+            if (toS === "1") days -= 0.5;
+            return days;
+        }
+
+        function setMinDates() {
+            const type = leaveTypeElem.value;
+            let min = new Date(today);
+            if (type === "CL" || type === "RH") min.setDate(today.getDate() + 5);
+            else if (type === "EL") min.setDate(today.getDate() + 2);
+
+            const minStr = min.toISOString().split("T")[0];
+            fromDateElem.min = minStr;
+            toDateElem.min = fromDateElem.value || minStr;
+
+            if(policies[type]) policyHint.textContent = policies[type];
+        }
+
+        function validateLeave(showAlerts = false) {
+            const type = leaveTypeElem.value;
+            const from = parseDate(fromDateElem.value);
+            const to = parseDate(toDateElem.value);
+            const fromS = document.querySelector('input[name="fromSession"]:checked')?.value;
+            const toS = document.querySelector('input[name="toSession"]:checked')?.value;
+
+
+            setMinDates();
+            if (!type || !from || !to) return (submitBtn.disabled = true);
+
+            let error = "";
+            if (to < from) error = "To Date cannot be earlier than From Date.";
+            if (from < parseDate(fromDateElem.min)) error = `Advance notice required for ${type}. Earliest date: ${fromDateElem.min}`;
+
+            const days = daysDiff(from, to, fromS, toS);
+            if (days === -1) error = "Invalid session sequence for same-day leave.";
+
+            if (error) {
+                if (showAlerts) Swal.fire({ title: "Check Details", text: error, icon: "warning", confirmButtonColor: "#4f46e5" });
+                daysPreview.textContent = "0";
+                return (submitBtn.disabled = true);
+            }
+
+            const req = Number(days.toFixed(1));
+            daysPreview.textContent = req;
+
+            if (req > (leaveBalances[type] || 0)) {
+                if (showAlerts) Swal.fire({ title: "Insufficient Balance", text: `You only have ${leaveBalances[type]} days available.`, icon: "error" });
+                return (submitBtn.disabled = true);
+            }
+
+            submitBtn.disabled = false;
+            return true;
+        }
+
+        leaveTypeElem.addEventListener("change", () => validateLeave());
+        fromDateElem.addEventListener("change", () => validateLeave());
+        toDateElem.addEventListener("change", () => validateLeave());
+        document.querySelectorAll('.session-radio').forEach(r => r.addEventListener("change", () => validateLeave()));
+
+        document.getElementById("leaveForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (!validateLeave(true)) return;
+
+            Swal.fire({
+                title: "Submit Request?",
+                text: "Your manager will be notified of this leave application.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Apply",
+                confirmButtonColor: "#4f46e5",
+                cancelButtonColor: "#f1f5f9",
+                customClass: { popup: 'rounded-[2rem]', confirmButton: 'rounded-xl', cancelButton: 'rounded-xl text-slate-600' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const days = Number(daysPreview.textContent);
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `<span class="spinner mr-2"></span> Submitting...`;
+                    const csrfToken = document.getElementById("csrfToken").value;
+                    $.ajax({
+                        url: "/leaves/applyleave",
+                        type: "POST",
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        data: {
+                            leaveType: leaveTypeElem.value,
+                            fromDate: fromDateElem.value,
+                            toDate: toDateElem.value,
+                            fromSession: document.querySelector('input[name="fromSession"]:checked').value,
+                            toSession: document.querySelector('input[name="toSession"]:checked').value,
+                            days: days,
+                            comment: document.getElementById("comment").value,
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            console.log(data);
+                            document.getElementById("leaveForm").reset();
+                            daysPreview.textContent = "0";
+                            fetchLeaveBalances();
+                            submitBtn.innerHTML = `<span>Submit Application</span><i class="material-icons-round ml-3 text-xl">send</i>`;
+                            Swal.fire({ icon: data.Message || 'success', title: data.Details || 'Submitted!', confirmButtonColor: "#4f46e5", customClass: { popup: 'rounded-[2rem]' } });
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

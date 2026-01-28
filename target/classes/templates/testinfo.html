@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form id="test">
+    <label>EID</label><input type="text" id="eid"><br>
+    <label>Name</label><input type="text" id="name"><br>
+    <input type="hidden" th:id="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <label>Designation</label><input type="text" id="designation"><br>
+    <input type="submit" value="Submit">
+</form>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    const form = document.getElementById("test");
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const formData = {
+            eid: document.getElementById("eid").value,
+            name: document.getElementById("name").value,
+            designation: document.getElementById("designation").value,
+            _csrf: document.getElementById("_csrf").value
+        };
+
+        console.log(formData);
+
+        $.ajax({
+            url: '/admin/testinfoo',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                console.log(res);
+            },
+            error:function (err){
+                console.log(err);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Department Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .modal-overlay { transition: opacity 0.3s ease; }
+    .modal-container { transition: transform 0.3s ease, opacity 0.3s ease; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900">
+<head th:replace="includes/header :: header"></head>
+<main class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="md:flex md:items-center md:justify-between mb-8">
+    <div class="flex-1 min-w-0">
+      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+        Departments
+      </h2>
+      <p class="mt-1 text-sm text-gray-500">Manage your organization's structures, codes, and abbreviations.</p>
+    </div>
+    <div class="mt-4 flex md:mt-0 md:ml-4">
+      <button onclick="openFormModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+        Add Department
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Overview -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+            <i data-lucide="layers" class="h-6 w-6 text-white"></i>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Departments</dt>
+              <dd id="totalCount" class="text-lg font-medium text-gray-900">0</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Departments Table -->
+  <div class="bg-white shadow border border-gray-200 rounded-lg overflow-hidden">
+    <div class="px-4 py-5 border-b border-gray-200 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <h3 class="text-lg leading-6 font-medium text-gray-900">Current Departments</h3>
+      <div class="relative w-full sm:w-64">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </span>
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search departments..."
+               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm">
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Name</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+          <th scope="col" class="relative px-6 py-3 text-right">
+          </th>
+        </tr>
+        </thead>
+        <tbody id="deptTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="hidden py-12 text-center">
+      <i data-lucide="folder-open" class="mx-auto h-12 w-12 text-gray-400"></i>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No departments</h3>
+      <p class="mt-1 text-sm text-gray-500">Get started by creating a new department.</p>
+    </div>
+  </div>
+</main>
+
+<!-- FORM MODAL -->
+<div id="formModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeFormModal()"></div>
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="formTitle">Add New Department</h3>
+          <button onclick="closeFormModal()" class="text-gray-400 hover:text-gray-500">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="deptForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+          <input type="hidden" id="editIndex" value="-1">
+          <div>
+            <label for="deptName" class="block text-sm font-medium text-gray-700">Department Name</label>
+            <input type="text" id="deptName" required placeholder="e.g. Human Resources"
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="deptShortName" class="block text-sm font-medium text-gray-700">Short Name</label>
+              <input type="text" id="deptShortName" required placeholder="HR"
+                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm uppercase">
+            </div>
+            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+            <div>
+              <label for="deptCode" class="block text-sm font-medium text-gray-700">Code</label>
+              <input type="text" id="deptCode" required placeholder="DEPT-101"
+                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm uppercase">
+            </div>
+          </div>
+          <div class="mt-5 sm:mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button type="button" onclick="closeFormModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+          <i data-lucide="alert-triangle" class="h-6 w-6 text-red-600"></i>
+        </div>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">Delete Department</h3>
+        <p class="text-sm text-gray-500">
+          Are you sure you want to delete <span id="deleteDeptName" class="font-semibold text-gray-900"></span>? This action cannot be undone.
+        </p>
+      </div>
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" id="confirmDeleteBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+          Delete
+        </button>
+        <button type="button" onclick="closeDeleteModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 transition-transform duration-300 ease-in-out bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+  <i data-lucide="check-circle-2" id="notifIcon" class="text-green-400 w-5 h-5"></i>
+  <span id="notificationText"></span>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+;
+
+  let pendingDeleteIndex = null;
+
+ // lucide.createIcons();
+
+  function renderTable(departments) {
+    const tableBody = document.getElementById('deptTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const totalCount = document.getElementById('totalCount');
+
+    tableBody.innerHTML = '';
+    totalCount.textContent = departments.length;
+
+    if (departments.length === 0) {
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      departments.forEach((dept, index) => {
+        tableBody.insertAdjacentHTML('beforeend', `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${dept.departmentName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 uppercase">${dept.departmentShortName}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${dept.departmentCode}</td>
+
+                        </tr>
+                    `);
+      });
+    }
+    lucide.createIcons();
+  }
+
+  // Form Modal Controls
+  function openFormModal() {
+    document.getElementById('formModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  function closeFormModal() {
+    document.getElementById('formModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    document.getElementById('deptForm').reset();
+    document.getElementById('editIndex').value = "-1";
+    document.getElementById('formTitle').textContent = "Add New Department";
+  }
+
+  // Delete Modal Controls
+  function openDeleteModal(index) {
+    pendingDeleteIndex = index;
+    document.getElementById('deleteDeptName').textContent = departments[index].name;
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    pendingDeleteIndex = null;
+  }
+
+  document.getElementById('confirmDeleteBtn').onclick = function() {
+    if (pendingDeleteIndex !== null) {
+      departments.splice(pendingDeleteIndex, 1);
+      saveData();
+      closeDeleteModal();
+      showNotification('Department deleted', 'trash-2', 'text-red-400');
+    }
+  };
+
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('deptName').value;
+    const shortName = document.getElementById('deptShortName').value.toUpperCase();
+    const code = document.getElementById('deptCode').value.toUpperCase();
+    const editIndex = parseInt(document.getElementById('editIndex').value);
+    const date = new Date().toISOString().split('T')[0];
+    const formData={
+      name:name,
+      shortName:shortName,
+      code:code,
+    };
+    const csrfToken = document.getElementById("csrfToken").value;
+
+    $.ajax({
+      url: '/admin/adddepartment',
+      type: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken
+      },
+      data: formData,
+      dataType: 'json',
+      success: function(response) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Department Added Successfully',
+          confirmButtonColor: '#2563eb'
+        });
+        $('#ticketForm')[0].reset();
+        loadTicketHistory();
+      },
+      error: function(xhr) {
+        Swal.fire("Service Error", xhr.responseText || "Could not reach IT server.", "error");
+      }
+    });
+    closeFormModal();
+  }
+
+  function editDept(index) {
+    const dept = departments[index];
+    document.getElementById('deptName').value = dept.name;
+    document.getElementById('deptShortName').value = dept.shortName;
+    document.getElementById('deptCode').value = dept.code;
+    document.getElementById('editIndex').value = index;
+    document.getElementById('formTitle').textContent = "Edit Department";
+    openFormModal();
+  }
+
+  function filterTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#deptTableBody tr');
+    rows.forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+  }
+
+  function saveData() {
+    localStorage.setItem('corp_departments', JSON.stringify(departments));
+  }
+
+  function showNotification(text, icon = 'check-circle-2', iconClass = 'text-green-400') {
+    const el = document.getElementById('notification');
+    const txt = document.getElementById('notificationText');
+    const icn = document.getElementById('notifIcon');
+
+    txt.textContent = text;
+    icn.setAttribute('data-lucide', icon);
+    icn.className = `${iconClass} w-5 h-5`;
+
+    lucide.createIcons();
+    el.classList.remove('translate-y-20');
+    setTimeout(() => el.classList.add('translate-y-20'), 3000);
+  }
+function fetchAlldepartments(){
+  $.ajax({
+    url: '/admin/managedepartments',
+    type: 'GET',
+    dataType: 'json',
+    success: function(response) {
+      renderTable(response);
+
+    },
+    error: function(err) {
+      console.log(err);
+    }
+  });
+}
+  fetchAlldepartments();
+
+</script>
+</body>
+</html>

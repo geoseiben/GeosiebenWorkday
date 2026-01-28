@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Employees</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --primary-blue: #0d6efd;
+            --table-header-bg: #e9ecef;
+            --table-border: #dee2e6;
+            --text-main: #334155;
+        }
+
+        body {
+            background-color: #f1f4f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+        }
+
+        .main-content { padding: 1.5rem; }
+
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .section-label {
+            padding: 1rem 1.25rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+        }
+
+        #leaveTable { width: 100% !important; border-collapse: collapse; }
+
+        #leaveTable thead th {
+            background-color: var(--table-header-bg);
+            color: #475569;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--table-border);
+            border-top: 1px solid var(--table-border);
+        }
+
+        #leaveTable tbody td {
+            padding: 12px 15px;
+            font-size: 13px;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: middle;
+        }
+
+        .emp-link {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .emp-link:hover { text-decoration: underline; }
+
+        .dt-buttons { margin-bottom: 15px; }
+        .btn-excel {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: white !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+        }
+        .group:hover .group-hover\:visible {
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 9999 !important;
+            display: block !important;
+        }
+
+        /* Fix for potential Tailwind Preflight conflict */
+        .invisible {
+            display: none;
+        }
+        .group:hover .invisible {
+            display: block;
+        }
+    </style>
+</head>
+<body>    <head th:replace="includes/header :: header"></head>
+
+<div class="main-content">
+    <div class="report-card">
+        <div class="section-label">
+            <i class="fa-solid fa-table-list"></i> Active Employees Report As On <p th:text="${#dates.format(#dates.createNow(), 'DD-MMM-YYYY')}"></p>
+
+        </div>
+
+        <div class="p-4 pt-0">
+            <table id="leaveTable" class="table">
+                <thead>
+                <tr>
+                    <th width="40">Sl No</th>
+                    <th>Employee Name</th>
+                    <th>Employee Id</th>
+                    <th>Date Of Birth</th>
+                    <th>Email </th>
+                    <th>Phone</th>
+                    <th>Designation</th>
+                    <th>Joined On</th>
+                    <th class="text-center">Office Mail</th>
+                    <th>Degree</th>
+                    <th>Field Of Study</th>
+                    <th>Status</th>
+
+                </tr>
+                </thead>
+                <tbody id="dataRoot">
+                <tr>
+                    <td colspan="13" class="text-center py-10 text-slate-400">
+                        <div class="spinner-border spinner-border-sm me-2"></div> Fetching data...
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        const today = new Date();
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        const formattedDate = today.toLocaleDateString('en-GB', options);
+
+        // 1. Fetch Data
+        $.get("/admin/getemployees", function (res) {
+            console.log(res);
+            let rows = res.data ? res.data : res;
+            let html = "";
+
+            if(rows.length > 0) {
+                rows.forEach((r, index) => {
+                    html += `
+                    <tr>
+                        <td class="text-slate-400">${index + 1}</td>
+                        <td><a href="#" class="emp-link">${r.name}</a></td>
+                        <td class="text-slate-600">${r.eid}</td>
+                        <td class="text-slate-600">${r.dob}</td>
+                        <td class="text-slate-600">${r.email}</td>
+                        <td class="text-slate-500">${r.phone}</td>
+                        <td class="text-slate-500">${r.designation}</td>
+                        <td class="text-center fw-bold text-dark">${r.joiningDate}</td>
+                        <td class="text-slate-500">${r.workmail}</td>
+                        <td class="text-slate-600 font-medium">N/A</td>
+                        <td class="text-slate-600 font-medium">${r.fieldOfStudy}</td>
+                        <td class="text-slate-600 font-medium">${r.status}</td>
+
+                    </tr>`;
+                });
+            } else {
+                html = '<tr><td colspan="13" class="text-center py-10">No approved records found.</td></tr>';
+            }
+
+            $("#dataRoot").html(html);
+
+            // 2. Initialize DataTable
+            $('#leaveTable').DataTable({
+                pageLength: 20,
+                layout: {
+                    topStart: {
+                        buttons: [
+                            {
+                                extend: 'excelHtml5',
+                                text: '<i class="fa-solid fa-file-excel me-1"></i> Export Excel',
+                                className: 'btn-excel',
+                                title: `Active Employees Report  As On ${formattedDate}`,
+                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] }
+                            }
+                        ]
+                    }
+                }
+            });
+        }, "json").fail(function() {
+            $("#dataRoot").html('<tr><td colspan="13" class="text-center py-10 text-danger">Failed to load data.</td></tr>');
+        });
+
+        // 3. Handle Cancel Click (Event Delegation)
+        $(document).on('click', '.btn-cancel-leave', function() {
+            const leaveId = $(this).data('id');
+            const empName = $(this).data('name');
+            const $btn = $(this);
+
+
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: "btn btn-success",
+                    cancelButton: "btn btn-danger mr-4"
+                },
+                buttonsStyling: false
+            });
+            swalWithBootstrapButtons.fire({
+                title: "Warning!",
+                text: `Are You Sure To Cancel ${empName}'s Leave Application`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes",
+                cancelButtonText: "No",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $btn.prop('disabled', true).text('Processing...');
+
+                    $.post("api/cancelLeave.php", {cancel : leaveId,csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>"}, function(response) {
+                        console.log(response);
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: "Cancelled",
+                                text: `${empName}'s Leave Application Cancelled`,
+                                icon: "success"
+                            }).then(()=>{
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: "Fialed",
+                                text: `Failed To Cancel ${empName}'s Leave Application`,
+                                icon: "error"
+                            }).then(()=>{
+                                location.reload();
+                            });
+                        }
+                    }, "json").fail(function() {
+                        alert("Network error. Please try again.");
+                        $btn.prop('disabled', false).text('Cancel Leave');
+                    });
+
+                } else if (
+                    result.dismiss === Swal.DismissReason.cancel
+                ) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Cancelled",
+                        text: "Leave Cancel Withdrawn",
+                        icon: "error"
+                    });
+                }
+            });
+
+        });
+    });
+</script>
+</body>
+</html>
