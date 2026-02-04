@@ -1,0 +1,647 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Onboarding Dashboard (Minimalist Light)</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* --- MODERN MINIMALIST LIGHT UI (NAVY ACCENT) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa; /* Light Gray Background */
+            color: #212529; /* Dark Text */
+        }
+
+        :root {
+            /* NAVY BLUE/DARK TEAL Accent Color */
+            --bs-primary: #1e3a8a; 
+            --app-surface: #ffffff; /* Pure White Card Surface */
+            --app-accent-light: #eff6ff; 
+            --app-accent-dark: #1f2937; 
+            --app-input-bg: #ffffff;
+            --app-text-muted: #6c757d;
+        }
+        
+        /* HEADER */
+        .dashboard-header {
+            background-color: var(--app-surface);
+            padding: 1.5rem 0;
+            margin-bottom: 2.5rem; 
+            border-bottom: 3px solid var(--bs-primary); /* Strong primary color underbar */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Very subtle shadow */
+        }
+
+        /* Unified Card Styling (Flat, Sharp Borders) */
+        .dashboard-card {
+            background-color: var(--app-surface);
+            border-radius: 0.75rem; /* Less rounded for crispness */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0; 
+        }
+
+        /* Metrics Card (Accent Highlight) */
+        .metric-card {
+            background-color: var(--app-surface);
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            transition: all .2s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            border-color: var(--bs-primary);
+        }
+        .metric-card h2 {
+            color: var(--app-accent-dark); /* Dark numbers */
+        }
+
+        /* Form Controls (White background, light border) */
+        .form-control {
+            border-radius: 0.5rem !important;
+            border: 1px solid #ced4da !important;
+            background-color: var(--app-input-bg) !important;
+            color: #212529 !important;
+        }
+        .form-control:focus {
+            border-color: var(--bs-primary) !important;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2) !important; /* Navy focus ring */
+        }
+        
+        /* Floating Labels */
+        .float-label label {
+            color: #495057; 
+        }
+        .float-label .form-control:focus + label,
+        .float-label .form-control:not(:placeholder-shown) + label {
+            background: var(--app-surface);
+            color: var(--bs-primary); /* Navy label when active */
+        }
+
+        /* Client Card animations */
+        .client-card {
+            background-color: var(--app-surface) !important;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all .3s ease;
+        }
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1), 0 0 0 2px var(--bs-primary); 
+            border-color: var(--bs-primary); 
+        }
+        .client-card .new-badge {
+            background-color: #10b981; /* Green for new */
+            color: white; 
+        }
+        
+        /* Button Styling */
+        .btn-primary {
+            background-color: var(--bs-primary) !important;
+            border-color: var(--bs-primary) !important;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.4) !important;
+            color: white !important;
+        }
+        .btn-primary:hover {
+            background-color: var(--app-accent-dark) !important;
+            border-color: var(--app-accent-dark) !important;
+            box-shadow: 0 6px 15px rgba(30, 58, 138, 0.6) !important;
+        }
+
+    </style>
+</head>
+
+<body>
+<head th:replace="includes/header :: header"></head>
+    <div class="min-vh-100 p-3 p-md-5">
+
+
+
+        <div class="row g-4 mb-5 justify-content-start">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card rounded-3 p-4 text-center">
+                    <i class="bi bi-database-fill me-2 h4 mb-2 text-primary"></i>
+                    <p class="text-secondary fw-semibold mb-1 small">Total Records</p>
+                    <h2 class="display-5 fw-bold" id="total-clients-metric">0</h2>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card rounded-3 p-4 text-center">
+                    <i class="bi bi-clock-history me-2 h4 mb-2 text-success"></i>
+                    <p class="text-secondary fw-semibold mb-1 small">Active (Last 24h)</p>
+                    <h2 class="display-5 fw-bold" id="recent-clients-metric">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="row g-5">
+
+            <div class="col-lg-5">
+                <div class="dashboard-card p-4 p-md-5 sticky-top" style="top: 20px;">
+                    <h2 class="h5 fw-bold mb-4 d-flex align-items-center border-bottom pb-3 text-primary">
+                        <i class="bi bi-clipboard-plus me-3"></i>
+                        Client Onboard Console..
+                    </h2>
+                    <p class="text-sm text-secondary mb-4">
+                        Manually input the client's reference ID and organizational name.
+                    </p>
+
+                    <form id="onboarding-form">
+                        <div class="mb-4 float-label">
+                            <input id="clientId" name="clientId" placeholder=" " 
+                                class="form-control" />
+                            <label for="clientId">Client ID (Required)</label>
+                        </div>
+
+                        <div class="mb-5 float-label">
+                            <input id="clientName" name="clientName" placeholder=" " required
+                                class="form-control" />
+                            <label for="clientName">Client Name / Company Name</label>
+                        </div>
+                            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                        <button id="submitButton" type="submit"
+                            class="btn btn-primary btn-lg w-100 fw-semibold d-flex align-items-center justify-content-center">
+                            <i class="bi bi-send-fill me-2"></i>
+                            Execute Onboarding
+                        </button>
+
+                        <div id="status-message" class="mt-4 alert alert-dismissible fade show d-none" role="alert"></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                
+
+
+
+                <div class="dashboard-card p-4 p-md-5">
+                    <h2 class="h5 fw-bold mb-4 d-flex align-items-center border-bottom pb-3 text-dark">
+                        <i class="bi bi-list-columns me-2 text-primary"></i>
+                        Full Data Archive
+                    </h2>
+
+                    <div class="mb-4 position-relative">
+                        <input type="text" id="clientSearch" placeholder="Search by Client Name or ID..." 
+                            class="form-control ps-5" style="border-radius: 0.5rem; background-color: #fcfcfc;"/>
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary" style="font-size: 1rem;"></i>
+                    </div>
+
+                    <div id="all-clients-list" class="space-y-3 pe-2">
+                        <p id="loading-indicator" class="text-center text-secondary py-5">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <br>Fetching Data...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 p-3 shadow-lg" style="background: var(--app-surface); border: 1px solid var(--bs-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h3 class="modal-title h4 fw-bold text-dark" id="modal-client-name"></h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <div class="space-y-3 text-secondary">
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-3" style="background-color: var(--app-accent-light); border: 1px solid var(--bs-primary);">
+                            <span class="fw-medium text-primary">RECORD ID:</span>
+                            <div class="d-flex align-items-center">
+                                <span id="modal-client-id" class="font-monospace fs-6 fw-semibold me-2 text-primary"></span>
+                                <button id="copy-client-id-button" 
+                                        class="btn btn-sm border-0 text-primary" 
+                                        title="Copy ID">
+                                    <i class="bi bi-files" style="font-size: 1rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mt-3" style="background-color: #f8f9fa;">
+                            <span class="fw-medium text-secondary">Processed By:</span>
+                            <span id="modal-onboarded-by" class="text-dark font-monospace text-sm"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-3" style="background-color: #f8f9fa;">
+                            <span class="fw-medium text-secondary">Timestamp:</span>
+                            <span id="modal-created-on" class="text-dark text-sm"></span>
+                        </div>
+
+                        <div class="pt-3 text-center">
+                            <p class="text-sm text-secondary">
+                                This record is confirmed and archived.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    // --- Mock Data Setup ---
+    const now = new Date();
+    const DATA = [ 
+        
+    ];
+    // ------------------------------------------------------------------
+
+    let clientDataCache = [];
+
+    // DOM elements
+    const form = document.getElementById('onboarding-form');
+    const clientIdInput = document.getElementById('clientId');
+    const clientNameInput = document.getElementById('clientName');
+    const submitButton = document.getElementById('submitButton');
+    const statusMessage = document.getElementById('status-message');
+    const allClientsList = document.getElementById('all-clients-list');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const recentLoadingIndicator = document.getElementById('recent-loading-indicator');
+    const noRecentClients = document.getElementById('no-recent-clients');
+    const copyIdButton = document.getElementById('copy-client-id-button');
+    const clientSearchInput = document.getElementById('clientSearch'); 
+    const totalClientsMetric = document.getElementById('total-clients-metric');
+    const recentClientsMetric = document.getElementById('recent-clients-metric');
+
+    const clientDetailModal = new bootstrap.Modal(document.getElementById('clientDetailModal'));
+
+
+    // --- Utility Functions ---
+
+    function isRecent(createdOnString) {
+        if (!createdOnString) return false;
+        const creationDate = new Date(createdOnString);
+        const now = new Date();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        return (now.getTime() - creationDate.getTime()) < twentyFourHours;
+    }
+
+    function openModal(client) {
+        document.getElementById('modal-client-name').textContent = client.clientName;
+        document.getElementById('modal-client-id').textContent = client.clientId;
+        document.getElementById('modal-onboarded-by').textContent = client.employeeBasicInfo.firstName || "N/A (System)"; 
+        document.getElementById('modal-created-on').textContent = formatDate(client.createdOn);
+        
+        copyIdButton.setAttribute('data-client-id', client.clientId);
+        clientDetailModal.show();
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        if (isNaN(date)) return "N/A";
+        return date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        });
+    }
+
+    function copyToClipboard(text, element) {
+        try {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const originalTitle = element.title;
+            const originalIcon = element.querySelector('i');
+            
+            originalIcon.className = `bi bi-check-lg text-success`;
+            element.title = "Copied!";
+
+            setTimeout(() => {
+                originalIcon.className = `bi bi-files`;
+                element.title = originalTitle;
+            }, 1500);
+
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+        }
+    }
+
+
+    /* ------------------------------------------------------------------------
+        AJAX: Load Clients 
+    -------------------------------------------------------------------------*/
+    function loadClients() {
+        if (loadingIndicator) loadingIndicator.classList.remove("d-none");
+        if (recentLoadingIndicator) recentLoadingIndicator.classList.remove("d-none");
+        
+        if (totalClientsMetric) totalClientsMetric.textContent = '...';
+        if (recentClientsMetric) recentClientsMetric.textContent = '...';
+
+        $.ajax({
+            url: "/admin/activeclients",
+            method: "GET",
+            data: { action: "getClients" },
+            dataType: "json",
+
+            success: function (response) {
+                console.log(response);
+                if (Array.isArray(response) && response.length > 0) {
+                    clientDataCache = response;
+                    if (!response[0].onboardedBy) {
+                         response[0].onboardedBy = "API Source"; 
+                    }
+                } else {
+                    clientDataCache = DATA;
+                }
+                renderLists(clientDataCache, clientDataCache === DATA);
+            },
+
+            error: function () {
+                console.warn("Client API unreachable — using fallback DATA.");
+                clientDataCache = DATA;
+                renderLists(clientDataCache, true);
+            },
+            complete: function() {
+                if (loadingIndicator) loadingIndicator.classList.add("d-none");
+                if (recentLoadingIndicator) recentLoadingIndicator.classList.add("d-none");
+            }
+        });
+    }
+
+    /* ------------------------------------------------------------------------
+        Filter Clients 
+    -------------------------------------------------------------------------*/
+    function filterClients() {
+        const query = clientSearchInput.value.toLowerCase().trim();
+        
+        if (!query) {
+            renderLists(clientDataCache, clientDataCache === DATA);
+            return;
+        }
+
+        const filteredClients = clientDataCache.filter(client => {
+            const nameMatch = client.clientName.toLowerCase().includes(query);
+            const idMatch = client.clientId && client.clientId.toLowerCase().includes(query);
+            return nameMatch || idMatch;
+        });
+
+        renderLists(filteredClients, clientDataCache === DATA, true);
+    }
+
+    /* ------------------------------------------------------------------------
+        AJAX: Save Client 
+    -------------------------------------------------------------------------*/
+    function saveClient(clientName, clientId) {
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...`;
+        statusMessage.classList.add("d-none");
+        
+        const onboardedByInfo = "Authenticated User (Hidden)"; 
+                    const csrfToken = document.getElementById("csrfToken").value;
+
+        const newClient = {
+            clientId: clientId,
+            clientName: clientName,
+            createdOn: new Date().toISOString(),
+            employeename: onboardedByInfo, 
+            isMock: clientDataCache === DATA 
+        };
+
+        $.ajax({
+            url: "/admin/saveClient",
+            method: "POST",
+            headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                },
+            data: {
+                clientName: clientName,
+                clientId: clientId
+            },
+            dataType: "json",
+
+            success: function (response) {
+
+                if (response.status=='success') {
+                    statusMessage.textContent = `Client "${clientName}" processed successfully! ID: ${clientId}`;
+                    statusMessage.className = "mt-4 alert alert-success d-block";
+                    
+                    clientNameInput.value = '';
+                    clientIdInput.value = ''; 
+
+                    if (clientDataCache !== DATA) {
+                        clientDataCache.unshift(response.data || newClient); 
+                    } else {
+                        clientDataCache.unshift(newClient);
+                    }
+                    renderLists(clientDataCache, clientDataCache === DATA); 
+
+                } else {
+                    showError(response.message || "Unknown error");
+                }
+            },
+
+            error: function (err) {
+                console.log(err);
+                showError("API connection error: Data submission failed.");
+            },
+
+            complete: function () {
+                submitButton.disabled = false;
+                submitButton.innerHTML = `<i class="bi bi-send-fill me-2"></i> Execute Onboarding`;
+            }
+        });
+    }
+
+
+    /* ------------------------------------------------------------------------
+        Update Metrics 
+    -------------------------------------------------------------------------*/
+    function updateMetrics(clients) {
+        if (!clients || clients.length === 0) {
+            totalClientsMetric.textContent = '0';
+            recentClientsMetric.textContent = '0';
+            return;
+        }
+
+        const recentCount = clients.filter(client => isRecent(client.createdOn)).length;
+
+        totalClientsMetric.textContent = clients.length;
+        recentClientsMetric.textContent = recentCount;
+    }
+
+
+    /* ------------------------------------------------------------------------
+        Render Client Lists 
+    -------------------------------------------------------------------------*/
+    function renderLists(clients, isFallback = false, isSearchMode = false) {
+        
+        if (!isSearchMode) {
+            updateMetrics(clientDataCache);
+        }
+
+        const sortedClients = [...clients].sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+
+        // --- 1. Handle Search Mode ---
+        if (isSearchMode) {
+            renderClientCards(sortedClients, allClientsList, isFallback, "search");
+            return;
+        } 
+        
+        // --- 2. Handle Normal Mode (No Search) ---
+
+        // --- Recent Clients List (Last 24 hours) ---
+   
+
+        // --- All Clients List ---
+        renderClientCards(sortedClients, allClientsList, isFallback, "all");
+    }
+
+    /* ------------------------------------------------------------------------
+        Inner Helper: Render individual client cards (Light Mode specific colors)
+    -------------------------------------------------------------------------*/
+    function renderClientCards(clients, containerElement, isFallback, listType) {
+        containerElement.innerHTML = "";
+        
+        if (listType === "all" && isFallback && clients.length > 0) {
+            const banner = document.createElement("div");
+            banner.className =
+                "alert alert-warning text-center small fw-semibold d-flex align-items-center justify-content-center p-3 mb-4";
+            banner.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span class="text-dark"> API connection failed, showing mock data.</span>
+            `;
+            containerElement.appendChild(banner);
+        }
+
+        if (clients.length === 0) {
+            containerElement.innerHTML += `
+                <div class="text-center py-5 rounded-4 mt-3 text-secondary" style="border: 1px dashed #ced4da;">
+                    <i class="bi bi-info-circle h2 mb-3 text-primary"></i>
+                    <p class="fs-6 fw-medium mb-1">${listType === 'search' ? 'No records found matching your query.' : 'No data records available.'}</p>
+                    ${listType === 'search' ? '<p class="small">Try adjusting your search criteria.</p>' : ''}
+                </div>
+            `;
+            return;
+        }
+
+        clients.forEach((client) => {
+            const isMock = client.isMock ?? false;
+            const isNew = isRecent(client.createdOn);
+            const dateString = formatDate(client.createdOn);
+
+            const element = document.createElement("div");
+            element.className =
+                `p-3 rounded-4 client-card position-relative d-flex flex-column space-y-2 mb-3`;
+            
+            element.addEventListener('click', () => openModal(client));
+
+            element.innerHTML = `
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="d-flex align-items-center me-3">
+                        <i class="bi bi-hash me-3 h4 mb-0 text-primary"></i>
+                        <p class="fs-6 fw-bolder text-truncate mb-0 text-dark">${client.clientName}</p>
+                    </div>
+
+                    <div class="d-flex align-items-center flex-shrink-0">
+                        ${isNew ? `
+                            <span class="new-badge me-2 badge text-white bg-success">LIVE</span>
+                        ` : ''}
+                        <span class="badge bg-light text-secondary fw-semibold font-monospace" style="border: 1px solid #ced4da;">
+                            ${client.clientId}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="position-absolute end-0 top-50 translate-middle-y me-3 opacity-0 transition-opacity" style="transition: opacity 0.3s;" role="img" aria-label="Details">
+                    <i class="bi bi-arrow-right-short text-primary h3 mb-0"></i>
+                </div>
+
+                <div class="d-flex justify-content-start small pt-1 ps-5 text-secondary">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-calendar me-1"></i>
+                        <strong class="text-dark me-1">Archived:</strong> ${dateString}
+                    </span>
+                </div>`;
+            
+            // Add hover effect visibility for the arrow icon
+            const arrowDiv = element.querySelector('.position-absolute');
+            element.addEventListener('mouseenter', () => arrowDiv.classList.remove('opacity-0'));
+            element.addEventListener('mouseleave', () => arrowDiv.classList.add('opacity-0'));
+
+
+            containerElement.appendChild(element);
+        });
+    }
+
+
+    /* ------------------------------------------------------------------------
+        Helper
+    -------------------------------------------------------------------------*/
+    function showError(msg) {
+        statusMessage.textContent = `Error: ${msg}`;
+        statusMessage.className = "mt-4 alert alert-danger d-block";
+        statusMessage.classList.remove("d-none");
+    }
+
+
+    /* ------------------------------------------------------------------------
+        Form Submit
+    -------------------------------------------------------------------------*/
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const clientName = clientNameInput.value.trim();
+        let clientId = clientIdInput.value.trim();
+        
+        if (!clientId) {
+            showError("Client ID is required for manual registration.");
+            return;
+        }
+
+        if (!clientName) {
+            showError("Client Name is required.");
+            return;
+        }
+
+        saveClient(clientName, clientId);
+    });
+
+    /* ------------------------------------------------------------------------
+        Initialize
+    -------------------------------------------------------------------------*/
+    window.onload = function() {
+        loadClients();
+
+        if (copyIdButton) {
+            copyIdButton.addEventListener('click', function() {
+                const clientId = this.getAttribute('data-client-id');
+                if (clientId) {
+                    copyToClipboard(clientId, this);
+                }
+            });
+        }
+        
+        if (clientSearchInput) {
+            let debounceTimer;
+            clientSearchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(filterClients, 300);
+            });
+        }
+    };
+
+</script>
+
+</body>
+</html>

@@ -1,13 +1,12 @@
 package com.geosieben.gsbworkday.service;
 
-import com.geosieben.gsbworkday.addon.AddonServ;
+
 import com.geosieben.gsbworkday.dto.LeaveBalanceReposnseDto;
 import com.geosieben.gsbworkday.dto.LeaveRequestDto;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.LeaveBalance;
 import com.geosieben.gsbworkday.entity.Leaves;
-import com.geosieben.gsbworkday.repository.BankInfoRepository;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.repository.LeaveBalanceRepository;
 import com.geosieben.gsbworkday.repository.LeaveRepository;
@@ -19,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.geosieben.gsbworkday.service.EmailService;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
@@ -33,8 +31,7 @@ public class LeaveServices implements LeaveInterface{
 
     @Autowired
     private LeaveBalanceRepository leaveBalanceRepository;
-    @Autowired
-    private BankInfoRepository bankInfoRepository;
+
     @Autowired
     private LeaveRepository leaveRepository;
     @Autowired

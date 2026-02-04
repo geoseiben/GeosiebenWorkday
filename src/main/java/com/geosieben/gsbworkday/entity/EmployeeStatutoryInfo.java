@@ -1,7 +1,6 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
-import jdk.jfr.Enabled;
 
 import java.time.LocalDate;
 

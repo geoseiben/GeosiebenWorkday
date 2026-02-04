@@ -1,266 +1,210 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    
     <title>Employee Portal | Velocity</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f8fafc;
-            /* Prevent body from scrolling so only the main content area does */
-            overflow: hidden;
-        }
-
-        /* Compact Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-
-        /* Progress Animation */
-        @keyframes grow { from { width: 0; } }
-        .progress-fill { animation: grow 1.2s ease-out forwards; }
-
-        /* Ticker Animation */
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .animate-scroll {
-            display: inline-flex;
-            animation: scroll 40s linear infinite;
-            width: max-content;
-        }
-        .animate-scroll:hover { animation-play-state: paused; }
-
-        .tile-compact {
-            transition: all 0.2s ease-in-out;
-            border: 1px solid rgba(241, 245, 249, 1);
-        }
-        .tile-compact:hover {
-            transform: translateY(-2px);
-            border-color: #e2e8f0;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-        }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-scroll { display: inline-flex; animation: scroll 40s linear infinite; width: max-content; }
+        .tile-compact { transition: all 0.2s ease-in-out; border: 1px solid rgba(241, 245, 249, 1); }
+        .tile-compact:hover { transform: translateY(-2px); border-color: #e2e8f0; box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.04); }
+        .modal-animate-enter { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 
 <body class="text-slate-900 h-screen w-screen flex">
-
 <main class="flex-1 h-screen overflow-y-auto custom-scrollbar">
-
     <div th:replace="includes/header :: header"></div>
 
-    <div class="w-full px-6 lg:px-10 py-6 space-y-8 max-w-[1600px] mx-auto">
-
-        <header class="flex items-center justify-between border-b border-slate-100 pb-4">
+    <div class="w-full px-6 lg:px-10 py-4 space-y-5 max-w-[1600px] mx-auto">
+        <header class="flex items-center justify-between border-b border-slate-100 pb-2">
             <div>
-                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900" id="greetingText">Loading...</h1>
-                <p class="text-slate-400 text-xs font-medium">Workspace Overview • 2026</p>
+                <h1 class="text-xl font-extrabold tracking-tight text-slate-900" id="greetingText">Loading...</h1>
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Workspace Overview • 2026</p>
             </div>
             <div class="hidden sm:flex items-center gap-4">
                 <div class="text-right">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Server Status</p>
-                    <p class="text-xs font-bold text-emerald-500 flex items-center justify-end gap-1">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Server Status</p>
+                    <p class="text-[11px] font-bold text-emerald-500 flex items-center justify-end gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Operational
                     </p>
                 </div>
             </div>
         </header>
 
-        <div class="w-full bg-white border border-slate-100 rounded-[2rem] py-6 overflow-hidden whitespace-nowrap relative shadow-sm">
-            <div class="absolute left-0 top-0 bottom-0 bg-white z-20 px-8 flex items-center shadow-[25px_0_30px_-5px_rgba(255,255,255,1)]">
-                <div class="flex flex-col items-center">
-                    <span class="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] flex flex-col items-center gap-2">
-                        <i class="fa-solid fa-cake-candles animate-bounce text-xl"></i>
-                        Events
-                    </span>
-                </div>
+        <div class="w-full bg-white border border-slate-100 rounded-2xl py-3 overflow-hidden whitespace-nowrap relative shadow-sm">
+            <div class="absolute left-0 top-0 bottom-0 bg-white z-20 px-6 flex items-center shadow-[15px_0_20px_-5px_rgba(255,255,255,1)]">
+                <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-cake-candles text-lg animate-bounce"></i> Events
+                </span>
             </div>
-
-            <div class="flex items-center gap-10 animate-scroll pl-40" id="celebrationTicker">
-            </div>
+            <div class="flex items-center gap-8 animate-scroll pl-36" id="celebrationTicker"></div>
         </div>
 
         <div sec:authorize="hasAuthority('admin')" class="w-full">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl tile-compact">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pending Leaves</p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="bg-white p-4 rounded-xl tile-compact">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pending Leaves</p>
                     <div class="flex items-baseline gap-2">
-                        <span class="text-2xl font-black text-slate-900" id="pendingLeaves">--</span>
-                        <span class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">Action</span>
+                        <span class="text-xl font-black text-slate-900" id="pendingLeaves">--</span>
+                        <span class="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">Action</span>
                     </div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl tile-compact">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">IT Tickets</p>
-                    <span class="text-2xl font-black text-slate-900" id="pendingIT">--</span>
+                <div class="bg-white p-4 rounded-xl tile-compact">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">IT Tickets</p>
+                    <span class="text-xl font-black text-slate-900" id="pendingIT">--</span>
                 </div>
-                <div class="bg-white p-5 rounded-2xl tile-compact">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Active Staff</p>
-                    <span class="text-2xl font-black text-slate-900" id="activeEmployees">--</span>
-                    <div class="text-[9px] font-bold text-slate-400 uppercase flex gap-2 mt-1" id="active"></div>
+                <div class="bg-white p-4 rounded-xl tile-compact">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Active Staff</p>
+                    <span class="text-xl font-black text-slate-900" id="activeEmployees">--</span>
+                    <div class="text-[8px] font-bold text-slate-400 uppercase flex gap-2 mt-0.5" id="active"></div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl tile-compact">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Separated</p>
-                    <span class="text-2xl font-black text-slate-900" id="seperatedEmployees">--</span>
+                <div class="bg-white p-4 rounded-xl tile-compact">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Separated</p>
+                    <span class="text-xl font-black text-slate-900" id="seperatedEmployees">--</span>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <div class="xl:col-span-3 space-y-6">
-                <div class="bg-white p-8 rounded-[1.5rem] border border-slate-100 shadow-sm">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-500 uppercase">Leave Balance</span>
-                                <span class="text-xs font-black text-indigo-600">12/20 Days</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-indigo-600 h-full progress-fill" style="width: 60%"></div>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-500 uppercase">Support Tickets</span>
-                                <span class="text-xs font-black text-orange-500">4 Open</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-orange-500 h-full progress-fill" style="width: 40%"></div>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-500 uppercase">Certifications</span>
-                                <span class="text-xs font-black text-emerald-500">66% Complete</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-emerald-500 h-full progress-fill" style="width: 66%"></div>
-                            </div>
-                        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-5">
+            <div class="xl:col-span-3 space-y-5">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    <a href="/leaves/apply" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center text-md group-hover:bg-indigo-600 group-hover:text-white transition-all"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Leave</h4><p class="text-[9px] text-slate-400 font-medium">Request</p></div>
+                    </a>
+                    
+                    <a href="/attendance" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-md group-hover:bg-emerald-600 group-hover:text-white transition-all"><i class="fa-solid fa-clock"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Clock-in</h4><p class="text-[9px] text-slate-400 font-medium">Attendance</p></div>
+                    </a>
+
+                    <div id="open-modal-btn" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3 cursor-pointer">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-md group-hover:bg-blue-600 group-hover:text-white transition-all"><i class="fa-solid fa-folder-plus"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Log Project</h4><p class="text-[9px] text-slate-400 font-medium">New Entry</p></div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <a href="/leaves/apply" class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-calendar-day"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Leave</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">Request Time Off</p>
-                        </div>
+                    <a href="/recruitment" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center text-md group-hover:bg-purple-600 group-hover:text-white transition-all"><i class="fa-solid fa-user-tie"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Hiring</h4><p class="text-[9px] text-slate-400 font-medium">Onboarding</p></div>
                     </a>
 
-                    <a href="/it/raiseticket" class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4">
-                        <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-orange-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-headset"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Support</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">IT Helpdesk</p>
-                        </div>
+                    <a href="/performance" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-md group-hover:bg-amber-600 group-hover:text-white transition-all"><i class="fa-solid fa-ranking-star"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Reviews</h4><p class="text-[9px] text-slate-400 font-medium">Performance</p></div>
                     </a>
 
-                    <a sec:authorize="hasAuthority('admin')" href="/admin/addemployee" class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4">
-                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-plus"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Hire</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">Add New Staff</p>
-                        </div>
+                    <a href="/payroll" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-md group-hover:bg-rose-600 group-hover:text-white transition-all"><i class="fa-solid fa-wallet"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Payroll</h4><p class="text-[9px] text-slate-400 font-medium">Payslips</p></div>
                     </a>
-
-                    <a href="/leaves/getbalance" class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4">
-                        <div class="w-12 h-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-sky-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-table-columns"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Dashboard</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">Resource Assets</p>
-                        </div>
-                    </a>
-
-                    <a href="/admin/departments" class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4">
-                        <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-purple-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-chart-simple"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Departments</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">Manage</p>
-                        </div>
-                    </a>
-
-                    <div class="tile-compact group bg-white p-6 rounded-2xl flex items-center gap-4 cursor-pointer">
-                        <div class="w-12 h-12 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center text-lg group-hover:bg-slate-600 group-hover:text-white transition-all">
-                            <i class="fa-solid fa-file-shield"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800">Policy</h4>
-                            <p class="text-[10px] text-slate-400 font-medium tracking-wide">Guidelines</p>
-                        </div>
-                    </div>
                 </div>
             </div>
 
             <div class="xl:col-span-1">
-                <div class="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm sticky top-0">
-                    <div class="p-5 border-b border-slate-50 flex items-center justify-between">
-                        <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Activity Feed</h2>
-                        <span class="px-2 py-0.5 bg-slate-100 text-[9px] font-bold rounded text-slate-500 uppercase">Live Updates</span>
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm sticky top-0 overflow-hidden">
+                    <div class="p-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                        <h2 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Recent Activity</h2>
+                        <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
                     </div>
-                    <div class="p-6 space-y-6">
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex-shrink-0 flex items-center justify-center text-xs">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[12px] font-bold text-slate-800 truncate">Leave Approved</p>
-                                <p class="text-[10px] text-slate-400 font-medium">2 hours ago</p>
-                            </div>
+                    <div class="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <div class="flex gap-3 relative before:absolute before:left-[14px] before:top-8 before:bottom-[-16px] before:w-[1px] before:bg-slate-100 last:before:hidden">
+                            <div class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex-shrink-0 flex items-center justify-center text-[10px] z-10"><i class="fa-solid fa-rocket"></i></div>
+                            <div class="min-w-0"><p class="text-[11px] font-bold text-slate-800">New Project Logged</p><p class="text-[10px] text-slate-500">Cloud Migration v2.0</p><p class="text-[9px] text-slate-400 mt-0.5">4h ago</p></div>
                         </div>
-                        <div class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex-shrink-0 flex items-center justify-center text-xs">
-                                <i class="fa-solid fa-ticket"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[12px] font-bold text-slate-800 truncate">Ticket #402 Resolved</p>
-                                <p class="text-[10px] text-slate-400 font-medium">Yesterday</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-6 pt-0">
-                        <button class="w-full py-3 rounded-xl bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-colors">
-                            View All Logs
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="h-10"></div>
     </div>
 </main>
+
+<div id="add-project-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-xl w-full transform scale-100 modal-animate-enter">
+        <h3 class="text-lg font-extrabold text-slate-800 mb-4 border-b pb-3 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list text-indigo-600"></i> Log Project or Pilot
+        </h3>
+        <form id="add-project-form">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Project Name</label>
+                    <input type="text" name="projectName" required placeholder="Enter project name..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Type</label>
+                        <select id="project-type" name="projectType" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
+                            <option value="Project">Project</option>
+                            <option value="Pilot">Pilot</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Category</label>
+                        <select id="category" name="categoryId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" required>
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Project Lead</label>
+                        <select id="project-lead" name="projectLeadId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" required>
+                            <option value="">Select Lead...</option>
+                        </select>
+                    </div>
+                                                <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Associated Client</label>
+                        <select id="associated-client" name="clientId" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" required>
+                            <option value="">Select Client...</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="pilot-fields" class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 hidden">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 mb-1 uppercase">Start Date</label>
+                        <input type="date" name="startDate" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 mb-1 uppercase">Deadline</label>
+                        <input type="date" name="deadline" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 mb-1 uppercase">Estimated Hours</label>
+                        <input type="text" name="hours" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 mb-1 uppercase">File Path</label>
+                        <input type="text" name="filepath" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" id="cancel-add-project" class="text-xs font-bold text-slate-400 uppercase hover:text-slate-600">Cancel</button>
+                <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase shadow-lg shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50">Submit Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script th:src="@{/js/script.js}" type="text/javascript"></script>
 <script th:inline="javascript">
-    function updateGreeting() {
-        const hour = new Date().getHours();
-        const greetingElement = document.getElementById('greetingText');
-        const username = /*[[${username}]]*/ 'Employee';
-        let greeting = (hour < 12) ? "Good Morning" : (hour < 17) ? "Good Afternoon" : "Good Evening";
-        greetingElement.textContent = `${greeting}, ${username}`;
-    }
-
+    
+    // 1. Fetching Logic for Dropdowns and Stats
     function fetchAdminStats() {
         $.ajax({
             url: '/admin/stats',
@@ -273,45 +217,115 @@
                     document.getElementById("activeEmployees").innerText = response.totalActiveEmployees || 0;
                     document.getElementById("active").innerHTML = `<span>M: ${response.activeMale || 0}</span> <span>F: ${response.activeFemale || 0}</span>`;
                 }
-            },
-            error: function() { console.log("Stats could not be loaded."); }
+            }
         });
     }
 
-    function loadCelebrations() {
-        const events = [
-            { name: "Alice Thompson", date: "Today", type: "birthday", img: "https://i.pravatar.cc/150?u=alice" },
-            { name: "Robert Fox", date: "5 Year Milestone", type: "anniversary", img: "https://i.pravatar.cc/150?u=bob" },
-            { name: "Sarah Jenkins", date: "Jan 30", type: "birthday", img: "https://i.pravatar.cc/150?u=sarah" },
-            { name: "Engineering Team", date: "3rd Anniversary", type: "anniversary", img: "https://i.pravatar.cc/150?u=eng" },
-            { name: "Michael Chen", date: "Feb 02", type: "birthday", img: "https://i.pravatar.cc/150?u=mike" }
-        ];
-
-        const ticker = document.getElementById('celebrationTicker');
-        const list = [...events, ...events];
-
-        ticker.innerHTML = list.map(item => `
-            <div class="flex items-center gap-5 px-6 py-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm hover:bg-white hover:border-indigo-100 transition-all cursor-pointer">
-                <div class="relative">
-                    <img src="${item.img}" class="w-14 h-14 rounded-full border-4 border-white shadow-md object-cover" alt="user">
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md text-xs">
-                        ${item.type === 'birthday' ? '🎂' : '🎊'}
-                    </div>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-[15px] font-extrabold text-slate-800">${item.name}</span>
-                    <span class="text-[10px] font-bold uppercase tracking-widest ${item.type === 'birthday' ? 'text-pink-500' : 'text-indigo-600'}">
-                        ${item.type === 'birthday' ? 'Happy Birthday' : 'Work Anniversary'} • ${item.date}
-                    </span>
-                </div>
-            </div>
-        `).join('');
+    function projectNeeds() {
+        $.ajax({
+            url: '/admin/getprojectrequired',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                 populateSelect("category", response[1], "categoryId", "catagoryShortname");
+                 populateSelect("project-lead", response[0], "eid", "name");
+                 populateSelect("associated-client", response[2], "cid", "clientId");
+            }
+        });
     }
+
+    function populateSelect(selectId, items, valueKey, textKey) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = `<option value="">-- Select --</option>`;
+        items.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item[valueKey];
+            option.textContent = item[textKey];
+            select.appendChild(option);
+        });
+    }
+
+    // 2. Greeting Logic
+    function updateGreeting() {
+        const hour = new Date().getHours();
+        const username = /*[[${username}]]*/ 'Employee';
+        let greeting = (hour < 12) ? "Good Morning" : (hour < 17) ? "Good Afternoon" : "Good Evening";
+        document.getElementById('greetingText').textContent = `${greeting}, ${username}`;
+    }
+
+    // 3. Modal Controls
+    const modal = document.getElementById('add-project-modal');
+    const projectForm = document.getElementById('add-project-form');
+    const projectTypeSelect = document.getElementById('project-type');
+    const pilotFields = document.getElementById('pilot-fields');
+
+    const toggleModal = (show) => {
+        if (show) modal.classList.remove('hidden');
+        else { 
+            modal.classList.add('hidden'); 
+            projectForm.reset(); 
+            pilotFields.classList.add('hidden'); 
+        }
+    };
+
+    // 4. AJAX POST FORM SUBMISSION
+    $(document).on('submit', '#add-project-form', function(e) {
+        e.preventDefault();
+        
+        const $submitBtn = $('#submit-btn');
+        $submitBtn.prop('disabled', true).text('Processing...');
+
+        // Map form data to a clean object
+        const payload = {
+            projectName: $("input[name='projectName']").val(),
+            projectType: $("#project-type").val(),
+            categoryId: $("#category").val(),
+            projectLeadId: $("#project-lead").val(),
+            clientId: $("#associated-client").val(),
+            startDate: $("input[name='startDate']").val(),
+            deadline: $("input[name='deadline']").val(),
+            hours: $("input[name='hours']").val(),
+             filepath: $("input[name='filepath']").val()
+        };
+        console.log(payload);
+                    const csrfToken = document.getElementById("csrfToken").value;
+
+        $.ajax({
+            url: '/admin/addproject', // Your backend endpoint
+            type: 'POST',
+                               type: "POST",
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+            data: payload,
+            success: function(response) {
+                console.log(response);
+                toggleModal(false);
+                fetchAdminStats(); // Refresh dashboard numbers
+            },
+            error: function(err) {
+                console.error(err);
+                alert("Error saving project. Please check fields and try again.");
+            },
+            complete: function() {
+                $submitBtn.prop('disabled', false).text('Submit Entry');
+            }
+        });
+    });
+
+    // Event Listeners
+    document.getElementById('open-modal-btn').addEventListener('click', () => toggleModal(true));
+    document.getElementById('cancel-add-project').addEventListener('click', () => toggleModal(false));
+    
+    projectTypeSelect.addEventListener('change', () => {
+        if (projectTypeSelect.value === 'Pilot') pilotFields.classList.remove('hidden');
+        else pilotFields.classList.add('hidden');
+    });
 
     $(document).ready(function() {
         updateGreeting();
         fetchAdminStats();
-        loadCelebrations();
+        projectNeeds();
     });
 </script>
 </body>

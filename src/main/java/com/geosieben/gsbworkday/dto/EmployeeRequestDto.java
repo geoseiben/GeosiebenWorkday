@@ -2,7 +2,6 @@ package com.geosieben.gsbworkday.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.springframework.scheduling.support.SimpleTriggerContext;
 
 import java.time.LocalDate;
 

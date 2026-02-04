@@ -5,7 +5,6 @@ import com.geosieben.gsbworkday.entity.TestInfo;
 import com.geosieben.gsbworkday.repository.TestDesgnRepo;
 import com.geosieben.gsbworkday.repository.TestInfoRepo;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,5 @@
 package com.geosieben.gsbworkday.controller;
 
-import com.geosieben.gsbworkday.entity.User;
-import com.geosieben.gsbworkday.service.UserServices;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -13,17 +11,10 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class AuthController {
-    private final UserServices userServices;
-
-    public AuthController(UserServices userServices) {
-        this.userServices = userServices;
-    }
 
     @GetMapping("/login")
     public String loginpage(){

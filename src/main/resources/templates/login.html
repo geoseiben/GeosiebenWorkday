@@ -1,93 +1,165 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Secure Access</title>
+    <title>Geosieben | Core Secure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        :root {
+            --geo-brand: #0040ff;
+            --geo-brand-soft: rgba(0, 64, 255, 0.05);
+            --geo-bg: #f8fafc;
+            --geo-card: #ffffff;
+        }
+
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: var(--geo-bg);
+            color: #0f172a;
+            overflow: hidden;
+        }
+
+        .cyber-grid {
+            position: fixed; inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(0, 64, 255, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 64, 255, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+
+        .cyber-grid::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, var(--geo-bg) 90%);
+        }
+
+        .industrial-card {
+            background: var(--geo-card);
+            border: 1px solid #e2e8f0;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 20px 48px -12px rgba(0, 64, 255, 0.08);
+        }
+
+        .mono-input {
+            font-family: 'JetBrains Mono', monospace;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mono-input:focus {
+            border-color: var(--geo-brand);
+            box-shadow: 4px 4px 0px 0px var(--geo-brand-soft);
+            outline: none;
+            transform: translate(-1px, -1px);
+        }
+
+        .btn-geo {
+            background: var(--geo-brand);
+            color: white; font-weight: 700;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-geo:hover {
+            box-shadow: 0 8px 20px -4px rgba(0, 64, 255, 0.4);
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .corner { position: absolute; width: 12px; height: 12px; border: 2px solid var(--geo-brand); opacity: 0.8; }
+        .c-tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+        .c-tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+        .c-bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+        .c-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+        .tag-label {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--geo-brand);
+            color: white; padding: 2px 8px; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-6 relative">
 
-<div class="max-w-md w-full">
-    <!-- Logo/Header Area -->
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+    <div class="cyber-grid"></div>
+
+    <div class="w-full max-w-[420px] relative">
+        <div class="text-center mb-12">
+            <div class="inline-flex relative mb-6">
+                <div class="relative w-16 h-16 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center shadow-sm">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0040ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-4xl font-bold tracking-tight text-slate-900 font-display">Geosieben</h1>
         </div>
-        <h1 class="text-3xl font-bold text-slate-900">Welcome back</h1>
-        <p class="text-slate-500 mt-2">Please enter your details to sign in</p>
-    </div>
 
-    <!-- Login Card -->
-    <div class="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100">
-        <form id="loginForm" action="/login" method="post" class="space-y-6">
+        <div class="industrial-card p-10 rounded-xl">
+            <div class="corner c-tl"></div><div class="corner c-tr"></div>
+            <div class="corner c-bl"></div><div class="corner c-br"></div>
 
-            <!-- Email Field -->
-            <div>
-                <label for="username" class="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        required
-                        placeholder="name"
-                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
-                >
+            <div class="mb-8 flex justify-between items-start">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 uppercase tracking-tight">Sign In</h2>
+                    <p class="text-slate-400 text-xs font-mono mt-0.5">Secured</p>
+                </div>
+                <div class="tag-label rounded-sm">Verified</div>
             </div>
 
-            <!-- Password Field -->
-            <div>
-                <div class="flex justify-between mb-1">
-                    <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                    <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">Forgot password?</a>
+            <div th:if="${param.error}" class="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs font-mono">
+                AUTHENTICATION_FAILED: INVALID_CREDENTIALS
+            </div>
+
+            <form id="loginForm" th:action="@{/login}" method="post" onsubmit="handleLogin(event)" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Employee-Id</label>
+                    <input type="text" name="username" placeholder="GSB-XXXX" required class="mono-input w-full px-4 py-4 rounded-lg text-sm text-slate-900">
                 </div>
-                <div class="relative">
-                    <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            required
-                            placeholder="••••••••"
-                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
-                    >
-                    <button
-                            type="button"
-                            onclick="togglePassword()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Password</label>
+                    </div>
+                    <input type="password" name="password" placeholder="••••••••••••" required class="mono-input w-full px-4 py-4 rounded-lg text-sm text-slate-900">
+                </div>
+
+                <button id="submitBtn" type="submit" class="btn-geo w-full py-4 rounded-lg flex items-center justify-center gap-3 shadow-lg">
+                    <span id="btnText" class="flex items-center gap-2">Initialize Session <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></span>
+                    <div id="btnLoader" class="hidden">
+                        <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                    </button>
-                </div>
-            </div>
-
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-            <!-- Submit Button -->
-            <input
-                    type="submit"
-                    id="submitBtn"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-
-
-        </form>
+                    </div>
+                </button>
+            </form>
+        </div>
     </div>
 
-    <p class="text-center text-slate-600 mt-8">
-        Don't have an account?
-        <a href="#" class="font-semibold text-blue-600 hover:text-blue-700 transition-colors">Sign up for free</a>
-    </p>
-</div>
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const txt = document.getElementById('btnText');
+            const loader = document.getElementById('btnLoader');
+            const form = document.getElementById('loginForm');
 
+            txt.classList.add('hidden');
+            loader.classList.remove('hidden');
+            btn.disabled = true;
 
+            // Artificial delay for industrial "feel" before submitting
+            setTimeout(() => {
+                form.submit();
+            }, 1000);
+        }
+    </script>
 </body>
 </html>

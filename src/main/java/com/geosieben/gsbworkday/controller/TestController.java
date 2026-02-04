@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.UnsupportedEncodingException;
-import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +100,7 @@ return leaveServices.fetchPendingLeaves();
         
         return itTicketService.updateTicket(ticketid, status, remarks);
     }
-    
+
     
 
 
