@@ -10,8 +10,7 @@ public class Images {
     @Id
     @Column(columnDefinition = "varchar(8) not null")
     private String EID;
-    private String imagepath;
-    private LocalDateTime uploadedon;
+
     @OneToOne
     @MapsId
     @JoinColumn(name = "EID")

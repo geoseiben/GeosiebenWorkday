@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+    <title>Candidate Management | Recruitment Portal</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root { --primary: #4f46e5; --bg-soft: #f8fafc; --border-color: #e2e8f0; --text-dark: #1e293b; }
+        body { background-color: var(--bg-soft); font-family: 'Inter', sans-serif; color: var(--text-dark); overflow-x: hidden; }
+        
+        /* Global Loader Styles */
+        #global-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner-custom {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .main-content { padding: 2rem; transition: all 0.3s ease; }
+        .glass-card { background: #ffffff; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .header-strip { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Table Styling */
+        #leaveTable thead th { background-color: #f1f5f9; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: #64748b; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+        .step-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .filter-select { min-width: 180px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 0.4rem; font-size: 0.875rem; }
+        
+        /* Action Button Polish */
+        .btn-action { transition: all 0.2s; font-weight: 500; }
+        .btn-action:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <div th:replace="includes/header :: header"></div>
+
+<div id="global-loader">
+    <div class="spinner-custom"></div>
+    <p class="mt-3 font-semibold text-slate-600">Updating Status Please Wait......</p>
+</div>
+
+<div class="main-content">
+    <div class="mb-6 flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Recruitment Pipeline</h1>
+            <p class="text-slate-500 text-sm">Monitor and advance candidates through the hiring workflow.</p>
+        </div>
+        <div class="text-end">
+             <span class="text-xs font-bold px-3 py-2 bg-white border rounded-lg text-slate-600 shadow-sm">
+                <i class="far fa-calendar-alt me-2 text-indigo-500"></i> 
+            </span>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="header-strip">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 font-semibold border-r pr-6">
+                    <div class="w-2 h-6 bg-indigo-600 rounded-full"></div>
+                    Active Candidates
+                </div>
+                <div class="flex items-center gap-3">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Registration Month</label>
+                    <select id="monthFilter" class="form-select filter-select shadow-sm">
+                        <option value="">All Months</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="table-responsive">
+                <table id="leaveTable" class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th width="40">ID</th>
+                            <th>Candidate Details</th>
+                            <th>Education</th>
+                            <th>Exp.</th>
+                            <th>Specialization</th>
+                            <th>Apti</th>
+                            <th>Tech</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataRoot">
+                        <tr>
+                            <td colspan="9" class="text-center py-20">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="text-slate-400 animate-pulse">Initializing data streams...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function () {
+    let table;
+    let uniqueMonths = new Set();
+
+    // DataTables Search Extension
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        let selectedMonth = $('#monthFilter').val();
+        if (!selectedMonth) return true; 
+        let rowData = table.row(dataIndex).data().rawData;
+        return rowData.candidateRegistrationMonth === selectedMonth;
+    });
+
+    function initDataTable() {
+        table = $('#leaveTable').DataTable({
+            pageLength: 10,
+            destroy: true,
+            ordering: true,
+            autoWidth: false,
+            language: {
+                search: "",
+                searchPlaceholder: "Search candidates...",
+                paginate: { next: '→', previous: '←' }
+            },
+            columns: [
+                { data: 'index' },
+                { data: 'name' },
+                { data: 'education' },
+                { data: 'exp' },
+                { data: 'spec' },
+                { data: 'apti' },
+                { data: 'tech' },
+                { data: 'status_label', className: 'text-center' },
+                { data: 'action', className: 'text-end' }
+            ]
+        });
+    }
+
+    // Load Data via AJAX
+    $.get("/admin/careers/getCandidates",  function (res) {
+                let rows = res.data ? res.data : res;
+        let tableData = [];
+
+        if(rows.length > 0) {
+            rows.forEach((r, index) => {
+                if(r.candidateRegistrationMonth) uniqueMonths.add(r.candidateRegistrationMonth);
+
+                let actionBtn = "";
+                let statusLabel = "";
+                let status = (r.status === null || r.status === "") ? -1 : parseInt(r.status);
+
+                // Workflow Logic
+                switch(status) {
+                    case -1:
+                        statusLabel = '<span class="step-pill bg-slate-100 text-slate-600 border border-slate-200">Applied</span>';
+                        actionBtn = `<button class="btn btn-sm btn-primary btn-action px-3" data-id="${r.cid}" data-cid="${r.cid}" data-task="sched" data-type="Aptitude"><i class="fa-solid fa-calendar-plus me-1"></i> Schedule Aptitude</button>`;
+                        break;
+                    case 0:
+                        statusLabel = '<span class="step-pill bg-blue-50 text-blue-600 border border-blue-100">Aptitude Sched.</span>';
+                        actionBtn = `<button class="btn btn-sm btn-warning btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="score" data-type="Aptitude"><i class="fa-solid fa-pen-to-square me-1"></i> Update Score</button>`;
+                        break;
+                    case 1:
+                        statusLabel = '<span class="step-pill bg-indigo-50 text-indigo-600 border border-indigo-100">Aptitude Done</span>';
+                        actionBtn = `<button class="btn btn-sm btn-info btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-type="Technical" data-task="sched"><i class="fa-solid fa-clock me-1"></i> Schedule Tech</button>`;
+                        break;
+                    case 2:
+                        statusLabel = '<span class="step-pill bg-orange-50 text-orange-600 border border-orange-100">Tech Sched.</span>';
+                        actionBtn = `<button class="btn btn-sm btn-warning btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="score" data-type="Technical"><i class="fa-solid fa-pen-to-square me-1"></i> Update Score</button>`;
+                        break;
+                    case 3:
+                        statusLabel = '<span class="step-pill bg-orange-50 text-orange-600 border border-orange-100">Tech Finished</span>';
+                        actionBtn = `<button class="btn btn-sm btn-primary btn-action px-3" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="document" ><i class="fa-solid fa-file-invoice me-1"></i> Initiate Docs</button>`;
+                        break;
+                    case 4:
+                        statusLabel = '<span class="step-pill bg-purple-50 text-purple-600 border border-purple-100">Docs Pending</span>';
+                        actionBtn = `<button class="btn btn-sm btn-primary btn-action px-3" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="finishdocs" ><i class="fa-solid fa-check-to-slot me-1"></i> Finish Docs</button>`;
+                        break;
+                    case 5:
+                        statusLabel = '<span class="step-pill bg-emerald-50 text-emerald-600 border border-emerald-100">Docs Ready</span>';
+                        actionBtn = `<button class="btn btn-sm btn-dark btn-action px-3" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="onboardschedule" ><i class="fa-solid fa-door-open me-1"></i> Schedule Onboard</button>`;
+                        break;
+                    case 6:
+                        statusLabel = '<span class="step-pill bg-sky-50 text-sky-600 border border-sky-100">Onboarding...</span>';
+                        actionBtn = `<button class="btn btn-sm btn-success btn-action px-3" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="onboardfinish" ><i class="fa-solid fa-flag-checkered me-1"></i> Finish Onboard</button>`;
+                        break;
+                    default:
+                        statusLabel = '<span class="step-pill bg-emerald-100 text-emerald-700">Completed</span>';
+                        actionBtn = `<span class="badge bg-success py-2 px-3 rounded-pill shadow-sm"><i class="fa-solid fa-check-double me-1"></i> Onboarded</span>`;
+                }
+
+                tableData.push({
+                    "index": index + 1,
+                    "name": `<div><div class="font-bold text-slate-800">${r.candidateName}</div><div class="text-[10px] text-slate-400 font-medium">${r.email}</div></div>`,
+                    "education": `<div><div class="text-xs font-semibold text-slate-700">${r.degree}</div><div class="text-[10px] text-slate-400">${r.fieldOfStudy}</div></div>`,
+                    "exp": `<span class="badge ${r.expinyears > 0 ? 'bg-slate-700' : 'bg-slate-300 text-slate-600'} rounded-pill text-[10px]">${r.expinyears > 0 ? r.expinyears+' Yrs' : 'Fresher'}</span>`,
+                    "spec": `<span class="text-slate-500 text-xs">${r.specialization || 'General'}</span>`,
+                    "apti": `<span class="font-mono font-bold ${r.aptitudeScore >= 50 ? 'text-emerald-600' : 'text-slate-400'}">${r.aptitudeScore??'--'}</span>`,
+                    "tech": `<span class="font-mono font-bold ${r.technicalScore >= 50 ? 'text-emerald-600' : 'text-slate-400'}">${r.technicalScore??'--'}</span>`,
+                    "status_label": statusLabel,
+                    "action": actionBtn,
+                    "rawData": r 
+                });
+            });
+
+            Array.from(uniqueMonths).sort().forEach(month => {
+                $('#monthFilter').append(`<option value="${month}">${month}</option>`);
+            });
+        }
+
+        $("#dataRoot").empty();
+        initDataTable();
+        table.rows.add(tableData).draw();
+
+    }, "json").fail(function() {
+        $("#dataRoot").html('<tr><td colspan="9" class="text-center py-10 text-danger">Failed to connect to API.</td></tr>');
+    });
+
+    $('#monthFilter').on('change', function() { table.draw(); });
+
+    // Centralized Process Update Function
+    function processUpdate(data, $btnElement) {
+    const token = $("meta[name='_csrf']").attr("content");
+    const header = $("meta[name='_csrf_header']").attr("content");
+
+    // Add CSRF token into your data payload
+    data['_csrf'] = token;
+
+
+        // UI Loading State
+        $('#global-loader').css('display', 'flex');
+        if($btnElement) $btnElement.prop('disabled', true).addClass('opacity-50');
+$.ajax({
+    url: "/admin/careers/updateprocess",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(data),
+    beforeSend: function(xhr) {
+        const token = $("meta[name='_csrf']").attr("content");
+        const header = $("meta[name='_csrf_header']").attr("content");
+        xhr.setRequestHeader(header, token);
+    },  success:function(res){
+       if(res.status === 'success') {
+               location.reload();
+            } else {
+                $('#global-loader').hide();
+                if($btnElement) $btnElement.prop('disabled', false).removeClass('opacity-50');
+                Swal.fire('Error', res.message || 'Workflow process failed', 'error');
+            }
+            },
+            error:function(err){
+                 $('#global-loader').hide();
+            if($btnElement) $btnElement.prop('disabled', false).removeClass('opacity-50');
+            Swal.fire('Connection Error', 'Could not reach server', 'error');
+            }
+
+        })
+
+
+    }
+
+    // Dynamic Action Event Listener    
+    $(document).on('click', '.btn-action', function() {
+        const $btn = $(this);
+        const cid = $btn.data('cid');
+        const id = $btn.data('id');
+        const task = $btn.data('task');
+        const type = $btn.data('type');
+
+        if(task === 'sched') {
+            Swal.fire({
+                title: `Schedule ${type}`,
+                html: `<div class="text-start"><label class="text-[10px] font-bold text-slate-400 uppercase">Appointment Time</label><input type="datetime-local" id="sched-date" class="form-control mt-1 shadow-sm"></div>`,
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                preConfirm: () => {
+                    const val = document.getElementById('sched-date').value;
+                    if(!val) return Swal.showValidationMessage('Selection required');
+                    return val;
+                }
+            }).then((result) => {
+                if(result.isConfirmed) processUpdate({action: 'updateCandidate', task: 'schedule', id: id, type: type, date: result.value, cid: cid}, $btn);
+            });
+        } 
+        else if(task === 'score') {
+            Swal.fire({
+                title: `${type} Evaluation`,
+                text: "Enter result (0-100)",
+                input: 'number',
+                inputAttributes: { min: 0, max: 100 },
+                confirmButtonColor: '#f59e0b',
+                showCancelButton: true
+            }).then((result) => {
+                if(result.isConfirmed) processUpdate({action: 'updateCandidate', task: 'score', id: id, type: type, score: result.value, cid: cid}, $btn);
+            });
+        }
+        else if (task === 'document' || task === 'onboardschedule') {
+            const title = task === 'document' ? 'Documentation Slot' : 'Onboarding Slot';
+            Swal.fire({
+                title: `Schedule ${title}`,
+                input: "datetime-local",
+                showCancelButton: true,
+                confirmButtonColor: "#4f46e5",
+                inputValidator: (v) => !v && "Time slot is required"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processUpdate({
+                        action: 'updateCandidate',
+                        task:'schedule',
+                        type: task === 'document' ? 'documentation' : 'onboardschedule',
+                        id: id, date: result.value, cid: cid
+                    }, $btn);
+                }
+            });
+        }
+        else if (['finishdocs', 'onboardfinish'].includes(task)) {
+            Swal.fire({
+                title: "Confirm Completion",
+                text: "Are you sure this stage is complete?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#10b981",
+                confirmButtonText: "Yes, Mark Finished"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processUpdate({ action: 'updateCandidate', task: 'finish', id: id, cid: cid,type:task }, $btn);
+                }
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>

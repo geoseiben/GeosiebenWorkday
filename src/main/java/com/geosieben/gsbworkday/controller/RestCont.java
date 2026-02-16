@@ -4,11 +4,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.geosieben.gsbworkday.dto.ProjectRequest;
 import com.geosieben.gsbworkday.entity.Clients;
-import com.geosieben.gsbworkday.entity.RootProject;
+import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
+import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.service.CategoryService;
 import com.geosieben.gsbworkday.service.ClientService;
 import com.geosieben.gsbworkday.service.EmployeeService;
 import com.geosieben.gsbworkday.service.ProjectService;
+import com.geosieben.gsbworkday.service.SeparationService;
+
+import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -23,10 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-
-
-
-
 @RestController
 public class RestCont {
     @Autowired
@@ -36,7 +36,13 @@ public class RestCont {
     @Autowired
     private CategoryService categoryService;
     @Autowired
+    private SeparationService separationService;
+    @Autowired
     private ProjectService projectService;
+        @Autowired
+    private BasicInfoRepository basicInfoRepository;
+    @Autowired
+    private HttpSession httpSession;
     @PostMapping("/admin/saveClient")
     public ResponseEntity<Map<String,String>> saveClient(@RequestParam String clientId,@RequestParam String clientName) {
   return clientService.saveclientInfo(clientId, clientName);
@@ -61,6 +67,16 @@ public ResponseEntity<Map<String,String>> addProject(@ModelAttribute ProjectRequ
     return projectService.logNewProject(request); // and so on...
 }
     
+@PostMapping("/separtion/resign")
+public ResponseEntity<?> processResignation(
+            @RequestParam("lastworking") LocalDate lastWorkingDate,
+            @RequestParam("reason") String reason,
+            @RequestParam("remark") String remark,
+            @RequestParam(value = "documents[]", required = false) List<String> documents) {
+        String eid=(String) httpSession.getAttribute("eid");
+        EmployeeBasicInfo appliedBy=(EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(eid);
+                    return separationService.applyResignation(lastWorkingDate,reason,remark,documents,appliedBy);
+    }
     
     
     

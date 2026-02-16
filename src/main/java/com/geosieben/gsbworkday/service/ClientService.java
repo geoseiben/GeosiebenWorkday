@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.geosieben.gsbworkday.dto.ClientWiseProjectResponseDto;
 import com.geosieben.gsbworkday.entity.Clients;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
@@ -43,4 +44,7 @@ public class ClientService implements ClientInterFace{
      return clientRepository.findAll();
     }
 
+    public List<ClientWiseProjectResponseDto> getPrejectStats(){
+        return clientRepository.getClientWiseProjectStats();
+    }
 }

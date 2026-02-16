@@ -106,10 +106,12 @@
                         <div><h4 class="text-xs font-bold text-slate-800">Reviews</h4><p class="text-[9px] text-slate-400 font-medium">Performance</p></div>
                     </a>
 
-                    <a href="/payroll" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
-                        <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-md group-hover:bg-rose-600 group-hover:text-white transition-all"><i class="fa-solid fa-wallet"></i></div>
-                        <div><h4 class="text-xs font-bold text-slate-800">Payroll</h4><p class="text-[9px] text-slate-400 font-medium">Payslips</p></div>
+                    <a  sec:autherize="hasAnyAuthority('admin','user','hr')" href="/separtion/resign" class="tile-compact group bg-white p-4 rounded-xl flex items-center gap-3">
+                        <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-md group-hover:bg-rose-600 group-hover:text-white transition-all"><i class="fa fa-times" aria-hidden="true"></i></div>
+                        <div><h4 class="text-xs font-bold text-slate-800">Separation</h4><p class="text-[9px] text-slate-400 font-medium">Resign</p></div>
                     </a>
+
+                </div>
                 </div>
             </div>
 

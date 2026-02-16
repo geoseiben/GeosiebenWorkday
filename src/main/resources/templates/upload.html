@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-md p-8 bg-white rounded-xl shadow-lg">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Import Data</h2>
+        
+        <form action="/api/excel/upload" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div class="flex items-center justify-center w-full">
+                <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-10 h-10 mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="mb-2 text-sm text-gray-700 font-semibold">Click to upload or drag and drop</p>
+                        <p class="text-xs text-gray-500">XLSX or XLS (Max 10MB)</p>
+                    </div>
+                    <input id="file-upload" name="file" type="file" class="hidden" accept=".xlsx, .xls" onchange="updateFileName()" />
+                </label>
+            </div>
+            
+            <div id="file-name" class="text-sm text-blue-600 font-medium text-center"></div>
+
+            <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition duration-200">
+                Process Excel File
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName() {
+            const input = document.getElementById('file-upload');
+            const display = document.getElementById('file-name');
+            display.textContent = input.files.length > 0 ? `Selected: ${input.files[0].name}` : '';
+        }
+    </script>
+</body>
+</html>

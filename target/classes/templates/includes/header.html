@@ -52,9 +52,7 @@
                             </svg>
                         </button>
                         <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <button onclick="showView('data')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">All Records</button>
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Archives</button>
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Export Data</button>
+                        <a href="/separtion/resign" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Resign</a>                           
                         </div>
                     </div>
           <div class="relative group h-16 flex items-center">
@@ -74,17 +72,29 @@
                     </div>  
                         <div sec:autherize="hasAuthority('admin')" class="relative group h-16 flex items-center">
                         <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
-                            Project
+                            Production
                             <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
                         <div  class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a href="/it/dashboard" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Projects</a>
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Pilots</button>
-                            <a  href="/admin/cl" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Clients</a>
-                             <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Project Categories</button>
+                            <a href="/admin/project/clients_stats" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Projects</a>
+                            <a href="/admin/pilot/clients_stats" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Pilots</a>
+                            <a href="/admin/clients" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Manage Clinets</a>
 
+                        </div>
+                    </div>
+                    
+                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-16 flex items-center">
+                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
+                            Careers
+                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
+                            <a href="/admin/careers/addCandidate" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Register Cadidate</a>
+                            <a  href="/admin/careers/manageCandidates" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Manage Candidates</a>
                         </div>
                     </div>
                     <div class="relative group h-16 flex items-center">

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <title>Employee | Submit Resignation</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="assets/images/favicon-32x32.png" type="image/x-icon">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons for enhanced UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+      <script src="https://cdn.tailwindcss.com"></script>
+
+
+  <style>
+    /* Customizing Bootstrap variables for an Indigo theme */
+    :root {
+        --bs-primary: #4F46E5; /* Indigo 600 */
+        --bs-primary-rgb: 79, 70, 229;
+    }
+    .btn-primary {
+        --bs-btn-bg: var(--bs-primary);
+        --bs-btn-border-color: var(--bs-primary);
+        --bs-btn-hover-bg: #4338CA; /* Indigo 700 */
+        --bs-btn-hover-border-color: #4338CA;
+        --bs-btn-active-bg: #3730A3; /* Indigo 800 */
+        --bs-btn-active-border-color: #3730A3;
+        --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+    }
+    body {
+      background-color: #f7f8fc; /* Softer light background */
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .form-container {
+      max-width: 720px; /* Slightly wider container */
+      margin: 60px auto;
+      padding: 40px;
+      background: #fff;
+      border-radius: 16px; /* More rounded corners */
+      /* Professional shadow with subtle border ring */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+    .form-title {
+      font-size: 2rem; /* Larger title */
+      font-weight: 700;
+      margin-bottom: 30px;
+      /* Primary color vertical divider */
+      border-left: 5px solid var(--bs-primary);
+      padding-left: 15px;
+      color: #1f2937; /* Darker, clearer text */
+    }
+    .form-label {
+        font-weight: 500;
+        color: #374151; /* Medium dark gray for labels */
+    }
+    .form-control, .form-select {
+      border-radius: 10px;
+      padding: 10px 15px;
+      border: 1px solid #e5e7eb; /* Lighter default border */
+      transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25); /* Stronger focus highlight */
+    }
+    .btn-primary {
+      border-radius: 10px;
+      font-weight: 600;
+      padding: 10px 25px;
+      /* Subtle lift effect on hover */
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); 
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+        transform: translateY(-1px);
+    }
+    .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    .form-text {
+        color: #6b7280; /* Muted hint text */
+    }
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+    <div th:replace="includes/header :: header"></div>
+  <div id="leave-toast-container"></div>
+<div class="form-container">
+  <!-- Updated Title with new icon -->
+  <div class="form-title"><i class="bi bi-person-fill-lock me-3"></i>Submit Resignation</div>
+
+  <form id="resignationForm" novalidate>
+    <!-- Last Working Date -->
+    <div class="mb-4">
+      <label for="lastworking" class="form-label">Last Working Date</label>
+      <input type="date" class="form-control" id="lastworking" name="lastworking"
+        value="<?php echo date('Y-m-d', strtotime('+30 days'));?>" >
+      <div class="form-text">System calculated (30 days from today)</div>
+    </div>
+
+    <!-- Reason -->
+    <div class="mb-4">
+      <label for="reason" class="form-label">Reason for Resignation</label>
+      <select id="reason" name="reason" class="form-select" required>
+        <option value="" disabled selected>Select Reason</option>
+        <option value="Career Change">Career Change</option>
+        <option value="Career Growth">Career Growth</option>
+        <option value="Health Issues">Health Issues</option>
+        <option value="Better Salary and Benefits">Better Salary and Benefits</option>
+        <option value="Family Circumstances">Family Circumstances</option>
+      </select>
+    </div>
+
+    <!-- Remarks -->
+    <div class="mb-4">
+      <label for="remark" class="form-label">Additional Remarks</label>
+      <textarea id="remark" name="remark" class="form-control" rows="4"
+        placeholder="Enter any additional remarks or details not covered above..." required></textarea>
+    </div>
+             <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />    <!-- Documents -->
+    <div class="mb-5">
+      <label class="form-label">Documents Required</label>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="doc1" name="documents[]" value="Relieving Letter">
+            <label class="form-check-label" for="doc1">Relieving Letter</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="doc2" name="documents[]" value="Last Increment Letter">
+            <label class="form-check-label" for="doc2">Last Increment Letter</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="doc3" name="documents[]" value="Experience Certificate">
+            <label class="form-check-label" for="doc3">Experience Certificate</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="doc4" name="documents[]" value="Salary Slips">
+            <label class="form-check-label" for="doc4">Salary Slips</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="doc5" name="documents[]" value="My Original Documents">
+            <label class="form-check-label" for="doc5">My Original Documents</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="text-end">
+      <button type="submit" id="submitBtn" class="btn btn-primary">
+        <!-- Updated icon for submission -->
+        <i class="bi bi-send-fill"></i> Submit Resignation
+      </button>
+    </div>
+  </form>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(function(){
+  $('#resignationForm').on('submit', function(e){
+    e.preventDefault();
+
+    let reason = $('#reason').val();
+    let remark = $('#remark').val().trim();
+
+    if(!reason){
+      Swal.fire("Missing Field","Please select a reason","warning");
+      return;
+    }
+    if(!remark){
+      Swal.fire("Missing Field","Please enter additional remarks","warning");
+      return;
+    }
+
+    let docs = $('input[name="documents[]"]:checked').map(function(){
+      return $(this).val();
+    }).get();
+    console.log(docs);
+
+    const btn = $('#submitBtn');
+    btn.prop('disabled', true).html('<span class="spinner"></span> Submitting...');
+  const csrfToken = document.getElementById("csrfToken").value;
+    $.ajax({
+      url: '/separtion/resign',
+      headers: {
+                  'X-CSRF-TOKEN': csrfToken
+              },
+      type: 'POST',
+      data: {
+        lastworking: $('#lastworking').val(),
+        reason: reason,
+        remark: remark,
+        documents: docs
+      },
+      dataType: 'json',
+      success: function(res){
+        console.log(res);
+        Swal.fire("Success","Resignation submitted successfully","success");
+        $('#resignationForm')[0].reset();
+      },
+      error: function(err){
+        console.error(err);
+        Swal.fire("Error",res.message,"error");
+      },
+      complete: function(){
+        btn.prop('disabled', false).html('<i class="bi bi-send-fill"></i> Submit Resignation');
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

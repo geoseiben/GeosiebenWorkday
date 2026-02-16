@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.geosieben.gsbworkday.entity.*;
+import java.util.List;
+
 
 @Repository
 public interface RootProjectRepository extends JpaRepository<RootProject, Integer> {
@@ -15,6 +17,9 @@ public interface RootProjectRepository extends JpaRepository<RootProject, Intege
       nativeQuery = true
     )
     RootProject findPilotProjectsByClientId(int clientId);
+
+@Query(value = "SELECT * FROM rootprojects where clientId=?1 and projectType='Project'",nativeQuery = true)
+    List<RootProject> findProjectsByClientId(int  clientid);
 
 }
 

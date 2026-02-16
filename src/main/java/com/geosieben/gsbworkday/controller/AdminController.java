@@ -2,8 +2,6 @@ package com.geosieben.gsbworkday.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
 
 @Controller
 public class AdminController {
@@ -11,5 +9,11 @@ public class AdminController {
 public String getClients() {
     return "clients";
 }
+
+@GetMapping("/separtion/resign")
+public String navigateSeparation() {
+    return "resign";
+}
+
 
 }

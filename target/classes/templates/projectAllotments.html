@@ -1,0 +1,645 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="title">Project Report</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+  <style>
+    /* Global Styles */
+    body {
+      background: linear-gradient(135deg, #f4f7f9, #eef2f7);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Card styling */
+    .app-card {
+      border-radius: 16px;
+      background: #ffffff;
+      border: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    /* Header Styling */
+    .app-header {
+      background: linear-gradient(135deg, #2045c2, #007bff);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+    }
+    .app-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    /* Table Styling */
+    #enhancedDataTable {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #enhancedDataTable thead th {
+      background: #e9ecef;
+      color: #343a40;
+      font-weight: 700;
+      border-bottom: 3px solid #dee2e6;
+      padding: 0.75rem 1rem;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+    #enhancedDataTable tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    #enhancedDataTable tbody td {
+        padding: 0.8rem 1rem;
+    }
+    .text-primary-color {
+        color: #2045c2 !important;
+    }
+
+    /* Chart Container Styling */
+    #chartContainer {
+        padding: 2rem;
+        background: #fdfdfd;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    /* Utility */
+    .link-button {
+        color: #0d6efd;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .link-button:hover {
+        color: #0a58ca;
+        text-decoration: underline;
+    }
+
+    /* Input/Select styling within modals */
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+  </style>
+
+</head>
+<body>
+
+<div class="container-fluid py-5">
+  <div class="app-card">
+
+    <div class="app-header">
+      <div class="d-flex align-items-center">
+        <button class="btn btn-outline-light me-4" onclick="history.back()">
+          <i class="fas fa-arrow-left"></i> <span class="d-none d-sm-inline ms-1">Back</span>
+        </button>
+        <h5 id="header"><i class="fas fa-chart-line me-2"></i>Loading Report...</h5>
+      </div>
+      <button class="btn btn-light fw-bold shadow-sm" id="openCreateAllotmentBtn">
+          <i class="fas fa-plus me-2"></i>Create Allotment
+      </button>
+    </div>
+
+    <div class="p-4 p-md-5">
+      <div id="messageContainer" style="display:none;"></div>
+
+      <!--<div id="chartContainer">-->
+      <!--  <h6 class="mb-4 text-primary fw-bold"><i class="fas fa-chart-bar me-2"></i> Allotment Hours Comparison</h6>-->
+      <!--  <div class="chart-wrapper" style="height: 350px;">-->
+      <!--      <canvas id="allotmentHoursChart"></canvas>-->
+      <!--  </div>-->
+      <!--</div>-->
+      <h6 class="mb-3 text-secondary fw-bold"><i class="fas fa-table me-2"></i> Detailed Allotment Data</h6>
+      
+      <div class="table-responsive mt-3" id="dataTableWrapper" style="display:none;">
+        <table id="enhancedDataTable" class="table table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th class="text-start">#</th>
+              <th>Allotment Name</th>
+              <th>Project Lead</th>
+              <th class="text-end">Start Date</th>
+              <th class="text-end">Deadline</th>
+             <th class="text-end">Total Hrs</th>
+              <th class="text-end">Prod Hrs</th>
+              <th class="text-end">QC Hrs</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="root"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="createAllotmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title d-flex align-items-center">
+          <i class="fas fa-boxes-stacked me-2"></i>Create New Allotment
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="row g-3">
+          
+          <div class="col-12">
+            <label class="fw-semibold form-label" for="allotmentNameInput">Allotment Name</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="fas fa-tag text-muted"></i></span>
+              <input type="text" id="allotmentNameInput" class="form-control" placeholder="e.g. Q4 Data Processing">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold form-label" for="startDateInput">Start Date</label>
+            <input type="date" id="startDateInput" class="form-control">
+          </div>
+          
+          <div class="col-md-6">
+            <label class="fw-semibold form-label" for="deadlineInput">Deadline</label>
+            <input type="date" id="deadlineInput" class="form-control border-danger-subtle">
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold form-label" for="departmentSelect">Department</label>
+            <select id="departmentSelect" class="form-select">
+              <option value="" selected disabled>Select Department...</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="fw-semibold form-label" for="allotmentLeadSelect">Project Lead</label>
+            <select id="allotmentLeadSelect" class="form-select">
+              <option value="" selected disabled>Assign Lead...</option>
+              </select>
+          </div>
+
+          <div class="col-12"><hr class="my-2 opacity-10"></div>
+
+          <div class="col-md-4">
+            <label class="fw-semibold form-label" for="totalHoursInput">Total Hours</label>
+            <input type="number" id="totalHoursInput" class="form-control border-primary-subtle" placeholder="0.00" min="0" step="0.5">
+          </div>
+
+          <div class="col-md-4">
+            <label class="fw-semibold form-label" for="qcPercentageInput">QC Percentage (%)</label>
+            <div class="input-group">
+              <input type="number" id="qcPercentageInput" class="form-control" placeholder="0" min="0" max="100" >
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+             <label class="fw-semibold form-label opacity-0 d-none d-md-block">Spacer</label>
+             <div class="form-text text-muted mt-2">Calculated based on total hours.</div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card bg-light border-0">
+              <div class="card-body py-2 px-3">
+                <label class="small text-uppercase fw-bold text-muted mb-1">QC Hours</label>
+                <input type="text" class="h5 mb-0 text-primary" id="qcHoursDisplay" readonly disabled>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card bg-light border-0">
+              <div class="card-body py-2 px-3">
+                <label class="small text-uppercase fw-bold text-muted mb-1">Production Hours</label>
+               <input type="text" class="h5 mb-0 text-success" id="productionHoursDisplay" readonly disabled>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 mt-2">
+            <label class="fw-semibold form-label" for="filePathInput">File Path (Optional)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="fas fa-link text-muted"></i></span>
+              <input type="text" id="filePathInput" class="form-control" placeholder="\\server\path\to\project">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light border-top-0">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success px-4 shadow-sm" id="saveAllotmentBtn">
+          <i class="fas fa-plus-circle me-1"></i> Create Allotment
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+    </div>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script>
+    const params=new URLSearchParams(window.location.search);
+let hoursChart = null; 
+$(document).ready(function () {
+
+  const projectId = params.get("projectId");
+    const projectName = params.get("projectName");
+$("#title").text(`${projectName}'s Allotments`);
+console.log({projectId,projectName});
+  const dateToday = "<?php echo date('d-M-Y'); ?>";
+
+  // --- Helper Function for Button State ---
+  function toggleSaveButton(isLoading) {
+      const btn = $("#saveAllotmentBtn");
+      if (isLoading) {
+          btn.attr("disabled", true);
+          // Changed text and added spinner
+          btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...');
+      } else {
+          btn.attr("disabled", false);
+          btn.html('<i class="fas fa-save"></i> Save Allotment');
+      }
+  }
+  // ------------------------------------------
+
+  function showMessage(msg, error=false) {
+      $("#messageContainer")
+          .show()
+          .html(`<div class="alert ${error ? 'alert-danger' : 'alert-warning'}">${msg}</div>`);
+  }
+
+  /* Helper function to get status badge */
+  function getStatusBadge(status) {
+      let badgeClass = '';
+      let icon = '';
+      if (status.includes('Completed')) {
+          badgeClass = 'bg-success';
+          icon = 'fa-check-circle';
+      } else if (status.includes('In Progress')) {
+          badgeClass = 'bg-primary';
+          icon = 'fa-spinner fa-spin';
+      } else if (status.includes('Pending')) {
+          badgeClass = 'bg-warning text-dark';
+          icon = 'fa-hourglass-half';
+      } else if (status.includes('Cancelled')) {
+          badgeClass = 'bg-danger';
+          icon = 'fa-times-circle';
+      } else {
+          badgeClass = 'bg-secondary';
+          icon = 'fa-info-circle';
+      }
+      return `<span class="badge ${badgeClass} text-uppercase py-2 px-3" style="min-width: 110px;"><i class="fas ${icon} me-1"></i> ${status}</span>`;
+  }
+
+  /* =============================
+        FETCH ALLOTMENT DATA
+  ============================= */
+  $.get("/admin/project/getProjectAllotments",
+      { projectId: projectId },
+      function (res) {
+          let finalData = res.data ? res.data : res;
+
+          if (!Array.isArray(finalData)) {
+              showMessage("Unexpected data format.", true);
+              return;
+          }
+
+          populateTable(finalData);
+          //renderHoursChart(finalData); 
+          
+          $("#dataTableWrapper").show();
+
+          $("#enhancedDataTable").DataTable({
+              pageLength: 10,
+              lengthMenu: [10, 25, 50, 100],
+              ordering: true, 
+              columnDefs: [
+                  { orderable: false, targets: [9] } 
+              ]
+          });
+      },
+      "json"
+  );
+
+  /* =============================
+        RENDER HOURS CHART
+  ============================= */
+  function renderHoursChart(data) {
+    if (hoursChart) {
+        hoursChart.destroy(); 
+    }
+
+    const labels = data.map(p => p.allotment);
+    const totalHours = data.map(p => parseFloat(p.totalHrs || 0));
+    const productionHours = data.map(p => parseFloat(p.productionHrs || 0));
+    const qcHours = data.map(p => parseFloat(p.qaHrs || 0));
+
+    const ctx = document.getElementById('allotmentHoursChart').getContext('2d');
+
+    hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Hours',
+                    data: totalHours,
+                    backgroundColor: 'rgba(32, 69, 194, 0.7)',
+                    borderColor: 'rgba(32, 69, 194, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Production Hours',
+                    data: productionHours,
+                    backgroundColor: 'rgba(0, 123, 255, 0.9)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'QC Hours',
+                    data: qcHours,
+                    backgroundColor: 'rgba(40, 167, 69, 0.9)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false,
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.parsed.y + ' Hrs';
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    title: {
+                        display: true,
+                        text: 'Allotment Name'
+                    }
+                },
+                y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Hours'
+                    }
+                }
+            }
+        }
+    });
+  }
+  
+  /* =============================
+        POPULATE TABLE
+  ============================= */
+  function populateTable(data) {
+      let html = "";
+      let counter = 1;
+
+      data.forEach(p => {
+          html += `
+            <tr>
+              <td class="text-start">${counter++}</td>
+              <td class="fw-semibold">
+                  <a href="viewProject.php?id=${p.pid}" class="text-primary-color text-decoration-none">${p.allotment}</a>
+              </td>
+              <td>${p.projectLead || 'N/A'}</td>
+              <td class="text-end">${p.startDate || 'N/A'}</td>
+               <td class="text-end">${p.endDate || 'N/A'}</td>
+                  <td class="text-end fw-bold">${p.totalHrs || '0.00'}</td>
+               <td class="text-end">${p.productionHrs || '0.00'}</td>
+                <td class="text-end">${p.qaHrs || '0.00'}</td>
+              <td class="text-center">${getStatusBadge(p.Status || 'Pending')}</td>
+               <td class="text-center">
+                    
+                </td>
+            </tr>
+          `;
+      });
+
+      $("#root").html(html);
+      $("#header").html(`<i class="fas fa-chart-line me-2"></i> ${projectName}'s Allotment Data <small class="text-white-50 ms-2" style="font-size:0.8em;">As On - ${dateToday}</small>`);
+  }
+
+    function fetchProjectLeads(selectElement = $("#projectLeadSelect")) {
+      $.get("/admin/getprojectrequired",
+          function (data) {
+            console.log(data);
+              const select = selectElement;
+              select.empty();
+
+              select.append(`<option value="">-- Select Lead --</option>`);
+              if (Array.isArray(data[0])) {
+                  data[0].forEach(l => {
+                      select.append(`<option value="${l.eid}">${l.name}</option>`);
+                  });
+              }
+          },
+          "json"
+      );
+    }
+    
+    $("#openCreateProjectBtn").click(function () {
+      fetchCategoriesForProject();
+      fetchProjectLeads($("#projectLeadSelect")); 
+      $("#projectNameInput").val("");
+      new bootstrap.Modal("#createProjectModal").show();
+    });
+
+    function calculateHours() {
+      const totalHours = parseFloat($("#totalHoursInput").val()) || 0;
+      const qcPercent = parseFloat($("#qcPercentageInput").val()) || 0;
+
+      if (totalHours <= 0 || qcPercent < 0 || qcPercent > 100) {
+          $("#qcHoursDisplay").val("0.00");
+          $("#productionHoursDisplay").val("0.00");
+          return;
+      }
+
+      const qcHours = (totalHours * (qcPercent / 100)).toFixed(2);
+      const productionHours = (totalHours - parseFloat(qcHours)).toFixed(2);
+
+      console.log({qcHours,productionHours});
+
+      $("#qcHoursDisplay").val(qcHours);
+      $("#productionHoursDisplay").val(productionHours);
+    }
+
+    $("#totalHoursInput, #qcPercentageInput").on("input", calculateHours);
+
+    $("#openCreateAllotmentBtn").click(function () {
+              fetchDepartments();
+      // Clear all fields on open
+      $("#allotmentNameInput").val("");
+      $("#startDateInput").val("");
+      $("#deadlineInput").val("");
+      $("#totalHoursInput").val("");
+      $("#qcPercentageInput").val("");
+      $("#filePathInput").val("");
+      $("#qcHoursDisplay").val("0.00");
+      $("#productionHoursDisplay").val("0.00");
+      fetchProjectLeads($("#allotmentLeadSelect"));
+
+      toggleSaveButton(false);
+      new bootstrap.Modal("#createAllotmentModal").show();
+    });
+
+    // ===================================
+    // SAVE ALLOTMENT BUTTON HANDLER (UPDATED)
+    // ===================================
+    $("#saveAllotmentBtn").click(function () {
+      const allotmentName = $("#allotmentNameInput").val().trim();
+      const startDate = $("#startDateInput").val();
+      const deadline = $("#deadlineInput").val();
+      const totalHours = parseFloat($("#totalHoursInput").val());
+      const qcPercent = parseFloat($("#qcPercentageInput").val());
+      const projectLead = $("#allotmentLeadSelect").val();
+      const filePath = $("#filePathInput").val().trim();
+      const qcHours = $("#qcHoursDisplay").val(); 
+      const productionHours = $("#productionHoursDisplay").val();
+      const department = $("#departmentSelect").val();
+
+      if (!allotmentName || !startDate || !deadline || isNaN(totalHours) || totalHours <= 0 || isNaN(qcPercent) || qcPercent < 0 || qcPercent > 100 || !projectLead) {
+          alert("Please ensure Allotment Name, Start Date, Deadline, Total Hours (>0), QC Percentage (0-100), and Project Lead are filled out correctly.");
+          return;
+      }
+
+      // 1. Show loader and disable button
+      toggleSaveButton(true); 
+
+      const allotmentData = {
+          rootid: projectId, 
+          allotmentName: allotmentName,
+          startDate: startDate,
+          deadline: deadline,
+          totalHours: totalHours,
+          qcPercentage: qcPercent,
+          qcHours: qcHours,
+          productionHours: productionHours,
+          projectLeadId: projectLead,
+          filePath: filePath
+      };
+console.log(allotmentData);
+      $.post("admin/project/createAllotment", allotmentData, function(res){
+          // This runs on successful API call
+          toggleSaveButton(false); // 2. Hide loader and re-enable button
+        console.log(res);
+          if (res && res.status === "success") {
+              alert("Allotment Created Successfully!");
+              $("#createAllotmentModal").modal("hide");
+              location.reload(); 
+          } else {
+              alert(`Error creating allotment: ${res ? res.message : 'Unknown error'}`);
+          }
+      }, "json").fail(function() {
+           // This runs on API/network failure
+           toggleSaveButton(false); // 2. Hide loader and re-enable button on failure
+           alert("API call failed. Please check the network tab and PHP endpoint.");
+      });
+    });
+    // ===================================
+
+    function  fetchCategoriesForProject() {
+      $.get("'/admin/getprojectrequired'",
+          function (data) {
+              const select = $("#departmentSelect");
+              select.empty();
+              select.append(`<option value="">-- Select Category --</option>`);
+              if (data.category && Array.isArray(data.category)) {
+                  data.category.forEach(c => {
+                      select.append(`<option value="${c.categoryId}">${c.categoryname}</option>`);
+                  });
+              }
+          },
+          "json"
+      );
+    }
+
+        function fetchDepartments() {
+      $.post("api/projectApi.php",
+          { getDepartments: "getDepartments" },
+          function (data) {
+            console.log(data);
+              const select = $("#departmentSelect");
+              select.empty();
+              select.append(`<option value="">-- Select Department --</option>`);
+              if (data) {
+                  data.forEach(c => {
+                      select.append(`<option value="${c.id}">${c.DepartmentShortName}</option>`);
+                  });
+              }
+          },
+          "json"
+      );
+    }
+    
+    
+    $("#saveProjectBtn").click(function () {
+      const name = $("#projectNameInput").val().trim();
+      const category = $("#projectCategorySelect").val();
+      const lead = $("#projectLeadSelect").val();
+
+      if (!name || !category || !lead) {
+          alert("Please fill all fields.");
+          return;
+      }
+
+      $.post("api/projDashboard.php", {
+          action: "createProject",
+          projectName: name,
+          categoryId: category,
+          projectLead: lead
+      }, function(res){
+          alert("Project Created Successfully!");
+          $("#createProjectModal").modal("hide");
+          location.reload();
+      }, "json");
+    });
+
+
+});
+</script>
+
+</body>
+</html>

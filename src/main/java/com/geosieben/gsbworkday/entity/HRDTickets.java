@@ -15,7 +15,7 @@ public class HRDTickets {
     private String description;
     private int status;
     private LocalDateTime raisedOn =LocalDateTime.now();
-    @Column(columnDefinition = "timestamp default current_timestamp on update cuurrent_timestamp")
+    @Column(columnDefinition = "timestamp default current_timestamp on update current_timestamp")
     private LocalDateTime updatedAt=LocalDateTime.now();
     @ManyToOne
     @JoinColumn(name="raisedBy")

@@ -2,6 +2,7 @@ package com.geosieben.gsbworkday.service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,5 +136,15 @@ return ResponseEntity.ok(response);
                     allocation.setAllottedTo(projectLead);
                     allocation.setProject(project);
                   return allocationRepository.save(allocation);
+                }
+                @Override
+                public List<RootProject> getRootProjectByClient(int clientid) {
+                 Clients client=(Clients) clientRepository.findById(clientid).orElse(null);
+                 return rootProjectRepository.findProjectsByClientId(clientid);
+
+                }
+                @Override
+                public List<Project> getAllotmentsByRoot(int rootid) {
+                    return projectRepository.findProjectsByRootProjectId(rootid);
                 }
 }
