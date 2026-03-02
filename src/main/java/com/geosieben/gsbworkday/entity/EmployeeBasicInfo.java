@@ -1,14 +1,55 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.Column;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.geosieben.gsbworkday.dto.StatsDto;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.SqlResultSetMapping;
+import jakarta.persistence.ConstructorResult;
+import jakarta.persistence.ColumnResult;
+
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "employee_basic_info")
+@SqlResultSetMapping(
+    name = "StatsMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = StatsDto.class,
+            columns = {
+                @ColumnResult(name = "totalActiveEmployees", type = Long.class),
+                @ColumnResult(name = "activeMale", type = Long.class),
+                @ColumnResult(name = "activeFemale", type = Long.class),
+                @ColumnResult(name = "totalSeparatedEmployees", type = Long.class),
+                @ColumnResult(name = "separatedMale", type = Long.class),
+                @ColumnResult(name = "separatedFemale", type = Long.class),
+                @ColumnResult(name = "pendingLeaves", type = Long.class),
+                @ColumnResult(name = "pendingTickets", type = Long.class)
+            }
+        )
+    }
+)
+
+@NamedNativeQuery(
+    name = "EmployeeBasicInfo.fetchAggregates",
+    query = "SELECT " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 1) AS totalActiveEmployees, " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 1 AND e.gender = 'Male') AS activeMale, " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 1 AND e.gender = 'Female') AS activeFemale, " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 0) AS totalSeparatedEmployees, " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 0 AND e.gender = 'Male') AS separatedMale, " +
+            " (SELECT COUNT(*) FROM employee_basic_info e WHERE e.employmentStatus = 0 AND e.gender = 'Female') AS separatedFemale, " +
+            " (SELECT COUNT(*) FROM tblleaves l WHERE l.status = 0) AS pendingLeaves, " +
+            " (SELECT COUNT(*) FROM ittickets i WHERE i.status < 2) AS pendingTickets",
+    resultSetMapping = "StatsMapping"
+)
 public class EmployeeBasicInfo {
     @Id
     @Column(columnDefinition = "varchar(8)")

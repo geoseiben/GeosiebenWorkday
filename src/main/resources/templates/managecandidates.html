@@ -187,10 +187,24 @@ $(document).ready(function () {
                         statusLabel = '<span class="step-pill bg-blue-50 text-blue-600 border border-blue-100">Aptitude Sched.</span>';
                         actionBtn = `<button class="btn btn-sm btn-warning btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="score" data-type="Aptitude"><i class="fa-solid fa-pen-to-square me-1"></i> Update Score</button>`;
                         break;
-                    case 1:
-                        statusLabel = '<span class="step-pill bg-indigo-50 text-indigo-600 border border-indigo-100">Aptitude Done</span>';
-                        actionBtn = `<button class="btn btn-sm btn-info btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-type="Technical" data-task="sched"><i class="fa-solid fa-clock me-1"></i> Schedule Tech</button>`;
+case 1:
+                        if (r.aptitudeScore >= 18) {
+                            statusLabel = '<span class="step-pill bg-indigo-50 text-indigo-600 border border-indigo-100">Aptitude Done</span>';
+                            actionBtn = `<button class="btn btn-sm btn-info btn-action px-3 text-white" 
+                                            data-id="${r.assesmentid}" 
+                                            data-cid="${r.cid}" 
+                                            data-type="Technical" 
+                                            data-task="sched">
+                                            <i class="fa-solid fa-clock me-1"></i> Schedule Tech
+                                        </button>`;
+                        } else {
+                            statusLabel = '<span class="step-pill bg-red-100 text-red-600 border border-red-200">Ineligible</span>';
+                            actionBtn = `<span class="badge bg-danger py-2 px-3 rounded-pill shadow-sm">
+                                            <i class="fa-solid fa-ban me-1"></i> Not Eligible
+                                        </span>`;
+                        }
                         break;
+
                     case 2:
                         statusLabel = '<span class="step-pill bg-orange-50 text-orange-600 border border-orange-100">Tech Sched.</span>';
                         actionBtn = `<button class="btn btn-sm btn-warning btn-action px-3 text-white" data-id="${r.assesmentid}" data-cid="${r.cid}" data-task="score" data-type="Technical"><i class="fa-solid fa-pen-to-square me-1"></i> Update Score</button>`;
@@ -310,17 +324,29 @@ $.ajax({
             });
         } 
         else if(task === 'score') {
+            console.log(type);
+
+        let min=0;
+        let max=0;
+            if(type==='Aptitude'){
+                min=0;
+                max=25;
+            }
+            else if(type==='Technical'){
+                max=10;
+            }
             Swal.fire({
                 title: `${type} Evaluation`,
-                text: "Enter result (0-100)",
+                text:  `Enter result (0-${max})`,
                 input: 'number',
-                inputAttributes: { min: 0, max: 100 },
+                inputAttributes: { min: 0, max: max },
                 confirmButtonColor: '#f59e0b',
                 showCancelButton: true
             }).then((result) => {
                 if(result.isConfirmed) processUpdate({action: 'updateCandidate', task: 'score', id: id, type: type, score: result.value, cid: cid}, $btn);
             });
         }
+
         else if (task === 'document' || task === 'onboardschedule') {
             const title = task === 'document' ? 'Documentation Slot' : 'Onboarding Slot';
             Swal.fire({

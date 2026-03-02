@@ -13,6 +13,7 @@ public class ProjectRequest {
     public LocalDate deadline;
     private BigDecimal hours;
     private String filepath;
+    private String pilotName=null;
     public String getProjectName() {
         return projectName;
     }
@@ -66,6 +67,12 @@ public class ProjectRequest {
     }
     public void setFilepath(String filepath) {
         this.filepath = filepath;
+    }
+    public String getPilotName() {
+        return pilotName;
+    }
+    public void setPilotName(String pilotName) {
+        this.pilotName = pilotName;
     }
     
 }

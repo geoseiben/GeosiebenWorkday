@@ -39,10 +39,10 @@ public class EmailService {
                 "                    <strong>Employee Name:</strong> "+employeename+" <br>\n" +
                 "                    <strong>Employee ID:</strong> "+eid+" <br>\n" +
                 "                    <strong>Leave Type:</strong> "+leaveType+" <br>\n" +
-                "                    <strong>Duration:</strong> "+AddonServ.formatDate(fromDate)+" to "+AddonServ.formatDate(toDate)+" <br>\n" +
+                "                    <strong>Duration:</strong> "+AddonServ.fullDateFormatter(fromDate)+" to "+AddonServ.fullDateFormatter(toDate)+" <br>\n" +
                 "                    <strong>Total Days:</strong> "+days+" <br>\n" +
                 "                    <strong>Reason:</strong> "+reason+" <br>\n" +
-                "                    <strong>Date Applied:</strong> "+AddonServ.formatDate(LocalDate.now())+"\n" +
+                "                    <strong>Date Applied:</strong> "+AddonServ.fullDateFormatter(LocalDate.now())+"\n" +
                 "                </p>\n" +
                 "                <hr style='border:none; border-top:1px solid #eee;' />\n" +
                 "                <p>To approve or reject this request, please log in to the portal:</p>\n" +
@@ -73,7 +73,7 @@ public class EmailService {
                 "            <strong>Issue:</strong> "+issue+" <br>\n" +
                 "            <strong>Priority:</strong> "+priority+" <br>\n" +
                 "            <strong>Description:</strong> "+descriptin+" <br>\n" +
-                "            <strong>Date Submitted:</strong> "+AddonServ.formatDate(raisedOn)+"\n" +
+                "            <strong>Date Submitted:</strong> "+AddonServ.fullDateFormatter(raisedOn)+"\n" +
                 "        </p>\n" +
                 "        <hr style='border:none; border-top:1px solid #eee;' />\n" +
                 "        <p>To review or update this ticket, please log in to the portal:</p>\n" +
@@ -128,7 +128,7 @@ public void closeticket(String toname,String tomail,int ticketid,String remarks,
     """.formatted(
         toname,                        // The person who opened the ticket
         issue,                               // Original issue title
-        AddonServ.formatDate(LocalDate.now()),  // The date it was closed
+        AddonServ.fullDateFormatter(LocalDate.now()),  // The date it was closed
         remarks,                     // What was done to fix it
         LocalDate.now().getYear()
     );

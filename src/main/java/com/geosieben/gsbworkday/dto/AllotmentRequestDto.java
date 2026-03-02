@@ -6,13 +6,14 @@ import java.time.LocalDate;
 public class AllotmentRequestDto {
 private int rootid;
 private String allotmentName;
-private LocalDate starDate;
+private LocalDate startDate;
 private LocalDate deadline;
 private BigDecimal totalHours;
 private BigDecimal productionHours;
 private BigDecimal qcHours;
 private String projectLeadId;
 private String filePath;
+private int category;
 public int getRootid() {
     return rootid;
 }
@@ -25,12 +26,7 @@ public String getAllotmentName() {
 public void setAllotmentName(String allotmentName) {
     this.allotmentName = allotmentName;
 }
-public LocalDate getStarDate() {
-    return starDate;
-}
-public void setStarDate(LocalDate starDate) {
-    this.starDate = starDate;
-}
+
 public LocalDate getDeadline() {
     return deadline;
 }
@@ -66,6 +62,18 @@ public String getFilePath() {
 }
 public void setFilePath(String filePath) {
     this.filePath = filePath;
+}
+public LocalDate getStartDate() {
+    return startDate;
+}
+public void setStartDate(LocalDate startDate) {
+    this.startDate = startDate;
+}
+public int getCategory() {
+    return category;
+}
+public void setCategory(int category) {
+    this.category = category;
 }
 
 

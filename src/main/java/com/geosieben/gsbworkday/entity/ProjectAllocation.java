@@ -5,8 +5,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
 @Table(name = "projectallocation")
+
 public class ProjectAllocation {
 
     @Id
@@ -70,11 +75,7 @@ public class ProjectAllocation {
     @Column(length = 10)
     private String type = "Prod";
 
-    // --- Constructors ---
 
-    /**
-     * Required by JPA
-     */
     public ProjectAllocation() {
     }
 

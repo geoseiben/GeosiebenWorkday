@@ -9,6 +9,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+
 
   <style>
     /* Global Styles */
@@ -94,8 +96,10 @@
 
 </head>
 <body>
+  <head th:replace="includes/header :: header"></head>
 
-<div class="container-fluid py-5">
+
+<div class="container-fluid py-2">
   <div class="app-card">
 
     <div class="app-header">
@@ -177,9 +181,9 @@
           </div>
 
           <div class="col-md-6">
-            <label class="fw-semibold form-label" for="departmentSelect">Department</label>
+            <label class="fw-semibold form-label" for="departmentSelect">Category</label>
             <select id="departmentSelect" class="form-select">
-              <option value="" selected disabled>Select Department...</option>
+              <option value="" selected disabled>Select Category...</option>
             </select>
           </div>
 
@@ -189,6 +193,7 @@
               <option value="" selected disabled>Assign Lead...</option>
               </select>
           </div>
+                            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
 
           <div class="col-12"><hr class="my-2 opacity-10"></div>
 
@@ -319,6 +324,7 @@ console.log({projectId,projectName});
   $.get("/admin/project/getProjectAllotments",
       { projectId: projectId },
       function (res) {
+        console.log(res);
           let finalData = res.data ? res.data : res;
 
           if (!Array.isArray(finalData)) {
@@ -442,12 +448,12 @@ console.log({projectId,projectName});
             <tr>
               <td class="text-start">${counter++}</td>
               <td class="fw-semibold">
-                  <a href="viewProject.php?id=${p.pid}" class="text-primary-color text-decoration-none">${p.allotment}</a>
+                  <a href="/admin/project/viewProject?id=${p.pid}" class="text-primary-color text-decoration-none">${p.allotmentName}</a>
               </td>
-              <td>${p.projectLead || 'N/A'}</td>
-              <td class="text-end">${p.startDate || 'N/A'}</td>
+              <td>${p.projectLead.firstName || 'N/A'}</td>
+              <td class="text-end">${p.starDate || 'N/A'}</td>
                <td class="text-end">${p.endDate || 'N/A'}</td>
-                  <td class="text-end fw-bold">${p.totalHrs || '0.00'}</td>
+                  <td class="text-end fw-bold">${p.totalHours || '0.00'}</td>
                <td class="text-end">${p.productionHrs || '0.00'}</td>
                 <td class="text-end">${p.qaHrs || '0.00'}</td>
               <td class="text-center">${getStatusBadge(p.Status || 'Pending')}</td>
@@ -465,7 +471,7 @@ console.log({projectId,projectName});
     function fetchProjectLeads(selectElement = $("#projectLeadSelect")) {
       $.get("/admin/getprojectrequired",
           function (data) {
-            console.log(data);
+            console.log(data[1]);
               const select = selectElement;
               select.empty();
 
@@ -473,6 +479,15 @@ console.log({projectId,projectName});
               if (Array.isArray(data[0])) {
                   data[0].forEach(l => {
                       select.append(`<option value="${l.eid}">${l.name}</option>`);
+                  });
+              }
+
+                const category = $("#departmentSelect");
+              category.empty();
+              category.append(`<option value="">-- Select Category --</option>`);
+              if (data[1] && Array.isArray(data[1])) {
+                  data[1].forEach(c => {
+                      category.append(`<option value="${c.categoryId}">${c.categoryName}</option>`);
                   });
               }
           },
@@ -509,7 +524,7 @@ console.log({projectId,projectName});
     $("#totalHoursInput, #qcPercentageInput").on("input", calculateHours);
 
     $("#openCreateAllotmentBtn").click(function () {
-              fetchDepartments();
+       // fetchDepartments();
       // Clear all fields on open
       $("#allotmentNameInput").val("");
       $("#startDateInput").val("");
@@ -558,31 +573,43 @@ console.log({projectId,projectName});
           qcHours: qcHours,
           productionHours: productionHours,
           projectLeadId: projectLead,
-          filePath: filePath
+          filePath: filePath,
+          category:department
       };
-console.log(allotmentData);
-      $.post("admin/project/createAllotment", allotmentData, function(res){
-          // This runs on successful API call
-          toggleSaveButton(false); // 2. Hide loader and re-enable button
-        console.log(res);
-          if (res && res.status === "success") {
+//console.log(allotmentData);
+               const csrfToken = document.getElementById("csrfToken").value;
+
+      $.ajax({
+        url:'/admin/project/createAllotment',
+        type:'POST',
+        data:allotmentData,
+        headers: {
+              'X-CSRF-TOKEN': csrfToken
+          },
+        success:function(res){
+          console.log(res);
+           if (res && res.status === "success") {
               alert("Allotment Created Successfully!");
               $("#createAllotmentModal").modal("hide");
-              location.reload(); 
+           //   location.reload(); 
           } else {
               alert(`Error creating allotment: ${res ? res.message : 'Unknown error'}`);
           }
-      }, "json").fail(function() {
-           // This runs on API/network failure
+        },
+        error:function(err){
+          console.log(err);
+            // This runs on API/network failure
            toggleSaveButton(false); // 2. Hide loader and re-enable button on failure
            alert("API call failed. Please check the network tab and PHP endpoint.");
-      });
+        }
+      })
     });
     // ===================================
 
     function  fetchCategoriesForProject() {
       $.get("'/admin/getprojectrequired'",
           function (data) {
+           // console.log(data[0]);
               const select = $("#departmentSelect");
               select.empty();
               select.append(`<option value="">-- Select Category --</option>`);
@@ -597,7 +624,7 @@ console.log(allotmentData);
     }
 
         function fetchDepartments() {
-      $.post("api/projectApi.php",
+      $.post("/admin/projectApi.php",
           { getDepartments: "getDepartments" },
           function (data) {
             console.log(data);

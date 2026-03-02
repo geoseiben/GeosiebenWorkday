@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #f8fafc; 
+            --accent: #0ea5e9; 
+            --border: #e2e8f0;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: #1e293b; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Modern Neumorphic Paper */
+        .paper { 
+            background: #ffffff; 
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .active-paper { 
+            border-color: var(--accent); 
+            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.1); 
+        }
+        
+        /* Smooth Animations */
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        .pulse { animation: pulse-soft 2s ease-in-out infinite; }
+
+        .modal-overlay { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.3); z-index: 100; 
+            align-items: center; justify-content: center; backdrop-filter: blur(8px); 
+        }
+
+        .reason-btn { 
+            border: 1px solid var(--border); 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: #f8fafc; 
+        }
+        .reason-btn:hover { border-color: var(--accent); background: white; transform: translateY(-1px); }
+        .reason-btn.selected { border-color: var(--accent); background: #f0f9ff; color: var(--accent); border-width: 2px; }
+
+        * { border-radius: 8px !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body >
+<head th:replace="includes/header :: header"></head>
+
+    <header class="flex justify-between items-center px-8 h-16 paper bg-white/80 backdrop-blur-md">
+        <div class="flex items-center gap-4">
+            <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+            <h1 class="text-sm font-800 tracking-tight text-slate-800">
+               Project Tracker V 2.O
+            </h1>
+        </div>
+        <div class="flex gap-10 items-center">
+            
+            <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Clock</p>
+                <span class="mono text-sm font-600 text-slate-700" id="live-clock">00:00:00</span>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total</p>
+                <span id="stat-total" class="mono text-sm font-600 text-sky-600">00</span>
+            </div>
+                     <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Active</p>
+                <span id="stat-total" class="mono text-sm font-600 text-yellow-600">00</span>
+            </div>
+                     <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Finshed</p>
+                <span id="stat-total" class="mono text-sm font-600 text-green-600">00</span>
+            </div>
+                     <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Overdue</p>
+                <span id="stat-total" class="mono text-sm font-600 text-red-600">00</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 flex gap-6 overflow-hidden">
+        <main class="flex-[1.5] flex flex-col gap-6">
+            <section id="main-card" class="flex-1 paper p-10 flex flex-col justify-between relative transition-all duration-500">
+                <div class="absolute top-6 right-6">
+                    <span id="global-status" class="px-3 py-1 bg-slate-100 text-[10px] font-bold tracking-widest uppercase text-slate-500 border border-slate-200">STANDBY</span>
+                </div>
+
+                <div class="space-y-8">
+                    <div>
+                        <span id="type-badge" class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-bold uppercase tracking-wider rounded">INIT_SEQ</span>
+                        <h2 id="feederCode" class="text-6xl font-800 text-slate-900 tracking-tighter uppercase mt-4 break-all">---</h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                         <div class="bg-slate-50 p-5 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Deadline</p>
+                            <p id="deadline-val" class="text-lg mono font-bold text-slate-700">--/--/--</p>
+                        </div>
+                        <div class="bg-slate-50 p-5 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">File Path</p>
+                            <p id="file-path" class="text-xs mono text-slate-500 truncate mt-1">/VOL/PROD_ACTIVE</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Elapsed Time</p>
+                            <p id="spent" class="text-5xl mono font-bold tracking-tighter text-slate-800">00:00:00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Safety Buffer</p>
+                            <p id="remaining" class="text-5xl mono font-bold tracking-tighter text-sky-500">00:00:00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-end text-[10px] font-bold uppercase tracking-widest">
+                        <span class="text-slate-400 italic">Progress</span>
+                        <span id="progress-text" class="text-slate-900 font-800">0%</span>
+                    </div>
+                    <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-sky-500 transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="flex gap-4 h-20">
+                <button id="mainBtn" onclick="handlePrimaryAction()" class="flex-[2] bg-slate-900 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all">Start Task...</button>
+                <button id="submitBtn" onclick="openModal('finalModal')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase tracking-[0.2em] text-xs hidden shadow-lg active:scale-95 transition-all">Commit Task</button>
+            </div>
+        </main>
+
+        <aside class="flex-1 flex flex-col gap-6 overflow-hidden">
+            <div class="paper flex-1 flex flex-col overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <span class="font-bold text-[11px] tracking-widest uppercase text-slate-500">Upcoming Operations</span>
+        
+                </div>
+                <div id="taskList" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar"></div>
+            </div>
+            <div class="h-20 paper px-6 flex items-center gap-4 bg-white border-dashed border-2">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Log:</p>
+                <p class="text-[11px] mono text-slate-500 italic">Awaiting operator input...</p>
+            </div>
+        </aside>
+    </div>
+
+    <div id="switchModal" class="modal-overlay">
+        <div class="bg-white w-full max-w-md p-10 border-t-8 border-sky-500 shadow-2xl">
+            <h3 class="text-2xl font-800 uppercase mb-2 tracking-tighter">Process Conflict</h3>
+            <p class="text-sm text-slate-500 mb-8">System is busy with <span id="active-node-name" class="text-sky-600 font-bold">---</span>.</p>
+            <div class="flex gap-4">
+                <button onclick="closeModal('switchModal')" class="flex-1 py-4 border border-slate-200 text-xs font-bold uppercase">Abort</button>
+                <button id="confirmSwitchBtn" class="flex-[2] py-4 bg-sky-600 text-white text-xs font-bold uppercase">Pause & Switch</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pauseModal" class="modal-overlay">
+        <div class="bg-white w-full max-w-xl p-10 shadow-2xl border-t-8 border-slate-900">
+            <h3 class="text-3xl font-800 uppercase mb-2 tracking-tighter">Halt Sequence</h3>
+            <p class="text-[10px] text-slate-400 mb-10 uppercase tracking-[0.4em]">Select Stop Code</p>
+            <div class="grid grid-cols-2 gap-4 mb-10">
+                <button onclick="selectReason('Break', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">01_BREAK</button>
+                <button onclick="selectReason('Lunch', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">02_LUNCH</button>
+                <button onclick="selectReason('Switching', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">03_SWITCH</button>
+                <button onclick="selectReason('EOD', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest text-rose-500">04_EOD</button>
+            </div>
+            <div id="eod-section" class="hidden mb-10 p-8 bg-slate-50 border border-slate-200">
+                <div class="flex justify-between items-end mb-6">
+                    <label class="text-[11px] font-bold uppercase text-sky-600">Verified Progress</label>
+                    <span id="pct-val" class="text-3xl font-800 mono text-sky-600">50%</span>
+                </div>
+                <input type="range" id="eod-pct" min="0" max="100" value="50" oninput="document.getElementById('pct-val').innerText = this.value + '%'" class="w-full h-2 bg-slate-200 appearance-none cursor-pointer rounded-full">
+            </div>
+            <div class="flex gap-4">
+                <button onclick="closeModal('pauseModal')" class="flex-1 py-5 font-bold uppercase text-xs text-slate-400">Cancel</button>
+                <button id="confirmPauseBtn" onclick="executePauseAndContinuity()" class="flex-[2] py-5 bg-sky-600 text-white font-bold uppercase text-xs tracking-widest opacity-50 cursor-not-allowed" disabled>Apply Halt</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="finalModal" class="modal-overlay">
+        <div class="bg-white w-full max-w-xl p-10 border-t-8 border-emerald-500 shadow-2xl">
+            <h3 class="text-3xl font-800 uppercase mb-4 tracking-tighter">Task Commit</h3>
+            <textarea id="feedbackText" rows="4" class="w-full bg-slate-50 border border-slate-200 p-6 mono text-sm mb-10 focus:ring-2 ring-emerald-500 outline-none" placeholder="LOG_COMMENTS..."></textarea>
+            <div class="flex gap-4">
+                <button onclick="closeModal('finalModal')" class="flex-1 py-5 font-bold uppercase text-xs text-slate-400">Abort</button>
+                <button onclick="submitTaskFinal()" class="flex-[2] py-5 bg-emerald-600 text-white font-bold uppercase text-xs tracking-widest">Execute Commit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [], activeTask = null, timer, pendingSwitchId = null, currentReason = '';
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toTimeString().split(' ')[0];
+        }
+        setInterval(updateClock, 1000);
+
+        function formatDate(dateStr) {
+            if (!dateStr) return "--/--/--";
+            const date = new Date(dateStr);
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`/myAllotments`);
+                tasks = await res.json();
+                if (!tasks.length) return;
+                const savedId = localStorage.getItem('last_allotment_id');
+                activeTask = tasks.find(t => t.isRunning) || tasks.find(t => t.allotmentid == savedId) || tasks[0];
+                updateUI(); renderQueue(); updateStats();
+            } catch (e) { console.error("OFFLINE_MODE"); }
+        }
+
+        function renderQueue() {
+            const list = document.getElementById('taskList');
+            const upcoming = tasks.filter(t => t.allotmentid !== activeTask?.allotmentid);
+            list.innerHTML = upcoming.map(t => `
+                <div onclick="requestSwitch(${t.allotmentid})" class="paper p-5 cursor-pointer hover:bg-sky-50 transition-all border-l-4 border-transparent hover:border-sky-500 group">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] font-bold text-sky-600 uppercase tracking-widest bg-sky-50 px-2 py-0.5">${t.type}</span>
+                        <span class="text-[10px] mono text-slate-400 font-bold">${formatDate(t.deadline || t.qcDeadline)}</span>
+                    </div>
+                    <h4 class="font-700 text-sm uppercase text-slate-700 group-hover:text-slate-900">${t.feederAlloted}</h4>
+                </div>`).join('');
+        }
+
+        function updateUI() {
+            clearInterval(timer);
+            const mainCard = document.getElementById('main-card');
+            const statusDot = document.getElementById('status-dot');
+            const globalStatus = document.getElementById('global-status');
+
+            document.getElementById('feederCode').innerText = activeTask.feederAlloted;
+            document.getElementById('deadline-val').innerText = formatDate(activeTask.deadline || activeTask.qcDeadline);
+            document.getElementById('type-badge').innerText = activeTask.type || 'NODE';
+            
+            const btn = document.getElementById('mainBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (activeTask.isRunning) {
+                btn.innerText = "Pause Sequence";
+                btn.className = "flex-[2] bg-slate-900 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all";
+                mainCard.classList.add('active-paper');
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse";
+                globalStatus.innerText = "ACTIVELY_TRACKING";
+                globalStatus.className = "px-3 py-1 bg-emerald-50 text-[10px] font-bold tracking-widest uppercase text-emerald-600 border border-emerald-100";
+                submitBtn.classList.add('hidden');
+                timer = setInterval(calculateTime, 1000);
+            } else {
+                btn.innerText = activeTask.elapsedTime > 0 ? "Resume Node" : "Boot Sequence";
+                btn.className = "flex-[2] bg-sky-600 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all";
+                mainCard.classList.remove('active-paper');
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-slate-300";
+                globalStatus.innerText = "STANDBY";
+                globalStatus.className = "px-3 py-1 bg-slate-100 text-[10px] font-bold tracking-widest uppercase text-slate-500 border border-slate-200";
+                submitBtn.classList.toggle('hidden', activeTask.elapsedTime === 0);
+                calculateTime();
+            }
+        }
+
+        function calculateTime() {
+            const now = Date.now();
+            const totalMs = (activeTask.elapsedTime || 0) + (activeTask.isRunning ? (now - new Date(activeTask.startTime).getTime()) : 0);
+            const quotaHrs = activeTask.type === 'Prod' ? activeTask.hrsAssigned : activeTask.qcHrs;
+            const quotaMs = (quotaHrs || 0) * 3600000;
+            const progress = quotaMs > 0 ? Math.min(100, (totalMs / quotaMs) * 100) : 0;
+            
+            document.getElementById('spent').innerText = formatMs(totalMs);
+            document.getElementById('remaining').innerText = formatMs(Math.max(0, quotaMs - totalMs));
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').innerText = Math.round(progress) + '%';
+        }
+
+        function formatMs(ms) {
+            const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        async function performAction(action, percentage = null) {
+            try {
+               
+                const res = await fetch(`/${activeTask.allotmentid}/${action}/${percentage??0}`);
+                const updated = await res.json();
+                const idx = tasks.findIndex(t => t.allotmentid === updated.allotmentid);
+                tasks[idx] = updated; 
+                activeTask = updated;
+                updateUI(); renderQueue(); updateStats();
+            } catch (e) { console.error("COMMS_FAILURE"); }
+        }
+
+        function requestSwitch(newId) {
+            if (activeTask.isRunning) {
+                pendingSwitchId = newId;
+                document.getElementById('active-node-name').innerText = activeTask.feederAlloted;
+                openModal('switchModal');
+                document.getElementById('confirmSwitchBtn').onclick = () => {
+                    closeModal('switchModal');
+                    openModal('pauseModal');
+                };
+            } else {
+                executeSwitch(newId);
+            }
+        }
+
+        function selectReason(reason, btn) {
+            currentReason = reason;
+            document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('eod-section').classList.toggle('hidden', reason !== 'EOD');
+            const confirmBtn = document.getElementById('confirmPauseBtn');
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        async function executePauseAndContinuity() {
+            const pct = currentReason === 'EOD' ? document.getElementById('eod-pct').value : null;
+            await performAction('pause', pct);
+            closeModal('pauseModal');
+            if (pendingSwitchId) { executeSwitch(pendingSwitchId); pendingSwitchId = null; }
+        }
+
+        function executeSwitch(id) {
+            activeTask = tasks.find(t => t.allotmentid === id);
+            localStorage.setItem('last_allotment_id', id);
+            updateUI(); renderQueue();
+        }
+
+        function handlePrimaryAction() {
+            if (activeTask.isRunning) openModal('pauseModal');
+            else performAction(activeTask.elapsedTime > 0 ? "resume" : "start");
+        }
+
+        async function submitTaskFinal() {
+            await performAction('submit');
+            closeModal('finalModal');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            if(id === 'pauseModal') {
+                currentReason = '';
+                document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
+                document.getElementById('confirmPauseBtn').disabled = true;
+            }
+        }
+
+        function updateStats() { document.getElementById('stat-total').innerText = tasks.length.toString().padStart(2, '0'); }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2083 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title id="title"></title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://cdn.tailwindcss.com"></script>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                body { font-family: 'Inter', sans-serif; }
+                /* Custom Scrollbar for Table Container */
+                .table-container {
+                    max-height: 70vh; /* Limit height for better scrolling experience */
+                }
+                .table-container::-webkit-scrollbar { height: 6px; width: 6px; } /* Reduced scrollbar size */
+                .table-container::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 10px; }
+                .table-container::-webkit-scrollbar-track { background: #f3f4f6; }
+
+                /* Select Arrow Customization */
+                select {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%236b7280' d='M10 12L4 7h12l-6 5z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 0.75rem center;
+                    background-size: 1.25rem 1.25rem;
+                    padding-right: 2.5rem !important;
+                    -webkit-appearance: none;
+                    -moz-appearance: none;
+                    appearance: none;
+                }
+
+                /* Filter Button Customization (Enhanced UI) */
+                .filter-btn { 
+                    opacity: 0.9; 
+                    transition: all 0.2s ease-in-out; 
+                    box-shadow: 0 1px 2px 0 rgba(0,0,0,.05); /* Further reduced shadow */
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem; /* Reduced gap */
+                }
+                .filter-btn:hover:not(.active) { opacity: 1; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+                .filter-btn.active { box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.1); opacity: 1; border: 2px solid #fff; }
+                
+                /* Badge Styling (Denser) */
+                .count-badge {
+                    background-color: rgba(255, 255, 255, 0.3); 
+                    color: #fff;
+                    font-size: 0.6rem; /* Very small text */
+                    font-weight: 700; 
+                    padding: 1px 5px; /* Minimized padding */
+                    border-radius: 9999px; 
+                    margin-left: 0.3rem; /* Minimized margin */
+                    transition: all 0.1s;
+                }
+
+                /* Active Colors */
+                .filter-btn[data-filter="All"].active { background-color: #10b981 !important; }
+                .filter-btn[data-filter="Prod"].active { background-color: #3b82f6 !important; }
+                .filter-btn[data-filter="QC"].active { background-color: #f59e0b !important; }
+                .filter-btn[data-filter="Deliverable"].active { background-color: #9333ea !important; }
+                .filter-btn[data-filter="Delivered"].active { background-color: #0d9488 !important; }
+
+                /* Table Header Sorting Icons */
+                .sortable.sorted-asc .sort-icon, .sortable.sorted-desc .sort-icon { color: #3b82f6 !important; }
+
+                /* Icon Button Styles (Minimized) */
+                .icon-btn {
+                    width: 28px; /* Further Reduced */
+                    height: 28px; /* Further Reduced */
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px; /* Reduced border radius */
+                    border: 1px solid #e6e9ee;
+                    background: #fff;
+                    cursor: pointer;
+                    transition: transform .08s ease, background-color .12s ease, box-shadow .12s ease;
+                    box-shadow: 0 1px 1px 0 rgba(0,0,0,.02); /* Minimal shadow */
+                }
+                .icon-btn:hover {
+                    background: #eef2ff;
+                    transform: translateY(-0.5px);
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+                }
+                .icon-btn:active {
+                    transform: none;
+                    box-shadow: 0 1px 1px 0 rgba(0,0,0,.04);
+                }
+                .icon-btn svg {
+                    width: 15px; /* Further Reduced */
+                    height: 15px; /* Further Reduced */
+                    fill: #6b7280;
+                }
+                .icon-btn.primary {
+                    background: #4f46e5;
+                    color: #fff;
+                    border: none;
+                }
+                .icon-btn.primary:hover {
+                    background: #4338ca;
+                }
+                .icon-btn.primary svg {
+                    fill: #fff;
+                }
+                .icon-btn.rework-btn {
+                    background: #f97316;
+                    color: white;
+                    border: none;
+                }
+                .icon-btn.rework-btn:hover {
+                    background: #ea580c;
+                }
+                .icon-btn.rework-btn svg {
+                    fill: white;
+                }
+                .icon-btn.bg-teal-600:hover {
+                    background: #0f766e;
+                }
+                /* Styling for Delete Button */
+                .icon-btn.delete-button:hover {
+                    background: #fee2e2;
+                }
+                .icon-btn.delete-button svg {
+                    fill: #dc2626; /* Red-700 */
+                }
+            </style>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        </head>
+        <body class="min-h-screen bg-gray-100 text-gray-800 p-2 sm:p-4 lg:p-5"> <!-- Reduced overall padding -->
+            <div class="w-full px-10">
+                <!-- Project Header & Summary -->
+                <header id="projectDetails" class="bg-white shadow-xl rounded-lg p-3 lg:p-4 border border-indigo-200 mb-4"> <!-- Reduced padding and shadow -->
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b pb-2 mb-2 border-gray-200"> <!-- Reduced padding/margin -->
+                        <div class="flex items-center gap-2"> <!-- Reduced gap -->
+                            <i class="fas fa-rocket text-3xl text-indigo-600"></i> <!-- Reduced icon size -->
+                            <h2 id="projectNameHeading" class="text-xl font-extrabold text-gray-900">Loading Project Details...</h2> <!-- Reduced font size -->
+                        </div>
+                        <div class="mt-2 lg:mt-0">
+                            <button id="completeProjectBtn" class="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm transform hover:scale-[1.01]"> <!-- Reduced padding and font size -->
+                                <i class="fas fa-check-circle"></i> <span>Complete Project</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="project-summary-placeholder">
+                        <div class="animate-pulse">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"> <!-- Reduced grid gap -->
+                                <?php for ($i=0; $i<6; $i++) { ?>
+                                    <div class="bg-gray-50 border-l-4 border-gray-300 rounded-lg p-2 space-y-0.5 shadow-sm"> <!-- Reduced padding and spacing -->
+                                        <span class="text-xs font-medium text-gray-500 block">Detail Label</span> <!-- Smallest text for label -->
+                                        <div class="h-4 bg-gray-300 rounded w-full"></div>
+                                    </div>
+                                <?php } ?>
+                            </div>
+                            <div class="h-2.5 bg-gray-300 rounded-full w-full mt-2"></div> <!-- Reduced height and margin -->
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Upload Allocations Card -->
+                <div class="bg-white shadow-xl rounded-lg p-3 border border-gray-200 mb-4" id='uploadCard'> <!-- Reduced padding and margin -->
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-1 flex items-center gap-2"><i class="fas fa-file-upload text-indigo-500"></i> Upload Allocations</h3> <!-- Reduced font size and margin -->
+                    <form id="uploadForm" enctype="multipart/form-form-data" class="flex flex-col md:flex-row items-center gap-3 border-4 border-dashed border-indigo-200 p-4 rounded-lg bg-indigo-50/50"> <!-- Reduced gap and padding -->
+                        <input type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required class="flex-grow w-full md:w-auto p-2 border border-indigo-300 rounded-lg bg-white file:mr-3 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 transition duration-150 shadow-sm text-sm"> <!-- Reduced padding and font size -->
+                        <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                        <button type="submit" id="uploadBtn" class="flex items-center justify-center space-x-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 w-full md:w-auto text-sm transform hover:scale-[1.01]"> <!-- Reduced padding and font size -->
+                            <i class="fas fa-upload"></i> <span>Upload Excel</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Task Filtering and Export (UPDATED) -->
+                <h3 class="text-lg font-bold text-gray-900 mb-2 mt-4 px-2">Project Tasks</h3> <!-- Reduced font size and margin -->
+                
+                <!-- NEW CONTAINER FOR SEARCH AND FILTERS -->
+                <div class="flex flex-col gap-3 px-2 mb-3">
+                    <!-- Universal Search Box (NEW) -->
+                    <input type="text" id="universalSearch" placeholder="Search by Feeder, Member, Status, Task ID..."  style="width:450px;"
+                           class=" px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm">
+
+<!-- Filter + Actions Container -->
+<div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+
+    <!-- Filter Buttons -->
+    <div id="filterButtons" class="flex flex-wrap items-center gap-2">
+        <button class="filter-btn active bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-semibold text-xs"
+            data-filter="All">
+            <i class="fas fa-tasks"></i>
+            All Tasks
+            <span id="allCountBadge" class="count-badge">0</span>
+        </button>
+
+        <button class="filter-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-semibold text-xs"
+            data-filter="Prod">
+            <i class="fas fa-cogs"></i>
+            Production
+            <span id="prodCountBadge" class="count-badge">0</span>
+        </button>
+
+        <button class="filter-btn bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg font-semibold text-xs"
+            data-filter="QC">
+            <i class="fas fa-clipboard-check"></i>
+            Quality Check
+            <span id="qcCountBadge" class="count-badge">0</span>
+        </button>
+
+        <button class="filter-btn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-semibold text-xs"
+            data-filter="Deliverable">
+            <i class="fas fa-box-open"></i>
+            Ready For Delivery
+            <span id="deliverableCountBadge" class="count-badge">0</span>
+        </button>
+
+        <button class="filter-btn bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg font-semibold text-xs"
+            data-filter="Delivered">
+            <i class="fas fa-truck-fast"></i>
+            Delivered
+            <span id="deliveredCountBadge" class="count-badge">0</span>
+        </button>
+    </div>
+
+    <!-- Export + Add Buttons in One Div -->
+    <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+
+        <button id="exportExcelBtn"
+            class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-lg text-sm shadow-md transition transform hover:scale-[1.01]">
+            <i class="fas fa-file-excel"></i>
+            <span>Export to Excel</span>
+        </button>
+
+        <button id="addAllotmentBtn"
+            class="flex items-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg text-sm shadow-md transition transform hover:scale-[1.01]">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add New Task</span>
+        </button>
+
+    </div>
+
+</div>
+
+                <!-- END NEW CONTAINER -->
+
+                <!-- Allocations Table -->
+                <div id="tableContainer" class="bg-white shadow-xl rounded-lg border border-gray-200 table-container px-2">
+                    <table id="allocTable" class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-indigo-100 sticky top-0 shadow-lg border-b-2 border-indigo-300">
+                            <tr class="shadow-sm">
+                                <!-- py-2 px-2, text-xs (base size for th) -->
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200" data-sort="allotmentid">Sl <br>No <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                
+                                <th class="py-2 px-1 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200" data-sort="feederAlloted">Feeder <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                            <th class="py-2 px-1 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200" data-sort="feederAlloted">Task<br> Type <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="hrsAssigned">Prod<br>Hrs <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="teamMember">Prod<br>Assinee <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="deadline">Prod<br>Deadline <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="qcHrs">QC<br>Hrs <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="qcAssinee">QC<br>Assinee <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="qcDeadline">QC<br>Deadline <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="offlineHrs">Delivery<br>Hrs <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider border-r border-indigo-200 task-col" data-sort="offlineHrs">Delivery<br>Deadline <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="completion_date">Prod. Comp.<br>Date <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer border-r border-indigo-200 task-col" data-sort="qcCompletionDate">QC Comp.<br>Date <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer task-col" data-sort="completionPercentage">Percent<br>Age <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider sortable cursor-pointer task-col" data-sort="status">Status <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                
+                                <!-- Delivered Columns (Hidden by default, shown when filter is 'Delivered') -->
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="invoiceNo">Prod<br>Hrs<i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="workOrder">Qc<br> Hrs<i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="clientHours">Prod<br>Person <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="productionHours">Qc<br>Person <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="deliveryDate">Delivery Date <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="deliveredBy">Delivered By <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider delivered-col hidden" data-sort="deliveryRemarks">Delivery Remarks <i class="fas fa-sort sort-icon text-gray-500 ml-1"></i></th>
+                                
+                                <th class="py-2 px-2 text-left text-[0.65rem] font-bold text-indigo-700 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id='render' class="bg-white divide-y divide-gray-200 text-[0.7rem]"> <!-- Reduced text size -->
+                            <!-- Skeleton Loading State (reduced padding) -->
+                            <tr class="skeleton-table-row animate-pulse even:bg-gray-50"><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td></tr>
+                            <tr class="skeleton-table-row animate-pulse even:bg-gray-50"><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noData" class="no-data hidden bg-white shadow-xl rounded-lg p-6 mt-4 text-center border border-gray-200"> <!-- Reduced padding and margin -->
+                    <i class="fas fa-exclamation-circle text-4xl text-gray-300 mb-2"></i> <!-- Reduced icon size -->
+                    <p class="text-sm text-gray-500 font-medium">No allocations found. Please upload a file to get started.</p> <!-- Reduced font size -->
+                </div>
+            </div>
+            
+            <!-- Assign Task Modal -->
+            <div id="assignModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div class="flex items-center justify-center min-h-screen p-3"> <!-- Reduced padding -->
+                    <div class="bg-white rounded-xl shadow-3xl w-full max-w-lg transition-all transform duration-300 p-0 border border-indigo-200">
+                        <div class="bg-indigo-50 p-4 rounded-t-xl border-b border-indigo-200"> <!-- Reduced padding -->
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-user-plus text-indigo-600"></i> Assign Task</h3>
+                        </div>
+                        <form id="assignForm" class="p-4"> <!-- Reduced padding -->
+                            <input type="hidden" id="modalAllotmentId">
+                            <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                <div class="form-group">
+                                    <label for="memberSelect" class="block text-sm font-bold text-gray-700 mb-1">Assign Production to</label>
+                                    <select id="memberSelect" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"></select> <!-- Reduced height and padding -->
+                                </div>
+                                                        <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                                <div class="form-group">
+                                    <label for="deadlineInput" class="block text-sm font-bold text-gray-700 mb-1">Production Deadline</label>
+                                    <input type="date" id="deadlineInput" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                </div>
+                                <hr class="border-gray-200">
+                                <div class="form-group">
+                                    <label for="memberSelectQc" class="block text-sm font-bold text-gray-700 mb-1">Assign QC to</label>
+                                    <select id="memberSelectQc" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"></select> <!-- Reduced height and padding -->
+                                </div>
+                                <div class="form-group">
+                                    <label for="qcdeadlineInput" class="block text-sm font-bold text-gray-700 mb-1">QC Deadline</label>
+                                    <input type="date" id="qcdeadlineInput" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100"> <!-- Reduced margin/padding -->
+                                <button type="button" id="closeAssignModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button> <!-- Reduced padding -->
+                                <button type="submit" id="saveAssignmentBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-save"></i> Save</button> <!-- Reduced padding -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Split Task Modal -->
+            <div id="assignOthersModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div class="flex items-center justify-center min-h-screen p-3"> <!-- Reduced padding -->
+                    <div class="bg-white rounded-xl shadow-3xl w-full max-w-md transition-all transform duration-300 p-0 border border-green-200">
+                        <div class="bg-green-50 p-4 rounded-t-xl border-b border-green-200"> <!-- Reduced padding -->
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-users-cog text-green-600"></i> Split Task</h3>
+                        </div>
+                        <form id="assignOthersForm" class="p-4"> <!-- Reduced padding -->
+                            <input type="hidden" id="modalAllotmentIdOthers">
+                            <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                <div class="form-group">
+                                    <label for="othermemberSelect" class="block text-sm font-bold text-gray-700 mb-1">Assign Split to</label>
+                                    <select id="othermemberSelect" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"></select> <!-- Reduced height and padding -->
+                                </div>
+                                <div class="form-group">
+                                    <label for="otherHrs" class="block text-sm font-bold text-gray-700 mb-1">Hours for New Task</label>
+                                    <input type="text" id="otherHrs" min="1" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                </div>
+                                <div class="form-group">
+                                    <label for="otherdeadlineInput" class="block text-sm font-bold text-gray-700 mb-1">Deadline for New Task</label>
+                                    <input type="date" id="otherdeadlineInput" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100"> <!-- Reduced margin/padding -->
+                                <button type="button" id="closeAssignOthersModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button> <!-- Reduced padding -->
+                                <button type="submit" id="saveAssignmentBtnn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-save"></i> Save Split</button> <!-- Reduced padding -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Edit Modal (UPDATED: Renamed fields, removed Offline panel logic) -->
+            <div id="globalEditModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div class="flex items-center justify-center min-h-screen p-3 my-4"> <!-- Reduced padding/margin -->
+                    <div class="bg-white rounded-xl shadow-3xl w-full max-w-5xl transition-all transform duration-300 p-0 border border-indigo-200">
+                        <div class="bg-indigo-50 p-4 rounded-t-xl border-b border-indigo-200"> <!-- Reduced padding -->
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-edit text-indigo-600"></i> Edit Task Details</h3>
+                        </div>
+                        <form id="globalEditForm" class="p-4"> <!-- Reduced padding -->
+                            <input type="hidden" id="globalEditAllotmentId">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"> <!-- Reduced grid gap -->
+                                <!-- Column 1: Core Details -->
+                                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"> <!-- Reduced padding -->
+                                    <h4 class="text-lg font-bold text-indigo-700 mb-2 border-b-2 border-indigo-100 pb-1.5">Task Core Details</h4> <!-- Reduced font size and margin -->
+                                    <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                        <div class="form-group">
+                                            <label for="editFeederAlloted" class="block text-sm font-bold text-gray-700 mb-1">Feeder Name</label>
+                                            <input type="text" id="editFeederAlloted" readonly class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-gray-100 font-medium cursor-not-allowed text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editTaskType" class="block text-sm font-bold text-gray-700 mb-1">Task Type</label>
+                                            <input type="text" id="editTaskType" readonly class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-gray-100 font-medium cursor-not-allowed text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editHrsAssigned" class="block text-sm font-bold text-gray-700 mb-1">Production Hours</label>
+                                            <input type="text" id="editHrsAssigned" min="0" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editQcHrs" class="block text-sm font-bold text-gray-700 mb-1">QC Hours</label>
+                                            <input type="text" id="editQcHrs" min="0" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Column 2: Production Status -->
+                                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"> <!-- Reduced padding -->
+                                    <h4 class="text-lg font-bold text-indigo-700 mb-2 border-b-2 border-indigo-100 pb-1.5">Production Status</h4> <!-- Reduced font size and margin -->
+                                    <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                        <div class="form-group">
+                                            <label for="editAssignedTo" class="block text-sm font-bold text-gray-700 mb-1">Assigned To</label>
+                                            <select id="editAssignedTo" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"></select> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editDeadline" class="block text-sm font-bold text-gray-700 mb-1">Production Deadline</label>
+                                            <input type="date" id="editDeadline" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editCompletedDate" class="block text-sm font-bold text-gray-700 mb-1">Completed Date</label>
+                                            <input type="date" id="editCompletedDate" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-gray-100 font-medium cursor-not-allowed text-sm" disabled> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editStatus" class="block text-sm font-bold text-gray-700 mb-1">Status</label>
+                                            <input type="text" id="editStatus" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-gray-100 font-medium cursor-not-allowed text-sm" readonly> <!-- Reduced height and padding -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Column 3: Quality Check & Delivery Info -->
+                                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"> <!-- Reduced padding -->
+                                    <h4 class="text-lg font-bold text-indigo-700 mb-2 border-b-2 border-indigo-100 pb-1.5">QC & Delivery Details</h4> <!-- Reduced font size and margin -->
+                                    <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                        <div class="form-group">
+                                            <label for="editQcAssinee" class="block text-sm font-bold text-gray-700 mb-1">QC Assinee</label>
+                                            <select id="editQcAssinee" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"></select> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editQcDeadline" class="block text-sm font-bold text-gray-700 mb-1">QC Deadline</label>
+                                            <input type="date" id="editQcDeadline" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editDeliveryHrs" class="block text-sm font-bold text-gray-700 mb-1">Delivery Hours</label>
+                                            <input type="text" id="editDeliveryHrs" min="0" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-teal-500 focus:border-teal-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editDeliveryDeadline" class="block text-sm font-bold text-gray-700 mb-1">Delivery Deadline</label>
+                                            <input type="date" id="editDeliveryDeadline" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-teal-500 focus:border-teal-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-200"> <!-- Reduced margin/padding -->
+                                <button type="button" id="closeGlobalEditModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button> <!-- Reduced padding -->
+                                <button type="submit" id="saveGlobalEditBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-save"></i> Save Changes</button> <!-- Reduced padding -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Project Modal -->
+            <div id="completeModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div class="flex items-center justify-center min-h-screen p-3"> <!-- Reduced padding -->
+                    <div class="bg-white rounded-xl shadow-3xl w-full max-w-lg transition-all transform duration-300 p-0 border border-green-200">
+                        <div class="bg-green-50 p-4 rounded-t-xl border-b border-green-200"> <!-- Reduced padding -->
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-clipboard-check text-green-600"></i> Finalize Project Completion</h3>
+                        </div>
+                        <form id="completeForm" class="p-4"> <!-- Reduced padding -->
+                            <input type="hidden" id="modalProjectId">
+                            <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                <p class="text-gray-600 text-sm">Please provide final details for project closure and invoicing.</p>
+                                <div class="form-group grid grid-cols-2 gap-3"> <!-- Reduced gap -->
+                                    <div>
+                                        <label for="invoiceNo" class="block text-sm font-bold text-gray-700 mb-1">Invoice No.</label>
+                                        <input type="text" id="invoiceNo" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                    </div>
+                                    <div>
+                                        <label for="workOrder" class="block text-sm font-bold text-gray-700 mb-1">Work Order</label>
+                                        <input type="text" id="workOrder" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                    </div>
+                                </div>
+                                <div class="form-group grid grid-cols-2 gap-3"> <!-- Reduced gap -->
+                                    <div>
+                                        <label for="clientHours" class="block text-sm font-bold text-gray-700 mb-1">Client Hours</label>
+                                        <input type="text" id="clientHours" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                    </div>
+                                    <div>
+                                        <label for="productionHours" class="block text-sm font-bold text-gray-700 mb-1">Internal Production Hours</label>
+                                        <input type="text" id="productionHours" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"> <!-- Reduced height and padding -->
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="teamLeadRemark" class="block text-sm font-bold text-gray-700 mb-1">Team Lead Remark</label>
+                                    <textarea id="teamLeadRemark" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-sm"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100"> <!-- Reduced margin/padding -->
+                                <button type="button" id="closeCompleteModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button> <!-- Reduced padding -->
+                                <button type="submit" id="saveCompleteBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-check"></i> Complete Project</button> <!-- Reduced padding -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deliver Task Modal (Single Task Delivery) -->
+            <div id="deliverModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div class="flex items-center justify-center min-h-screen p-3"> <!-- Reduced padding -->
+                    <div class="bg-white rounded-xl shadow-3xl w-full max-w-md transition-all transform duration-300 p-0 border border-teal-200">
+                        <div class="bg-teal-50 p-4 rounded-t-xl border-b border-teal-200"> <!-- Reduced padding -->
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-truck-fast text-teal-600"></i> Finalize Delivery</h3>
+                        </div>
+                        <form id="deliverForm" class="p-4"> <!-- Reduced padding -->
+                            <input type="hidden" id="modalDeliverAllotmentId">
+                            <div class="space-y-3"> <!-- Reduced vertical spacing -->
+                                <p class="text-gray-600 text-sm">Please confirm delivery for this task and add any final remarks for the client record.</p>
+                                <div class="form-group">
+                                    <label for="deliveryRemark" class="block text-sm font-bold text-gray-700 mb-1">Delivery Remarks (Optional)</label>
+                                    <textarea id="deliveryRemark" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-teal-500 focus:border-teal-500 transition duration-150 text-sm"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100"> <!-- Reduced margin/padding -->
+                                <button type="button" id="closeDeliverModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button> <!-- Reduced padding -->
+                                <button type="submit" id="saveDeliveryBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-check"></i> Mark Delivered</button> <!-- Reduced padding -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+          <div id="addAllotmentModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+    <div class="flex items-center justify-center min-h-screen p-3">
+        <div class="bg-white rounded-xl shadow-3xl w-full max-w-4xl transition-all transform duration-300 p-0 border border-purple-200">
+            <div class="bg-purple-50 p-4 rounded-t-xl border-b border-purple-200">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-3"><i class="fas fa-plus-circle text-purple-600"></i> Add New Project Task</h3>
+            </div>
+            <form id="addAllotmentForm" class="p-4">
+                <input type="hidden" name="pid" value="<?php echo htmlspecialchars($_GET['id']); ?>">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                    
+                    <div class="space-y-3">
+                        <h4 class="text-md font-bold text-purple-700 border-b border-purple-300 pb-1 mb-2">Task Details</h4>
+                        <div class="form-group">
+                            <label for="newFeederAlloted" class="block text-sm font-bold text-gray-700 mb-1">Feeder/Task Name</label>
+                            <input type="text" id="newFeederAlloted" name="feederAlloted" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="newTaskType" class="block text-sm font-bold text-gray-700 mb-1">Task Type</label>
+                            <select id="newTaskType" name="taskType" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                                <option value="Prod">Production</option>
+                                <option value="QC">Quality Check</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="newHrsAssigned" class="block text-sm font-bold text-gray-700 mb-1">Production Hours</label>
+                            <input type="number" id="newHrsAssigned" name="hrsAssigned" min="0" step="0.01" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="newDeliveryHrs" class="block text-sm font-bold text-gray-700 mb-1">Delivery Hours</label>
+                            <input type="number" id="newDeliveryHrs" name="deliveryHrs" min="0" step="0.01" value="0" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-md font-bold text-purple-700 border-b border-purple-300 pb-1 mb-2">Production & Deadlines</h4>
+                        <div class="form-group">
+                            <label for="newMemberSelect" class="block text-sm font-bold text-gray-700 mb-1">Production Assinee</label>
+                            <select id="newMemberSelect" name="memberId" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="newDeadlineInput" class="block text-sm font-bold text-gray-700 mb-1">Production Deadline</label>
+                            <input type="date" id="newDeadlineInput" name="deadline" required class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="newDeliveryDeadline" class="block text-sm font-bold text-gray-700 mb-1">Delivery Deadline</label>
+                            <input type="date" id="newDeliveryDeadline" name="deliveryDeadline" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                        </div>
+                        </div>
+                    
+                    <div class="space-y-3">
+                        <h4 class="text-md font-bold text-purple-700 border-b border-purple-300 pb-1 mb-2">Quality Check (QC)</h4>
+                        <div class="mt-4 p-3 bg-purple-100/50 rounded-lg border border-purple-200">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <input type="checkbox" id="qcRequiredCheckbox" checked class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <label for="qcRequiredCheckbox" class="text-sm font-bold text-gray-800">QC Required?</label>
+                            </div>
+                            <div id="qcFieldsContainer" class="space-y-3">
+                                <div class="form-group">
+                                    <label for="newQcHrs" class="block text-sm font-bold text-gray-700 mb-1">QC Hours</label>
+                                    <input type="number" id="newQcHrs" name="qcHrs" min="0" step="0.01" value="0.5" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newMemberSelectQc" class="block text-sm font-bold text-gray-700 mb-1">QC Assinee</label>
+                                    <select id="newMemberSelectQc" name="qcMemberId" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newQcDeadlineInput" class="block text-sm font-bold text-gray-700 mb-1">QC Deadline</label>
+                                    <input type="date" id="newQcDeadlineInput" name="qcDeadline" class="w-full h-9 px-3 py-1.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-200">
+                    <button type="button" id="closeAddAllotmentModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded-lg transition duration-200 transform hover:scale-[1.01] shadow-md text-sm"><i class="fas fa-times-circle"></i> Cancel</button>
+                    <button type="submit" id="saveAllotmentBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-1.5 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01] text-sm"><i class="fas fa-plus"></i> Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+        <script>
+        // START OF JAVASCRIPT LOGIC
+        $(document).ready(function(){
+      
+            let allotment='';
+    const params=new URLSearchParams(window.location.search);
+             const projectId = params.get("id");
+             //console.log(projectId);
+                    loadProjects();
+            const statusClassMap = {
+                'unassigned': 'bg-gray-200 text-gray-700 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
+                'in-progress': 'bg-yellow-100 text-yellow-800 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
+                'completed': 'bg-green-100 text-green-800 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
+                'rework': 'bg-red-100 text-red-800 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
+                'deliverable': 'bg-purple-100 text-purple-800 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */ 
+                'delivered': 'bg-teal-100 text-teal-800 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
+            // Removed Offline statuses
+            };
+            
+            $('a[href="#"]').on('click', function(e) {
+                e.preventDefault();
+            });
+
+           const pid = projectId;
+            
+            let allAllocationsData = [];
+            let allMembersData = [];
+            let currentFilter = 'All';
+            let sortState = { column: null, direction: 'asc' };
+            let refreshIntervalId;
+            let scrollPosition = 0;
+            let currentSearchTerm = ''; // NEW: Global variable for search term
+
+            function startAutoRefresh() {
+                if (refreshIntervalId) clearInterval(refreshIntervalId);
+                refreshIntervalId = setInterval(() => {
+                    loadProjects();
+                    loadAllocations();
+                }, 5000);
+            }
+
+            function stopAutoRefresh() {
+                if (refreshIntervalId) {
+                    clearInterval(refreshIntervalId);
+                    refreshIntervalId = null;
+                }
+            }
+            
+            // --- ADDED: Utility function to safely escape HTML ---
+            function escapeHtml(s) {
+                const div = document.createElement('div');
+                div.textContent = s;
+                return div.innerHTML;
+            }
+            // --- END ADDED ---
+            
+            function formatDate(dateString) {
+                if (!dateString || dateString === 'TBD' || dateString === '0000-00-00') return 'TBD';
+
+                const monthMap = {
+                    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+                    May: '05', Jun: '06', Jul: '07', Aug: '08',
+                    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+                };
+
+                const parts = dateString.split('-');
+
+                // Case 1: YYYY-MM-DD (standard from DB) → DD-MM-YYYY
+                if (parts.length === 3 && /^\d{4}$/.test(parts[0])) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+
+                // Case 2 & 3: Handling DD-MMM-YY or YYYY-MMM-DD formats
+                if (parts.length === 3 && (parts[1] in monthMap || /^[a-zA-Z]{3}$/.test(parts[1]))) {
+                    // Try to format to DD-MMM-YYYY for consistency
+                    const day = parts.length === 3 ? parts[2] : parts[0];
+                    const monthAbbr = parts.length === 3 ? parts[1] : parts[1];
+                    const year = parts.length === 3 ? parts[0] : parts[2];
+
+                    if (year && monthAbbr && day) {
+                        return `${day}-${monthAbbr}-${year}`;
+                    }
+                }
+
+                return dateString; // If format not recognized
+            }
+
+
+            function formatDateForInput(dateString) {
+                if (!dateString || dateString === 'TBD' || dateString === '0000-00-00') {
+                    return '';
+                }
+                // If the date is already in YYYY-MM-DD format, return it.
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                    return dateString;
+                }
+                
+                const monthMap = {
+                    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+                    'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+                    'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+                };
+
+                const parts = dateString.split('-');
+
+                if (parts.length === 3) {
+                    const day = parts[0];
+                    const month = monthMap[parts[1]] || parts[1];
+                    let year = parts[2];
+
+                    if (year.length === 2) {
+                        year = (parseInt(year) < 50 ? '20' : '19') + year;
+                    }
+
+                    // Handle YYYY-MMM-DD format from SQL: '2025-Oct-31'
+                    if (parts[0].length === 4 && isNaN(parts[1]) && parts[2].length <= 2) {
+                        return `${parts[0]}-${monthMap[parts[1]]}-${parts[2]}`;
+                    }
+
+                    if (month !== parts[1]) {
+                        return `${year}-${month}-${day}`;
+                    }
+                }
+
+                return dateString;
+            }
+
+
+            function getStatusInfo(r) {
+                // 1. Delivered
+                if (r.isDelivered == 1) {
+                    return { label: "Delivered", class: "delivered" };
+                }
+                
+                const statusMap = {
+                    Prod: {  
+                        0: { label: "Un-Assigned", class: "unassigned" },
+                        1: { label: "Assigned", class: "in-progress" },
+                        2: { label: "Started", class: "in-progress" },
+                        3: { label: "Prod Finished", class: "completed" },
+                        8: { label: "Rework Assigned", class: "rework" },
+                        9: { label: "Rework Started", class: "rework" },
+                        10: { label: "Prod Finished(R)", class: "completed" }
+                    },
+                    QC: {
+                        4: { label: "QC Assigned", class: "in-progress" },
+                        5: { label: "QC Started", class: "in-progress" },
+                        6: { label: "QC Finished", class: "deliverable" },
+                        7: { label: "Qc Hold", class: "rework" }
+                    }
+                    // Removed Offline Status map
+                };
+                
+                // Removed Offline status check
+                
+                if (r.type === 'Prod') {
+                    return statusMap.Prod[String(r.status)] || { label: "Unknown", class: "unassigned" };
+                } else if (r.type === 'QC') {
+                    return statusMap.QC[String(r.status)] || { label: "QC Task", class: "unassigned" }; 
+                }
+                
+                if(r.status == 6) {
+                    return { label: "QC Finished", class: "deliverable" };
+                }
+
+                return { label: "Unknown", class: "unassigned" };  
+            }
+
+            const iconSvg = {
+                assign: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M20 6h-8l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2zm-2 8h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>`,
+                edit: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`,
+                split: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M15 3v2h3.59L14 9.59V14a2 2 0 01-2 2H6v3h2v2H4v-4h2v-2h6V9.59L5.41 5H9V3H3v6h2V6.41L13 14v3a4 4 0 004 4h4v-2h-4a2 2 0 01-2-2v-3.59L20.59 7H17V3h-2z"/></svg>`,
+                rework: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8s3.58 8 8 8c2.15 0 4.14-.81 5.66-2.18l-1.42-1.42C15.01 17.48 13.52 18 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6z"/></svg>`,
+                deliver: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>`,
+                delete: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`
+            };
+
+            // === MODIFIED: generateRowHtml to reflect new column order and denser padding/font ===
+            function generateRowHtml(r, count) {
+                const statusInfo = getStatusInfo(r);
+                const statusClasses = statusClassMap[statusInfo.class];
+                const deadline = r.deadline || 'TBD';
+                const qcDeadline = r.qcDeadline || 'TBD';
+                const completionDate = r.completion_date || 'TBD';
+                const qcCompletionDate = r.qcCompletionDate || 'TBD'; // Added QC Completion Date
+                
+                // 1. Determine if the task is eligible for Delivery
+                let isDeliverable = false;
+                
+                if (r.isDelivered == 0 && r.type === 'Prod') {
+                    const hasQcDate = r.qcCompletionDate && r.qcCompletionDate !== '0000-00-00' && r.qcCompletionDate !== 'TBD';
+                    const noQcRequired = parseFloat(r.qcHrs) <= 0;
+                    const isProdFinished = r.status === 3 || r.status === 10; // Prod Finished or Prod Finished (Rework)
+                    
+                    // Simplified Logic: Prod Finished AND (QC Finished OR No QC Required)
+                    if (isProdFinished && (hasQcDate)) {
+                        isDeliverable = true;
+                    }
+                }
+                
+                // 2. Setup buttons
+                let editButton = `<button class="edit-button icon-btn" aria-label="Edit" title="Edit" data-allotmentid="${r.allotmentid}">${iconSvg.edit}</button>`;
+                let deleteButton = `<button class="delete-button icon-btn" aria-label="Delete" title="Delete" data-allotmentid="${r.allotmentid}">${iconSvg.delete}</button>`;
+                let actionButtonHtml = `<div class="flex space-x-1">`;
+                
+                if (r.isDelivered == 1) {
+                    // Delivered State
+                    actionButtonHtml = `<span class="${statusClasses} font-semibold border border-teal-300">Delivered</span>`;
+                } else if (isDeliverable) {
+                    // Deliverable State: Show DELIVER, EDIT, and DELETE
+                    actionButtonHtml += `<button class="deliver-button icon-btn primary bg-teal-600 hover:bg-teal-700" aria-label="Mark Delivered" title="Mark Delivered" data-allotmentid="${r.allotmentid}">${iconSvg.deliver}</button>`;
+                    actionButtonHtml += editButton;
+                //   actionButtonHtml += deleteButton; // ADDED DELETE BUTTON
+                } else {
+                    // Default action logic based on status
+                    switch (r.status) {
+                        case 0: // Un-Assigned
+                            actionButtonHtml += `<button class="action-button icon-btn primary" aria-label="Assign" title="Assign" data-type="assign-prod" data-allotmentid="${r.allotmentid}">${iconSvg.assign}</button>`;
+                            actionButtonHtml += editButton;
+                          actionButtonHtml += deleteButton; // ADDED DELETE BUTTON
+                            break;
+                        case 1: // Assigned
+                        case 2: // Started
+                        case 3: // Finished
+                        case 9: // Rework Started
+                        case 10: // Rework Started
+
+                            actionButtonHtml += `<button class="assign-others icon-btn" aria-label="Split" title="Split" data-allotmentid="${r.allotmentid}">${iconSvg.split}</button>`;
+                            actionButtonHtml += editButton;
+                        //  actionButtonHtml += deleteButton; // ADDED DELETE BUTTON
+                            break;
+                        case 7: // Qc Hold (Rework)
+                            actionButtonHtml += `<button class="rework-button icon-btn rework-btn" aria-label="Rework" title="Rework" data-allotmentid="${r.allotmentid}">${iconSvg.rework}</button>`;
+                            actionButtonHtml += editButton;
+                        //  actionButtonHtml += deleteButton; // ADDED DELETE BUTTON
+                            break;
+                        default:      
+                            // Cases like QC Assigned (4), QC Started (5), QC Finished (6)
+                            // actionButtonHtml += editButton;
+                        //  actionButtonHtml += deleteButton; // ADDED DELETE BUTTON
+                            break;
+                    }
+                }
+                
+                if (r.isDelivered != 1) {
+                    actionButtonHtml += `</div>`;
+                }
+                
+                // Classes to hide/show columns dynamically. These match the classes added to <th> tags.
+                const isDeliveredView = currentFilter === 'Delivered';
+                const taskColClass = isDeliveredView ? 'hidden task-col' : 'task-col';
+                const deliveredColClass = isDeliveredView ? 'delivered-col' : 'hidden delivered-col';
+                var status;
+                // Reduced py/px for table cells
+                const cellClass = "py-1.5 px-2 text-[0.7rem] text-gray-700";
+                const cellClassStrong = "py-1.5 px-2 text-[0.7rem] text-gray-900 font-medium";
+                        if(r.status==1 && r.elapsedTime>0){
+                            status='Prod Paused';
+                        }
+                        else if(r.status == 4 && r.elapsedTime>0){
+                            status='QC Paused';
+                        }
+                        else if(r.status == 8 && r.elapsedTime>0){
+                            status='Rework Paused';
+                        }
+                        else 
+                        {
+                        status=statusInfo.label;  
+                        }
+ function formatName(person) {
+    if (!person) return 'TBA';
+    const first = person.firstName ?? '';
+    const last = person.lastName ?? '';
+    return (first + ' ' + last).trim() || 'TBA';
+}
+
+return `
+    <td class="${cellClass}">${count}</td>
+    
+    <!-- Standard Task Columns (Updated Order) -->
+    <td class="${cellClassStrong}">${r.feederAlloted ?? 'N/A'}</td>
+    <td class="${cellClassStrong}">${r.type ?? 'N/A'}</td>
+
+    <td class="${cellClass} ${taskColClass}">${r.hrsAssigned ?? 'N/A'}</td>
+    <td class="${cellClass} ${taskColClass}">${formatName(r.allottedTo)}</td>
+    <td class="${cellClass} ${taskColClass}">${formatDate(deadline)}</td>
+    <td class="${cellClass} ${taskColClass}">${r.qcHrs ?? 'N/A'}</td>
+    <td class="${cellClass} ${taskColClass}">${formatName(r.qcAssinee)}</td>
+    <td class="${cellClass} ${taskColClass}">${formatDate(qcDeadline)}</td>
+    <td class="${cellClass} ${taskColClass} font-mono">${r.DeliveryHours ?? 'N/A'}</td> <!-- Delivery Hrs -->
+    <td class="${cellClass} ${taskColClass} font-mono">${r.DeliveryDeadline ?? 'N/A'}</td> <!-- Delivery Deadline -->
+
+    <td class="${cellClass} ${taskColClass}">${formatDate(completionDate)}</td> <!-- Prod Completion Date -->
+    <td class="${cellClass} ${taskColClass}">${formatDate(qcCompletionDate)}</td> <!-- QC Completion Date (NEW) -->
+    <td class="${cellClass} ${taskColClass} font-mono">${r.completionPercentage ? r.completionPercentage+'%' : 'N/A'}</td>
+    <td class="${cellClass} ${taskColClass}">
+        <span class="${statusClasses}">${status}</span>
+    </td>
+
+    <!-- Delivered Columns -->
+    <td class="${cellClass} font-mono ${deliveredColClass}">${r.hrsAssigned ?? 'N/A'}</td>
+    <td class="${cellClass} font-mono ${deliveredColClass}">${r.qcHrs ?? 'N/A'}</td>
+    <td class="${cellClassStrong} ${deliveredColClass}">${formatName(r.teamMember)}</td>
+    <td class="${cellClassStrong} ${deliveredColClass}">${formatName(r.qcAssinee)}</td>
+    <td class="${cellClass} ${deliveredColClass}">${formatDate(r.deliveryDate) ?? 'N/A'}</td>
+    <td class="${cellClass} ${deliveredColClass}">${r.deliveredBy ?? 'N/A'}</td>
+    <td class="${cellClass} ${deliveredColClass} max-w-xs truncate" title="${r.deliveryRemarks ?? ''}">${r.deliveryRemarks ?? 'N/A'}</td>
+
+    <td class="${cellClass}">${actionButtonHtml}</td>
+`;
+            }
+            // === END MODIFIED: generateRowHtml ===
+
+            function loadProjects() {
+                $.get("/admin/project/getAllotmentInfo", { projectid: projectId })
+                .done(function(data) {
+                    //console.log(data);
+                    let project;
+                    try {
+                        project = typeof data === "string" ? JSON.parse(data) : data;
+                        allotment=project.projectName;3
+                        $("#title").text(`${allotment}'s Tasks`);
+                    } catch (e) {
+                        console.error("Failed to parse project data:", data);
+                        return;
+                    }
+                    
+                    // Removed logic setting currentProjectDepartment
+                    
+                    $("#projectNameHeading").text('Allotment: '+project.projectName);
+                    const totalTasks = parseInt(project.Total) || 0;
+                    const finishedTasks = parseInt(project.Delivered) || 0;
+                    const completionPercentage = totalTasks > 0 ? ((finishedTasks / totalTasks) * 100).toFixed(2) : '0.00';
+                    const projectStatus = project.status;
+                    
+                    // Check if all tasks are Delivered (isDelivered=1)
+                    const allTasksDelivered = allAllocationsData.filter(a => a.type === 'Prod').every(a => a.isDelivered == 1);
+
+                 
+                    const summaryHtml = `
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"> <!-- Reduced grid gap -->
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Project Name</span><strong class="text-base text-gray-900 font-extrabold">${project.rootProject.projectName}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Total Hours</span><strong class="text-base text-gray-900 font-extrabold">${project.totalHours} hrs</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Prod. Hours</span><strong class="text-base text-gray-900 font-extrabold">${project.productionHrs} hrs</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">QC Hours</span><strong class="text-base text-gray-900 font-extrabold">${project.qaHrs} hrs</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Project Lead</span><strong class="text-base text-gray-900 font-extrabold">${project.projectLead.firstName+' '+project.projectLead.lastName}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Start Date</span><strong class="text-base text-gray-900 font-extrabold">${formatDate(project.starDate)}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">End Date</span><strong class="text-base text-gray-900 font-extrabold">${formatDate(project.endDate)}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Created By</span><strong class="text-base text-gray-900 font-extrabold">${project.createdBy.firstName+' '+project.createdBy.lastName}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Feeders</span><strong class="text-base text-gray-900 font-extrabold">${totalTasks}</strong> <!-- Reduced font size -->
+                            </div>
+                            <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-2 transition duration-200 hover:shadow-lg shadow-inner"> <!-- Reduced padding -->
+                                <span class="text-xs font-semibold text-indigo-600 block uppercase">Delivered</span><strong class="text-base text-gray-900 font-extrabold">${finishedTasks}</strong> <!-- Reduced font size -->
+                            </div>
+                        </div>
+                        <div class="mt-2"> <!-- Reduced margin -->
+                            <h5 class="text-sm font-bold text-gray-700 mb-0.5">Project Progress: ${completionPercentage}%</h5> <!-- Reduced margin -->
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 shadow-inner"> <!-- Reduced height -->
+                                <div class="bg-green-500 h-2.5 rounded-full text-xs text-white flex items-center justify-end pr-1 font-bold transition-all duration-500 ease-out" style="width: ${completionPercentage}%">
+                                    ${completionPercentage > 10 ? `${completionPercentage}%` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $("#project-summary-placeholder").html(summaryHtml);
+                })
+                .fail(function(err) {
+                   // console.log(err);
+                    $("#project-summary-placeholder").html(`<p class="text-red-500 p-4"><i class="fas fa-exclamation-triangle"></i> Failed to load project details: ${err}</p>`);
+                });
+            }
+
+            function sortAllocations(data) {
+                if (!sortState.column) return data;
+                const { column, direction } = sortState;
+
+                const sortedData = [...data].sort((a, b) => {
+                    let valA = a[column];
+                    let valB = b[column];
+
+                    const isValANull = valA === null || valA === 'TBD' || valA === '0000-00-00';
+                    const isValBNull = valB === null || valB === 'TBD' || valB === '0000-00-00';
+                    if (isValANull && isValBNull) return 0;
+                    if (isValANull) return 1;
+                    if (isValBNull) return -1;
+                    
+                    // Added 'offlineHrs' for DeliveryHrs
+                    if (['hrsAssigned', 'qcHrs', 'allotmentid', 'status', 'completionPercentage', 'clientHours', 'productionHours', 'offlineHrs'].includes(column)) { 
+                        valA = parseFloat(valA);
+                        valB = parseFloat(valB);
+                        return direction === 'asc' ? valA - valB : valB - valA;
+                    }
+                    // Added 'qcCompletionDate'
+                    else if (['deadline', 'qcDeadline', 'completion_date', 'deliveryDate', 'qcCompletionDate'].includes(column)) { 
+                        // Convert display formats (DD-MMM-YY, YYYY-MMM-DD) back to sortable YYYY-MM-DD
+                        const dateA = new Date(formatDateForInput(valA));
+                        const dateB = new Date(formatDateForInput(valB));
+                        return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+                    else {
+                        return direction === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+                    }
+                });
+                return sortedData;
+            }
+            
+            // === MODIFIED: Get Task Category for Filtering and Counting (Removed Offline/Dept 12) ===
+            function getTaskCategoryForFilter(r) {
+                if (r.isDelivered == 1) return 'Delivered';
+                
+                // Simplified Deliverable Logic
+                if (r.type === 'Prod') {
+                    const hasQcDate = r.qcCompletionDate && r.qcCompletionDate !== '0000-00-00' && r.qcCompletionDate !== 'TBD';
+                    const noQcRequired = parseFloat(r.qcHrs) <= 0;
+                    const isProdFinished = r.status === 3 || r.status === 10;
+
+                    // Deliverable: Prod Finished AND (QC Date OR No QC Required)
+                    if (isProdFinished && (hasQcDate || noQcRequired)) {
+                        return 'Deliverable';
+                    }
+                }
+                // End Simplified Deliverable Logic
+
+                if (r.status == 4 || r.status == 5 || r.status == 7) return 'QC';
+                
+                // Removed Offline Category Check
+
+                if (r.type === 'Prod' && (r.status >= 0 && r.status <= 3 || r.status >= 8 && r.status <= 10)) {
+                    return 'Prod';
+                }
+                
+                return 'Other'; 
+            }
+            // === END MODIFIED HELPER ===
+
+            function calculateCounts() {
+                // Removed Offline from counts array
+                const counts = { All: 0, Prod: 0, QC: 0, Deliverable: 0, Delivered: 0 };
+                
+                // Filter out non-primary tasks if necessary (assuming only type 'Prod' rows are primary feeders)
+                const mainAllocations = allAllocationsData.filter(r => r.type === 'Prod' || r.type === 'QC'); // Removed || r.type === 'Offline'
+
+                mainAllocations.forEach(r => {
+                    counts.All++;
+                    const category = getTaskCategoryForFilter(r);
+                    if (category !== 'Other') {
+                        counts[category]++;
+                    }
+                });
+
+                // Delivered count must be unique per feeder
+                const deliveredFeeders = new Set(allAllocationsData.filter(r => r.isDelivered == 1).map(r => r.feederAlloted));
+                counts.Delivered = deliveredFeeders.size;
+                
+                // Update badge texts - Removed Offline badge update
+                $('#allCountBadge').text(counts.All);
+                $('#prodCountBadge').text(counts.Prod);
+                $('#qcCountBadge').text(counts.QC);
+                $('#deliverableCountBadge').text(counts.Deliverable);
+                $('#deliveredCountBadge').text(counts.Delivered);
+            }
+            
+            // === MODIFIED: Function to toggle header/column visibility (Removed Offline logic) ===
+            function toggleTableColumns(currentFilter) {
+                const isDeliveredView = currentFilter === 'Delivered';
+
+                // 1. Toggle Task vs Delivered Columns
+                if (isDeliveredView) {
+                    // Hide standard task columns, show delivered columns
+                    $('#allocTable th.task-col, #allocTable td.task-col').addClass('hidden');
+                    $('#allocTable th.delivered-col, #allocTable td.delivered-col').removeClass('hidden');
+                } else {
+                    // Show standard task columns, hide delivered columns
+                    $('#allocTable th.task-col, #allocTable td.task-col').removeClass('hidden');
+                    $('#allocTable th.delivered-col, #allocTable td.delivered-col').addClass('hidden');
+                }
+                // Removed Offline column toggling logic entirely
+            }
+            // === END MODIFIED FUNCTION ===
+
+
+            function updateAllocationsTable(allocations) {
+                const renderBody = $('#render');
+                
+                // 1. If the project data is truly empty, don't proceed, the main loadAllocations function handles UI.
+                if (allAllocationsData.length === 0) {
+                    renderBody.html('');
+                    return;
+                }
+
+                // 2. Handle scenario where data exists, but the filter returns zero results.
+                if (allocations.length === 0) {
+                    $('#noData').show();
+                    $('#noData p').html('<i class="fas fa-filter text-xl mr-2"></i> No tasks found matching the current criteria.'); // Updated message
+                    renderBody.html('');
+                    return;
+                }
+
+                // 3. Data found and filtered, proceed with rendering.
+                $('#noData').hide();
+
+                let newHtml = '';
+                let count = 1;
+                allocations.forEach(r => {
+                    const rowClass = count % 2 === 0 ? 'bg-gray-50 hover:bg-indigo-50 transition duration-150' : 'bg-white hover:bg-indigo-50 transition duration-150';
+                    newHtml += `<tr class="${rowClass}" data-allotmentid="${r.allotmentid}" data-type="${r.type}" data-status="${r.status}">` + generateRowHtml(r, count) + `</tr>`;
+                    count++;
+                });
+
+                renderBody.html(newHtml);
+
+                $('#allocTable th.sortable').removeClass('sorted-asc sorted-desc').find('.sort-icon').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort').css('color', '#9ca3af');
+                if (sortState.column) {
+                    const header = $(`#allocTable th[data-sort="${sortState.column}"]`);
+                    header.addClass(`sorted-${sortState.direction}`);
+                    header.find('.sort-icon').removeClass('fa-sort').addClass(sortState.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down').css('color', '#3b82f6');
+                }
+                
+                // Re-apply column visibility after re-rendering the rows
+                toggleTableColumns(currentFilter); 
+            }
+            
+            // === MODIFIED renderTable FUNCTION to include search filtering ===
+            function renderTable() {
+                calculateCounts(); 
+                
+                let filteredData = [...allAllocationsData];
+                let isDeliveredView = currentFilter === 'Delivered';
+                
+                // 1. FILTER BY STATUS (Existing Logic)
+                if (currentFilter === 'All') {
+                    // Show all tasks that are primary (Prod) or QC
+                    filteredData = allAllocationsData.filter(r => r.type === 'Prod' || r.type === 'QC');
+                } else if (currentFilter === 'Prod') {
+                    filteredData = allAllocationsData.filter(r => getTaskCategoryForFilter(r) === 'Prod');
+                } else if (currentFilter === 'QC') {
+                    filteredData = allAllocationsData.filter(r => getTaskCategoryForFilter(r) === 'QC');
+                } else if (currentFilter === 'Deliverable') {
+                    filteredData = allAllocationsData.filter(r => getTaskCategoryForFilter(r) === 'Deliverable');
+                } 
+                // Removed 'Offline' filter
+                else if (isDeliveredView) {
+                    // Delivered tasks: isDelivered 1. Show only ONE task per feeder (the main one).
+                    const deliveredFeederMap = new Map();
+                    const allDeliveredTasks = allAllocationsData.reverse().filter(r => r.isDelivered == 1);
+
+                    // Iterate backwards to ensure the latest delivery data for a feeder is used
+                    for (let i = allDeliveredTasks.length - 1; i >= 0; i--) {
+                        const task = allDeliveredTasks[i];
+                        if (!deliveredFeederMap.has(task.feederAlloted)) {
+                            deliveredFeederMap.set(task.feederAlloted, task);
+                        }
+                    }
+                    
+                    // Convert Map values back to an array and sort by allotmentid
+                    filteredData = Array.from(deliveredFeederMap.values());
+                    filteredData.sort((a, b) => parseInt(a.allotmentid) - parseInt(b.allotmentid));
+
+                } else {
+                    filteredData = allAllocationsData.filter(r => r.type === 'Prod'); // Fallback to 'All' primary tasks
+                }
+                
+                // 2. FILTER BY UNIVERSAL SEARCH (NEW LOGIC)
+                const search = currentSearchTerm.toLowerCase().trim();
+                if (search) {
+                    filteredData = filteredData.filter(r => {
+                        const statusInfo = getStatusInfo(r);
+                        const statusLabel = statusInfo.label.toLowerCase(); 
+
+                        // Columns to search through:
+                        return String(r.allotmentid).toLowerCase().includes(search) ||
+                               String(r.feederAlloted).toLowerCase().includes(search) ||
+                               String(r.teamMember).toLowerCase().includes(search) ||
+                               String(r.qcAssinee).toLowerCase().includes(search) ||
+                               String(r.type).toLowerCase().includes(search) ||
+                               statusLabel.includes(search);
+                    });
+                }
+
+                // 3. SORTING (Existing Logic)
+                const sortedData = sortAllocations(filteredData);
+                updateAllocationsTable(sortedData);
+            }
+            // === END MODIFIED renderTable FUNCTION ===
+            
+            function loadAllocations() {
+                if (allAllocationsData.length === 0) {
+                    showTableLoadingState();
+                }
+                $.ajax({
+                    url: '/admin/project/getAllocationData',
+                    type: 'GET',
+                    data: { projectid: pid },
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log(data);
+                        allAllocationsData = data;
+                        loadProjects(); // Reload projects to update completion status based on new allocation data
+                        
+                        if (allAllocationsData.length > 0) {
+                            // Data exists: hide upload form permanently and set default filter message
+                            $('#uploadCard').hide();
+                            $('#noData').hide();
+                            $('#noData p').html('<i class="fas fa-filter text-xl mr-2"></i> No tasks found matching the current criteria.');
+                        } else {
+                            // No data exists: show upload form and initial empty message
+                            $('#uploadCard').show();
+                            $('#noData').show();
+                            $('#noData p').html('No allocations found. Please upload a file to get started.');
+                        }
+
+                        renderTable();
+                    },
+                    error: function(err) {
+
+                        console.error(err);
+                        if (allAllocationsData.length === 0) {
+                            $('#render').html('<tr><td colspan="18" class="py-12 text-center text-red-500"><i class="fas fa-exclamation-triangle"></i> Failed to load tasks.</td></tr>');
+                        }
+                    }
+                });
+            }
+
+            function showTableLoadingState() {
+                // Updated py/px for skeleton rows
+                const loadingHtml = `
+                    <tr class="animate-pulse even:bg-gray-50"><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td></tr>
+                    <tr class="animate-pulse even:bg-gray-50"><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td><td class="py-1.5 px-2"><div class="h-3 bg-gray-200 rounded"></div></td></tr>
+                `;
+                $('#render').html(loadingHtml);
+            }
+            
+            function loadMembersForModal(allocation = null) {
+                // Removed editOfflineAssinee from targets
+                const memberSelects = [$("#memberSelect"), $("#memberSelectQc"), $("#othermemberSelect"), $("#editAssignedTo"), $("#editQcAssinee")]; 
+                
+                if (allMembersData.length > 0) {
+                    populateMemberSelects(allocation);
+                    return $.Deferred().resolve().promise();
+                }
+                
+                return $.ajax({
+                    url: '/admin/project/getAssinee',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        allMembersData = data;
+                        populateMemberSelects(allocation);
+                    },
+                    error: function(err) {
+                      //  console.log(err)
+                        Swal.fire({ icon: 'error', title: 'Failed to load members', text: 'Try Again Later' });
+                    }
+                });
+            }
+
+            function populateMemberSelects(allocation = null) {
+                // Removed #editOfflineAssinee from targets
+                const targets = [$("#memberSelect"), $("#memberSelectQc"), $("#othermemberSelect"), $("#editAssignedTo"), $("#editQcAssinee")]; 
+                
+                targets.forEach(target => {
+                    target.empty();
+                    const defaultText = target.attr('id').includes('Qc') ? '-- Select QC Member --' : '-- Select Member --';
+                    target.append(`<option value="">${defaultText}</option>`);
+
+                    if (Array.isArray(allMembersData) && allMembersData.length > 0) {
+                        allMembersData.forEach(item => {
+                            let selectedProd = '';
+                            let selectedQc = '';
+                            // Removed selectedOffline
+                            
+                            if (allocation) {
+                                if (target.is('#editAssignedTo') && allocation.teamMember == item.fullname) {
+                                    selectedProd = 'selected';
+                                }
+                                if (target.is('#editQcAssinee') && allocation.qcAssinee == item.fullname) {
+                                    selectedQc = 'selected';
+                                }
+                                // Removed check for Offline Assinee selection 
+                            }
+                            // Only include selectedProd or selectedQc, they shouldn't conflict on these targets
+                            const selectedAttr = selectedProd || selectedQc; 
+                            const optionHtml = `<option value="${item.EID}" ${selectedAttr}>${item.fullname}</option>`;
+                            target.append(optionHtml);
+                        });
+                    }
+                });
+            }
+            
+            // === MODIFIED: populateGlobalEditModal (Removed Offline fields, added Delivery fields) ===
+            function populateGlobalEditModal(allocation) {
+                
+                // Removed Conditional Offline Panel Visibility logic
+                
+                $('#globalEditAllotmentId').val(allocation.allotmentid);
+                $('#editFeederAlloted').val(allocation.feederAlloted);
+                $('#editTaskType').val(allocation.type === 'Prod' ? 'Production' : 'Quality Check');
+                $('#editHrsAssigned').val(allocation.hrsAssigned);
+                $('#editQcHrs').val(allocation.qcHrs);
+
+                $('#editDeadline').val(formatDateForInput(allocation.deadline));
+                $('#editQcDeadline').val(formatDateForInput(allocation.qcDeadline));
+                $('#editCompletedDate').val(formatDateForInput(allocation.completion_date));
+
+                // Populate NEW Delivery Fields (using old offline DB fields, renamed in UI)
+                $('#editDeliveryHrs').val(allocation.DeliveryHours || 0); // Reuse `offlineHrs` field
+                $('#editDeliveryDeadline').val(formatDateForInput(allocation.DeliveryDeadline)); // Reuse `offlineDeadline` field
+                // Note: I will only populate the selects handled in populateMemberSelects. 
+                // The `offlineAssinee` field is removed entirely.
+
+                const statusInfo = getStatusInfo(allocation);
+                $('#editStatus').val(statusInfo.label);
+                $('#editStatus').prop('readonly', true).addClass('bg-gray-100 cursor-not-allowed').removeClass('bg-gray-50');
+
+                loadMembersForModal(allocation);
+            }
+            // === END MODIFIED: populateGlobalEditModal ===
+
+
+            $("#uploadForm").on("submit", function(e){
+                e.preventDefault();
+                const uploadBtn = $("#uploadBtn");
+                uploadBtn.html('<i class="fas fa-spinner fa-spin"></i> Uploading...').prop('disabled', true);
+   var formData = new FormData();
+formData.append("file", $("#excelFile")[0].files[0]); // file input element
+formData.append("projectId", projectId);
+                    const csrfToken = document.getElementById("csrfToken").value;
+
+                $.ajax({
+                    url: "/admin/project/uploadallotments",
+                    type: "POST",
+                    data: formData,
+                    headers: {
+              'X-CSRF-TOKEN': csrfToken
+          },
+                    processData: false,
+                    contentType: false,
+                    success: function(res){
+                        Swal.fire({ icon: 'success', title: 'Success!', text: 'Upload Successfull!!'});
+                        loadAllocations();
+                        loadProjects();
+                        $("#uploadForm")[0].reset();
+                    },
+                    error: function(err) {
+                     //   console.log(err);
+                        Swal.fire({ icon: 'error', title: 'Upload Failed', text: 'Something Went Wrong'});
+                    },
+                    complete: function() {
+                        uploadBtn.html('<i class="fas fa-upload"></i> Upload Excel').prop('disabled', false);
+                    }
+                });
+            });
+
+            function exportAllocations() {
+                const exportBtn = $('#exportExcelBtn');
+                exportBtn.html('<i class="fas fa-spinner fa-spin"></i> Exporting...').prop('disabled', true);
+                $.ajax({
+                    url: 'export.php',
+                    method: 'GET',
+                    data: { pid: pid },
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    success: function(blob, status, xhr) {
+                        let filename = `Project_Allocations_${pid}.xlsx`;
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Export Successful!',
+                            text: `${filename} downloaded.`
+                        });
+                    },
+                    error: function() {
+                   
+                    },
+                    complete: function() {
+                        exportBtn.html('<i class="fas fa-file-excel"></i> Export to Excel').prop('disabled', false);
+                    }
+                });
+            }
+
+            $(document).on('click', '#exportExcelBtn', exportAllocations);
+            $(document).on('click', '#allocTable th.sortable', function() {
+                const column = $(this).data('sort');
+                if (!column) return;
+                if (sortState.column === column) {
+                    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortState.column = column;
+                    sortState.direction = 'asc';
+                }
+                renderTable();
+            });
+            
+            // === MODIFIED: Filter button handler calls renderTable (No logic change, just reference) ===
+            $(document).on('click', '.filter-btn', function() {
+                const filter = $(this).data('filter');
+                currentFilter = filter;
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                renderTable();
+            });
+            // === END MODIFIED ===
+            
+            // NEW: Universal Search Input Handler
+            $('#universalSearch').on('input', function() {
+                currentSearchTerm = $(this).val();
+                renderTable();
+            });
+
+            // --- Handlers for New Icon Buttons ---
+            $(document).on('click', '.action-button[data-type="assign-prod"]', function() {
+                stopAutoRefresh();
+                const clickedButton = this;
+                const allotmentId = $(clickedButton).data('allotmentid');
+                
+                loadMembersForModal().done(function() {
+                    const allocation = allAllocationsData.find(a => a.allotmentid == allotmentId);
+                    $('#modalAllotmentId').val(allotmentId);
+                    $('#memberSelect').val(allocation.assignedToId || '');
+                    $('#memberSelectQc').val(allocation.qcAssineeId || '');
+                    $('#deadlineInput').val(formatDateForInput(allocation.deadline) || '');
+                    $('#qcdeadlineInput').val(formatDateForInput(allocation.qcDeadline) || '');
+                    
+                    const qcGroup = $('#assignModal .form-group:has(#memberSelectQc), #assignModal .form-group:has(#qcdeadlineInput)');
+                    const hr = $('#assignModal hr');
+                    if (allocation && (allocation.qcHrs === null || allocation.qcHrs === 'N/A' || parseFloat(allocation.qcHrs) <= 0)) {
+                    qcGroup.addClass('hidden');
+                    hr.addClass('hidden');
+                    } else {
+                        qcGroup.removeClass('hidden');
+                        hr.removeClass('hidden');
+                    }
+                    // FIX: Remove 'hidden' class before fading in
+                    $('#assignModal').removeClass('hidden').fadeIn(200); 
+                });
+            });
+
+            $(document).on('click', '.edit-button', function() {
+                stopAutoRefresh();
+                const allotmentId = $(this).data('allotmentid');
+                
+                loadMembersForModal().done(function() {
+                    const allocation = allAllocationsData.find(a => a.allotmentid == allotmentId);
+                    if (allocation) {
+                        populateGlobalEditModal(allocation);
+                        // FIX: Remove 'hidden' class before fading in
+                        $('#globalEditModal').removeClass('hidden').fadeIn(200);
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Task data not found.' });
+                        startAutoRefresh();
+                    }
+                });
+            });
+
+            $(document).on('click', '.assign-others', function() {
+                stopAutoRefresh();
+                const allotmentId = $(this).data('allotmentid');
+                
+                loadMembersForModal().done(function() {
+                    $('#modalAllotmentIdOthers').val(allotmentId);
+                    $('#assignOthersForm')[0].reset();
+                    $('#othermemberSelect').val('');
+                    // FIX: Remove 'hidden' class before fading in
+                    $('#assignOthersModal').removeClass('hidden').fadeIn(200);
+                });
+            });
+            
+            // --- Rework Button Handler ---
+            $(document).on('click', '.rework-button', function() {
+                stopAutoRefresh();
+                const allotmentId = $(this).data('allotmentid');
+                
+                Swal.fire({
+                    title: 'Confirm Rework?',
+                    text: "This will re-assign the task back to the production queue (Status: Rework Assigned).",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f97316', // orange-500
+                    cancelButtonColor: '#6b7280', // gray-500
+                    confirmButtonText: 'Yes, Start Rework'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const clickedButton = $(this);
+                        clickedButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-white"></i>');
+
+                        $.ajax({
+                            url: "api/projectApi.php",
+                            type: "POST",
+                            data: { reworkTask: allotmentId },
+                            success: function(res) {
+                                const response = typeof res === 'string' ? JSON.parse(res) : res;
+                                Swal.fire({ icon: response.status || 'success', title: 'Rework Initiated!', text: response.message || 'Task is now in the rework queue.' });
+                                loadAllocations();
+                            },
+                            error: function() {
+                                Swal.fire({ icon: 'error', title: 'Rework Failed', text: 'Failed To Assign Rework' });
+                            },
+                            complete: function() {
+                                startAutoRefresh();
+                            }
+                        });
+                    } else {
+                        startAutoRefresh();
+                    }
+                });
+            });
+
+            // --- Deliver Button Handler ---
+            $(document).on('click', '.deliver-button', function() {
+                stopAutoRefresh();
+                const allotmentId = $(this).data('allotmentid');
+                
+                $('#modalDeliverAllotmentId').val(allotmentId);
+                $('#deliveryRemark').val('');  
+                // FIX: Remove 'hidden' class before fading in
+                $('#deliverModal').removeClass('hidden').fadeIn(200);
+            });
+
+            // --- New Deliver Form Submission Handler ---
+            $('#deliverForm').on('submit', function(e) {
+                e.preventDefault();
+                scrollPosition = $(window).scrollTop();
+                const saveBtn = $('#saveDeliveryBtn');
+                saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+
+                const allotmentId = $('#modalDeliverAllotmentId').val();
+                const deliveryRemark = $('#deliveryRemark').val();
+
+                $.ajax({
+                    url: "api/projectApi.php",  
+                    type: "POST",
+                    data: { markDelivered: allotmentId, deliveryRemark: deliveryRemark },
+                    success: function(res) {
+                        const response = typeof res === 'string' ? JSON.parse(res) : res;
+                        Swal.fire({ icon: response.status || 'success', title: 'Delivered!', text:  'Task marked as delivered.' }).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                        loadAllocations();
+                        // FIX: Re-add 'hidden' class after fadeOut
+                        $('#deliverModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                        startAutoRefresh();
+                    },
+                    error: function() {
+                        Swal.fire({ icon: 'error', title: 'Delivery Failed', text: 'Unabale To Deliver'});
+                    },
+                    complete: function() {
+                        saveBtn.html('<i class="fas fa-check"></i> Mark Delivered').prop('disabled', false);
+                    }
+                });
+            });
+            // ---------------------------------
+            
+            // --- NEW DELETE BUTTON HANDLER ---
+            $(document).on('click', '.delete-button', function() {
+                stopAutoRefresh();
+                const allotmentId = $(this).data('allotmentid');
+                const $row = $(this).closest('tr');
+                const feederName = $row.find('td:eq(1)').text(); // Feeder name is at index 1
+                const clickedButton = $(this); // Capture the button clicked for re-enabling
+
+                Swal.fire({
+                    title: 'Confirm Deletion?',
+                    html: `Are you sure you want to permanently delete the task for feeder <strong>${escapeHtml(feederName)}</strong> ? <br><br> <strong>Note:</strong> On Confirming task related Booking Hours Also Deleted for both Prod And Qc Task.<br><strong style="color:red">This action cannot be undone!.</strong>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626', // Red-700
+                    cancelButtonColor: '#6b7280', // Gray-500
+                    confirmButtonText: 'Yes, Delete It!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Deleting Task...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+                        
+                        clickedButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-white"></i>');
+
+                        $.ajax({
+                            url: "api/projectApi.php",
+                            type: "POST",
+                            data: { deleteTask: allotmentId }, 
+                            success: function(res) {
+                                try {
+                                    const response = typeof res === 'string' ? JSON.parse(res) : res;
+                                    if (response.status === 'success') {
+                                        Swal.fire({ icon: 'success', title: 'Deleted!', text: response.message || 'Task successfully removed.' });
+                                        loadAllocations(); // Refresh table
+                                    } else {
+                                        Swal.fire({ icon: 'error', title: 'Deletion Failed', text: response.message || 'The server reported an error.' });
+                                    }
+                                } catch (e) {
+                                    // Handle non-JSON or unexpected successful responses
+                                    Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Task successfully removed (Server response unconfirmed).' });
+                                    loadAllocations();
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({ icon: 'error', title: 'Deletion Failed', text: 'Unable To Delete' });
+                            },
+                            complete: function() {
+                                // Re-enable button and restore icon on failure/completion
+                                clickedButton.prop('disabled', false).html(iconSvg.delete); 
+                                startAutoRefresh();
+                            }
+                        });
+                    } else {
+                        startAutoRefresh();
+                    }
+                });
+            });
+            // ---------------------------------
+
+            $(document).on('click', '#completeProjectBtn', function() {
+                stopAutoRefresh();
+                if ($(this).prop('disabled')) {
+                    Swal.fire({ icon: 'info', title: 'Project Incomplete', text: 'The project must have all tasks marked as Delivered before completing the project.' });
+                    startAutoRefresh();
+                    return;
+                }
+                $('#modalProjectId').val(pid);
+                // FIX: Remove 'hidden' class before fading in
+               // $('#completeModal').removeClass('hidden').fadeIn(200);
+               Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Mark Completd!"
+                }).then((result) => {
+                if (result.isConfirmed) {
+                        $.ajax({
+                            url:'api/projectApi.php',
+                            type:'POST',
+                            data:{finishNoInvoice:pid},
+                            dataType:'JSON',
+                            success:function(res){
+                                Swal.fire({
+                title: "Success!",
+                text:'Project Marked Completed',
+                icon: "success",
+                draggable: true
+                });
+            },
+            error:function(){
+                               
+
+            }
+        })
+  }
+});
+            });
+            
+            // FIX: Update escape key handler to re-add 'hidden' class
+            $(document).on('keydown', function(e) {
+                if (e.key === "Escape") {
+                    $('.modal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                    startAutoRefresh();
+                }
+            });
+
+            // FIX: Update modal overlay click handler to re-add 'hidden' class
+            $('.modal').on('click', function(e) {
+                if ($(e.target).is('.modal')) {
+                    $(this).fadeOut(200, function() { $(this).addClass('hidden'); });
+                    startAutoRefresh();
+                }
+            });
+            // FIX: Update individual close button handlers to re-add 'hidden' class
+            $('#closeAssignModalBtn').on('click', function() {
+                $('#assignModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                startAutoRefresh();
+            });
+            $('#closeAssignOthersModalBtn').on('click', function() {
+                $('#assignOthersModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                startAutoRefresh();
+            });
+            $('#closeGlobalEditModalBtn').on('click', function() {
+                $('#globalEditModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                startAutoRefresh();
+            });
+            $('#closeCompleteModalBtn').on('click', function() {
+                $('#completeModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                startAutoRefresh();
+            });
+            $('#closeDeliverModalBtn').on('click', function() { // New close handler
+                $('#deliverModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                startAutoRefresh();
+            });
+
+            $('#assignForm').on('submit', function(e) {
+                e.preventDefault();
+                scrollPosition = $(window).scrollTop();
+                const saveBtn = $('#saveAssignmentBtn');
+                saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+                const allotmentId = $('#modalAllotmentId').val();
+                const memberId = $('#memberSelect').val();
+                const deadline = $('#deadlineInput').val();
+                const qcdeadline= $('#qcdeadlineInput').val() || null;
+                const qcMemberId = $('#memberSelectQc').val() || null;
+                const csrfToken=document.getElementById("csrfToken").value;
+              //  console.log({allotmentId,memberId,deadline,qcMemberId,qcdeadline});
+                $.ajax({
+                    url: "/admin/project/assignTask",
+                    type: "POST",
+                    data: { allotmentid: allotmentId, memberId: memberId, deadline: deadline, qcMemberId: qcMemberId,qcdeadline:qcdeadline??null },
+                          headers: {
+              'X-CSRF-TOKEN': csrfToken
+          },
+                    success: function(res) {
+                        const response = typeof res === 'string' ? JSON.parse(res) : res;
+                        Swal.fire({ icon: response.status || 'success', title: 'Success!', text:'Task assigned successfully.' }).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                        loadAllocations();
+                        // FIX: Re-add 'hidden' class after fadeOut
+                        $('#assignModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                        $('#assignForm')[0].reset();
+                        $('#memberSelect').val('');
+                        $('#memberSelectQc').val('');
+                        startAutoRefresh();
+                    },
+                    error: function(err) {
+                        console.log(err);
+                        Swal.fire({ icon: 'error', title: 'Request Failed', text: 'Failed To Assign Task'}).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                    },
+                    complete: function() {
+                        saveBtn.html('<i class="fas fa-save"></i> Save').prop('disabled', false);
+                    }
+                });
+            });
+
+            // === MODIFIED: globalEditForm submission (Removed Offline Assinee/Logic, used Delivery fields) ===
+            $('#globalEditForm').on('submit', function(e) {
+                e.preventDefault();
+                scrollPosition = $(window).scrollTop();
+                const saveBtn = $('#saveGlobalEditBtn');
+                saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+                
+                const allotmentId = $('#globalEditAllotmentId').val();
+                const hrsAssigned = $('#editHrsAssigned').val();
+                const qcHrs = $('#editQcHrs').val();
+                const assignedToId = $('#editAssignedTo').val();
+                const deadline = $('#editDeadline').val();
+                const qcDeadline = $('#editQcDeadline').val()??null;
+                const qcAssineeId = $('#editQcAssinee').val();
+                // NEW Delivery Fields
+                const deliveryHrs = $('#editDeliveryHrs').val();
+                const deliveryDeadline = $('#editDeliveryDeadline').val();
+                
+                const dataToSend = {
+                    updateAllotment: allotmentId,
+                    hrsAssigned: hrsAssigned,
+                    qcHrs: qcHrs,
+                    assignedToId: assignedToId,
+                    deadline: deadline,
+                    qcAssineeId: qcAssineeId,
+                    qcDeadline: qcDeadline,
+                    offlineHrs: deliveryHrs, 
+                    offlineDeadline: deliveryDeadline,
+                };
+
+                $.ajax({
+                    url: "api/projectApi.php",
+                    type: "POST",
+                    data: dataToSend, 
+                    success: function(res) {
+                        const response = typeof res === 'string' ? JSON.parse(res) : res;
+                        Swal.fire({ icon: response.status || 'success', title: 'Success!', text: 'Task updated successfully.' }).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                        loadAllocations();
+                        // FIX: Re-add 'hidden' class after fadeOut
+                        $('#globalEditModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                        startAutoRefresh();
+                    },
+                    error: function(err) {
+                    },
+                    complete: function() {
+                        saveBtn.html('<i class="fas fa-save"></i> Save Changes').prop('disabled', false);    
+                    }
+                });
+            });
+            // === END MODIFIED: globalEditForm submission ===
+            // --- NEW: Add Allotment Modal Logic ---
+
+// 1. Extend populateMemberSelects to include the new selects
+function populateMemberSelects(allocation = null) {
+    // OLD LINE: const targets = [$("#memberSelect"), $("#memberSelectQc"), $("#othermemberSelect"), $("#editAssignedTo"), $("#editQcAssinee")];
+    // NEW LINE: Includes new Member Selects
+    const targets = [$("#memberSelect"), $("#memberSelectQc"), $("#othermemberSelect"), $("#editAssignedTo"), $("#editQcAssinee"), $("#newMemberSelect"), $("#newMemberSelectQc")];
+    
+    // ... (rest of the populateMemberSelects function remains the same) ...
+    
+    targets.forEach(target => {
+        target.empty();
+        let defaultText;
+        if (target.is('#memberSelectQc') || target.is('#newMemberSelectQc') || target.is('#editQcAssinee')) {
+             defaultText = '-- Select QC Member --';
+        } else if (target.is('#memberSelect') || target.is('#newMemberSelect') || target.is('#othermemberSelect') || target.is('#editAssignedTo')) {
+             defaultText = '-- Select Member --';
+        } else {
+             defaultText = '-- Select Member --';
+        }
+        
+        target.append(`<option value="">${defaultText}</option>`);
+
+        if (Array.isArray(allMembersData) && allMembersData.length > 0) {
+            allMembersData.forEach(item => {
+                let selectedProd = '';
+                let selectedQc = '';
+                
+                if (allocation) {
+                    if ((target.is('#editAssignedTo') || target.is('#newMemberSelect')) && allocation.teamMember == item.firstName+' '+item.lastName) {
+                        selectedProd = 'selected';
+                    }
+                    if ((target.is('#editQcAssinee') || target.is('#newMemberSelectQc')) && allocation.qcAssinee == item.firstName+' '+item.lastName) {
+                        selectedQc = 'selected';
+                    }
+                }
+                
+                const selectedAttr = selectedProd || selectedQc; 
+                const optionHtml = `<option value="${item.eid}" ${selectedAttr}>${item.firstName+' '+item.lastName}</option>`;
+                target.append(optionHtml);
+            });
+        }
+    });
+}
+// Note: Ensure the updated populateMemberSelects replaces the original function in your code.
+
+
+// 2. Add Button Click Handler
+$(document).on('click', '#addAllotmentBtn', function() {
+    stopAutoRefresh();
+    $('#addAllotmentForm')[0].reset();
+    $('#newMemberSelect').val('');
+    $('#newMemberSelectQc').val('');
+    $('#qcRequiredCheckbox').prop('checked', true).trigger('change'); // Ensure QC fields are shown by default
+    
+    // Set default deadlines (optional: can be today/tomorrow or left blank)
+    const today = new Date().toISOString().split('T')[0];
+    $('#newDeadlineInput').val(today); 
+    $('#newQcDeadlineInput').val(today);
+    $('#newDeliveryDeadline').val(today);
+
+    loadMembersForModal().done(function() {
+        // FIX: Remove 'hidden' class before fading in
+        $('#addAllotmentModal').removeClass('hidden').fadeIn(200);
+    });
+});
+
+// 3. QC Required Checkbox Handler
+$(document).on('change', '#qcRequiredCheckbox', function() {
+    const qcRequired = $(this).is(':checked');
+    const qcFieldsContainer = $('#qcFieldsContainer');
+    const newQcHrs = $('#newQcHrs');
+    const newMemberSelectQc = $('#newMemberSelectQc');
+    const newQcDeadlineInput = $('#newQcDeadlineInput');
+
+    if (qcRequired) {
+        qcFieldsContainer.slideDown(200);
+        newQcHrs.prop('required', true);
+        newMemberSelectQc.prop('required', true);
+        newQcDeadlineInput.prop('required', true);
+    } else {
+        qcFieldsContainer.slideUp(200);
+        // Clear and remove required flags when not needed
+        newQcHrs.val(0).prop('required', false);
+        newMemberSelectQc.val('').prop('required', false);
+        newQcDeadlineInput.val('').prop('required', false);
+    }
+});
+// Trigger on load to set initial state
+$('#qcRequiredCheckbox').trigger('change'); 
+
+
+// 4. Modal Close Button Handler
+$('#closeAddAllotmentModalBtn').on('click', function() {
+    $('#addAllotmentModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+    startAutoRefresh();
+});
+
+
+// 5. Form Submission Handler
+$('#addAllotmentForm').on('submit', function(e) {
+    e.preventDefault();
+    scrollPosition = $(window).scrollTop();
+    const saveBtn = $('#saveAllotmentBtn');
+    saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Adding...').prop('disabled', true);
+
+    const isQcRequired = $('#qcRequiredCheckbox').is(':checked');
+    const qcDeadline = isQcRequired ? $('#newQcDeadlineInput').val() : '';
+    const qcHrs = isQcRequired ? $('#newQcHrs').val() : 0;
+    const qcMemberId = isQcRequired ? $('#newMemberSelectQc').val() : null;
+
+    const dataToSend = {
+        addAllotment: true,
+        pid: $('#pid').val(), // Use the hidden PID from the form or global variable
+        feederAlloted: $('#newFeederAlloted').val(),
+        taskType: $('#newTaskType').val(), // Added Task Type
+        hrsAssigned: $('#newHrsAssigned').val(),
+        deliveryHrs: $('#newDeliveryHrs').val(),
+        memberId: $('#newMemberSelect').val(),
+        deadline: $('#newDeadlineInput').val(),
+        qcRequired: isQcRequired ? 1 : 0,
+        qcHrs: qcHrs,
+        qcMemberId: qcMemberId,
+        qcDeadline: qcDeadline,
+        // The API handler will need to correctly process this new structure
+    };
+    
+    
+    // Simple validation
+    if (dataToSend.hrsAssigned <= 0 && isQcRequired) { // Ensure production hours are set if QC is needed
+        Swal.fire({ icon: 'error', title: 'Invalid Input', text: 'Production Hours must be greater than zero if QC is required.' });
+        saveBtn.html('<i class="fas fa-plus"></i> Add Task').prop('disabled', false);
+        return;
+    }
+
+    $.ajax({
+        url: "api/projectApi.php",
+        type: "POST",
+        data: dataToSend,
+        success: function(res) {
+            const response = typeof res === 'string' ? JSON.parse(res) : res;
+            Swal.fire({ icon: response.status || 'success', title: 'Success!', text:'New task successfully added.' }).then(() => {
+                $(window).scrollTop(scrollPosition);
+            });
+            loadAllocations();
+            // FIX: Re-add 'hidden' class after fadeOut
+            $('#addAllotmentModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+            $('#addAllotmentForm')[0].reset();
+            startAutoRefresh();
+        },
+        error: function() {
+           
+            Swal.fire({ icon: 'error', title: 'Request Failed !', text: 'Something Went Wrong!!'}).then(() => {
+                $(window).scrollTop(scrollPosition);
+            });
+        },
+        complete: function() {
+            saveBtn.html('<i class="fas fa-plus"></i> Add Task').prop('disabled', false);
+        }
+    });
+});
+// --- END NEW: Add Allotment Modal Logic ---
+            
+            $('#assignOthersForm').on('submit', function(e) {
+                e.preventDefault();
+                scrollPosition = $(window).scrollTop();
+                const saveBtn = $('#saveAssignmentBtnn');
+                saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+                const allotmentId = $('#modalAllotmentIdOthers').val();
+                const memberId = $('#othermemberSelect').val();
+                const deadline = $('#otherdeadlineInput').val();
+                const hrsAssigned = $('#otherHrs').val();
+                if (!hrsAssigned || isNaN(hrsAssigned) || Number(hrsAssigned) <= 0) {
+                    Swal.fire({ icon: 'error', title: 'Invalid Input', text: 'Please enter a valid number of hours greater than zero.' });
+                    saveBtn.html('<i class="fas fa-save"></i> Save Split').prop('disabled', false);
+                    return;
+                }
+
+                $.ajax({
+                    url: "api/projectApi.php",
+                    type: "POST",
+                    data: { assignOthers: allotmentId, allotTo: memberId, deadline: deadline, hrsAssigned: hrsAssigned },
+                    success: function(res) {
+                        const response = typeof res === 'string' ? JSON.parse(res) : res;
+                        Swal.fire({ icon:'success', title:'Success', text: 'Task assigned successfully.' }).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                        loadAllocations();
+                        // FIX: Re-add 'hidden' class after fadeOut
+                        $('#assignOthersModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                        $('#assignOthersForm')[0].reset();
+                        $('#othermemberSelect').val('');
+                        startAutoRefresh();
+                    },
+                    error: function() {
+                       
+                        Swal.fire({ icon: 'error', title: 'Request Failed', text:'Failed To Assign Task'}).then(() => {
+                            $(window).scrollTop(scrollPosition);
+                        });
+                    },
+                    complete: function() {
+                        saveBtn.html('<i class="fas fa-save"></i> Save Split').prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#completeForm').on('submit', function(e) {
+                e.preventDefault();
+                const saveBtn = $('#saveCompleteBtn');
+                saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Completing...').prop('disabled', true);
+                
+                const data = {
+                    completeProject: $('#modalProjectId').val(),
+                    invoiceNo: $('#invoiceNo').val(),
+                    workOrder: $('#workOrder').val(),
+                    clientHours: $('#clientHours').val(),
+                    productionHours: $('#productionHours').val(),
+                    teamLeadRemark: $('#teamLeadRemark').val()
+                };
+
+                $.ajax({
+                    url: "api/projectApi.php",
+                    type: "POST",
+                    data: data,
+                    success: function(res) {
+                        const response = typeof res === 'string' ? JSON.parse(res) : res;
+                        Swal.fire({ icon:'success', title: 'Success!', text: 'Project marked as complete.' });
+                        // FIX: Re-add 'hidden' class after fadeOut
+                        $('#completeModal').fadeOut(200, function() { $(this).addClass('hidden'); });
+                        loadProjects();
+                        startAutoRefresh();
+                    },  
+                    error: function() {
+                        Swal.fire({ icon: 'error', title: 'Completion Failed', text: 'Something Went Wrong'});
+                    },
+                    complete: function() {
+                        saveBtn.html('<i class="fas fa-check"></i> Complete Project').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Initial calls
+            loadMembersForModal().always(function() {
+                loadAllocations();
+            });
+            loadAllocations();
+            startAutoRefresh();
+           
+        });
+        // END OF JAVASCRIPT LOGIC
+        </script>
+        </body>
+        </html>

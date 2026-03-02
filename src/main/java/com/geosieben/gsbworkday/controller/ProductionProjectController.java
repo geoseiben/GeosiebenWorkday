@@ -1,10 +1,14 @@
 package com.geosieben.gsbworkday.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -26,6 +30,23 @@ public class ProductionProjectController {
     public String projectAllotments() {
         return "projectAllotments";
     }
+    @GetMapping("/viewProject")
+    public String viewProjectData() {
+        return "viewproject";
+    }
+        @GetMapping("/employeeHours")
+    public String employeeHours() {
+        return "employeeHours";
+    }
+            @GetMapping("/projectHours")
+    public String projectHours() {
+        return "projectHours";
+    }
+            @GetMapping("/monthlyHours")
+    public String monthlyHours() {
+        return "monthlyHours";
+    }
+    
     
     
 }

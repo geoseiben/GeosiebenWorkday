@@ -4,8 +4,12 @@ package com.geosieben.gsbworkday.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 @Entity 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name="projects")
 public class Project {
 @Id 
@@ -25,15 +29,19 @@ private String filePath;
 @JoinColumn(name="projectLead")
 private EmployeeBasicInfo projectLead;
 @ManyToOne
+@JoinColumn(name="category")
+private ProjectCategories category;
+@ManyToOne
 @JoinColumn(name="createdBy")
 private EmployeeBasicInfo createdBy;
 
 @ManyToOne
 @JoinColumn(name="rootId")
 private RootProject rootProject;
-public Project(String allotmentName, BigDecimal totalHours, BigDecimal productionHrs, BigDecimal qaHrs, LocalDate starDate,
+public Project(int pid,String allotmentName, BigDecimal totalHours, BigDecimal productionHrs, BigDecimal qaHrs, LocalDate starDate,
         LocalDate endDate, String filePath, EmployeeBasicInfo projectLead, EmployeeBasicInfo createdBy,
-        RootProject rootProject) {
+        RootProject rootProject,ProjectCategories category) {
+            this.pid=pid;
     this.allotmentName = allotmentName;
     this.totalHours = totalHours;
     this.productionHrs = productionHrs;
@@ -44,6 +52,7 @@ public Project(String allotmentName, BigDecimal totalHours, BigDecimal productio
     this.projectLead = projectLead;
     this.createdBy = createdBy;
     this.rootProject = rootProject;
+    this.category=category;
 }
 
 
@@ -119,5 +128,24 @@ public void setRootProject(RootProject rootProject) {
     this.rootProject = rootProject;
 }
 
+
+public ProjectCategories getCategory() {
+    return category;
+}
+
+
+public void setCategory(ProjectCategories category) {
+    this.category = category;
+}
+
+
+public int getPid() {
+    return pid;
+}
+
+
+public void setPid(int pid) {
+    this.pid = pid;
+}
 
 }
