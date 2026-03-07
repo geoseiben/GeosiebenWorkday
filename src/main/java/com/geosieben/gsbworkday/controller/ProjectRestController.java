@@ -8,6 +8,7 @@ import com.geosieben.gsbworkday.dto.BookeHoursProjection;
 import com.geosieben.gsbworkday.dto.ClientWiseProjectResponseDto;
 import com.geosieben.gsbworkday.dto.MonthlyHoursProjection;
 import com.geosieben.gsbworkday.dto.ProjectHoursProjection;
+import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Project;
 import com.geosieben.gsbworkday.entity.ProjectAllocation;
@@ -28,9 +29,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequestMapping("admin/project")
 @RestController
@@ -105,6 +105,10 @@ public Project  getAllotmentInfo(@RequestParam int projectid) {
         return projectService.assignTask(allotmentid, memberId, deadline, qcMemberId, qcdeadline);
     }
     
+@PostMapping("/updateAllotment")
+public ResponseEntity<Map<String, String>> updateAllotment(@RequestBody UpdateAllotmentDto dto) { 
+    return projectService.updateAllotment(dto); 
+}
     
 
 

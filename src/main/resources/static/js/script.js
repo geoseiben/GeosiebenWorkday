@@ -36,3 +36,36 @@ function updateActiveLinkStyles(viewId) {
         if (viewId === 'settings' && text.includes('config')) link.classList.add('active');
     });
 }
+function openChat(name, avatar) {
+    activeName.innerText = name;
+    headerName.innerText = name;
+    activeAvatar.src = avatar;
+    headerAvatar.src = avatar;
+    
+    // Clear old messages except the header and timestamp
+    const messages = messageDisplay.querySelectorAll('.message-in, .flex-col.items-end');
+    messages.forEach(m => m.remove());
+
+    // Mock specific conversation data
+    const mockHistory = {
+        'Alex Rivera': ["Hey! The updates look incredible.", "Are we still on for the demo at 4?"],
+        'Jordan Smith': ["I've uploaded the PDF for the contract.", "Let me know when you've signed it."],
+        'Sarah Chen': ["Don't forget the cake for the office party!", "I'll be there in 10 mins."]
+    };
+
+    const history = mockHistory[name] || ["Hello! How can I help you today?"];
+    
+    history.forEach(msg => {
+        const html = `
+            <div class="flex items-start max-w-[85%] message-in">
+                <div class="ai-bubble p-4 px-5 text-sm leading-relaxed shadow-sm">${msg}</div>
+            </div>`;
+        messageDisplay.insertAdjacentHTML('beforeend', html);
+    });
+
+    listView.classList.add('hidden');
+    conversationView.classList.remove('hidden');
+    conversationView.classList.add('flex');
+    
+    setTimeout(() => { messageDisplay.scrollTop = messageDisplay.scrollHeight; }, 50);
+}

@@ -31,11 +31,22 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/dashboard", true)
-                        .permitAll()
-                )
+        .formLogin(form -> form
+    .loginPage("/login")
+    .successHandler((request, response, authentication) -> {
+        var authorities = authentication.getAuthorities();
+
+        String redirectUrl = "/dashboard"; // default
+        if (authorities.stream().anyMatch(a -> a.getAuthority().equals("user"))) {
+            redirectUrl = "/userDashboard";
+        } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("admin"))) {
+            redirectUrl = "/dashboard";
+        }
+
+        response.sendRedirect(redirectUrl);
+    })
+    .permitAll()
+)
                 .logout(logout -> logout
                         .logoutUrl("/logout")                // endpoint for logout
                         .logoutSuccessUrl("/login?logout")   // redirect after logout

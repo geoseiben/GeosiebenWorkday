@@ -6,15 +6,20 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.geosieben.gsbworkday.addon.AddonServ;
+import com.geosieben.gsbworkday.controller.AdminController;
+import com.geosieben.gsbworkday.controller.AuthController;
 import com.geosieben.gsbworkday.dto.AllotmentRequestDto;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
+import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
 import com.geosieben.gsbworkday.entity.Clients;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Project;
@@ -30,10 +35,16 @@ import com.geosieben.gsbworkday.repository.ProjectcategoryRepository;
 import com.geosieben.gsbworkday.repository.RootProjectRepository;
 import com.geosieben.gsbworkday.repository.TlTargetHoursRepository;
 
-import jakarta.persistence.criteria.Root;
 import jakarta.servlet.http.HttpSession;
+
 @Service
 public class ProjectService implements ProjectInterface{
+
+    private final AuthController authController;
+
+    private final EmployeeService employeeService;
+
+    private final AdminController adminController;
 @Autowired
 private ClientRepository clientRepository;
 @Autowired 
@@ -50,6 +61,12 @@ private ProjectRepository projectRepository;
 private AllocationRepository allocationRepository;
 @Autowired
 private TlTargetHoursRepository tlTargetHoursRepository;
+
+    ProjectService(AdminController adminController, EmployeeService employeeService, AuthController authController) {
+        this.adminController = adminController;
+        this.employeeService = employeeService;
+        this.authController = authController;
+    }
     @Transactional
     public ResponseEntity<Map<String,String>> logNewProject(ProjectRequest request) {
       Map<String,String> response=new HashMap<>();
@@ -242,9 +259,70 @@ return ResponseEntity.ok(response);
                       }
                       return ResponseEntity.ok(response);
                 }
-                
+             @Override
+@Transactional
+public ResponseEntity<Map<String, String>> updateAllotment(UpdateAllotmentDto dto) {
+    Map<String, String> response = new HashMap<>();
+    
+    // 1. Safe retrieval using Optional
+    ProjectAllocation allotment = allocationRepository.findById(dto.getAllotmentId())
+            .orElse(null);
 
-                
+    if (allotment == null) {
+        response.put("status", "error");
+        response.put("message", "Task Not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 
-                
+    // 2. Handle QC Task Synchronization
+    // Added null check for getQcAssinee() to prevent NPE
+    boolean isQcStatus = (allotment.getStatus() == 3 || allotment.getStatus() == 6);
+    if (isQcStatus) {
+        ProjectAllocation qcTask = allocationRepository.getQcTask(
+            allotment.getFeederAlloted(), 
+            allotment.getProject().getPid(), 
+            "QC"
+        );
+
+        if (qcTask != null) {
+            // Update QC Assignee if ID differs
+            if (dto.getQcAssineeId() != null && 
+               (allotment.getQcAssinee() == null || !allotment.getQcAssinee().getEID().equals(dto.getQcAssineeId()))) {
+                EmployeeBasicInfo newQcEmp = (EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(dto.getQcAssineeId());
+                allotment.setQcAssinee(newQcEmp);
+                qcTask.setQcAssinee(newQcEmp);
+            }
+            
+            // Sync QC Deadline and Hours
+            if (dto.getQcDeadline() != null) {
+                allotment.setQcDeadline(dto.getQcDeadline());
+                qcTask.setQcDeadline(dto.getQcDeadline());
+            }
+            
+            allotment.setQcHrs(dto.getQcHrs());
+            qcTask.setQcHrs(dto.getQcHrs());
+        }
+    }
+
+    // 3. Handle Primary Assignment
+    if (dto.getAssignedToId() != null && 
+       (allotment.getAllottedTo() == null || !allotment.getAllottedTo().getEID().equals(dto.getAssignedToId()))) {
+        
+        EmployeeBasicInfo newMainEmp = (EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(dto.getAssignedToId());
+        if (newMainEmp != null) {
+            allotment.setAllottedTo(newMainEmp);
+            if (allotment.getStatus() == 0) allotment.setStatus(1);
+        }
+    }
+
+    // 4. Update General Info
+    allotment.setDeadline(dto.getDeadline());
+    allotment.setHrsAssigned(dto.getHrsAssigned());
+
+    // No need for explicit .save() due to @Transactional dirty checking
+    response.put("status", "success");
+    response.put("message", "Updated successfully");
+    return ResponseEntity.ok(response);
+}
+            
 }

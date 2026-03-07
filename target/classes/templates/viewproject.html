@@ -5,6 +5,8 @@
             <meta charset="UTF-8">
             <title id="title"></title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <meta name="csrf-param" th:content="${_csrf.parameterName}">
+<meta name="csrf-token" th:content="${_csrf.token}">
             <script src="https://cdn.tailwindcss.com"></script>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -128,9 +130,11 @@
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         </head>
-        <body class="min-h-screen bg-gray-100 text-gray-800 p-2 sm:p-4 lg:p-5"> <!-- Reduced overall padding -->
-            <div class="w-full px-10">
-                <!-- Project Header & Summary -->
+        <body > <!-- Reduced overall padding -->
+            <head th:replace="includes/header :: header"></head>
+
+            <div class="w-full ">
+                <!-- Project Header & Summary -->   
                 <header id="projectDetails" class="bg-white shadow-xl rounded-lg p-3 lg:p-4 border border-indigo-200 mb-4"> <!-- Reduced padding and shadow -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b pb-2 mb-2 border-gray-200"> <!-- Reduced padding/margin -->
                         <div class="flex items-center gap-2"> <!-- Reduced gap -->
@@ -605,15 +609,19 @@
         </div>
     </div>
 </div>
-
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <script>
         // START OF JAVASCRIPT LOGIC
         $(document).ready(function(){
-      
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : null;
+}
             let allotment='';
     const params=new URLSearchParams(window.location.search);
              const projectId = params.get("id");
-             //console.log(projectId);
                     loadProjects();
             const statusClassMap = {
                 'unassigned': 'bg-gray-200 text-gray-700 font-medium px-1 py-0.5 rounded-full inline-flex items-center text-[0.65rem]', /* Reduced padding and font size */
@@ -922,14 +930,12 @@ return `
             function loadProjects() {
                 $.get("/admin/project/getAllotmentInfo", { projectid: projectId })
                 .done(function(data) {
-                    //console.log(data);
                     let project;
                     try {
                         project = typeof data === "string" ? JSON.parse(data) : data;
                         allotment=project.projectName;3
                         $("#title").text(`${allotment}'s Tasks`);
                     } catch (e) {
-                        console.error("Failed to parse project data:", data);
                         return;
                     }
                     
@@ -990,7 +996,6 @@ return `
                     $("#project-summary-placeholder").html(summaryHtml);
                 })
                 .fail(function(err) {
-                   // console.log(err);
                     $("#project-summary-placeholder").html(`<p class="text-red-500 p-4"><i class="fas fa-exclamation-triangle"></i> Failed to load project details: ${err}</p>`);
                 });
             }
@@ -1218,7 +1223,6 @@ return `
                     data: { projectid: pid },
                     dataType: 'json',
                     success: function(data) {
-                        console.log(data);
                         allAllocationsData = data;
                         loadProjects(); // Reload projects to update completion status based on new allocation data
                         
@@ -1238,7 +1242,6 @@ return `
                     },
                     error: function(err) {
 
-                        console.error(err);
                         if (allAllocationsData.length === 0) {
                             $('#render').html('<tr><td colspan="18" class="py-12 text-center text-red-500"><i class="fas fa-exclamation-triangle"></i> Failed to load tasks.</td></tr>');
                         }
@@ -1273,7 +1276,6 @@ return `
                         populateMemberSelects(allocation);
                     },
                     error: function(err) {
-                      //  console.log(err)
                         Swal.fire({ icon: 'error', title: 'Failed to load members', text: 'Try Again Later' });
                     }
                 });
@@ -1367,7 +1369,6 @@ formData.append("projectId", projectId);
                         $("#uploadForm")[0].reset();
                     },
                     error: function(err) {
-                     //   console.log(err);
                         Swal.fire({ icon: 'error', title: 'Upload Failed', text: 'Something Went Wrong'});
                     },
                     complete: function() {
@@ -1743,7 +1744,6 @@ formData.append("projectId", projectId);
                 const qcdeadline= $('#qcdeadlineInput').val() || null;
                 const qcMemberId = $('#memberSelectQc').val() || null;
                 const csrfToken=document.getElementById("csrfToken").value;
-              //  console.log({allotmentId,memberId,deadline,qcMemberId,qcdeadline});
                 $.ajax({
                     url: "/admin/project/assignTask",
                     type: "POST",
@@ -1765,7 +1765,6 @@ formData.append("projectId", projectId);
                         startAutoRefresh();
                     },
                     error: function(err) {
-                        console.log(err);
                         Swal.fire({ icon: 'error', title: 'Request Failed', text: 'Failed To Assign Task'}).then(() => {
                             $(window).scrollTop(scrollPosition);
                         });
@@ -1795,24 +1794,28 @@ formData.append("projectId", projectId);
                 const deliveryDeadline = $('#editDeliveryDeadline').val();
                 
                 const dataToSend = {
-                    updateAllotment: allotmentId,
+                    allotmentId: allotmentId,
                     hrsAssigned: hrsAssigned,
                     qcHrs: qcHrs,
                     assignedToId: assignedToId,
                     deadline: deadline,
                     qcAssineeId: qcAssineeId,
                     qcDeadline: qcDeadline,
-                    offlineHrs: deliveryHrs, 
-                    offlineDeadline: deliveryDeadline,
+                    delivery: deliveryHrs, 
+                    deliveryDeadline: deliveryDeadline,
                 };
-
+                console.log(dataToSend);    
                 $.ajax({
-                    url: "api/projectApi.php",
+                    url: "/admin/project/updateAllotment",
                     type: "POST",
-                    data: dataToSend, 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken() // Attach the token here
+                    },
+                    data: JSON.stringify(dataToSend), 
                     success: function(res) {
-                        const response = typeof res === 'string' ? JSON.parse(res) : res;
-                        Swal.fire({ icon: response.status || 'success', title: 'Success!', text: 'Task updated successfully.' }).then(() => {
+                        console.log(res);
+                        Swal.fire({ icon: res.status || 'success', title: 'Success!', text: 'Task updated successfully.' }).then(() => {
                             $(window).scrollTop(scrollPosition);
                         });
                         loadAllocations();
@@ -1821,6 +1824,7 @@ formData.append("projectId", projectId);
                         startAutoRefresh();
                     },
                     error: function(err) {
+                        console.log(err);
                     },
                     complete: function() {
                         saveBtn.html('<i class="fas fa-save"></i> Save Changes').prop('disabled', false);    

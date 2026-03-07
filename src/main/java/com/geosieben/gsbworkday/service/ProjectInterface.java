@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.geosieben.gsbworkday.dto.AllotmentRequestDto;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
+import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
 import com.geosieben.gsbworkday.entity.*;
 
 public interface ProjectInterface {
@@ -19,4 +20,5 @@ public Project getAllotmenInfo(int projectid);
 public List<ProjectAllocation> getProjectAllocationData(int projectid);
 public List<EmployeeBasicInfo> findEmployees();
 public ResponseEntity<Map<String,String>> assignTask(int allotmentId,String prodAssignee,LocalDate deadline,String qcAssignee,LocalDate qcDeadline);
+public ResponseEntity<Map<String,String>> updateAllotment(UpdateAllotmentDto dto);
 }

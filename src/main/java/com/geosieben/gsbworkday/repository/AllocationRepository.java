@@ -27,4 +27,13 @@ Optional<ProjectAllocation> findRelatedProdTask(String feeder, int pid);
 @Query(value="SELECT * FROM projectallocation  WHERE feederAlloted = :feeder AND type = 'Prod' AND qcAssinee IS NOT NULL AND pid = :pid",nativeQuery=true)
 Optional<ProjectAllocation> findProdByFeederAndPid(String feeder, int pid); 
 @Query(value="SELECT * FROM projectallocation  WHERE (((type='Prod'OR type='Pilot') AND allottedto=:allottedto) OR ((type='QC') AND qcAssinee=:allottedto)) and isRunning=1",nativeQuery=true)
-Optional<ProjectAllocation> getRunningTasks(@Param("allottedto") String allottedto);}
+Optional<ProjectAllocation> getRunningTasks(@Param("allottedto") String allottedto);
+@Query(value = "SELECT * FROM projectallocation WHERE feederAlloted = :feeder AND pid = :pid AND type = :type LIMIT 1", nativeQuery = true)
+ProjectAllocation getQcTask(
+    @Param("feeder") String feeder, 
+    @Param("pid") int pid, 
+    @Param("type") String type
+);
+}
+
+

@@ -17,14 +17,14 @@ public interface BookerHoursRepository extends JpaRepository<BookedHours,Integer
     BookedHours findbydateAndAllotmentforToday(@Param("eid") String eid,@Param("allotmentid") int allotmentid );
     @Query(value = "select * from bookedhours where EID=:eid and allotmentid=:allotmentid order by id desc",nativeQuery = true)
     BookedHours findbyAndAllotmentforBookedSoFar(@Param("eid") String eid,@Param("allotmentid") int allotmentid );
-@Query(value="SELECT e.firstName as firstName, e.lastName as lastName, " +
+@Query(value="SELECT e.firstName as firstName, e.lastName as lastName,e.eid, " +
              "SUM(CASE WHEN b.type = 'Prod' THEN b.hoursbooked ELSE 0 END) as prodHours, " +
              "SUM(CASE WHEN b.type = 'QC' THEN b.hoursbooked ELSE 0 END) as qcHours, " +
              "SUM(CASE WHEN b.type = 'Delivery' THEN b.hoursbooked ELSE 0 END) as deliveryHours, " +
              "SUM(CASE WHEN b.type = 'Pilot' THEN b.hoursbooked ELSE 0 END) as pilotHours, " +
              "SUM(b.hoursbooked) as totalHours " +
              "FROM bookedhours b INNER JOIN employee_basic_info e ON e.eid = b.eid " +
-             "GROUP BY e.firstName, e.lastName",
+             "GROUP BY e.firstName, e.lastName,e.eid",
        nativeQuery = true)
 List<BookeHoursProjection> getHoursByEmployeePivot();
 @Query(value="SELECT p.allotmentName, " +

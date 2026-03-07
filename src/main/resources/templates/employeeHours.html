@@ -65,7 +65,9 @@
       </div>
     </div>
   </div>
-
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
@@ -113,9 +115,12 @@
           dataset.forEach(row => {
             const comonth=row.otmonth??'N/A';
             console.log(row);
+            const link=`<a href="">${row.firstName+' '+row.lastName}</a>`;
               output += `
                   <tr>
-                      <td class='fw-bold text-center'>${row.firstName+' '+row.lastName}</td>
+                        <td class=" text-primary fw-bold text-center"><u>
+                        <a href="/admin/project/employeeHoursMonthWise?employeeId=${row.eid}&name=${row.firstName+' '+row.lastName}" target="_blank">${row.firstName+' '+row.lastName}</a>
+                        </u> </td>
                       <td class="text-primary text-center">${row.prodHours}</td>
                       <td class="text-success text-center ">${row.qcHours}</td>
                       <td class="text-warning text-center">${row.deliveryHours}</td>
