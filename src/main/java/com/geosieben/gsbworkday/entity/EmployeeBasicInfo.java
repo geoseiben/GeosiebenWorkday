@@ -59,6 +59,8 @@ public class EmployeeBasicInfo {
     @Column(name = "lastName")
     private String lastName;
     @Column(name = "gender")
+    private String address;
+    @Column(name = "address")
     private String gender;
     @Column(name = "dob")
     private LocalDate dob;
@@ -76,16 +78,33 @@ public class EmployeeBasicInfo {
     public EmployeeBasicInfo() {
     }
 
-    public EmployeeBasicInfo(String maritalStatus, String EID, String firstName, String lastName, String gender, LocalDate dob, String email, String phone, String bloodGroup) {
+    public EmployeeBasicInfo(String maritalStatus, String EID, String firstName, String lastName, String address, String gender, LocalDate dob, String email, String phone, String bloodGroup) {
         this.maritalStatus = maritalStatus;
         this.EID = EID;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.address=address;
         this.gender = gender;
         this.dob = dob;
         this.email = email;
         this.phone = phone;
         this.bloodGroup = bloodGroup;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public int getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(int employmentStatus) {
+        this.employmentStatus = employmentStatus;
     }
 
     public String getPhone() {

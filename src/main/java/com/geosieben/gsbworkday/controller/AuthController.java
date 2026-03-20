@@ -91,6 +91,9 @@ public  String activeEmployees(Model model, HttpSession httpSession){
     public String myTasks() {
         return"tasks";
     }
-    
+    @GetMapping("/admin/generateLetters")
+    public String genLeters(){
+        return "generateLetters";
+    }
 
 }

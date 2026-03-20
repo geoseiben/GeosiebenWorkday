@@ -1,4 +1,5 @@
 package com.geosieben.gsbworkday.repository;
+import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
 import com.geosieben.gsbworkday.dto.StatsDto;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
@@ -35,6 +36,19 @@ public interface BasicInfoRepository extends JpaRepository<EmployeeBasicInfo,Str
 @Query(nativeQuery = true, name = "EmployeeBasicInfo.fetchAggregates")
     StatsDto fetchAggregates();
 
+@Query(value = "SELECT e.firstName, e.lastName, e.gender, e.address, e.Eid, e.email, " +
+               "j.dateOfJoining, j.status, j.workmail, " + // Added comma and space
+               "s.pan, s.aadhar, s.uan, s.pfStartDate, " +
+               "c.emergencyContactName, c.emergencyContactNum, c.relation, " + // Added comma
+               "b.accountNumber, b.bankName, d.designation " +
+               "FROM employee_basic_info e " +
+               "JOIN employee_joining_info j ON e.EID = j.EID " +
+               "JOIN employee_designation_info d ON e.EID = d.EID " +
+               "JOIN employee_bank_info b ON e.EID = b.EID " +
+               "JOIN employee_statutory_info s ON e.EID = s.EID " +
+               "JOIN employee_emergcontact_info c ON e.EID = c.EID " +
+               "WHERE e.EID = :empid", nativeQuery = true)
+EmployeeProfileProjection employeeProfile(@Param("empid") String eid);
 
 
     EmployeeBasicInfo findEmployeeBasicInfoByEID(String s);

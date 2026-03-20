@@ -84,7 +84,6 @@ public class EmployeeService implements EmployeeServiceInterface {
         String password = passwordEncoder.encode("Pavan@9662");
         User user = new User(employeeName, password, "user", dto.getPersonalEmail(), null);
         user.setEmployeeBasicInfo(savedEmp);
-
         // 3. Save Children
         joiningInfoRepository.save(joining);
         designationInfoRepository.save(designationInfo);
@@ -94,7 +93,7 @@ public class EmployeeService implements EmployeeServiceInterface {
         emergencyInfoRepository.save(employeeEmergencyContactInfo);
         userRepository.save(user);
         return ResponseEntity.ok(Map.of("status", "Employee Added Successfully"));
-    }
+    }   
 
 
     @Override

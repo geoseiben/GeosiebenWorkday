@@ -25,14 +25,13 @@ public class CustomUserDetails implements UserDetailsService {
         }
 
         httpSession.setAttribute("eid",user.getEmployeeBasicInfo().getEID());
-        System.out.println("Role: " + user.getEmployeeBasicInfo().getEID());
+        //System.out.println("Role: " + user.getEmployeeBasicInfo().getEID());
 
         return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
+                .withUsername(user.getEmployeeBasicInfo().getEID())
                 .password(user.getPassword()) // already encoded in DB
                 .authorities(user.getRole())  // if DB stores ROLE_ADMIN, ROLE_USER, etc.
                 .build();
-
 
     }
 

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.geosieben.gsbworkday.entity.AdminActivities;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Separation;
 import com.geosieben.gsbworkday.entity.SeparationDocs;
@@ -27,6 +28,8 @@ public class SeparationService implements SeparationInterface {
     private SeparationRepository separationRepository;
         @Autowired
     private SeperationDocsRepository seperationDocsRepository;
+    @Autowired
+    private AdminActivitiesRepository adminActivitiesRepository;
 
     @Override
     @Transactional
@@ -41,13 +44,18 @@ public class SeparationService implements SeparationInterface {
             separation.setDescription(remark);
             separation.setAppliedBy(appliedBy);
             Separation savedDoc=separationRepository.save(separation);
-
-           for(String doc:documents){
-            SeparationDocs separationDocs=new SeparationDocs();
-            separationDocs.setDocument(doc);
-            separationDocs.setSeparation(savedDoc);
-            seperationDocsRepository.save(separationDocs);
-           }
+            AdminActivities activity=new AdminActivities();
+            activity.setCategory("Separation");
+            activity.setTitle("Separation Initiated");
+            String message=appliedBy.getFirstName()+" "+appliedBy.getLastName()+" - "+reason;
+            activity.setMessage(message);
+            adminActivitiesRepository.save(activity);
+            for(String doc:documents){
+                    SeparationDocs separationDocs=new SeparationDocs();
+                    separationDocs.setDocument(doc);
+                    separationDocs.setSeparation(savedDoc);
+                    seperationDocsRepository.save(separationDocs);
+            }
 
              return ResponseEntity.ok(Map.of(
             "status", "success",

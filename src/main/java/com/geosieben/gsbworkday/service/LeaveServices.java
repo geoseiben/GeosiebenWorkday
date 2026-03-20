@@ -4,9 +4,11 @@ package com.geosieben.gsbworkday.service;
 import com.geosieben.gsbworkday.dto.LeaveBalanceReposnseDto;
 import com.geosieben.gsbworkday.dto.LeaveRequestDto;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
+import com.geosieben.gsbworkday.entity.AdminActivities;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.LeaveBalance;
 import com.geosieben.gsbworkday.entity.Leaves;
+import com.geosieben.gsbworkday.repository.AdminActivitiesRepository;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.repository.LeaveBalanceRepository;
 import com.geosieben.gsbworkday.repository.LeaveRepository;
@@ -40,6 +42,8 @@ public class LeaveServices implements LeaveInterface{
     private HttpSession httpSession;
     @Autowired
     private EmailService emailService;
+        @Autowired
+    private AdminActivitiesRepository adminActivitiesRepository;
 
     @Value("${app.hrname}")
     String toname;
@@ -114,7 +118,12 @@ public class LeaveServices implements LeaveInterface{
 
         leaveRepository.save(leave);
         leaveBalanceRepository.save(leaveBalance);
-
+        AdminActivities activity=new AdminActivities();
+        activity.setCategory("Leaves");
+        activity.setTitle("Leave Requested");
+        String message=emp.getFirstName()+" "+emp.getLastName()+" - "+dto.getLeaveType();
+        activity.setMessage(message);
+    adminActivitiesRepository.save(activity);
         String empname=emp.getFirstName()+" "+emp.getLastName();
         String sub="Leave Application from "+empname +"[ "+emp.getEID()+"]";
 emailService.leaveApplicationHR(tomail,toname,empname,emp.getEID(),

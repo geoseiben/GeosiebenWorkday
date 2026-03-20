@@ -20,6 +20,7 @@ import com.geosieben.gsbworkday.controller.AuthController;
 import com.geosieben.gsbworkday.dto.AllotmentRequestDto;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
 import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
+import com.geosieben.gsbworkday.entity.AdminActivities;
 import com.geosieben.gsbworkday.entity.Clients;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Project;
@@ -27,6 +28,7 @@ import com.geosieben.gsbworkday.entity.ProjectAllocation;
 import com.geosieben.gsbworkday.entity.ProjectCategories;
 import com.geosieben.gsbworkday.entity.RootProject;
 import com.geosieben.gsbworkday.entity.TeamLeadTargetHours;
+import com.geosieben.gsbworkday.repository.AdminActivitiesRepository;
 import com.geosieben.gsbworkday.repository.AllocationRepository;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.repository.ClientRepository;
@@ -49,6 +51,8 @@ public class ProjectService implements ProjectInterface{
 private ClientRepository clientRepository;
 @Autowired 
 private ProjectcategoryRepository projectcategoryRepository;
+@Autowired
+private AdminActivitiesRepository adminActivitiesRepository;
 @Autowired
 private BasicInfoRepository basicInfoRepository;
 @Autowired
@@ -108,13 +112,14 @@ return ResponseEntity.ok(response);
         }
         public RootProject addRootProject(ProjectRequest request,ProjectCategories projectCategories,Clients client,EmployeeBasicInfo projectLead,EmployeeBasicInfo addedBy){
 
+                        RootProject rootProject=new RootProject();
 
             if(request.getProjectType().equals("Pilot")){
-              request.setPilotName(client.getClientId()+"_Pilots");
+             rootProject.setProjectName(client.getClientId()+"_Pilots");
+            }else{
+              rootProject.setProjectName(request.getProjectName());
             }
-                        RootProject rootProject=new RootProject();
                         rootProject.setCategory(projectCategories);
-                        rootProject.setProjectName(client.getClientId()+"_Pilots");
                         rootProject.setClient(client);
                         rootProject.setProjectStatus(0);
                         rootProject.setProjectType(request.getProjectType());
@@ -128,10 +133,17 @@ return ResponseEntity.ok(response);
 
 
                 public Project addProject(ProjectRequest request,RootProject rootProject,Clients client){
+                    AdminActivities activity=new AdminActivities();
+                       Project project=new Project();
+                              activity.setCategory("Project");
                     if(request.getProjectType().equals("Pilot")){
-              request.setPilotName(client.getClientId()+"_Pilots");
+                       activity.setTitle("New Pilot Logged");
+              project.setAllotmentName(client.getClientId()+"_Pilots");
             }
-                    Project project=new Project();
+            else {
+                      activity.setTitle("New Project Logged");
+            }
+                 
                     EmployeeBasicInfo projectLead=(EmployeeBasicInfo)basicInfoRepository.findEmployeeBasicInfoByEID(request.getProjectLeadId());
                     String eid=(String) httpSession.getAttribute("eid");
                     EmployeeBasicInfo addedBy=(EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(eid);  
@@ -144,7 +156,10 @@ return ResponseEntity.ok(response);
                             project.setEndDate(request.getDeadline());
                             project.setStatus(0);
                             project.setFilePath(request.getFilepath());
-                            project.setCreatedBy(addedBy);                            
+                            project.setCreatedBy(addedBy);     
+                             String message=request.getProjectName()+" "+AddonServ.fullDateFormatter(request.getDeadline());
+                            activity.setMessage(message);
+                            adminActivitiesRepository.save(activity); 
                     return projectRepository.save(project);
                 }
                 public ProjectAllocation addAllocation(ProjectRequest request,EmployeeBasicInfo projectLead,EmployeeBasicInfo addedBy,Project project){

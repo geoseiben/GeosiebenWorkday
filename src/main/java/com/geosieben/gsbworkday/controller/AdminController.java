@@ -14,6 +14,9 @@ public String getClients() {
 public String navigateSeparation() {
     return "resign";
 }
-
+@GetMapping("/myprofile")
+public String navigateMyprofile() {
+    return "myprofile";
+}
 
 }

@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuGen Pro — Geosieben</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ink: #0c0e14;
+            --ink-2: #2e3245;
+            --ink-3: #6b7094;
+            --ink-4: #a8adc4;
+            --surface: #f7f6f2;
+            --surface-2: #eeede8;
+            --surface-3: #e4e2d9;
+            --white: #ffffff;
+            --navy: #1a2744;
+            --navy-2: #253566;
+            --blue: #3256b0;
+            --blue-light: #dde6f9;
+            --gold: #b07a1a;
+            --gold-light: #fdf3da;
+            --emerald: #1a7a4e;
+            --emerald-light: #d4f0e3;
+            --amber: #a0521a;
+            --amber-light: #fde8d0;
+            --rose: #9b2240;
+            --rose-light: #fde8ee;
+            --violet: #5b2d8e;
+            --violet-light: #ede0fa;
+            --teal: #0e7490;
+            --teal-light: #ccf2f9;
+            --r: 16px;
+            --r-sm: 10px;
+            --shadow-sm: 0 2px 8px rgba(12,14,20,0.06);
+            --shadow: 0 8px 32px rgba(12,14,20,0.1);
+            --shadow-lg: 0 20px 60px rgba(12,14,20,0.15);
+        }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.5;
+        }
+
+        /* ── HEADER ── */
+        header {
+            background: var(--navy);
+            padding: 0 2.5rem;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100,140,230,0.4), transparent);
+        }
+
+        .logo-wrap { display: flex; align-items: center; gap: 12px; }
+
+        .logo-mark {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--blue), #6a90e8);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(50,86,176,0.5);
+        }
+
+        .logo-text { display: flex; flex-direction: column; gap: 1px; }
+
+        .logo-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.01em;
+            line-height: 1;
+        }
+
+        .logo-sub {
+            font-size: 0.6rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .header-pill {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.06);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.85); }
+        }
+
+        /* ── HERO ── */
+        .hero-band {
+            background: var(--navy);
+            padding: 3rem 2.5rem 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-band::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(50,86,176,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-band::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100,140,230,0.3), transparent);
+        }
+
+        .hero-inner { max-width: 960px; margin: 0 auto;  }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.63rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #7a9de8;
+            margin-bottom: 1rem;
+        }
+
+        .hero-eyebrow::before {
+            content: '';
+            width: 18px; height: 1.5px;
+            background: #7a9de8;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.01em;
+            text-align: left;
+        }
+
+        .hero-title em { font-style: italic; color: #7a9de8; }
+
+        .hero-desc {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.45);
+            max-width: 520px;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* ── STATS BAR ── */
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ── MAIN ── */
+        main {
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2.5rem 2rem 5rem;
+            flex-grow: 1;
+        }
+
+        /* ── SECTION LABEL ── */
+        .grid-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+        }
+
+        .grid-label-text {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            white-space: nowrap;
+        }
+
+        .grid-label-line { flex: 1; height: 1px; background: var(--surface-3); }
+
+        /* ── SEARCH BAR ── */
+        .search-bar-wrap {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 320px;
+            padding: 9px 14px 9px 36px;
+            border: 1.5px solid var(--surface-3);
+            border-radius: var(--r-sm);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.8rem;
+            color: var(--ink);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            position: relative;
+        }
+
+        .search-bar:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+
+        .search-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--ink-4);
+            pointer-events: none;
+        }
+
+        /* ── CATEGORY TABS ── */
+        .category-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .cat-tab {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1.5px solid var(--surface-3);
+            background: var(--white);
+            color: var(--ink-3);
+            transition: all 0.15s;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .cat-tab:hover { border-color: var(--blue); color: var(--blue); }
+        .cat-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+        /* ── TEMPLATE GRID ── */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .template-card {
+            background: var(--white);
+            border: 1.5px solid var(--surface-3);
+            border-radius: var(--r);
+            padding: 1.4rem 1.2rem 1.15rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            appearance: none;
+            font-family: inherit;
+        }
+
+        .template-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 60%, rgba(0,0,0,0.02));
+            border-radius: inherit;
+        }
+
+        .template-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .template-card:active { transform: translateY(-1px); }
+        .template-card.card-hidden { display: none; }
+
+        .card--blue { border-color: #c2d1f0; }
+        .card--blue:hover { border-color: var(--blue); box-shadow: 0 20px 60px rgba(50,86,176,0.14); }
+
+        .card--gold { border-color: #e6d39a; }
+        .card--gold:hover { border-color: var(--gold); box-shadow: 0 20px 60px rgba(176,122,26,0.12); }
+
+        .card--emerald { border-color: #9adfc0; }
+        .card--emerald:hover { border-color: var(--emerald); box-shadow: 0 20px 60px rgba(26,122,78,0.12); }
+
+        .card--amber { border-color: #f0c09a; }
+        .card--amber:hover { border-color: var(--amber); box-shadow: 0 20px 60px rgba(160,82,26,0.12); }
+
+        .card--rose { border-color: #f0aabb; }
+        .card--rose:hover { border-color: var(--rose); box-shadow: 0 20px 60px rgba(155,34,64,0.12); }
+
+        .card--violet { border-color: #c9aef0; }
+        .card--violet:hover { border-color: var(--violet); box-shadow: 0 20px 60px rgba(91,45,142,0.12); }
+
+        .card--teal { border-color: #99dff0; }
+        .card--teal:hover { border-color: var(--teal); box-shadow: 0 20px 60px rgba(14,116,144,0.12); }
+
+        .card-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .icon--blue { background: var(--blue-light); color: var(--blue); }
+        .icon--gold { background: var(--gold-light); color: var(--gold); }
+        .icon--emerald { background: var(--emerald-light); color: var(--emerald); }
+        .icon--amber { background: var(--amber-light); color: var(--amber); }
+        .icon--rose { background: var(--rose-light); color: var(--rose); }
+        .icon--violet { background: var(--violet-light); color: var(--violet); }
+        .icon--teal { background: var(--teal-light); color: var(--teal); }
+
+        .card-title { font-size: 0.875rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.01em; }
+
+        .card-tag { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        .tag--blue { color: var(--blue); }
+        .tag--gold { color: var(--gold); }
+        .tag--emerald { color: var(--emerald); }
+        .tag--amber { color: var(--amber); }
+        .tag--rose { color: var(--rose); }
+        .tag--violet { color: var(--violet); }
+        .tag--teal { color: var(--teal); }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 1.1rem; right: 1.1rem;
+            width: 26px; height: 26px;
+            background: var(--surface-2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--ink-3);
+            transition: all 0.2s;
+        }
+
+        .template-card:hover .card-arrow { background: var(--ink); color: #fff; transform: rotate(45deg); }
+
+        .official-badge {
+            position: absolute;
+            top: 12px; right: 12px;
+            font-size: 0.52rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            background: var(--navy);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .coming-soon-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(2px);
+            border-radius: inherit;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 5;
+        }
+
+        .coming-soon-tag {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            background: var(--surface-3);
+            color: var(--ink-3);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        /* ── MODAL ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(12,14,20,0.6);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+
+        .overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--white);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 40px 100px rgba(12,14,20,0.25);
+            overflow: hidden;
+            transform: translateY(20px) scale(0.96);
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .overlay.open .modal { transform: translateY(0) scale(1); }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem 1rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--surface-2);
+        }
+
+        .modal-eyebrow { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 3px; }
+        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); font-weight: 600; }
+
+        .modal-close {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: var(--surface-2);
+            border: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--ink-3);
+            transition: all 0.15s;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .modal-close:hover { background: var(--ink); color: #fff; }
+
+        .modal-body { padding: 1.25rem 1.5rem; }
+
+        .modal-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+            max-height: 52vh;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .modal-fields::-webkit-scrollbar { width: 3px; }
+        .modal-fields::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+        .field-wrap { display: flex; flex-direction: column; gap: 5px; }
+        .field-wrap.full-width { grid-column: 1 / -1; }
+
+        .field-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+
+        .field-input, .field-select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid var(--surface-3);
+            border-radius: var(--r-sm);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.82rem;
+            color: var(--ink);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        .field-input:focus, .field-select:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-light);
+            background: var(--white);
+        }
+
+        .field-input:hover:not(:focus), .field-select:hover:not(:focus) {
+            border-color: var(--surface-3);
+            background: var(--white);
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--surface-2);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 9px 20px;
+            border-radius: var(--r-sm);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-ghost { background: transparent; color: var(--ink-3); border: 1.5px solid var(--surface-3); }
+        .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+        .btn-primary { background: var(--navy); color: #fff; display: flex; align-items: center; gap: 6px; }
+        .btn-primary:hover { background: var(--blue); }
+        .btn-primary:active { transform: scale(0.98); }
+
+        /* ── PREVIEW ── */
+        .preview-section {
+            max-width: 960px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 2rem 5rem;
+        }
+
+        .preview-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 0 1.25rem;
+            border-top: 1px solid var(--surface-3);
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-eyebrow { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 3px; }
+        .preview-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--ink); }
+
+        .toolbar-actions { display: flex; gap: 8px; }
+
+        .btn-print {
+            background: var(--navy);
+            color: #fff;
+            padding: 9px 20px;
+            border-radius: var(--r-sm);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .btn-print:hover { background: var(--blue); }
+
+        .btn-back {
+            background: transparent;
+            color: var(--ink-2);
+            padding: 9px 16px;
+            border-radius: var(--r-sm);
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--surface-3);
+            transition: all 0.15s;
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-back:hover { background: var(--surface-2); }
+
+        .doc-info-strip {
+            background: var(--white);
+            border: 1px solid var(--surface-3);
+            border-radius: var(--r);
+            padding: 0.875rem 1.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .doc-info-left { display: flex; align-items: center; gap: 12px; }
+
+        .doc-info-icon {
+            width: 34px; height: 34px;
+            background: var(--blue-light);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--blue);
+            flex-shrink: 0;
+        }
+
+        .doc-info-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); }
+        .doc-info-name { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+
+        .doc-ready-pill {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--emerald-light);
+            color: var(--emerald);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .letter-paper {
+            background: var(--white);
+            border: 1px solid var(--surface-3);
+            border-radius: var(--r);
+            box-shadow: var(--shadow-lg);
+            min-height: 1060px;
+            overflow: hidden;
+        }
+
+        .letter-preview { line-height: 1.7; color: #1a1a2e; font-size: 0.9rem; }
+
+        .lh-margin-top {
+            height: 100px;
+            background: repeating-linear-gradient(45deg, #f0f4ff, #f0f4ff 5px, #e8eef9 5px, #e8eef9 10px);
+            border-bottom: 2px dashed #b0c4e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            color: #6b88c0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            user-select: none;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .lh-margin-bottom {
+            height: 75px;
+            background: repeating-linear-gradient(45deg, #f0f4ff, #f0f4ff 5px, #e8eef9 5px, #e8eef9 10px);
+            border-top: 2px dashed #b0c4e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            color: #6b88c0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            user-select: none;
+            font-family: 'Sora', sans-serif;
+        }
+
+        footer {
+            background: var(--navy);
+            text-align: center;
+            padding: 1.1rem;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        @media print {
+            header, footer, .no-print, .hero-band { display: none !important; }
+            body { background: white !important; }
+            body::before { display: none !important; }
+            .preview-section { padding: 0 !important; max-width: none !important; }
+            .preview-toolbar, .doc-info-strip { display: none !important; }
+            .letter-paper { border: none !important; box-shadow: none !important; border-radius: 0 !important; min-height: auto !important; }
+            .lh-margin-top, .lh-margin-bottom { display: none !important; }
+            @page {
+                size: A4;
+                margin-top: 28mm;
+                margin-bottom: 16mm;
+                margin-right: 14mm;
+                margin-left: 14mm;
+            }
+            #printArea { padding: 2mm 0 0 !important; font-size: 0.8rem !important; }
+            #printArea div, #printArea p { line-height: 1.55 !important; }
+            #printArea p { margin-bottom: 0.6rem !important; }
+        }
+
+        .hidden { display: none !important; }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .template-card { animation: fade-up 0.4s ease both; }
+        .template-card:nth-child(1) { animation-delay: 0.05s; }
+        .template-card:nth-child(2) { animation-delay: 0.08s; }
+        .template-card:nth-child(3) { animation-delay: 0.11s; }
+        .template-card:nth-child(4) { animation-delay: 0.14s; }
+        .template-card:nth-child(5) { animation-delay: 0.17s; }
+        .template-card:nth-child(6) { animation-delay: 0.20s; }
+        .template-card:nth-child(7) { animation-delay: 0.23s; }
+        .template-card:nth-child(8) { animation-delay: 0.26s; }
+        .template-card:nth-child(9) { animation-delay: 0.29s; }
+        .template-card:nth-child(10) { animation-delay: 0.32s; }
+        .template-card:nth-child(11) { animation-delay: 0.35s; }
+
+        .print-notice {
+            background: #fffbea;
+            border: 1.5px solid #f0d060;
+            border-radius: var(--r-sm);
+            padding: 0.75rem 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.78rem;
+            color: #7a5a00;
+            line-height: 1.5;
+        }
+        .print-notice strong { display: block; margin-bottom: 2px; font-size: 0.8rem; }
+        .print-notice svg { flex-shrink: 0; margin-top: 1px; color: #b07a00; }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 5px; }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: var(--ink-4);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero-band no-print" id="heroBand">
+    <div class="hero-inner">
+        <div class="hero-eyebrow">Document Library</div>
+        <h1 class="hero-title">Generate a <em>Letter</em></h1>       
+    </div>
+</div>
+
+<main class="no-print" id="mainSection">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+        <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input class="search-bar" type="text" placeholder="Search templates…" id="searchInput" oninput="filterCards()">
+        </div>
+    </div>
+
+    <div class="category-tabs" id="categoryTabs">
+        <button class="cat-tab active" onclick="filterCategory('all', this)">All</button>
+        <button class="cat-tab" onclick="filterCategory('onboarding', this)">Onboarding</button>
+        <button class="cat-tab" onclick="filterCategory('performance', this)">Performance</button>
+        <button class="cat-tab" onclick="filterCategory('exit', this)">Exit</button>
+        <button class="cat-tab" onclick="filterCategory('compliance', this)">Compliance</button>
+        <button class="cat-tab" onclick="filterCategory('recognition', this)">Recognition</button>
+    </div>
+
+    <div class="grid-label">
+        <span class="grid-label-text">Templates</span>
+        <span class="grid-label-line"></span>
+        <span class="grid-label-text" id="countLabel">11 available</span>
+    </div>
+
+    <div class="template-grid" id="templateGrid">
+
+        <!-- Offer Letter -->
+        <button class="template-card card--blue" data-type="offer" data-category="onboarding" data-keywords="offer employment job hire" onclick="openModal('offer')">
+            <span class="official-badge">Official</span>
+            <div class="card-icon icon--blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="card-title">Offer Letter</div>
+            <div class="card-tag tag--blue">Onboarding</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Appointment -->
+        <button class="template-card card--gold" data-type="appointment" data-category="onboarding" data-keywords="appointment join confirm" onclick="openModal('appointment')">
+            <div class="card-icon icon--gold">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <div class="card-title">Appointment Letter</div>
+            <div class="card-tag tag--gold">Onboarding</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Probation -->
+        <button class="template-card card--amber" data-type="probation" data-category="onboarding compliance" data-keywords="probation agreement terms" onclick="openModal('probation')">
+            <div class="card-icon icon--amber">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="card-title">Probation Agreement</div>
+            <div class="card-tag tag--amber">Compliance</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Confirmation -->
+        <button class="template-card card--emerald" data-type="confirmation" data-category="onboarding performance" data-keywords="confirmation permanent confirmed" onclick="openModal('confirmation')">
+            <div class="card-icon icon--emerald">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="card-title">Confirmation Letter</div>
+            <div class="card-tag tag--emerald">Performance</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Increment -->
+        <button class="template-card card--violet" data-type="increment" data-category="recognition performance" data-keywords="increment salary hike raise appraisal" onclick="openModal('increment')">
+            <div class="card-icon icon--violet">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <div class="card-title">Increment Letter</div>
+            <div class="card-tag tag--violet">Recognition</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Relieving -->
+        <button class="template-card card--teal" data-type="relieving" data-category="exit" data-keywords="relieving relieve noc exit" onclick="openModal('relieving')">
+            <div class="card-icon icon--teal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <div class="card-title">Relieving Letter</div>
+            <div class="card-tag tag--teal">Exit</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Experience -->
+        <button class="template-card card--blue" data-type="experience" data-category="exit" data-keywords="experience certificate service noc" onclick="openModal('experience')">
+            <div class="card-icon icon--blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            </div>
+            <div class="card-title">Experience Letter</div>
+            <div class="card-tag tag--blue">Exit</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Termination -->
+        <button class="template-card card--rose" data-type="termination" data-category="exit performance" data-keywords="termination terminate fired dismiss" onclick="openModal('termination')">
+            <div class="card-icon icon--rose">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="card-title">Termination Letter</div>
+            <div class="card-tag tag--rose">Exit</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Warning -->
+        <button class="template-card card--amber" data-type="warning" data-category="performance compliance" data-keywords="warning show cause misconduct" onclick="openModal('warning')">
+            <div class="card-icon icon--amber">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="card-title">Warning Letter</div>
+            <div class="card-tag tag--amber">Compliance</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Marks Card -->
+        <button class="template-card card--emerald" data-type="marksCard" data-category="compliance" data-keywords="marks card original documents return" onclick="openModal('marksCard')">
+            <div class="card-icon icon--emerald">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div class="card-title">Marks Card Return</div>
+            <div class="card-tag tag--emerald">Compliance</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+        <!-- Employment Bond -->
+        <button class="template-card card--blue" data-type="bond" data-category="compliance onboarding" data-keywords="bond service agreement" onclick="openModal('bond')">
+            <div class="card-icon icon--blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6M20 6H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z"/></svg>
+            </div>
+            <div class="card-title">Employment Bond</div>
+            <div class="card-tag tag--blue">Compliance</div>
+            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </button>
+
+    </div>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="modalOverlay">
+    <div class="modal" id="modalBox">
+        <div class="modal-header">
+            <div class="modal-header-text">
+                <div class="modal-eyebrow">Fill in Details</div>
+                <span class="modal-title" id="modalTitle">Template Details</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form id="letterForm">
+            <div class="modal-body">
+                <div class="modal-fields" id="formFields"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    Generate
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PREVIEW -->
+<section class="preview-section hidden" id="resultSection">
+    <div class="preview-toolbar no-print">
+        <div class="preview-title-wrap">
+            <div class="preview-eyebrow">Document Ready</div>
+            <h2 class="preview-title">Preview &amp; Print</h2>
+        </div>
+        <div class="toolbar-actions">
+            <button class="btn-back" onclick="resetApp()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <button class="btn-print" onclick="window.print()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                Print / Save PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="doc-info-strip no-print" id="docInfoStrip">
+        <div class="doc-info-left">
+            <div class="doc-info-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div>
+                <div class="doc-info-label">Generated Document</div>
+                <div class="doc-info-name" id="docInfoName">—</div>
+            </div>
+        </div>
+        <span class="doc-ready-pill">Ready to Print</span>
+    </div>
+
+    <div class="print-notice no-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+            <strong>To hide the page URL, date &amp; title while printing:</strong>
+            In the print dialog → click <b>More settings</b> → uncheck <b>"Headers and footers"</b>. This is a browser setting that cannot be disabled automatically.
+        </div>
+    </div>
+
+    <div class="letter-paper">
+        <div class="lh-margin-top">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Letterhead Space — Top (38 mm on print)
+        </div>
+        <div id="printArea" class="letter-preview" style="padding: 1.5rem 3.5rem 2rem;"></div>
+        <div class="lh-margin-bottom">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18M9 21v-6"/></svg>
+            Footer Space — Bottom (28 mm on print)
+        </div>
+    </div>
+</section>
+
+<footer>
+    Geosieben Consulting Pvt Ltd &nbsp;·&nbsp; DocuGen Pro &nbsp;·&nbsp; Internal Use Only
+</footer>
+
+<script>
+/* ─── HELPERS ─── */
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function fmtDate(s) {
+    if (!s) return '___';
+    const d = new Date(s);
+    const utc = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+    return utc.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function geoFooter() {
+    return `<div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #e2e8f0; text-align:center; font-size:0.72rem; color:#64748b; line-height:1.8;">
+        <p style="font-weight:700;">Geosieben Consulting Private Limited</p>
+        <p>2nd Floor, Shri Shabarish Plaza, Aryabhata Road, Ring Road, Jaya Nagar, Hassan-573201</p>
+        <p>E-mail: info@geosieben.com &nbsp;|&nbsp; Off: 63648 48844</p>
+    </div>`;
+}
+
+function signatureBlock(name, designation = 'HR Department') {
+    return `<div style="margin-top:2rem;">
+        <p>Sincerely,</p>   
+        <p style="font-size:0.82rem;">${designation}</p>
+        <p style="font-size:0.82rem; font-weight:700;">Geosieben Consulting Pvt Ltd</p>
+    </div>`;
+}
+
+function docHead(date) {
+    return `<p style="text-align:right; margin-bottom:1.6rem; font-size:0.88rem;">Date: <strong>${fmtDate(date)}</strong></p>`;
+}
+
+function wrapper(content) {
+    return `<div style="font-family:'Times New Roman',Times,serif; color:#1a1a2e; line-height:1.7; font-size:0.93rem;">${content}</div>`;
+}
+
+/* ─── BOND / PROBATION SHARED TEMPLATE ─── */
+function bondTemplate(d) {
+    return wrapper(`
+    ${docHead(d.date)}
+    <div style="text-align:center; margin-bottom:1.8rem;">
+        <p style="font-weight:700; font-size:1.15rem; text-decoration:underline; letter-spacing:0.06em;">EMPLOYMENT BOND AGREEMENT</p>
+    </div>
+    <p style="text-align:justify; margin-bottom:1rem; line-height:1.8;">This Employment Bond Agreement ("Agreement") is entered into on <strong>${fmtDate(d.joiningDate)}</strong>, between <strong>Geosieben Consulting Pvt Ltd</strong>, with its principal place of business at Above Sri Krishna Motors TVS, SECOND FLOOR, Sri Shabrish Plaza, Ring Road, Jaya Nagar, Hassan, 573201 (hereinafter referred to as the "Company"),</p>
+    <p style="text-align:center; font-weight:700; margin-bottom:1rem;">AND</p>
+    <p style="text-align:justify; margin-bottom:1.2rem; line-height:1.8;"><strong>${d.employeeName}</strong>, S/o <strong>${d.fatherName}</strong> residing at <strong>${d.address}</strong> (hereinafter referred to as the "Employee").</p>
+    <p style="margin-bottom:1.5rem;"><strong>Aadhar Number:</strong> ${d.aadhar}</p>
+    <p style="font-weight:700; text-decoration:underline; margin-bottom:1rem;">Terms &amp; Conditions:</p>
+    <div style="display:flex; flex-direction:column; gap:0.65rem; text-align:justify;">
+        <p><strong>1. Term of Employment:</strong><br>The Employee agrees to serve the Company for a minimum period of 6 months from the date of joining.</p>
+        <p><strong>2. Early Employee Exit – Full Salary Repayment Liability:</strong><br>If the Employee resigns, leaves the Company without notice, or departs before completing 6 months, the Employee shall be liable to repay the entire salary paid by the Company from the date of joining till the date of exit.</p>
+        <p><strong>3. Release of Original Mark Sheets:</strong><br>The Company agrees to release the original mark sheets and any other relevant documents, only after the employee has formally resigned and successfully completed all exit formalities, including the required notice period.</p>
+        <p><strong>4. Salary Withholding Policy for Un-notified Employee Departure:</strong><br>a. In the event of an employee's sudden resignation without providing notice or informing the company, and if the departure occurs before completing the minimum term of 6 months, the salary for the respective month shall not be disbursed as per the terms outlined in the employee agreement.<br><br>b. If an employee's performance during the training period is found to be unsatisfactory, the company reserves the right to terminate the employment and withhold the salary for the respective month, in accordance with the terms stated in the employee agreement.</p>
+        <p><strong>5. Confirmation of Employment:</strong><br>After completing the 6-month probation period, the Employee will be considered for confirmation based on overall performance, discipline, behavior, and the performance report received from the Team Lead.</p>
+        <p><strong>6. Leave during Probation:</strong><br>During the 3-month probation period, the Employee will be eligible for:<br>&nbsp;&nbsp;&bull;&nbsp; 3 Sick Leaves (SL)<br>&nbsp;&nbsp;&bull;&nbsp; 3 Applied Leaves (AL) – prior approval required<br>Any unapproved or excess leaves will be treated as Loss of Pay (LOP).</p>
+        <p><strong>7. Governing Law:</strong><br>This Agreement shall be governed by and construed in accordance with the laws of India.</p>
+        <p><strong>8.</strong> After successful completion and serving the company for a minimum duration of 6 months; this agreement thereafter is considered to be <strong>NULL and VOID</strong>.</p>
+        <p><strong>9.</strong> This agreement is effective from <strong>${fmtDate(d.joiningDate)}</strong>.</p>
+    </div>
+    <div style="margin-top:2rem; line-height:2;">
+        <p><strong>Employee Name:</strong> ${d.employeeName}</p>
+        <p><strong>Employee Email ID:</strong> ${d.email}</p>
+        <p><strong>Employee Phone Number:</strong> ${d.phone}</p>
+    </div>
+    <div style="margin-top:2rem;">
+        <p style="font-weight:700;">For,</p>
+        <p style="font-weight:700;">Geosieben Consulting Pvt Ltd.</p>
+        <div style="margin-top:3rem; border-bottom:1px solid #334155; width:180px;"></div>
+        <p style="font-size:0.8rem; margin-top:4px;">Authorized Signatory</p>
+    </div>
+    <div style="margin-top:2.5rem; border-top:1.5px solid #cbd5e1; padding-top:1.5rem;">
+        <p style="font-weight:700; text-align:center; margin-bottom:0.8rem;">Acknowledgment:</p>
+        <p style="text-align:justify; line-height:1.9;">I, <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>, acknowledge that I have received and read the terms and conditions of Employment Agreement and agree to be bound by the terms and conditions of employment as outlined therein.</p>
+        <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:3rem;">
+            <div style="flex:1.5;"><div style="border-bottom:1px solid #334155; padding-bottom:4px; font-size:0.8rem;">Employee's Signature:</div></div>
+            <div style="flex:1;"><div style="border-bottom:1px solid #334155; padding-bottom:4px; font-size:0.8rem;">Date:</div></div>
+        </div>
+    </div>`);
+}
+
+/* ─── CONFIG ─── */
+const config = {
+
+offer: {
+    title: "Geosieben Offer Letter",
+    fields: [
+        { name: 'date', label: 'Offer Date', type: 'date', default: today(), full: false },
+        { name: 'candidateName', label: 'Candidate Name', type: 'text', full: true },
+        { name: 'role', label: 'Position', type: 'text', default: 'Web Developer', full: false },
+        { name: 'startDate', label: 'Start Date', type: 'date', full: false },
+        { name: 'salary', label: 'Monthly CTC (Probation)', type: 'text', default: '20,000', full: false },
+        { name: 'probationMonths', label: 'Probation Duration', type: 'text', default: 'three (3) to six (6)', full: false },
+        { name: 'deadline', label: 'Acceptance Deadline', type: 'date', full: false },
+        { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R', full: false }
+    ],
+    template: (d) => `
+<div style="font-family:'Times New Roman',Times,serif; color:#1a1a2e; line-height:1.7; font-size:1.05rem; margin-left: 5%;">
+
+    <div style="page-break-after: always;">
+        <p style="margin-bottom:1.6rem; font-size:0.95rem; text-align:right;">Date: <strong>${fmtDate(d.date)}</strong></p>
+
+        <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; letter-spacing:0.01em; text-align:center;"><u>Offer of Employment</u></h2>
+
+        <p style="margin-bottom:1.2rem;">Dear <strong>${d.candidateName}</strong>,</p>
+
+        <p style="margin-bottom:1.2rem; text-align:justify;">We are pleased to extend an offer to you for the position of <strong>${d.role}</strong> at <strong>Geosieben Consulting Pvt Ltd</strong>. We recognize your potential and enthusiasm, and we believe that your academic background and passion to learn will make you a valuable part of our team.</p>
+
+        <p style="margin-bottom:1rem;">This letter outlines the terms and conditions of your employment. Kindly review the details below:</p>
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <p><strong>1. Job Title:</strong><br>
+            You will be employed as a <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd.</p>
+
+            <p><strong>2. Start Date:</strong><br>
+            Your employment will commence on <strong>${fmtDate(d.startDate)}</strong>.</p>
+
+            <p><strong>3. Compensation:</strong><br>
+            Your monthly salary during the probationary period will be ₹${d.salary} (CTC). Upon successful completion of the probation period, your salary will be reviewed and revised based on performance.</p>
+
+            <p><strong>4. Probation Period:</strong><br>
+            You will be placed on a probation period of ${d.probationMonths} months starting from your joining date. During this period, your performance and suitability for the role will be evaluated. Upon successful 
+            completion of the probation period, you will be confirmed in your role and become eligible for the company’s benefits as per policy.</p>
+
+            <p><strong>5. Work Schedule:</strong><br>
+            Your normal working hours will be 9:00 AM – 6:30 PM, from Monday to Saturday, totaling 51 hours per week. There may be occasional flexibility depending on business needs.</p>
+        </div>
+    </div>
+
+    <div style="break-before: page; margin-top: 2rem;">
+        <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:1.6rem;">
+            <p><strong>6. Benefits:</strong><br>
+            Once confirmed in your role, you will be entitled to the following benefits:<br>
+            &nbsp;&nbsp;&nbsp;Paid Time Off (PTO): Leaves as per Standard MNC policy.</p>
+            
+            <p><strong>7. Confidentiality and Non-Disclosure Agreement:</strong><br>
+            As part of your employment, you will be required to adhere to the company’s confidentiality and non-disclosure agreements. All intellectual property developed during your employment will remain the property of the company.</p>
+
+            <p><strong>8. Company Policies:</strong><br>
+            You will be expected to comply with all applicable company policies, rules, and regulations, including but not limited to: 
+            <ol type="a" style="margin-top:0.5rem; margin-left:15px;">
+                <li>Working hours and attendance</li>
+                <li>Code of conduct and behavior</li>
+                <li>Health and safety protocols</li>
+                <li>IT security policies</li>
+            </ol></p>
+
+            <p><strong>9. At-Will Employment Statement:</strong><br>
+            Your employment with Geosieben Consulting Pvt Ltd is at-will, meaning either you or the company may terminate the relationship at any time, with or without notice, and for any lawful reason, in accordance with applicable local labor laws.</p>
+
+            <p><strong>10. Location:</strong><br>
+            You will be based at our office located at Hassan. You may be required to travel to other company locations, or work remotely, depending on business requirements.</p>
+
+            <p><strong>11. Acceptance Deadline:</strong><br>
+            Please confirm your acceptance of this offer by signing and returning a copy of this letter by <strong>${fmtDate(d.deadline)}</strong>.</p>
+        </div>
+    </div>
+
+    <div style="break-before: page; margin-top: 2rem;">
+        <p><strong>12. Signatures:</strong><br>
+        By signing this offer letter, you agree to the terms and conditions outlined above. A copy of the signed offer letter will be provided to you for your records.<br><br>
+        We are excited about the prospect of you joining our dynamic team. Please do not hesitate to reach out if you have any questions or need clarification.<br><br>
+        We look forward to working with you!</p>
+        
+        <p style="margin-top:1.5rem;">Sincerely,</p>
+        <p style="font-weight:700; margin-top:1rem; margin-bottom:0;">${d.signatory}</p>
+        <p style="font-size:0.9rem; margin:0;">HR-Admin</p>
+        <p style="font-size:0.9rem; font-weight:700; margin:0;">Geosieben Consulting Pvt Ltd</p>
+
+        <div style="border-top:2px solid #cbd5e1; margin-top:3rem; padding-top:1.5rem;">
+            <h3 style="font-weight:700; margin-bottom:1rem; font-size:1.1rem;">Acknowledgement and Acceptance</h3>
+            <p style="margin-bottom:2rem;">I, <strong>${d.candidateName}</strong>, accept the offer as outlined in this letter.</p>
+            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
+                <div style="flex:1.5; border-bottom:1px solid #334155; padding-bottom:8px;">Signature: ___________________</div>
+                <div style="flex:1; border-bottom:1px solid #334155; padding-bottom:8px;">Date: ___________________</div>
+            </div>
+        </div>
+    </div>
+
+</div>`
+},
+
+    appointment: {
+        title: "Appointment Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'department', label: 'Department', type: 'text', default: 'Technology' },
+            { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
+            { name: 'salary', label: 'Monthly CTC', type: 'text', default: '20,000' },
+            { name: 'reportingTo', label: 'Reporting To', type: 'text', default: 'Team Lead' },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        ${docHead(d.date)}
+        <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong></p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">APPOINTMENT LETTER</h2>
+        <p style="margin-bottom:1.2rem; text-align:justify;">With reference to your application and the subsequent interview, we are pleased to appoint you as <strong>${d.role}</strong> in the <strong>${d.department}</strong> Department at Geosieben Consulting Pvt Ltd, effective <strong>${fmtDate(d.joiningDate)}</strong>.</p>
+        <p style="margin-bottom:1rem;">The terms and conditions of your appointment are as follows:</p>
+        <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;">
+            <p><strong>1. Designation:</strong> ${d.role}</p>
+            <p><strong>2. Department:</strong> ${d.department}</p>
+            <p><strong>3. Date of Joining:</strong> ${fmtDate(d.joiningDate)}</p>
+            <p><strong>4. Place of Posting:</strong> Hassan, Karnataka. You may be transferred to any other branch/location of the company as required.</p>
+            <p><strong>5. Compensation:</strong> You will be paid a gross monthly salary of ₹${d.salary} (CTC). The salary will be credited to your bank account by the 7th of every month.</p>
+            <p><strong>6. Reporting:</strong> You will report to <strong>${d.reportingTo}</strong> or such other person as designated by the Management.</p>
+            <p><strong>7. Working Hours:</strong> 9:00 AM to 6:30 PM, Monday to Saturday. You may be required to work beyond normal hours based on business requirements.</p>
+            <p><strong>8. Leave Entitlement:</strong> You are entitled to leaves as per the Company's leave policy communicated at the time of joining.</p>
+            <p><strong>9. Probation:</strong> You will be on probation for a period of six (6) months, during which your performance will be assessed. Confirmation is subject to satisfactory performance review.</p>
+            <p><strong>10. Termination / Notice Period:</strong> During probation, either party may terminate the employment with 15 days' written notice. Post-confirmation, 30 days' notice is required.</p>
+            <p><strong>11. Confidentiality:</strong> You shall not disclose any confidential or proprietary information of the Company during or after your employment.</p>
+            <p><strong>12. Code of Conduct:</strong> You are expected to conduct yourself with the highest standards of professionalism and integrity at all times.</p>
+        </div>
+        <p style="margin-bottom:1.8rem;">Please sign and return a copy of this letter as your acceptance of the above terms.</p>
+        ${signatureBlock(d.signatory)}
+        <div style="border-top:1.5px solid #cbd5e1; padding-top:1.5rem; margin-top:2rem;">
+            <p>I, <strong>${d.employeeName}</strong>, accept the appointment on the terms stated above.</p>
+            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
+                <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Employee Signature:</div>
+                <div style="flex:1; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Date:</div>
+            </div>
+        </div>
+        ${geoFooter()}`)
+    },
+
+    confirmation: {
+        title: "Confirmation Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'joiningDate', label: 'Original Joining Date', type: 'date' },
+            { name: 'confirmDate', label: 'Confirmation Date', type: 'date' },
+            { name: 'newSalary', label: 'Revised Monthly CTC', type: 'text', default: '25,000' },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        ${docHead(d.date)}
+        <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong></p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">CONFIRMATION OF EMPLOYMENT</h2>
+        <p style="margin-bottom:1.2rem;">Dear <strong>${d.employeeName}</strong>,</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">We are pleased to inform you that upon successful completion of your probationary period, your employment as <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd has been confirmed with effect from <strong>${fmtDate(d.confirmDate)}</strong>.</p>
+        <p style="margin-bottom:1rem; text-align:justify;">Your performance during the probation period has been reviewed and found satisfactory. We appreciate your dedication and hard work, and we look forward to your continued contribution to the organisation.</p>
+        <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem; border:1.5px solid #e2e8f0; border-radius:8px; padding:1rem 1.2rem; background:#f8fafc;">
+            <p><strong>Name:</strong> ${d.employeeName}</p>
+            <p><strong>Designation:</strong> ${d.role}</p>
+            <p><strong>Date of Joining:</strong> ${fmtDate(d.joiningDate)}</p>
+            <p><strong>Date of Confirmation:</strong> ${fmtDate(d.confirmDate)}</p>
+            <p><strong>Revised Monthly CTC:</strong> ₹${d.newSalary}</p>
+        </div>
+        <p style="margin-bottom:1rem; text-align:justify;">All other terms and conditions of your employment as stated in your Appointment Letter will remain unchanged. Please note that a notice period of 30 days will now be applicable for resignation.</p>
+        <p style="margin-bottom:1.8rem;">Congratulations on your confirmation! We wish you continued success in your career with us.</p>
+        ${signatureBlock(d.signatory)}
+        ${geoFooter()}`)
+    },
+
+    increment: {
+        title: "Salary Increment Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'effectiveDate', label: 'Effective Date', type: 'date' },
+            { name: 'oldSalary', label: 'Current Monthly CTC (₹)', type: 'text', default: '20,000' },
+            { name: 'newSalary', label: 'Revised Monthly CTC (₹)', type: 'text', default: '25,000' },
+            { name: 'reason', label: 'Reason / Appraisal Period', type: 'text', default: 'Annual Performance Appraisal 2024–25', full: true },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => {
+            const inc = (parseFloat((d.newSalary||'').replace(/,/g,'')) - parseFloat((d.oldSalary||'').replace(/,/g,''))).toLocaleString('en-IN');
+            return wrapper(`
+            ${docHead(d.date)}
+            <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong></p>
+            <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">SALARY INCREMENT LETTER</h2>
+            <p style="margin-bottom:1.2rem;">Dear <strong>${d.employeeName}</strong>,</p>
+            <p style="margin-bottom:1.2rem; text-align:justify;">We are pleased to inform you that, following the <strong>${d.reason}</strong>, the Management has decided to revise your compensation in recognition of your valuable contribution and commendable performance at Geosieben Consulting Pvt Ltd.</p>
+            <div style="margin:1.5rem 0; border:1.5px solid #e2e8f0; border-radius:8px; padding:1rem 1.2rem; background:#f8fafc;">
+                <p style="margin-bottom:0.5rem;"><strong>Designation:</strong> ${d.role}</p>
+                <p style="margin-bottom:0.5rem;"><strong>Current Monthly CTC:</strong> ₹${d.oldSalary}</p>
+                <p style="margin-bottom:0.5rem;"><strong>Revised Monthly CTC:</strong> ₹${d.newSalary}</p>
+                <p style="margin-bottom:0;"><strong>Increment Amount:</strong> ₹${inc} per month</p>
+            </div>
+            <p style="margin-bottom:1rem; text-align:justify;">The revised salary is effective from <strong>${fmtDate(d.effectiveDate)}</strong>. All other terms and conditions of your employment remain unchanged.</p>
+            <p style="margin-bottom:1rem; text-align:justify;">We appreciate your hard work, dedication, and the positive impact you bring to the team. We encourage you to continue delivering excellence and look forward to your future contributions.</p>
+            <p style="margin-bottom:1.8rem;">Please sign and return a copy of this letter as an acknowledgement.</p>
+            ${signatureBlock(d.signatory)}
+            <div style="border-top:1.5px solid #cbd5e1; padding-top:1.5rem; margin-top:2rem;">
+                <p>I, <strong>${d.employeeName}</strong>, acknowledge receipt of this increment letter and accept the revised terms.</p>
+                <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
+                    <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Employee Signature:</div>
+                    <div style="flex:1; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Date:</div>
+                </div>
+            </div>
+            ${geoFooter()}`);
+        }
+    },
+
+relieving: {
+    title: "Relieving Letter",
+    fields: [
+        { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+        { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+        { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'GSB-XXXX' },
+        { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
+        { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date' },
+        { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+    ],
+    template: (d) => wrapper(`
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+            <img src="/uploads/images/gsblogo.png" alt="Geosieben Logo" style="height: 60px; width: auto;">
+            <div style="text-align: right; font-weight: 600;">Date: ${fmtDate(d.date)}</div>
+        </div>
+
+        <h2 style="font-size:1.2rem; font-weight:700; text-align:center; margin-bottom:2rem; text-decoration: underline;">RELIEVING LETTER</h2>
+        
+        <p style="margin-bottom:1.5rem;">To Whom It May Concern,</p>
+        
+        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+            This is to certify that <strong>Mr/Ms. ${d.employeeName}</strong> [EMP ID: ${d.empId}] was employed with <strong>Geosieben Consulting Pvt Ltd</strong> from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>. 
+            He/She has completed all necessary formalities and has been relieved from his/her duties on <strong>${fmtDate(d.lastWorkingDate)}</strong>.
+        </p>
+        
+        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+            You may please get in touch with HR/Service Desk for all your future correspondence and final settlement.
+        </p>
+        
+        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+            Your contributions to the organization will always be valued and recognized.
+        </p>
+        
+        <p style="margin-bottom:2rem; text-align:justify; line-height: 1.6;">
+            We thank you for your services and wish the very best in all your future endeavors.
+        </p>
+
+        <div style="margin-top: 3rem;">
+            <p style="margin-bottom:0.5rem; font-weight: 700;">For Geosieben Consulting Pvt Ltd</p>
+            <br><br>
+            <p><strong>${d.signatory}</strong><br>Human Resources</p>
+        </div>
+        
+        ${geoFooter()}
+    `)
+},
+
+    experience: {
+        title: "Experience Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'department', label: 'Department', type: 'text', default: 'Technology' },
+            { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
+            { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date' },
+            { name: 'conduct', label: 'Conduct (Good / Excellent)', type: 'text', default: 'good' },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        ${docHead(d.date)}
+        <p style="margin-bottom:1.4rem;">To Whom It May Concern,</p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">EXPERIENCE CERTIFICATE</h2>
+        <p style="margin-bottom:1.2rem; text-align:justify;">This is to certify that <strong>${d.employeeName}</strong> was employed with <strong>Geosieben Consulting Pvt Ltd</strong> as a <strong>${d.role}</strong> in the <strong>${d.department}</strong> Department from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">During his/her tenure with us, ${d.employeeName} has demonstrated ${d.conduct} conduct, professional attitude, and a willingness to learn and grow. He/She has contributed positively to the team and has been a responsible and dependable team member.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">He/She is relieved from his/her duties on <strong>${fmtDate(d.lastWorkingDate)}</strong> on his/her own request after completion of the required formalities.</p>
+        <p style="margin-bottom:1.8rem; text-align:justify;">We wish ${d.employeeName} all the very best for his/her future endeavours.</p>
+        ${signatureBlock(d.signatory)}
+        ${geoFooter()}`)
+    },
+
+    termination: {
+        title: "Termination Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
+            { name: 'terminationDate', label: 'Effective Termination Date', type: 'date' },
+            { name: 'reason', label: 'Reason for Termination', type: 'text', default: 'unsatisfactory performance during the probationary period', full: true },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        ${docHead(d.date)}
+        <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong></p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">TERMINATION OF EMPLOYMENT</h2>
+        <p style="margin-bottom:1.2rem;">Dear <strong>${d.employeeName}</strong>,</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">We regret to inform you that your employment as <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd, which commenced on <strong>${fmtDate(d.joiningDate)}</strong>, is hereby terminated effective <strong>${fmtDate(d.terminationDate)}</strong>.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">This decision has been made due to <strong>${d.reason}</strong>. The Management has carefully reviewed the circumstances and has determined that termination of your employment is the appropriate course of action.</p>
+        <p style="margin-bottom:1rem; text-align:justify;">You are required to:</p>
+        <div style="margin-bottom:1.2rem; padding-left:1rem;">
+            <p style="margin-bottom:0.5rem;">1. Return all company property, equipment, access cards, and any confidential documents in your possession by <strong>${fmtDate(d.terminationDate)}</strong>.</p>
+            <p style="margin-bottom:0.5rem;">2. Complete all pending handover procedures with your team lead or manager.</p>
+            <p style="margin-bottom:0.5rem;">3. Settle all outstanding dues with the Finance department.</p>
+        </div>
+        <p style="margin-bottom:1.2rem; text-align:justify;">Your final payslip and settlement will be processed as per company policy. The terms of the confidentiality and non-disclosure agreement you signed at the time of joining remain in force.</p>
+        <p style="margin-bottom:1.8rem; text-align:justify;">If you have any questions regarding this decision or the exit process, please contact the HR department.</p>
+        ${signatureBlock(d.signatory)}
+        <div style="border-top:1.5px solid #cbd5e1; padding-top:1.5rem; margin-top:2rem;">
+            <p>Acknowledgement of Receipt:</p>
+            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
+                <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Employee Signature:</div>
+                <div style="flex:1; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Date:</div>
+            </div>
+        </div>
+        ${geoFooter()}`)
+    },
+
+    warning: {
+        title: "Warning Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
+            { name: 'warningNumber', label: 'Warning Number', type: 'select', options: ['First (1st)', 'Second (2nd)', 'Final (3rd)'], default: 'First (1st)' },
+            { name: 'incidentDate', label: 'Date of Incident', type: 'date' },
+            { name: 'misconduct', label: 'Nature of Misconduct', type: 'text', default: 'habitual late coming and absenteeism without prior approval', full: true },
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        ${docHead(d.date)}
+        <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong><br>${d.role}</p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">WARNING LETTER — ${(d.warningNumber||'').toUpperCase()} WARNING</h2>
+        <p style="margin-bottom:1.2rem;">Dear <strong>${d.employeeName}</strong>,</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">This letter serves as a formal <strong>${d.warningNumber} Warning</strong> regarding your behaviour at the workplace. It has come to the attention of the Management that on or around <strong>${fmtDate(d.incidentDate)}</strong>, you were found to be engaged in / responsible for: <strong>${d.misconduct}</strong>.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">Such conduct is a violation of the company's Code of Conduct and is unacceptable. This behaviour adversely affects work productivity, team morale, and the professional environment of the organisation.</p>
+        <p style="margin-bottom:1rem; text-align:justify;">You are hereby directed to:</p>
+        <div style="margin-bottom:1.2rem; padding-left:1rem;">
+            <p style="margin-bottom:0.5rem;">1. Immediately cease the said behaviour and conduct yourself in accordance with company norms.</p>
+            <p style="margin-bottom:0.5rem;">2. Provide a written explanation / response to this warning within <strong>3 working days</strong> from the date of receipt.</p>
+            <p style="margin-bottom:0.5rem;">3. Ensure compliance with all company policies and procedures going forward.</p>
+        </div>
+        <p style="margin-bottom:1.2rem; text-align:justify;">Please be advised that failure to improve and any recurrence of such conduct may result in further disciplinary action, up to and including termination of employment.</p>
+        <p style="margin-bottom:1.8rem;">This letter is being placed on your personnel file for record purposes.</p>
+        ${signatureBlock(d.signatory)}
+        <div style="border-top:1.5px solid #cbd5e1; padding-top:1.5rem; margin-top:2rem;">
+            <p>Acknowledgement of Receipt:</p>
+            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
+                <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Employee Signature:</div>
+                <div style="flex:1; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Date:</div>
+            </div>
+        </div>
+        ${geoFooter()}`)
+    },
+
+    probation: {
+        title: "Probation Agreement",
+        fields: [
+            { name: 'date', label: 'Agreement Date', type: 'date', default: today() },
+            { name: 'joiningDate', label: 'Joining Date', type: 'date' },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'fatherName', label: "Father's Name", type: 'text' },
+            { name: 'aadhar', label: 'Aadhar Number', type: 'text' },
+            { name: 'email', label: 'Employee Email', type: 'text' },
+            { name: 'phone', label: 'Phone Number', type: 'text' },
+            { name: 'address', label: 'Residential Address', type: 'text', full: true }
+        ],
+        template: (d) => bondTemplate(d)
+    },
+
+    bond: {
+        title: "Employment Bond Agreement",
+        fields: [
+            { name: 'date', label: 'Agreement Date', type: 'date', default: today() },
+            { name: 'joiningDate', label: 'Joining Date', type: 'date' },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'fatherName', label: "Father's Name", type: 'text' },
+            { name: 'aadhar', label: 'Aadhar Number', type: 'text' },
+            { name: 'email', label: 'Employee Email', type: 'text' },
+            { name: 'phone', label: 'Phone Number', type: 'text' },
+            { name: 'address', label: 'Residential Address', type: 'text', full: true }
+        ],
+        template: (d) => bondTemplate(d)
+    },
+
+    marksCard: {
+        title: "Marks Card Return Acknowledgement",
+        fields: [
+            { name: 'date', label: 'Return Date', type: 'date', default: today() },
+            { name: 'candidateName', label: 'Candidate / Employee Name', type: 'text', full: true },
+            { name: 'hrName', label: 'HR Admin Name', type: 'text', default: 'Amruth R' }
+        ],
+        template: (d) => wrapper(`
+        <div style="margin-bottom:1.8rem;">
+            <p style="font-weight:700;">The HR Admin,</p>
+            <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
+            <p style="font-weight:700;">Hassan – 573201</p>
+        </div>
+        <p style="margin-bottom:2rem;">Dear <strong>${d.candidateName || '<Candidate/Employee Name>'}</strong>,</p>
+        <p style="margin-bottom:3rem; text-align:justify; line-height:1.8;">This is to acknowledge the receipt of returning back original marks cards from <strong>Geosieben Consulting Pvt Ltd</strong> on <strong>${fmtDate(d.date)}</strong>. The company is no longer responsible for the same.</p>
+        <div style="margin-bottom:4rem;">
+            <p style="margin-bottom:0.4rem;">Employee Signature,</p>
+            <div style="border-bottom:1px solid #334155; width:220px; height:2rem;"></div>
+        </div>
+        <div>
+            <p>Regards,</p>
+            <p style="font-weight:700; margin-top:0.8rem;">HR Admin</p>
+            <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
+            <p style="font-size:0.85rem; color:#475569;">Name: ${d.hrName}</p>
+        </div>
+        <div style="margin-top:3rem; padding-top:1rem; border-top:1px solid #e2e8f0; text-align:center; font-size:0.72rem; color:#94a3b8;">
+            Geosieben Consulting Private Limited &nbsp;|&nbsp; Hassan Office
+        </div>`)
+    }
+};
+
+/* ─── SEARCH & FILTER ─── */
+let activeCategory = 'all';
+
+function filterCategory(cat, btn) {
+    activeCategory = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+}
+
+function filterCards() { applyFilters(); }
+
+function applyFilters() {
+    const query = (document.getElementById('searchInput').value || '').toLowerCase();
+    const cards = document.querySelectorAll('.template-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+        const cat = card.dataset.category || '';
+        const keywords = (card.dataset.keywords || '') + ' ' + (card.querySelector('.card-title')?.textContent || '');
+        const catMatch = activeCategory === 'all' || cat.includes(activeCategory);
+        const searchMatch = !query || keywords.toLowerCase().includes(query);
+        if (catMatch && searchMatch) {
+            card.classList.remove('card-hidden');
+            visible++;
+        } else {
+            card.classList.add('card-hidden');
+        }
+    });
+
+    document.getElementById('countLabel').textContent = visible + ' available';
+
+    // Show no-results
+    const existing = document.querySelector('.no-results');
+    if (existing) existing.remove();
+    if (visible === 0) {
+        const msg = document.createElement('div');
+        msg.className = 'no-results';
+        msg.textContent = 'No templates match your search.';
+        document.getElementById('templateGrid').appendChild(msg);
+    }
+}
+
+/* ─── MODAL ─── */
+let currentType = null;
+const overlay = document.getElementById('modalOverlay');
+
+function openModal(type) {
+    currentType = type;
+    const cfg = config[type];
+    if (!cfg) return;
+    document.getElementById('modalTitle').textContent = cfg.title;
+    document.getElementById('formFields').innerHTML = cfg.fields.map(f => {
+        const isSelect = f.type === 'select';
+        const isTextarea = f.type === 'textarea';
+        let input = '';
+        if (isSelect) {
+            const opts = (f.options||[]).map(o => `<option value="${o}" ${o === f.default ? 'selected' : ''}>${o}</option>`).join('');
+            input = `<select class="field-select" name="${f.name}">${opts}</select>`;
+        } else if (isTextarea) {
+            input = `<textarea class="field-input" name="${f.name}" rows="3" style="resize:vertical;">${f.default||''}</textarea>`;
+        } else {
+            input = `<input class="field-input" type="${f.type}" name="${f.name}" value="${f.default || ''}" ${f.type !== 'date' ? 'required' : ''}>`;
+        }
+        return `<div class="field-wrap ${f.full ? 'full-width' : ''}">\n<label class="field-label">${f.label}</label>\n${input}\n</div>`;
+    }).join('');
+    overlay.classList.add('open');
+    setTimeout(() => {
+        const first = document.querySelector('.field-input[type="text"], .field-select');
+        if (first) first.focus();
+    }, 250);
+}
+
+function closeModal() { overlay.classList.remove('open'); }
+
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+document.getElementById('letterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this).entries());
+    document.getElementById('printArea').innerHTML = config[currentType].template(data);
+    document.getElementById('docInfoName').textContent = config[currentType].title;
+    closeModal();
+    document.getElementById('mainSection').classList.add('hidden');
+    document.getElementById('heroBand').classList.add('hidden');
+    document.getElementById('resultSection').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+function resetApp() {
+    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('mainSection').classList.remove('hidden');
+    document.getElementById('heroBand').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* Update count on load */
+document.getElementById('templateCount').textContent = document.querySelectorAll('.template-card').length;
+document.getElementById('countLabel').textContent = document.querySelectorAll('.template-card').length + ' available';
+</script>
+</body>
+</html>

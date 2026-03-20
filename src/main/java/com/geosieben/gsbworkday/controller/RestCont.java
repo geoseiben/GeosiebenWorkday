@@ -2,6 +2,7 @@ package com.geosieben.gsbworkday.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
 import com.geosieben.gsbworkday.entity.BookedHours;
 import com.geosieben.gsbworkday.entity.Clients;
@@ -125,5 +126,9 @@ private BookerHoursRepository bookerHoursRepository ;
     public BookedHours getHours(@PathVariable("empid") String empid,@PathVariable("allotmentid") int allotmentid) {
         return bookerHoursRepository.findbydateAndAllotmentforToday(empid, allotmentid);
     }
-    
+@GetMapping("/myProfileData")
+public EmployeeProfileProjection myProfile() {
+    return basicInfoRepository.employeeProfile((String)httpSession.getAttribute("eid"));
+}
+
 }
