@@ -43,8 +43,9 @@ public class EmployeeService implements EmployeeServiceInterface {
                 dto.getEmployeeId(), // Ensure this is NOT NULL in your JSON
                 dto.getFirstName(),
                 dto.getLastName(),
+                dto.getAddress(),
                 dto.getGender(),
-                dto.getDob(),
+                 dto.getDob(),
                 dto.getPersonalEmail(),
                 dto.getPhone(),
                 dto.getBloodGroup()

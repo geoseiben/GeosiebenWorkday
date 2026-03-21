@@ -4,8 +4,12 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
-import com.geosieben.gsbworkday.entity.*;;
+import com.geosieben.gsbworkday.dto.SeparationRequestsProjection;
+import com.geosieben.gsbworkday.entity.*;
 
 public interface SeparationInterface {
-public ResponseEntity<?> applyResignation(LocalDate lastWorkingDate,String reason,String remark,List<String> documents,EmployeeBasicInfo appliedBy);
+ ResponseEntity<?> applyResignation(LocalDate lastWorkingDate,String reason,String remark,List<String> documents,EmployeeBasicInfo appliedBy);
+List<SeparationRequestsProjection> getSeparationRequests();
+ResponseEntity<?> updateSeparationRequest(String action,int id,String remarks);
+Separation  getSeparationRequest(int separationid);
 }

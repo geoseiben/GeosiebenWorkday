@@ -1,6 +1,7 @@
 package com.geosieben.gsbworkday.service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.geosieben.gsbworkday.dto.SeparationRequestsProjection;
 import com.geosieben.gsbworkday.entity.AdminActivities;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Separation;
@@ -59,8 +61,41 @@ public class SeparationService implements SeparationInterface {
 
              return ResponseEntity.ok(Map.of(
             "status", "success",
-            "message", "Resignation processed for " + documents
+            "message", "Resignation processed for "
         ));
     }
+
+    @Override
+    public List<SeparationRequestsProjection> getSeparationRequests() {
+        return separationRepository.getSeparationRequests();
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<?> updateSeparationRequest(String action, int id, String remarks) {
+        Map<String,String> response=new HashMap<>();
+       Separation request=separationRepository.findById(id).orElse(null);
+       if(!request.equals(null)){
+        int status =action.equals("approve")?1:2;
+        request.setStatus(status);
+        request.setAdminRemarks(remarks);
+        request.setApprovedOn(LocalDate.now());
+        separationRepository.save(request);
+        response.put("status", "success");
+          response.put("message", "Request Updated");
+       }
+       else{
+        response.put("status", "error");
+          response.put("message", "separation request not found");
+       }
+
+       return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public Separation getSeparationRequest(int separationid) {
+return separationRepository.findById(separationid).orElse(null);
+    }
+   
 
 }

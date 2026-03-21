@@ -34,6 +34,7 @@ public class Separation {
     @ManyToOne
     @JoinColumn(name="appliedBy")
     private EmployeeBasicInfo appliedBy;
+    private String adminRemarks=null;
 
 
     
@@ -127,6 +128,12 @@ public class Separation {
     }
     public void setAppliedBy(EmployeeBasicInfo appliedBy) {
         this.appliedBy = appliedBy;
+    }
+    public String getAdminRemarks() {
+        return adminRemarks;
+    }
+    public void setAdminRemarks(String adminRemarks) {
+        this.adminRemarks = adminRemarks;
     }
 
     
