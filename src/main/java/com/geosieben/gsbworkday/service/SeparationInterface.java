@@ -10,6 +10,6 @@ import com.geosieben.gsbworkday.entity.*;
 public interface SeparationInterface {
  ResponseEntity<?> applyResignation(LocalDate lastWorkingDate,String reason,String remark,List<String> documents,EmployeeBasicInfo appliedBy);
 List<SeparationRequestsProjection> getSeparationRequests();
-ResponseEntity<?> updateSeparationRequest(String action,int id,String remarks);
+ResponseEntity<?> updateSeparationRequest(String action,int id,LocalDate lwd,String remarks);
 Separation  getSeparationRequest(int separationid);
 }

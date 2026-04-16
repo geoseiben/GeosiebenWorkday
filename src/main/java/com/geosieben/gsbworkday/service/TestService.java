@@ -1,13 +1,22 @@
 package com.geosieben.gsbworkday.service;
 
+import com.geosieben.gsbworkday.dto.EmployeeRequestDto;
+import com.geosieben.gsbworkday.dto.TestDto;
 import com.geosieben.gsbworkday.entity.TestDesgn;
 import com.geosieben.gsbworkday.entity.TestInfo;
 import com.geosieben.gsbworkday.repository.TestDesgnRepo;
 import com.geosieben.gsbworkday.repository.TestInfoRepo;
 import jakarta.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,11 +26,13 @@ public class TestService {
     private final TestInfoRepo testInfoRepo;
     private final TestDesgnRepo testDesgnRepo;
 
+
     // Constructor Injection (Best Practice)
     public TestService(TestInfoRepo testInfoRepo, TestDesgnRepo testDesgnRepo) {
         this.testInfoRepo = testInfoRepo;
         this.testDesgnRepo = testDesgnRepo;
     }
+
 
     @Transactional
     public ResponseEntity<Map<String, String>> addinfo(TestInfo testInfo, TestDesgn testDesgn) {
@@ -39,6 +50,7 @@ public class TestService {
         response.put("status", "success");
         return ResponseEntity.ok(response);
     }
+
 }
 
 

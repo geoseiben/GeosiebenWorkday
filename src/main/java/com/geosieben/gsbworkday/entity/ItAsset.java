@@ -1,43 +1,44 @@
 package com.geosieben.gsbworkday.entity;
 
 import java.time.LocalDateTime;
-
-import org.hibernate.annotations.ManyToAny;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-
+@Setter // Added to allow updating status and assignments
 @Entity
 @Table(name="itasset")
 public class ItAsset {
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-private int assetid;
-private String assetName;
-private String model;
-private String category;
-@Column(columnDefinition = "UNIQUE")
-private String serialNo;
-private String vendor;
-private int status;
-private LocalDateTime createdOn=LocalDateTime.now();
-@ManyToOne
-@JoinColumn(name="createdBy")
-private EmployeeBasicInfo createdBy;
-@ManyToOne
-@JoinColumn(name="assignedTo")
-private EmployeeBasicInfo assignedTo;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int assetid;
+
+    private String assetName;
+    private String model;
+    private String category;
+
+    @Column(unique = true) // Standard JPA way to ensure unique serial numbers
+    private String serialNo;
+
+    private String vendor;
+
+    // Consider using an Enum for status (e.g., AVAILABLE, ASSIGNED, SCRAPPED)
+    private int status;
+
+    @Column(updatable = false)
+    private LocalDateTime createdOn = LocalDateTime.now();
+
+    @ManyToOne
+    @JoinColumn(name="createdBy")
+    private EmployeeBasicInfo createdBy;
+
+    @ManyToOne
+    @JoinColumn(name="assignedTo")
+    private EmployeeBasicInfo assignedTo;
 }

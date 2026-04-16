@@ -6,13 +6,21 @@ import com.geosieben.gsbworkday.service.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+
 
 
 @RestController
@@ -30,16 +38,16 @@ private TestService testService;
     @Autowired
     private DepartmentService departmentService;
 
+
     @PostMapping("/admin/testinfoo")
     public ResponseEntity<Map<String,String>> addTestInfo(@RequestParam String eid, @RequestParam String name, @RequestParam String designation){
         TestInfo testInfo=new TestInfo(eid,name);
         TestDesgn testDesgn=new TestDesgn(designation,testInfo);
         return testService.addinfo(testInfo,testDesgn);
     }
-
+@PostMapping("/admin/addemployeee")
     public ResponseEntity<Map<String, String>> addEmployee(
-            @ModelAttribute EmployeeRequestDto dto,
-            @RequestParam("photo") MultipartFile image) {
+            @ModelAttribute EmployeeRequestDto dto) {
      return employeeService.addEmployee(dto);
 
     }
@@ -58,6 +66,7 @@ private TestService testService;
         return leaveServices.applyLeave(dto);
     }
     @GetMapping("/admin/pendingrequests")
+    
     public List<PendingLeaveResponseDto> pendingRequests(){
 return leaveServices.fetchPendingLeaves();
     }
@@ -101,7 +110,6 @@ return leaveServices.fetchPendingLeaves();
         return itTicketService.updateTicket(ticketid, status, remarks);
     }
 
-    
 
 
 }

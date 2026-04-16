@@ -15,7 +15,7 @@ public interface BasicInfoRepository extends JpaRepository<EmployeeBasicInfo,Str
 
 
     @Query("SELECT new com.geosieben.gsbworkday.dto.EmployeeResponseDto(" +
-            "e.EID, e.firstName, j.dateOfJoining, d.designation, " +
+            "e.EID, concat(e.firstName,' ',e.lastName), j.dateOfJoining, d.designation, " +
             "e.phone, e.email, j.status, j.workmail, " +
             "ed.fieldOfStudy, ed.yearOfPassing, e.dob) " +
             "FROM EmployeeBasicInfo e " +

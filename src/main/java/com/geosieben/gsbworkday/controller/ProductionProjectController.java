@@ -38,11 +38,14 @@ public class ProductionProjectController {
     public String projectHours() {
         return "projectHours";
     }
-            @GetMapping("/monthlyHours")
+ @GetMapping("/monthlyHours")
     public String monthlyHours() {
         return "monthlyHours";
     }
-    
+     @GetMapping("/monthWiseProjectHours")
+    public String monthWiseProjectHours() {
+        return "monthWiseProjectHours";
+    }
     
     
 }

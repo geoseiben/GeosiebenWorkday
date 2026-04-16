@@ -188,6 +188,40 @@ emailService.leaveApplicationHR(tomail,toname,empname,emp.getEID(),
         return ResponseEntity.ok(response);
     }
 
+    @Override
+    @Transactional
+    public ResponseEntity<Map<String, String>> calcelLeave(int leaveid) {
+        Map<String,String> response=new HashMap<>();
+    Leaves leave=leaveRepository.findById(leaveid).orElse(null);
+    if(!leave.equals(null)){
+        LeaveBalance lb=leaveBalanceRepository.findByEmployeeBasicInfo_EID(leave.getEmployeeBasicInfo().getEID());
+        String leavetype=leave.getLeaveType();
+        if(leavetype.equals("CL")){
+            lb.setCasualleaves(lb.getCasualleaves()+leave.getNoofDays());
+        }
+        else         if(leavetype.equals("EL")){
+            lb.setEarnedleaves(lb.getEarnedleaves() +leave.getNoofDays());
+        }
+              else         if(leavetype.equals("RH")){
+            lb.setRestrictedholidays(lb.getRestrictedholidays() +leave.getNoofDays());
+        }
+                      else         if(leavetype.equals("SL")){
+            lb.setSickleaves(lb.getSickleaves() +leave.getNoofDays());
+        }
+        leave.setStatus(4);
+        leaveRepository.save(leave);
+        leaveBalanceRepository.save(lb);
+        response.put("status", "success");
+        response.put("message", "Leave Cancelled Successfully");
+    }
+    else {
+                response.put("status", "error");
+        response.put("message", "unable to find leave request");
+    }
+
+    return ResponseEntity.ok(response);
+    }
+
 }
 
 

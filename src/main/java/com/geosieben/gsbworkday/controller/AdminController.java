@@ -18,5 +18,8 @@ public String navigateSeparation() {
 public String navigateMyprofile() {
     return "myprofile";
 }
-
+@GetMapping("/test")
+public String test() {
+    return "test";
+}
 }

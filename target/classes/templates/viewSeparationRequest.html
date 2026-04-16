@@ -1,722 +1,335 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Admin | Separation Request</title>
+    <title>Admin Portal | Separation Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <link rel="icon" href="../assets/images/favicon-32x32.png" type="image/x-icon">
     <meta charset="UTF-8">
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         :root {
-            --c-bg: #f1f3f8;
-            --c-surface: #ffffff;
-            --c-surface-2: #f7f8fc;
-            --c-border: #e4e7ef;
-            --c-border-strong: #cdd2e1;
-            --c-text: #151a28;
-            --c-text-2: #5a6278;
-            --c-text-3: #9199ae;
-            --c-accent: #3b5bdb;
-            --c-accent-light: #eef1fd;
-            --c-accent-hover: #2f4ac4;
-            --c-success: #0d9f6e;
-            --c-success-light: #e8faf4;
-            --c-danger: #e5332a;
-            --c-danger-light: #fdf1f0;
-            --c-warning: #d97706;
-            --c-warning-light: #fefce8;
-            --c-info: #0284c7;
-            --c-info-light: #e0f2fe;
-            --radius-sm: 6px;
-            --radius: 10px;
-            --radius-lg: 14px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+            --sidebar-width: 320px;
+            --brand-primary: #0f172a;
+            --brand-accent: #3b82f6;
+            --bg-main: #f8fafc;
+            --border-color: #e2e8f0;
         }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background: var(--c-bg);
-            color: var(--c-text);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            background-color: var(--bg-main);
+            color: #1e293b;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: -0.01em;
+            overflow-x: hidden;
         }
 
-        /* ── Page Layout ── */
-        .page-wrap {
-          
-            margin: 0 auto;
-            padding: 24px 20px 48px;
-        }
-
-        /* ── Page Header ── */
-        .page-header {
+        /* ── Full Width Layout ── */
+        .dashboard-container {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .page-header-back {
-            width: 32px; height: 32px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--c-border);
-            background: var(--c-surface);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--c-text-2);
-            text-decoration: none;
-            transition: background 0.15s;
-        }
-        .page-header-back:hover { background: var(--c-border); color: var(--c-text); }
-        .page-header-title { font-size: 17px; font-weight: 700; color: var(--c-text); }
-        .page-header-sub { font-size: 12px; color: var(--c-text-3); margin-top: 1px; }
-
-        /* ── Cards ── */
-        .card {
-            background: var(--c-surface);
-            border: 1px solid var(--c-border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-        }
-        .card-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--c-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--c-surface-2);
-        }
-        .card-header-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--c-text-2);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .card-header-title .material-icons-round { font-size: 15px; }
-        .card-body { padding: 18px; }
-
-        /* ── Stat Strip ── */
-        .stat-strip {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            border-bottom: 1px solid var(--c-border);
-        }
-        .stat-item {
-            padding: 14px 18px;
-            border-right: 1px solid var(--c-border);
-        }
-        .stat-item:last-child { border-right: none; }
-        .stat-label {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--c-text-3);
-            margin-bottom: 4px;
-        }
-        .stat-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--c-text);
-            font-family: 'DM Mono', monospace;
-        }
-        .stat-value.accent { color: var(--c-accent); }
-        .stat-value.danger { color: var(--c-danger); }
-
-        /* ── Field Grid ── */
-        .field-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-        }
-        .field {
-            padding: 12px 18px;
-            border-bottom: 1px solid var(--c-border);
-            border-right: 1px solid var(--c-border);
-        }
-        .field:nth-child(even) { border-right: none; }
-        .field:nth-last-child(-n+2) { border-bottom: none; }
-        .field.full { grid-column: 1 / -1; border-right: none; }
-        .field.full:last-child { border-bottom: none; }
-        .field-label {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--c-text-3);
-            margin-bottom: 4px;
-        }
-        .field-value {
-            font-size: 13.5px;
-            font-weight: 500;
-            color: var(--c-text);
-        }
-        .field-value a {
-            color: var(--c-accent);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .field-value a:hover { text-decoration: underline; }
-        .field-value.mono { font-family: 'DM Mono', monospace; font-size: 13px; }
-
-        /* ── LWD Highlight ── */
-        .lwd-box {
-            margin: 0 18px 14px;
-            border-radius: var(--radius);
-            border: 1px solid #c7d2fe;
-            background: var(--c-accent-light);
-            padding: 12px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        .lwd-box .lwd-inner { flex: 1; }
-        .lwd-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--c-accent);
-            margin-bottom: 3px;
-        }
-        .lwd-date {
-            font-size: 16px;
-            font-weight: 700;
-            font-family: 'DM Mono', monospace;
-            color: var(--c-accent-hover);
-        }
-        
-        /* ── Reason / Remarks ── */
-        .text-box {
-            margin: 0 18px 14px;
-            padding: 12px 14px;
-            background: var(--c-surface-2);
-            border: 1px solid var(--c-border);
-            border-radius: var(--radius);
-            font-size: 13px;
-            color: var(--c-text-2);
-            font-style: italic;
-            min-height: 52px;
-            line-height: 1.6;
-        }
-        .text-box.editable-area { position: relative; }
-
-        /* ── Inline Edit ── */
-        .inline-edit-wrap { position: relative; }
-        .inline-edit-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 18px;
-            margin-bottom: 6px;
-        }
-        .section-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--c-text-3);
-        }
-        .edit-icon-btn {
-            background: none;
-            border: none;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
             padding: 0;
-            color: var(--c-text-3);
-            cursor: pointer;
-            display: flex; align-items: center;
-            transition: color 0.15s;
-            line-height: 1;
-        }
-        .edit-icon-btn:hover { color: var(--c-accent); }
-        .edit-icon-btn .material-icons-round { font-size: 15px; }
-        .inline-edit-controls {
-            display: flex;
-            gap: 6px;
-            padding: 0 18px 14px;
-            justify-content: flex-end;
         }
 
-        /* ── Checklist ── */
-        .checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-        .checklist li {
+        .top-nav {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 2rem;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--c-text);
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
-        .checklist li .material-icons-round { font-size: 16px; color: var(--c-success); }
 
-        /* ── Status Badge ── */
-        .badge-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-size: 11px;
-            font-weight: 700;
+        .main-content-area {
+            display: flex;
+            flex: 1;
+            width: 100%;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .side-panel {
+            width: var(--sidebar-width);
+            background: white;
+            border-left: 1px solid var(--border-color);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* ── Summary Ribbon ── */
+        .summary-ribbon {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .ribbon-item {
+            padding: 1.5rem;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .ribbon-item:last-child { border-right: none; }
+
+        .ribbon-label {
+            font-size: 0.7rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .badge-status::before {
-            content: '';
-            width: 6px; height: 6px;
+
+        .ribbon-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+        }
+
+        /* ── Data Cards ── */
+        .data-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header-custom {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .info-grid-modern {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .info-block {
+            background: white;
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* ── Timeline ── */
+        .step-item {
+            position: relative;
+            padding-left: 1.75rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid #f1f5f9;
+        }
+        .step-item:last-child { border-left-color: transparent; }
+        .step-dot {
+            position: absolute;
+            left: -7px;
+            top: 2px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
+            background: #cbd5e1;
+            border: 2px solid white;
         }
-        .badge-status.pending { background: var(--c-warning-light); color: var(--c-warning); }
-        .badge-status.pending::before { background: var(--c-warning); }
-        .badge-status.approved { background: var(--c-accent-light); color: var(--c-accent); }
-        .badge-status.approved::before { background: var(--c-accent); }
-        .badge-status.rejected, .badge-status.withdrawn { background: var(--c-danger-light); color: var(--c-danger); }
-        .badge-status.rejected::before, .badge-status.withdrawn::before { background: var(--c-danger); }
-        .badge-status.completed { background: var(--c-success-light); color: var(--c-success); }
-        .badge-status.completed::before { background: var(--c-success); }
-        .badge-status.info { background: var(--c-info-light); color: var(--c-info); }
-        .badge-status.info::before { background: var(--c-info); }
+        .step-item.active .step-dot { background: var(--brand-accent); box-shadow: 0 0 0 4px #dbeafe; }
 
-        /* ── Sidebar ── */
-        .sidebar { display: flex; flex-direction: column; gap: 12px; }
-        .sidebar-sticky { position: sticky; top: 20px; }
-
-        /* ── Status Card ── */
-        .status-card { }
-        .status-top {
-            padding: 16px 18px;
-            border-bottom: 1px solid var(--c-border);
-            text-align: center;
-        }
-        .status-top .status-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--c-text-3); margin-bottom: 10px; }
-        .status-row {
-            padding: 11px 18px;
-            border-bottom: 1px solid var(--c-border);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .status-row:last-child { border-bottom: none; }
-        .status-row-label { font-size: 11px; font-weight: 600; color: var(--c-text-3); }
-        .status-row-value { font-size: 12px; font-weight: 600; color: var(--c-text); }
-
-        /* ── Action Buttons ── */
-        .action-card .card-body { display: flex; flex-direction: column; gap: 8px; }
-        .btn-act {
+        /* ── Interaction Elements ── */
+        .btn-action-main {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.875rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 9px 14px;
-            border-radius: var(--radius);
-            font-size: 13px;
-            font-weight: 600;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            width: 100%;
+            gap: 0.75rem;
+            transition: all 0.2s;
         }
-        .btn-act .material-icons-round { font-size: 16px; }
-        .btn-primary-act {
-            background: var(--c-accent);
-            color: #fff;
-        }
-        .btn-primary-act:hover { background: var(--c-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(59,91,219,0.25); }
-        .btn-danger-act {
-            background: var(--c-danger-light);
-            color: var(--c-danger);
-            border: 1px solid #f5c6c4;
-        }
-        .btn-danger-act:hover { background: var(--c-danger); color: #fff; transform: translateY(-1px); }
-        .btn-info-act {
-            background: var(--c-info-light);
-            color: var(--c-info);
-            border: 1px solid #bae6fd;
-        }
-        .btn-info-act:hover { background: var(--c-info); color: #fff; transform: translateY(-1px); }
-        .btn-success-act {
-            background: var(--c-success-light);
-            color: var(--c-success);
-            border: 1px solid #a7f3d0;
-        }
-        .btn-success-act:hover { background: var(--c-success); color: #fff; transform: translateY(-1px); }
 
-        /* ── Form Controls ── */
-        .form-control, .form-select {
-            border: 1px solid var(--c-border-strong);
-            border-radius: var(--radius-sm);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            color: var(--c-text);
-            background: var(--c-surface);
-            padding: 8px 12px;
-            width: 100%;
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--c-accent);
-            box-shadow: 0 0 0 3px rgba(59,91,219,0.1);
-        }
-        textarea.form-control { resize: vertical; min-height: 80px; }
+        .btn-approve { background: var(--brand-primary); color: white; }
+        .btn-approve:hover { background: #000; transform: translateY(-1px); }
 
-        /* ── Modal ── */
-        .modal-content {
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--c-border);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.12);
-            overflow: hidden;
-        }
-        .modal-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--c-border);
-            background: var(--c-surface-2);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .modal-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--c-text); }
-        .modal-title .material-icons-round { font-size: 18px; color: var(--c-accent); }
-        .modal-body { padding: 20px; }
-        .modal-footer {
-            padding: 14px 20px;
-            border-top: 1px solid var(--c-border);
-            background: var(--c-surface-2);
-            display: flex; gap: 8px; justify-content: flex-end;
-        }
-        .form-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-text-2); margin-bottom: 6px; display: block; }
-        .form-hint { font-size: 11px; color: var(--c-text-3); margin-top: 4px; }
-
-        /* ── Divider ── */
-        .divider { height: 1px; background: var(--c-border); margin: 2px 0; }
-
-        /* ── Rehire Checkbox ── */
-        .rehire-check {
+        .edit-icon-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 12px;
-            border: 1px solid var(--c-border);
-            border-radius: var(--radius);
-            background: var(--c-surface-2);
-            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            transition: all 0.2s;
         }
-        .rehire-check input[type="checkbox"] {
-            width: 16px; height: 16px;
-            accent-color: var(--c-success);
-            margin-top: 1px;
-            flex-shrink: 0;
-        }
-        .rehire-check-text strong { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; }
-        .rehire-check-text span { font-size: 11px; color: var(--c-text-3); }
+        .edit-icon-btn:hover { background: #f1f5f9; color: var(--brand-accent); }
 
-        /* ── Interview Status ── */
-        .interview-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 18px;
-            border-bottom: 1px solid var(--c-border);
+        .status-pill {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
         }
-        .interview-row:last-child { border-bottom: none; }
-        .interview-row-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-text-3); }
+        .s-pending { background: #fff7ed; color: #c2410c; }
+        .s-approved { background: #f0fdf4; color: #15803d; }
+        .s-rejected { background: #fef2f2; color: #b91c1c; }
 
-        /* ── Spinner ── */
-        .spinner-border-sm { width: 13px; height: 13px; border-width: 2px; }
-
-        /* ── Responsive ── */
-        @media (max-width: 767px) {
-            .field-grid { grid-template-columns: 1fr; }
-            .field { border-right: none; }
-            .field:nth-last-child(-n+2) { border-bottom: 1px solid var(--c-border); }
-            .field:last-child { border-bottom: none; }
-            .stat-strip { grid-template-columns: 1fr; }
-            .stat-item { border-right: none; border-bottom: 1px solid var(--c-border); }
-            .stat-item:last-child { border-bottom: none; }
-        }
-        @media (max-width: 991px) {
-            .sidebar-sticky { position: static; }
-        }
+        /* ── Skeleton ── */
+        .skel { height: 16px; background: #f1f5f9; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
-      <script src="https://cdn.tailwindcss.com"></script>
-
 </head>
 <body>
-    <head th:replace="includes/header :: header"></head>
 
-
-
-<div class="page-wrap">
-
-    <!-- Page Header -->
-    <div class="page-header">
-        <a href="separations.php" class="page-header-back">
-            <span class="material-icons-round" style="font-size:16px;">arrow_back</span>
-        </a>
-        <div>
-            <div class="page-header-title">Separation Request</div>
-            <div class="page-header-sub">Case ID #<?= htmlentities($sid); ?></div>
+<div class="dashboard-container">
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="flex items-center gap-6">
+            <button onclick="history.back()" class="text-slate-400 hover:text-slate-900 transition-colors">
+                <span class="material-icons-round">arrow_back_ios_new</span>
+            </button>
+            <div class="h-6 w-[1px] bg-slate-200"></div>
+            <div>
+                <h1 id="topName" class="text-lg font-extrabold text-slate-900">...</h1>
+                <p id="topMeta" class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Employee Separation Case</p>
+            </div>
         </div>
-    </div>
+        <div id="topStatus">
+            <!-- Status Pill -->
+        </div>
+    </header>
 
+    <div class="main-content-area">
+        <!-- Main Scrollable Content -->
+        <main class="content-body">
+            
+            <!-- Summary Ribbon -->
+            <div class="summary-ribbon" id="ribbonContainer">
+                <div class="ribbon-item"><div class="skel w-1/2"></div></div>
+                <div class="ribbon-item"><div class="skel w-1/2"></div></div>
+                <div class="ribbon-item"><div class="skel w-1/2"></div></div>
+                <div class="ribbon-item"><div class="skel w-1/2"></div></div>
+            </div>
 
-    <div class="row g-3">
-
-        <!-- ── Main Column ── -->
-        <div class="col-lg-8">
-            <div class="d-flex flex-column gap-3">
-
-                <!-- CARD 1: Employee + Key Metrics -->
-                <div class="card" id="personal">
-             
+            <!-- Profile Info Section -->
+            <div class="data-card">
+                <div class="card-header-custom">
+                    <h2 class="text-sm font-extrabold flex items-center gap-2 uppercase tracking-tight">
+                        <span class="material-icons-round text-blue-500 text-lg">badge</span>
+                        Employment Profile
+                    </h2>
                 </div>
-
-                <!-- CARD 2: Timeline Details -->
-                <div class="card" id="resignation">
-
+                <div id="infoGrid" class="info-grid-modern">
+                    <!-- Dynamic Blocks -->
+                    <div class="info-block"><div class="skel w-3/4"></div></div>
+                    <div class="info-block"><div class="skel w-1/2"></div></div>
                 </div>
+            </div>
 
-                <!-- CARD 3: Exit Requirements -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-header-title">
-                            <span class="material-icons-round">checklist</span>
-                            Exit Requirements
+            <!-- Case Statement & Remarks -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div class="data-card">
+                    <div class="card-header-custom">
+                        <h2 class="text-sm font-extrabold uppercase tracking-tight">Employee Statement</h2>
+                    </div>
+                    <div class="p-6">
+                        <label class="ribbon-label mb-2">Reason for Leaving</label>
+                        <div id="reasonBox" class="p-5 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-600 italic leading-relaxed">
+                            ...
                         </div>
                     </div>
-                    <div class="row g-0">
-                        <!-- Documents -->
-                        <div class="col-md-6" style="border-right:1px solid var(--c-border);">
-                            <div style="padding:14px 18px;">
-                                <div class="section-label" style="margin-bottom:10px;">Requested Documents</div>
-                                <?php
-                                $sql1 = "SELECT * FROM separationdocs WHERE SEPARATIONID=:sid";
-                                $query1 = $dbh->prepare($sql1);
-                                $query1->bindParam(':sid', $sid, PDO::PARAM_INT);
-                                $query1->execute();
-                                $results1 = $query1->fetchAll(PDO::FETCH_OBJ);
-                                if ($query1->rowCount() > 0): ?>
-                                    <ul class="checklist">
-                                        <?php foreach ($results1 as $result1): ?>
-                                            <li>
-                                                <span class="material-icons-round">check_circle</span>
-                                                <?= htmlentities($result1->Document); ?>
-                                            </li>
-                                        <?php endforeach; ?>
-                                    </ul>
-                                <?php else: ?>
-                                    <div style="font-size:12px;color:var(--c-text-3);font-style:italic;">None requested.</div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+                </div>
 
-                        <!-- Exit Interview -->
-                        <div class="col-md-6">
-                            <div style="padding:14px 18px;">
-                                <div class="section-label" style="margin-bottom:10px;">Exit Interview</div>
-                                <?php if ($result->ExitInterview == 'Scheduled' && isset($exitInterview)): ?>
-                                    <!-- Date Inline Edit -->
-                                    <div class="interview-row" style="padding:0;margin-bottom:10px;border-bottom:none;">
-                                        <div>
-                                            <div class="interview-row-label">Scheduled Date</div>
-                                            <div id="interviewDateDisplay" style="font-size:13px;font-weight:600;color:var(--c-text);margin-top:2px;">
-                                                <?= date('d M Y', strtotime($exitInterview->ExitInterviewDate)); ?>
-                                            </div>
-                                            <div id="interviewDateEdit" style="display:none;margin-top:6px;">
-                                                <input id="interviewDateInput" type="date" class="form-control" value="<?= htmlentities($exitInterviewDate); ?>" style="max-width:180px;">
-                                                <div class="d-flex gap-2 mt-2">
-                                                    <button id="cancelInterviewDateBtn" class="btn-act btn-danger-act" style="width:auto;padding:5px 10px;font-size:11px;">Cancel</button>
-                                                    <button id="saveInterviewDateBtn" class="btn-act btn-primary-act" style="width:auto;padding:5px 10px;font-size:11px;" data-interviewid="<?= htmlentities($exitInterview->SeparationId); ?>">Save</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button id="editInterviewDateBtn" class="edit-icon-btn" title="Edit date">
-                                            <span class="material-icons-round">edit</span>
-                                        </button>
-                                    </div>
-                                    <div style="margin-top:8px;">
-                                        <div class="interview-row-label" style="margin-bottom:4px;">Status</div>
-                                        <span class="badge-status info"><?= htmlentities($exitInterview->Status); ?></span>
-                                    </div>
-                                <?php else: ?>
-                                    <div style="font-size:12px;color:var(--c-text-3);font-style:italic;">Not yet scheduled.</div>
-                                <?php endif; ?>
+                <div class="data-card">
+                    <div class="card-header-custom">
+                        <h2 class="text-sm font-extrabold uppercase tracking-tight">Internal Admin Notes</h2>
+                        <button onclick="toggleNotesEdit()" class="text-[10px] font-bold text-blue-600 border border-blue-100 rounded-md px-2 py-1 hover:bg-blue-50">EDIT NOTES</button>
+                    </div>
+                    <div class="p-6">
+                        <div id="notesView" class="text-sm text-slate-600 leading-loose">...</div>
+                        <div id="notesEdit" class="hidden">
+                            <textarea id="notesInput" class="w-full border rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-100 outline-none h-32" placeholder="Add administrative details..."></textarea>
+                            <div class="flex justify-end gap-2 mt-3">
+                                <button onclick="toggleNotesEdit()" class="text-xs font-bold text-slate-400">CANCEL</button>
+                                <button onclick="saveAdminNotes()" class="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg">SAVE</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
+        </main>
 
-        <!-- ── Sidebar ── -->
-        <div class="col-lg-4">
-            <div class="sidebar sidebar-sticky">
-
-                <!-- Status Card -->
-                <div class="card status-card">
-                    <div class="card-header">
-                        <div class="card-header-title">
-                            <span class="material-icons-round">info</span>
-                            Case Status
-                        </div>
+        <!-- Right Side Panel -->
+        <aside class="side-panel">
+            <div class="section">
+                <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-6">Workflow Status</h3>
+                <div class="timeline-container">
+                    <div class="step-item active">
+                        <div class="step-dot"></div>
+                        <div class="text-sm font-bold">Request Filed</div>
+                        <div id="tsSubmitted" class="text-[11px] text-slate-400 mt-1">...</div>
                     </div>
-                    <div class="status-top">
-                        <div class="status-title">Current Status</div>
-                        <?php
-                        $cls = 'pending';
-                        if ($status == 'Approved') $cls = 'approved';
-                        elseif ($status == 'Completed') $cls = 'completed';
-                        elseif (in_array(strtolower($status), ['rejected', 'withdrawn'])) $cls = 'rejected';
-                        ?>
-                        <span class="badge-status <?= $cls; ?>" style="font-size:13px;padding:6px 16px;">
-                            <?= htmlentities($status); ?>
-                        </span>
+                    <div id="stepApproved" class="step-item">
+                        <div class="step-dot"></div>
+                        <div class="text-sm font-bold">Admin Approval</div>
+                        <div id="tsApproved" class="text-[11px] text-slate-400 mt-1">Awaiting review...</div>
                     </div>
-                    <div class="status-row">
-                        <span class="status-row-label">Processed By</span>
-                        <span class="status-row-value"><?= $result->ApprovedBy ? htmlentities($result->ApprovedBy) : '—'; ?></span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-row-label">Exit Interview</span>
-                        <span class="status-row-value"><?= htmlentities($result->ExitInterview); ?></span>
+                    <div id="stepSettled" class="step-item">
+                        <div class="step-dot"></div>
+                        <div class="text-sm font-bold">Final Settlement</div>
+                        <div class="text-[11px] text-slate-400 mt-1">Last formalities...</div>
                     </div>
                 </div>
-
-                <!-- Actions Card -->
-                <div class="card action-card">
-                    <div class="card-header">
-                        <div class="card-header-title">
-                            <span class="material-icons-round">bolt</span>
-                            Actions
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($status == 'Pending'): ?>
-                            <button type="button" class="btn-act btn-primary-act" data-bs-toggle="modal" data-bs-target="#approveModal" data-separationid="<?= htmlspecialchars($result->SeparationId); ?>" data-lastworkingday="<?= $existingLWD; ?>">
-                                <span class="material-icons-round">how_to_reg</span> Approve Request
-                            </button>
-                            <form id="reject">
-                                <input type="hidden" id="rejected" value="<?= htmlspecialchars($result->SeparationId); ?>">
-                                <button type="submit" class="btn-act btn-danger-act">
-                                    <span class="material-icons-round">close</span> Reject Request
-                                </button>
-                            </form>
-                        <?php endif; ?>
-
-                        <?php if ($status == 'Approved' && $result->ExitInterview == 'To Be Scheduled'): ?>
-                            <button type="button" class="btn-act btn-info-act" data-bs-toggle="modal" data-bs-target="#actionModal2">
-                                <span class="material-icons-round">event_available</span> Schedule Interview
-                            </button>
-                        <?php endif; ?>
-
-<?php if ($result->ExitInterview == 'Scheduled' && $result->Status != 'Completed'): ?>
-    <button type="button" class="btn-act btn-success-act" data-bs-toggle="modal" data-bs-target="#actionModal3">
-        <span class="material-icons-round">assignment_turned_in</span> Complete Exit Process
-    </button>
-    <button id="withdraw" type="button" class="btn-act btn-danger-act">
-        <span class="material-icons-round">undo</span> Withdraw
-    </button>
-
-<?php elseif ($result->Status == 'Completed'): ?>
-   
-<?php endif; ?>
-
-                        <?php if (empty($status) || ($status != 'Pending' && $status != 'Approved' && $result->ExitInterview != 'Scheduled')): ?>
-                            <p style="font-size:12px;color:var(--c-text-3);text-align:center;padding:8px 0;">No actions available for current status.</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
             </div>
-        </div>
+
+            <div class="section mt-auto pt-8 border-t border-slate-100">
+                <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-4">Operations</h3>
+                <div id="actionArea" class="space-y-3">
+                    <!-- Actions -->
+                </div>
+            </div>
+        </aside>
     </div>
+</div>
 
-    <!-- ── Modal: Approve ── -->
-    <div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title"><span class="material-icons-round">how_to_reg</span> Approve Separation</div>
-                    <button type="button" class="edit-icon-btn" data-bs-dismiss="modal"><span class="material-icons-round">close</span></button>
-                </div>
-                <div class="modal-body">
-                    <p style="font-size:12px;color:var(--c-text-2);margin-bottom:14px;">Employee requested LWD: <strong><?= date('d M Y', strtotime($result->LastWorkingDay)); ?></strong>. Confirm or adjust below.</p>
-                    <label class="form-label">Final Last Working Day</label>
-                    <input id="newLastWorkingDay" type="date" class="form-control" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-act btn-danger-act" data-bs-dismiss="modal" style="width:auto;padding:7px 14px;font-size:12px;">Cancel</button>
-                    <button id="confirmApproveBtn" type="button" class="btn-act btn-primary-act" data-separationid="<?= htmlentities($result->SeparationId); ?>" style="width:auto;padding:7px 14px;font-size:12px;">
-                        <span class="material-icons-round" style="font-size:14px;">check</span> Confirm
-                    </button>
+<!-- LWD Quick Update Modal -->
+<div class="modal fade" id="lwdModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-2xl rounded-3xl overflow-hidden">
+            <div class="p-6">
+                <h4 class="font-extrabold text-slate-900 mb-1">Update LWD</h4>
+                <p class="text-xs text-slate-400 mb-4">Set the final working date for departure.</p>
+                
+                <input type="date" id="lwdInput" class="w-full border-2 border-slate-100 rounded-xl p-3 font-bold text-slate-700 outline-none focus:border-blue-500 mb-4">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="py-3 text-xs font-bold text-slate-400" data-bs-dismiss="modal">CLOSE</button>
+                    <button class="bg-blue-600 text-white py-3 rounded-xl text-xs font-bold" onclick="submitLwdUpdate('approve')">UPDATE DATE</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- ── Modal: Schedule Interview ── -->
-    <div class="modal fade" id="actionModal2" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title"><span class="material-icons-round" style="color:var(--c-info);">today</span> Schedule Exit Interview</div>
-                    <button type="button" class="edit-icon-btn" data-bs-dismiss="modal"><span class="material-icons-round">close</span></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label">Interview Date</label>
-                    <input id="exitInterviewDate" type="date" class="form-control" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-act btn-danger-act" data-bs-dismiss="modal" style="width:auto;padding:7px 14px;font-size:12px;">Cancel</button>
-                    <button id="scheduleExitBtn" type="button" class="btn-act btn-primary-act" data-separationid="<?= htmlentities($result->SeparationId); ?>" style="width:auto;padding:7px 14px;font-size:12px;">
-                        <span class="material-icons-round" style="font-size:14px;">event_available</span> Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Modal: Complete Separation ── -->
-    <div class="modal fade" id="actionModal3" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title"><span class="material-icons-round">assignment_turned_in</span> Finalize Separation</div>
-                    <button type="button" class="edit-icon-btn" data-bs-dismiss="modal"><span class="material-icons-round">close</span></button>
-                </div>
-                <div class="modal-body">
-                    <form id="completeForm">
-                        <label class="form-label">Final Remarks / Summary</label>
-                        <textarea id="finalRemarks" name="finalRemarks" class="form-control" rows="4" placeholder="Exit interview notes and summary..." required></textarea>
-                        <div style="margin-top:14px;">
-                            <label class="rehire-check" for="eligibleForRehire">
-                                <input type="checkbox" value="1" id="eligibleForRehire" name="eligibleForRehire">
-                                <div class="rehire-check-text">
-                                    <strong>Eligible for Rehire</strong>
-                                    <span>Check if performance qualifies for re-employment.</span>
-                                </div>
-                            </label>
-                        </div>
-                        <input type="hidden" name="csrf" id="csrf" value="<?= htmlentities($_SESSION['csrf']); ?>">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-act btn-danger-act" data-bs-dismiss="modal" style="width:auto;padding:7px 14px;font-size:12px;">Cancel</button>
-                    <button id="complete" type="submit" form="completeForm" class="btn-act btn-primary-act" data-separationid="<?= htmlentities($result->SeparationId); ?>" style="width:auto;padding:7px 14px;font-size:12px;">
-                        <span class="material-icons-round" style="font-size:14px;">check_circle</span> Finalize
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <?php endforeach; endif; ?>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -724,261 +337,201 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const separationId = urlParams.get("separationid");
+    let globalData = null;
+    let autoApproveOnLwd = false;
 
- const params=new URLSearchParams(window.location.search);
-let hoursChart = null; 
-
-
-  const separationid = params.get("separationid");
-  console.log(separationid);
-  getSeparationData(separationid);
-  function getSeparationData(separationid){
-    $.ajax({
-        url:`/admin/separation/view/${separationid}`,
-        type:'GET',
-        dataType:'JSON',
-        success:function(res){
-            console.log(res);
-            let output=`       <!-- Stat Strip -->
-                    <div class="stat-strip">
-                        <div class="stat-item">
-                            <div class="stat-label">Employee ID</div>
-                            <div class="stat-value accent">${res.employeeBasicInfo.eid}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Submitted</div>
-                            <div class="stat-value">${res.resignationDate}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Last Working Day</div>
-                            <div class="stat-value danger">${res.lastWorkingDay}</div>
-                        </div>
-                    </div>
-
-                    <!-- Employee Fields -->
-                    <div class="field-grid">
-                        <div class="field">
-                            <div class="field-label">${res.employeeBasicInfo.firstName+' '+res.employeeBasicInfo.lastName}</div>
-                            <div class="field-value">
-                                <a href="editemployee.php?empid=${res.employeeBasicInfo.eid}" target="_blank">
-                                    ${res.employeeBasicInfo.firstName+' '+res.employeeBasicInfo.lastName}
-                                </a>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Email</div>
-                            <div class="field-value mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${res.employeeBasicInfo.email}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Gender</div>
-                            <div class="field-value">${res.employeeBasicInfo.gender}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Contact</div>
-                            <div class="field-value mono">${res.employeeBasicInfo.phone}</div>
-                        </div>
-                        <div class="field full">
-                            <div class="field-label">Approved / Rejected On</div>
-                            <div class="field-value">${res.approvedOn??'--'}</div>
-                        </div>
-                    </div>`;
-                    document.getElementById("personal").innerHTML=output;
-
-                    let output1=`                    <div class="card-header">
-                        <div class="card-header-title">
-                            <span class="material-icons-round">calendar_today</span>
-                            Timeline & Remarks
-                        </div>
-                    </div>
-
-                    <!-- Confirmed LWD (Inline Edit) -->
-                    <div style="padding:14px 18px 10px;">
-                        <div class="lwd-box" id="lwdSection">
-                            <div class="lwd-inner">
-                                <div class="lwd-label">Confirmed Last Working Day</div>
-                                <div id="lwdDisplay">
-                                    <span class="lwd-date">${res.lastWorkingDay}</span>
-                                </div>
-                                <div id="lwdEdit" style="display:none; margin-top:8px;">
-                                    <input id="lwdInput" type="date" class="form-control" value="${res.lastWorkingDay}" style="max-width:200px;">
-                                    <div class="d-flex gap-2 mt-2">
-                                        <button id="cancelLWDBtn" class="btn-act btn-danger-act" style="width:auto;padding:6px 12px;font-size:12px;">Cancel</button>
-                                        <button id="saveLWDBtn" class="btn-act btn-primary-act" style="width:auto;padding:6px 12px;font-size:12px;" data-separationid="${res.separationid}">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="editLWDBtn" class="edit-icon-btn" title="Edit LWD">
-                                <span class="material-icons-round">edit</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Reason -->
-                    <div style="padding: 0 18px 4px;">
-                        <div class="section-label" style="margin-bottom:6px;">Reason for Leaving</div>
-                    </div>
-                    <div class="text-box" style="margin-bottom:10px;">
-                       ${res.reasonforLeaving}
-                    </div>
-
-                    <!-- Admin Remarks (Inline Edit) -->
-                    <div class="inline-edit-wrap" style="padding-bottom:14px;">
-                        <div class="inline-edit-header">
-                            <div class="section-label">Employee Remarks</div>
-                        </div>
-                        <div id="remarksDisplay" class="text-box" style="margin-bottom:0;">
-                            ${res.description}
-                        </div>
-                    </div>`;
-                      document.getElementById("resignation").innerHTML=output1;
+    $(document).ready(() => {
+        if (!separationId) {
+            Swal.fire("Missing Parameters", "Case ID not found", "error");
+            return;
         }
+        refreshData();
+    });
 
-    })
-  }
-
-    /* ── Button state helper ── */
-    function setButtonState(btn, loading) {
-        if (loading) {
-            $(btn).data('orig', $(btn).html()).prop('disabled', true)
-                  .html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
-        } else {
-            $(btn).prop('disabled', false).html($(btn).data('orig'));
-        }
-    }
-
-    /* ── Inline editor factory ── */
-    function setupInlineEditor({ editBtn, cancelBtn, saveBtn, display, editArea, input, saveData, formatDisplay }) {
-        let saved = $(input).val();
-
-        $(editBtn).click(() => { saved = $(input).val(); $(display).hide(); $(editArea).show(); $(input).focus(); });
-        $(cancelBtn).click(() => { $(input).val(saved); $(editArea).hide(); $(display).show(); });
-        $(saveBtn).click(function() {
-            const val = $(input).val();
-            if (val === saved) { $(editArea).hide(); $(display).show(); return; }
-            setButtonState(this, true);
-            saveData(val, $(saveBtn))
-                .then(data => {
-                    if (data.logo === 'success') {
-                        saved = val;
-                        $(display).html(formatDisplay(val));
-                        $(editArea).hide(); $(display).show();
-                        Swal.fire({ icon:'success', text: data.message || 'Updated.', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
-                    } else { throw new Error(data.message || 'Error'); }
-                })
-                .catch(err => Swal.fire({ icon:'error', title:'Failed', text: err.message }))
-                .finally(() => setButtonState($(saveBtn), false));
-        });
-    }
-
-    $(document).ready(function() {
-
-        /* Admin Remarks */
-        setupInlineEditor({
-            editBtn: '#editRemarksBtn', cancelBtn: '#cancelRemarksBtn', saveBtn: '#saveRemarksBtn',
-            display: '#remarksDisplay', editArea: '#remarksEdit', input: '#remarksInput',
-            saveData: (val, btn) => $.ajax({ url:'api/updateRemark.php', type:'POST', dataType:'json', data:{ separationId: btn.data('separationid'), remark: val } }),
-            formatDisplay: val => val.trim() || 'No remarks added yet.'
-        });
-
-        /* LWD */
-        setupInlineEditor({
-            editBtn: '#editLWDBtn', cancelBtn: '#cancelLWDBtn', saveBtn: '#saveLWDBtn',
-            display: '#lwdDisplay', editArea: '#lwdEdit', input: '#lwdInput',
-            saveData: (val, btn) => $.ajax({ url:'api/separation.php', type:'POST', dataType:'json', data:{ updateLwd: btn.data('separationid'), lastWorkingDay: val } }),
-            formatDisplay: (d) => {
-                const date = new Date(d + 'T00:00:00');
-                const f = date.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-                return `<span class="lwd-date">${f}</span>`;
-            }
-        });
-
-        /* Exit Interview Date */
-        if ($('#interviewDateInput').length) {
-            setupInlineEditor({
-                editBtn: '#editInterviewDateBtn', cancelBtn: '#cancelInterviewDateBtn', saveBtn: '#saveInterviewDateBtn',
-                display: '#interviewDateDisplay', editArea: '#interviewDateEdit', input: '#interviewDateInput',
-                saveData: (val, btn) => $.ajax({ url:'api/separation.php', type:'POST', dataType:'json', data:{ updateEID: btn.data('interviewid'), interviewDate: val } }),
-                formatDisplay: (d) => {
-                    const date = new Date(d + 'T00:00:00');
-                    return date.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-                }
+    async function refreshData() {
+        try {
+            const res = await $.ajax({
+                url: `/admin/separation/view/${separationId}`,
+                type: 'GET'
             });
+            console.log(res);
+            globalData = res;
+            populateUI(res);
+        } catch (err) {
+            console.error(err);
+            Swal.fire("Network Error", "Could not load case details", "error");
         }
-    });
+    }
 
-    /* ── Approve Modal pre-populate ── */
-    $('#approveModal').on('show.bs.modal', function(e) {
-        const btn = $(e.relatedTarget);
-        $('#newLastWorkingDay').val(btn.data('lastworkingday'));
-        $('#confirmApproveBtn').data('separationid', btn.data('separationid'));
-    });
+    function populateUI(data) {
+        const emp = data.employeeBasicInfo || {};
+        const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.trim();
+        
+        // Navigation & Status
+        $("#topName").text(fullName || 'Incomplete Profile');
+        const statusConfig = {
+            0: { label: 'Rejected', class: 's-rejected' },
+            1: { label: 'Pending Approval', class: 's-pending' },
+            2: { label: 'Approved', class: 's-approved' },
+            3: { label: 'Settled', class: 's-approved' }
+        };
+        const st = statusConfig[data.status] || statusConfig[1];
+        $("#topStatus").html(`<span class="status-pill ${st.class}">${st.label}</span>`);
 
-    /* ── Confirm Approve ── */
-    $('#confirmApproveBtn').click(function(e) {
-        e.preventDefault();
-        const sid = $(this).data('separationid');
-        const date = $('#newLastWorkingDay').val();
-        if (!date) { Swal.fire({ icon:'warning', text:'Select a last working day.' }); return; }
-        setButtonState(this, true);
-        $('#approveModal').modal('hide');
-        $.ajax({
-            url:'api/separation.php', type:'POST', dataType:'json',
-            data:{ accept: sid, newLastWorkingDay: date },
-            success: () => { Swal.fire({ title:'Approved!', icon:'success', confirmButtonColor:'#0d9f6e' }); setTimeout(()=>location.reload(), 1500); },
-            error: () => { Swal.fire({ icon:'error', title:'Failed', text:'Could not approve. Try again.' }); setButtonState('#confirmApproveBtn', false); }
+        // Ribbon
+        $("#ribbonContainer").html(`
+            <div class="ribbon-item">
+                <div class="ribbon-label">E-ID</div>
+                <div class="ribbon-value text-blue-600">${emp.eid || '--'}</div>
+            </div>
+            <div class="ribbon-item">
+                <div class="ribbon-label">Date of Filing</div>
+                <div class="ribbon-value">${formatDate(data.resignationDate)}</div>
+            </div>
+            <div class="ribbon-item">
+                <div class="ribbon-label">Last Working Day <button onclick="triggerLwdEdit(false)" class="edit-icon-btn inline-flex ml-2"><span class="material-icons-round text-xs">edit</span></button></div>
+                <div class="ribbon-value text-rose-500">${formatDate(data.lastWorkingDay)}</div>
+            </div>
+            <div class="ribbon-item">
+                <div class="ribbon-label">Separation Type</div>
+                <div class="ribbon-value uppercase text-[10px] tracking-widest">${data.separationType || 'RESIGNATION'}</div>
+            </div>
+        `);
+
+        // Info Grid
+        $("#infoGrid").html(`
+            <div class="info-block"><div class="ribbon-label">Contact Email</div><div class="text-sm font-semibold">${emp.email || '--'}</div></div>
+            <div class="info-block"><div class="ribbon-label">Phone Number</div><div class="text-sm font-semibold">${emp.phone || '--'}</div></div>
+            <div class="info-block"><div class="ribbon-label">Department</div><div class="text-sm font-semibold">${emp.department || '--'}</div></div>
+            <div class="info-block"><div class="ribbon-label">Gender / Blood</div><div class="text-sm font-semibold">${emp.gender || '--'} / ${emp.bloodGroup || '--'}</div></div>
+            <div class="info-block col-span-full"><div class="ribbon-label">Address</div><div class="text-sm font-semibold">${emp.address || '--'}</div></div>
+        `);
+
+        // Statements
+        $("#reasonBox").text(data.reasonforLeaving || 'No statement provided by employee.');
+        $("#notesView").text(data.adminRemarks || data.description || 'No administrative notes recorded yet.');
+        $("#notesInput").val(data.adminRemarks || data.description || '');
+
+        // Timeline
+        $("#tsSubmitted").text(`On ${formatDate(data.resignationDate)}`);
+        if (data.status >= 2) {
+            $("#stepApproved").addClass('active');
+            $("#tsApproved").text(`Approved on ${formatDate(data.approvedOn)}`);
+        }
+        if (data.status === 3) $("#stepSettled").addClass('active');
+
+        // Sidebar Actions
+        renderActions(data.status);
+    }
+
+    function renderActions(status) {
+        let html = "";
+        if (status === 1) {
+            html = `
+                <button onclick="triggerLwdEdit(true)" class="btn-action-main btn-approve">
+                    <span class="material-icons-round">done_all</span> Schedule Exit Interview
+                </button>
+            `;
+        } else if (status === 2) {
+            html = `
+                <button onclick="changeStatus(3)" class="btn-action-main btn-approve">
+                    <span class="material-icons-round">task_alt</span> MARK SETTLED
+                </button>
+                <button onclick="changeStatus(1)" class="btn-action-main border border-slate-200 text-slate-500 hover:bg-slate-50">
+                    <span class="material-icons-round">undo</span> REVERT TO PENDING
+                </button>
+            `;
+        } else {
+            html = `<div class="p-4 bg-slate-50 rounded-xl text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Case Process Closed</div>`;
+        }
+        $("#actionArea").html(html);
+    }
+
+    function triggerLwdEdit(approvalFlow) {
+        autoApproveOnLwd = approvalFlow;
+        $("#lwdInput").val(globalData.lastWorkingDay);
+        new bootstrap.Modal('#lwdModal').show();
+    }
+
+    async function submitLwdUpdate() {
+        const date = $("#lwdInput").val();
+        if(!date) return;
+
+        const payload = {
+            id: separationId,
+            action:'approve',
+            lwd:date,
+            remarks:null
+        };
+
+        await executePost(payload);
+        bootstrap.Modal.getInstance('#lwdModal').hide();
+    }
+
+    function toggleNotesEdit() {
+        $("#notesView").toggleClass('hidden');
+        $("#notesEdit").toggleClass('hidden');
+    }
+
+    async function saveAdminNotes() {
+        await executePost({
+            id: separationId,
+            action:'adminremark',
+            remarks: $("#notesInput").val(),
+            lwd:null
         });
-    });
+        toggleNotesEdit();
+    }
 
-    /* ── Reject ── */
-    $('#reject').submit(function(e) {
-        e.preventDefault();
-        const btn = $(this).find('button');
-        setButtonState(btn, true);
-        $.ajax({
-            url:'api/separation.php', type:'POST', dataType:'json',
-            data:{ reject: $('#rejected').val() },
-            success: () => { Swal.fire({ title:'Rejected', icon:'success' }); setTimeout(()=>location.reload(), 1500); },
-            error: () => { Swal.fire({ icon:'error', title:'Failed' }); setButtonState(btn, false); }
+    async function changeStatus(newStatus) {
+        const confirm = await Swal.fire({
+            title: 'Update Status?',
+            text: "This will move the case through the workflow.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0f172a'
         });
-    });
+        if (confirm.isConfirmed) {
+            await executePost({ id: separationId, action:'reject',remarks: null,lwd:null });
+        }
+    }
 
-    /* ── Schedule Interview ── */
-    $('#scheduleExitBtn').click(function(e) {
-        e.preventDefault();
-        const date = $('#exitInterviewDate').val();
-        if (!date) { Swal.fire({ icon:'warning', text:'Select an interview date.' }); return; }
-        setButtonState(this, true);
-        $.ajax({
-            url:'api/scheduleInterview.php', type:'POST', dataType:'json',
-            data:{ separationId: $(this).data('separationid'), exitInterviewDate: date },
-            success: (res) => {
-                if (res.status === 'success') { Swal.fire({ title:'Scheduled!', icon:'success' }).then(()=>location.reload()); }
-                else { Swal.fire('Error', res.message, 'error'); setButtonState('#scheduleExitBtn', false); }
-            },
-            error: () => { Swal.fire('Error', 'Network error.', 'error'); setButtonState('#scheduleExitBtn', false); }
-        });
-    });
+    async function executePost(payload) {
+const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-    /* ── Complete Separation ── */
-    $('#completeForm').submit(function(e) {
-        e.preventDefault();
-        const remarks = $('#finalRemarks').val();
-        if (!remarks) { Swal.fire({ icon:'warning', text:'Enter final remarks.' }); return; }
-        const btn = $('#complete');
-        setButtonState(btn, true);
-        $.ajax({
-            url:'api/completeSeparation.php', type:'POST', dataType:'json',
-            data:{
-                complete: btn.data('separationid'),
-                final: remarks,
-                csrf: $('#csrf').val(),
-                eligibleForRehire: $('#eligibleForRehire').is(':checked') ? 1 : 0,
-                eid: "<?= htmlentities($result->EID); ?>"
-            },
-            success: () => Swal.fire({ title:'Completed!', text:'Separation finalized.', icon:'success' }),
-            error: () => { Swal.fire({ icon:'error', title:'Failed' }); setButtonState(btn, false); }
-        });
-    });
+console.log(payload);
+        try {
+            const res = await $.ajax({
+                url: `/admin/separtion/updateStatus`,
+                type: 'POST',
+                          headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                data: payload,
+                dataType: 'json'
+            });
+            console.log(res);
+            if (res.success || res.status === "success") {
+                Swal.fire({ icon: 'success', title: 'Updated', timer: 1000, showConfirmButton: false });
+                refreshData();
+            } else {
+                throw new Error(res.message);
+            }
+        } catch (err) {
+            console.log(err);
+            Swal.fire("Update Failed", err.message || "Server error", "error");
+        }
+    }
+
+    function formatDate(str) {
+        if (!str) return "--";
+        const d = new Date(str);
+        return isNaN(d) ? str : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
 </script>
+
 </body>
 </html>

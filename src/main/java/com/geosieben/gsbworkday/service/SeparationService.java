@@ -72,14 +72,20 @@ public class SeparationService implements SeparationInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<?> updateSeparationRequest(String action, int id, String remarks) {
+    public ResponseEntity<?> updateSeparationRequest(String action, int id, LocalDate lwd,String remarks) {
         Map<String,String> response=new HashMap<>();
        Separation request=separationRepository.findById(id).orElse(null);
        if(!request.equals(null)){
+        if(action.equals("approve") ||action.equals("reject")){
         int status =action.equals("approve")?1:2;
         request.setStatus(status);
         request.setAdminRemarks(remarks);
         request.setApprovedOn(LocalDate.now());
+        request.setLastWorkingDay(lwd);
+        }
+        else if(action.equals("adminremark")){
+            request.setAdminRemarks(remarks);
+        }
         separationRepository.save(request);
         response.put("status", "success");
           response.put("message", "Request Updated");

@@ -47,6 +47,17 @@ List<ProjectHoursProjection> getHoursByProjects();
              "FROM bookedhours b group by date_format(b.date,'%b-%Y')",
        nativeQuery = true)
 List<MonthlyHoursProjection> getHoursByMonthly();
+@Query(value = "SELECT date_format(b.date, '%b-%Y') as monthName, " +
+               "SUM(CASE WHEN b.type = 'Prod' THEN b.hoursbooked ELSE 0 END) as prodHours, " +
+               "SUM(CASE WHEN b.type = 'QC' THEN b.hoursbooked ELSE 0 END) as qcHours, " +
+               "SUM(CASE WHEN b.type = 'Delivery' THEN b.hoursbooked ELSE 0 END) as deliveryHours, " +
+               "SUM(CASE WHEN b.type = 'Pilot' THEN b.hoursbooked ELSE 0 END) as pilotHours, " +
+               "SUM(b.hoursbooked) as totalHours " +
+               "FROM bookedhours b " +
+               "WHERE date_format(b.date, '%b-%Y') = :month " + // WHERE comes first
+               "GROUP BY date_format(b.date, '%b-%Y')",         // GROUP BY comes second
+       nativeQuery = true)
+List<ProjectHoursProjection> getProjectHoursByMonth(@Param("month") String month);
 
 
 }

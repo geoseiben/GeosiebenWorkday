@@ -16,6 +16,7 @@ public interface LeaveInterface {
     public ResponseEntity<Map<String, String>> applyLeave(LeaveRequestDto dto) throws UnsupportedEncodingException, MessagingException;
     public List<PendingLeaveResponseDto> fetchPendingLeaves();
     public ResponseEntity<Map<String, Object>> updateLeaveApplication(String action, int leaveId, String remarks);
+    public ResponseEntity<Map<String, String>> calcelLeave(int leaveid);
 
 
 }

@@ -6,6 +6,7 @@ import com.geosieben.gsbworkday.dto.SeparationRequestsProjection;
 import com.geosieben.gsbworkday.entity.Separation;
 import com.geosieben.gsbworkday.service.SeparationService;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +30,9 @@ public List<SeparationRequestsProjection> getRequests() {
 }
 
 @PostMapping("/admin/separtion/updateStatus")
-public ResponseEntity<?> updateSeparationRequest(@RequestParam String action,@RequestParam int id,@RequestParam String remarks ) {
-    System.out.println(action+" "+id+" "+remarks);
-return separationService.updateSeparationRequest(action, id, remarks);
+public ResponseEntity<?> updateSeparationRequest(@RequestParam String action,@RequestParam int id,@RequestParam String remarks, @RequestParam LocalDate lwd){
+
+return separationService.updateSeparationRequest(action, id, lwd,remarks);
 }
 @GetMapping("/admin/separation/view/{separationid}")
 public Separation getSeparationRequest(@PathVariable int separationid) {

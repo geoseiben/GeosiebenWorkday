@@ -110,8 +110,9 @@ public ResponseEntity<Map<String, String>> updateAllotment(@RequestBody UpdateAl
     return projectService.updateAllotment(dto); 
 }
     
-
-
-
-
+@GetMapping("/getProjectHoursByMonth")
+public List<ProjectHoursProjection> getProjectHoursByMonth(@RequestParam String month
+) { 
+   return bookerHoursRepository.getProjectHoursByMonth(month);
+}
 }
