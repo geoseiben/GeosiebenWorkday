@@ -12,6 +12,7 @@ import com.geosieben.gsbworkday.entity.SalaryStructure;
 import com.geosieben.gsbworkday.service.PayRollService;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,5 +58,16 @@ private PayRollService payRollService;
     public List<Salary> fetchpayroll() {
         return payRollService.getPayRoll();
     }
+    
+    @GetMapping("/authenticateUser")
+    public ResponseEntity<Map<String,String>> authenticateUser(@RequestParam("password") String password) {
+
+        return payRollService.authenticatePayRollUser(password);
+    }
+    @PostMapping("/passwordChange")
+    public ResponseEntity<Map<String,String>> passwordChange(@RequestParam("password") String password,@RequestParam("newPassword") String newPassword) {
+return payRollService.changePassword(password, newPassword);
+    }
+    
     
 }

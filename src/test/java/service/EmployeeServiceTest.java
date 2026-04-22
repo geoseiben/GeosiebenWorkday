@@ -37,7 +37,7 @@ public class EmployeeServiceTest {
             .thenReturn(null);         // Second call
 
         EmployeeBasicInfo emp = basicInfoRepository.findEmployeeBasicInfoByEID("GSB-0900");
-        assertNull(emp);
+        assertNotNull(emp);
         assertEquals("Pavan", emp.getFirstName());
         assertNull(basicInfoRepository.findEmployeeBasicInfoByEID("GSB-0900"));
     }

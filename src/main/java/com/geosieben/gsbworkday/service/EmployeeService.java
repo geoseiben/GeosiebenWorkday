@@ -83,7 +83,11 @@ public class EmployeeService implements EmployeeServiceInterface {
         String employeeName = dto.getLastName() != null ? dto.getFirstName() + " " + dto.getLastName() : dto.getFirstName();
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String password = passwordEncoder.encode("Pavan@9662");
-        User user = new User(employeeName, password, "user", dto.getPersonalEmail(), null);
+        User user = new User();
+        user.setUsername(employeeName);
+        user.setPassword(password);
+        user.setRole("user");
+        user.setEmail(dto.getPersonalEmail());
         user.setEmployeeBasicInfo(savedEmp);
         // 3. Save Children
         joiningInfoRepository.save(joining);

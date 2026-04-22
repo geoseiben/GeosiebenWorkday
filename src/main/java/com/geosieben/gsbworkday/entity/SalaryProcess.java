@@ -26,7 +26,15 @@ private int id;
 private String month;
 private int status=0;
 @ManyToOne
-@JoinColumn(name="updatedBy")
-private EmployeeBasicInfo updatedBy;
-private LocalDateTime updatedOn=LocalDateTime.now();
+@JoinColumn(name="processedBy")
+private EmployeeBasicInfo processedBy;
+private LocalDateTime processedOn=LocalDateTime.now();
+@ManyToOne
+@JoinColumn(name="approvedBy")
+private EmployeeBasicInfo approvedBy;
+private LocalDateTime approvedOn=null;
+@ManyToOne
+@JoinColumn(name="releasedBy")
+private EmployeeBasicInfo releasedBy;
+private LocalDateTime releasedOn=null;
 }

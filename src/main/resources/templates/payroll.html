@@ -1,451 +1,858 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta charset="UTF-8">
+        <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title>Geosieben Payroll Dashboard - Enhanced UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geosieben Payroll Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; font-size: 0.8rem; }
-        .modal { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f8fafc; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .table-container { height: calc(100vh - 240px); }
-        .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; border-left-width: 4px; }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .section-header { position: relative; padding-left: 12px; }
-        .section-header::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px; }
-        .tab-active { border-bottom: 3px solid #6366f1; color: #4338ca; font-weight: 800; background: linear-gradient(to top, #eef2ff 0%, transparent 100%); }
-        .glass-header { background: #0f172a; border-bottom: 1px solid #1e293b; }
-        .custom-shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-size: 13px; 
+            background-color: #f1f5f9;
+        }
+
+        .modal { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .table-container { height: calc(100vh - 290px); }
+        
+        .glass-header { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border-bottom: 1px solid rgba(99,102,241,0.2);
+        }
+        
+        .tab-active { 
+            color: #6366f1; 
+            font-weight: 800;
+            border-bottom: 3px solid #6366f1;
+        }
+
+        .action-btn { transition: all 0.15s ease; }
+        .action-btn:hover { transform: translateY(-1px); }
+        .action-btn:active { transform: scale(0.97) translateY(0); }
+
+        th { white-space: nowrap; }
+        td { white-space: nowrap; }
+        input, select { font-size: 12px !important; }
+
+        .card-shadow {
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px 0 rgba(0,0,0,0.04);
+        }
+        .card-shadow:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card { transition: all 0.2s ease; }
+
+        /* Auth modal overlay */
+        #authOverlay {
+            background: linear-gradient(135deg, #f6f6f7 10%, #204ad4 100%);
+        }
+
+        /* Password strength */
+        .strength-bar { height: 3px; border-radius: 99px; transition: all 0.3s ease; }
+
+        /* Export dropdown */
+        .export-dropdown { display:none; }
+        .export-dropdown.open { display: block; }
+
+        /* Pill badge */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Toolbar gradient line */
+        .toolbar-accent {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, transparent);
+            height: 2px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+        }
+
+        /* Animated spinner */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.8s linear infinite; }
+
+        /* Row hover */
+        tbody tr { transition: background 0.1s ease; }
+
+        /* Input focus ring */
+        input:focus, select:focus { 
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+            border-color: #6366f1 !important;
+            outline: none;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Header -->
-    <header class="glass-header text-white shrink-0 px-6 py-3 flex items-center justify-between z-20">
-        <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 p-2 rounded-xl shadow-lg rotate-3 group-hover:rotate-0 transition-transform">
-                <i class="fas fa-file-invoice-dollar text-white text-lg"></i>
+    <!-- ===== AUTH OVERLAY ===== -->
+    <div id="authOverlay" class="fixed inset-0 z-[200] flex items-center justify-center">
+        <div class="w-full max-w-sm mx-4">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/20 rounded-2xl border border-indigo-500/30 mb-4">
+                    <i class="fas fa-shield-alt text-indigo-400 text-2xl"></i>
+                </div>
+                <h1 class="text-white text-xl font-black tracking-tight uppercase">Geosieben <span class="text-indigo-400">Payroll</span></h1>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Secure Access Required</p>
             </div>
-            <div>
-                <h1 class="text-sm font-black tracking-tight uppercase">Geosieben <span class="text-indigo-400 italic">PayRoll</span></h1>
-                <p class="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Global Finance Terminal</p>
+
+            <!-- Auth Panel -->
+            <div id="loginPanel" class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <p class="text-taupe-200 text-[10px] font-bold uppercase tracking-widest mb-5">Enter Payroll Password</p>
+                <form id="authForm" class="space-y-4">
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>
+                        <input type="password" id="authPassword" placeholder="Password" 
+                            class="w-full pl-9 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-slate-600 focus:border-indigo-500 focus:ring-0 outline-none transition-all">
+                        <button type="button" onclick="toggleAuthPwd('authPassword','authEye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                            <i id="authEye" class="fas fa-eye text-[11px]"></i>
+                        </button>
+                    </div>
+                    <p id="authError" class="text-rose-400 text-[10px] font-bold hidden">Incorrect password. Please try again.</p>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black py-3 rounded-xl uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-unlock text-[11px]"></i> Unlock Dashboard
+                    </button>
+                </form>
+                <div class="mt-4 pt-4 border-t border-white/5">
+                    <button onclick="showChangePassword()" class="w-full text-slate-0 hover:text-indigo-400 text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1">
+                        <i class="fas fa-key text-[10px]"></i> Change Password
+                    </button>
+                </div>
+            </div>
+
+            <!-- Change Password Panel -->
+            <div id="changePwdPanel" class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hidden">
+                <div class="flex items-center gap-2 mb-5">
+                    <button onclick="showLoginPanel()" class="text-slate-500 hover:text-indigo-400 transition-colors">
+                        <i class="fas fa-arrow-left text-[11px]"></i>
+                    </button>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Change Password</p>
+                </div>
+                <form id="changePwdForm" class="space-y-4">
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>
+                        <input type="password" id="currentPwd" placeholder="Current Password"
+                            class="w-full pl-9 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-slate-600 focus:border-indigo-500 outline-none transition-all">
+                        <button type="button" onclick="toggleAuthPwd('currentPwd','eyeCurrent')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                            <i id="eyeCurrent" class="fas fa-eye text-[11px]"></i>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-lock-open absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>
+                        <input type="password" id="newPwd" placeholder="New Password" oninput="checkStrength(this.value)"
+                            class="w-full pl-9 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-slate-600 focus:border-indigo-500 outline-none transition-all">
+                        <button type="button" onclick="toggleAuthPwd('newPwd','eyeNew')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                            <i id="eyeNew" class="fas fa-eye text-[11px]"></i>
+                        </button>
+                    </div>
+                    <!-- Strength bar -->
+                    <div class="space-y-1">
+                        <div class="flex gap-1">
+                            <div id="s1" class="strength-bar flex-1 bg-white/10"></div>
+                            <div id="s2" class="strength-bar flex-1 bg-white/10"></div>
+                            <div id="s3" class="strength-bar flex-1 bg-white/10"></div>
+                            <div id="s4" class="strength-bar flex-1 bg-white/10"></div>
+                        </div>
+                        <p id="strengthLabel" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest"></p>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-check-circle absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>
+                        <input type="password" id="confirmPwd" placeholder="Confirm New Password"
+                            class="w-full pl-9 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold placeholder-slate-600 focus:border-indigo-500 outline-none transition-all">
+                    </div>
+                    <p id="changePwdError" class="text-rose-400 text-[10px] font-bold hidden">Error message</p>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black py-3 rounded-xl uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-save text-[11px]"></i> Update Password
+                    </button>
+                </form>
             </div>
         </div>
-        
-        <div class="flex items-center space-x-6">
-            <div class="flex items-center space-x-3 bg-slate-800/40 px-3 py-1.5 rounded-xl border border-slate-700/50">
-                <i class="far fa-calendar-alt text-indigo-400 text-xs"></i>
-                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Global Filter:</span>
-                <select id="monthFilter" class="bg-transparent border-none text-white text-[11px] outline-none cursor-pointer font-black focus:ring-0">
-                    <option value="Apr-2026" class="bg-slate-900" selected>Apr-2026</option>
-                    <option value="Mar-2026" class="bg-slate-900">Mar-2026</option>
-                    <option value="Feb-2026" class="bg-slate-900">Feb-2026</option>
-                </select>
-            </div>
-            <div class="flex items-center space-x-4 pl-6 border-l border-slate-700/50">
-                <div class="text-right leading-tight">
-                    <p class="text-[11px] font-black">System Admin</p>
-                    <p class="text-[9px] text-indigo-400 font-extrabold uppercase tracking-tighter">Operations Superuser</p>
-                </div>
-                <div class="relative">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=4f46e5&color=fff&bold=true" class="w-9 h-9 rounded-xl border-2 border-slate-700 shadow-xl" alt="Admin">
-                    <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full animate-pulse"></div>
-                </div>
-            </div>
-        </div>
-    </header>
+    </div>
+    <!-- ===== END AUTH OVERLAY ===== -->
 
-    <!-- Main Content Area -->
+    <!-- ===== MAIN DASHBOARD (hidden until auth) ===== -->
+    <div id="dashboardContent" class="hidden flex-1 flex flex-col overflow-hidden">
+
+    <!-- Main Content -->
     <main class="flex-1 flex flex-col overflow-hidden w-full px-6 py-5">
-        
-        <!-- Enhanced Stats Bar -->
-        <div class="grid grid-cols-5 gap-5 mb-5 shrink-0">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 custom-shadow flex flex-col justify-between stat-card border-l-slate-500">
-                <div class="flex justify-between items-start">
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Active Headcount</p>
-                    <div class="p-2 bg-slate-50 rounded-lg"><i class="fas fa-users text-slate-400 text-xs"></i></div>
+        <header class="glass-header text-white shrink-0 px-6 py-3 flex items-center justify-between z-30 rounded-t-xl">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-500/20 p-2 rounded-lg border border-indigo-500/20">
+                    <i class="fas fa-file-invoice-dollar text-indigo-400 text-sm"></i>
                 </div>
-                <div class="mt-3">
-                    <p class="text-2xl font-black text-slate-800 tracking-tight" id="stat-total-staff">0</p>
-                    <p class="text-[9px] text-slate-400 font-bold mt-1">Total Enrolled</p>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 custom-shadow flex flex-col justify-between stat-card border-l-indigo-500">
-                <div class="flex justify-between items-start">
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Gross Liability</p>
-                    <div class="p-2 bg-indigo-50 rounded-lg"><i class="fas fa-money-bill-wave text-indigo-400 text-xs"></i></div>
-                </div>
-                <div class="mt-3">
-                    <p class="text-2xl font-black text-slate-800 tracking-tight" id="stat-gross">₹ 0</p>
-                    <p class="text-[9px] text-indigo-400 font-bold mt-1">Pre-Tax Obligations</p>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 custom-shadow flex flex-col justify-between stat-card border-l-rose-500">
-                <div class="flex justify-between items-start">
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Total Deductions</p>
-                    <div class="p-2 bg-rose-50 rounded-lg"><i class="fas fa-hand-holding-usd text-rose-400 text-xs"></i></div>
-                </div>
-                <div class="mt-3">
-                    <p class="text-2xl font-black text-rose-600 tracking-tight" id="stat-deduction">₹ 0</p>
-                    <p class="text-[9px] text-rose-400 font-bold mt-1">PF / ESI / Taxes</p>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 custom-shadow flex flex-col justify-between stat-card border-l-emerald-500">
-                <div class="flex justify-between items-start">
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Net Payout</p>
-                    <div class="p-2 bg-emerald-50 rounded-lg"><i class="fas fa-university text-emerald-500 text-xs"></i></div>
-                </div>
-                <div class="mt-3">
-                    <p class="text-2xl font-black text-emerald-700 tracking-tight" id="stat-net">₹ 0</p>
-                    <p class="text-[9px] text-emerald-500 font-bold mt-1">Take Home Total</p>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 custom-shadow flex flex-col justify-between stat-card border-l-amber-500">
-                <div class="flex justify-between items-start">
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Period Status</p>
-                    <div class="p-2 bg-amber-50 rounded-lg"><i class="fas fa-shield-alt text-amber-500 text-xs"></i></div>
-                </div>
-                <div class="mt-3">
-                    <span id="statusBadge" class="inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-tighter">
-                        <span class="w-1.5 h-1.5 bg-amber-500 rounded-full mr-2 animate-pulse"></span>
-                        Draft Period
-                    </span>
-                    <p class="text-[9px] text-slate-400 font-bold mt-1">Needs Execution</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Toolbar -->
-        <div class="flex items-center justify-between mb-5 bg-white px-5 py-4 rounded-2xl border border-slate-200 custom-shadow">
-            <div class="flex items-center space-x-8">
-                <div class="flex space-x-2">
-                    <button onclick="switchView('ledger')" id="tab-ledger" class="px-4 py-2 text-[11px] uppercase font-black tracking-widest tab-active rounded-t-lg transition-all border-b-2">PayRoll Ledger (<span id="month"></span>)</button>
-                    <button onclick="switchView('structure')" id="tab-structure" class="px-4 py-2 text-[11px] uppercase font-black tracking-widest text-slate-400 hover:text-indigo-600 transition-all border-b-2 border-transparent">CTC Master</button>
-                    <button onclick="switchView('lopOthers')" id="tab-lopOthers" class="px-4 py-2 text-[11px] uppercase font-black tracking-widest text-slate-400 hover:text-indigo-600 transition-all border-b-2 border-transparent">LOP Adjustments</button>
-                </div>
-                <div class="h-8 w-px bg-slate-200"></div>
-                <div class="relative group">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[11px] group-focus-within:text-indigo-500 transition-colors"></i>
-                    <input type="text" placeholder="Filter employee by name or ID..." class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-semibold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 w-80 transition-all placeholder:text-slate-300">
+                <div>
+                    <h1 class="text-sm font-black tracking-tight uppercase">Geosieben <span class="text-indigo-400">Payroll</span></h1>
+                    <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Human Resource Management System</p>
                 </div>
             </div>
             
             <div class="flex items-center space-x-3">
-                <div class="flex bg-slate-100 p-1 rounded-xl mr-2">
-                    <button onclick="toggleModal('employeeModal')" class="p-2 text-indigo-600 hover:bg-white rounded-lg transition-all" title="Enroll Staff"><i class="fas fa-user-plus text-xs"></i></button>
-                    <button onclick="toggleModal('lopModal')" class="p-2 text-rose-600 hover:bg-white rounded-lg transition-all" title="Apply LOP"><i class="fas fa-calendar-minus text-xs"></i></button>
-                    <button onclick="toggleModal('extraPayModal')" class="p-2 text-emerald-600 hover:bg-white rounded-lg transition-all" title="Extra Pay"><i class="fas fa-plus-circle text-xs"></i></button>
+                <div class="flex items-center space-x-2 bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/60">
+                    <i class="fas fa-calendar-alt text-[10px] text-slate-400"></i>
+                    <span class="text-[9px] uppercase font-bold text-slate-400">Period:</span>
+                    <select id="monthFilter" class="bg-transparent border-none text-white text-[11px] outline-none cursor-pointer font-bold focus:ring-0 appearance-none pr-4">
+                        <option value="Apr-2026" class="bg-slate-900" selected>Apr-2026</option>
+                        <option value="Mar-2026" class="bg-slate-900">Mar-2026</option>
+                    </select>
+                    <i class="fas fa-caret-down text-[10px] text-slate-500 -ml-3 pointer-events-none"></i>
                 </div>
-                <button onclick="processPayroll()" class="flex items-center space-x-3 px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all font-black text-[11px] uppercase tracking-widest group">
-                    <i class="fas fa-play text-[9px] group-hover:scale-125 transition-transform"></i>
-                    <span>Run Payroll</span>    
+                <!-- Lock button -->
+                <button onclick="lockDashboard()" class="flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all text-[10px] font-bold uppercase tracking-wider">
+                    <i class="fas fa-lock text-[10px]"></i> Lock
                 </button>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-5 gap-4 mt-4 mb-4 shrink-0">
+            <div class="stat-card bg-white p-4 rounded-xl border border-slate-100 flex items-center space-x-3 card-shadow">
+                <div class="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Active Staff</p>
+                    <p class="text-2xl font-black text-slate-800 leading-tight" id="stat-total-staff">0</p>
+                </div>
+            </div>
+            <div class="stat-card bg-white p-4 rounded-xl border border-slate-100 flex items-center space-x-3 card-shadow">
+                <div class="w-11 h-11 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 border border-indigo-100 shrink-0">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Gross</p>
+                    <p class="text-lg font-black text-indigo-600 leading-tight" id="stat-gross">₹ 0</p>
+                </div>
+            </div>
+            <div class="stat-card bg-white p-4 rounded-xl border border-slate-100 flex items-center space-x-3 card-shadow">
+                <div class="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 border border-rose-100 shrink-0">
+                    <i class="fas fa-minus-circle"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Deductions</p>
+                    <p class="text-lg font-black text-rose-500 leading-tight" id="stat-deduction">₹ 0</p>
+                </div>
+            </div>
+            <div class="stat-card bg-white p-4 rounded-xl border border-slate-100 flex items-center space-x-3 card-shadow">
+                <div class="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-100 shrink-0">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Net Payout</p>
+                    <p class="text-lg font-black text-emerald-600 leading-tight" id="stat-net">₹ 0</p>
+                </div>
+            </div>
+            <div class="stat-card bg-white p-4 rounded-xl border border-slate-100 flex items-center space-x-3 card-shadow">
+                <div class="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 border border-amber-100 shrink-0">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Engine Status</p>
+                    <span id="statusBadge" class="pill text-amber-700 bg-amber-100">Draft</span>
+                </div>
             </div>
         </div>
 
-        <!-- Table Area -->
-        <div class="flex-1 overflow-hidden bg-white rounded-2xl border border-slate-200 custom-shadow flex flex-col">
-            <!-- Ledger View -->
-            <div class="overflow-auto table-container" id="ledgerView">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/50 sticky top-0 z-10 border-b border-slate-100 backdrop-blur-sm">
-                        <tr>
-                            <th class="px-6 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest min-w-[200px]">Employee Identity</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Basic</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Conv.</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Med.</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Bonus</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Other</th>
-                            <th class="px-3 py-4 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-indigo-50/50">PF (EE)</th>
-                            <th class="px-3 py-4 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-indigo-50/50">PF (ER)</th>
-                            <th class="px-3 py-4 font-black text-rose-600 text-[9px] uppercase tracking-widest bg-rose-50/50">ESI (EE)</th>
-                            <th class="px-3 py-4 font-black text-rose-600 text-[9px] uppercase tracking-widest bg-rose-50/50">ESI (ER)</th>
-                            <th class="px-3 py-4 font-black text-slate-700 text-[9px] uppercase tracking-widest">Gratuity</th>
-                            <th class="px-3 py-4 font-black text-slate-700 text-[9px] uppercase tracking-widest">Prof Tax</th>
-                            <th class="px-6 py-4 font-black text-emerald-700 text-[9px] uppercase tracking-widest bg-emerald-50/30">Net Payable</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100" id="payrollTableBody">
-                        <!-- Dynamic Rows -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Salary Structure View -->
-            <div class="overflow-auto table-container hidden" id="structureView">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/50 sticky top-0 z-10 border-b border-slate-100 backdrop-blur-sm">
-                        <tr>
-                            <th class="px-6 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest min-w-[200px]">Employee Identity</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Basic</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Conv.</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Med.</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Bonus</th>
-                            <th class="px-3 py-4 font-black text-slate-500 text-[9px] uppercase tracking-widest">Other</th>
-                            <th class="px-3 py-4 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-indigo-50/50">PF (EE)</th>
-                            <th class="px-3 py-4 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-indigo-50/50">PF (ER)</th>
-                            <th class="px-3 py-4 font-black text-rose-600 text-[9px] uppercase tracking-widest bg-rose-50/50">ESI (EE)</th>
-                            <th class="px-3 py-4 font-black text-rose-600 text-[9px] uppercase tracking-widest bg-rose-50/50">ESI (ER)</th>
-                            <th class="px-3 py-4 font-black text-slate-700 text-[9px] uppercase tracking-widest">Gratuity</th>
-                            <th class="px-3 py-4 font-black text-slate-700 text-[9px] uppercase tracking-widest">Prof Tax</th>
-                              <th class="px-3 py-4 font-black text-slate-700 text-[9px] uppercase tracking-widest">Net Pay</th>
-                            <th class="px-3 py-4 font-black text-indigo-700 text-[9px] uppercase tracking-widest bg-slate-50">Month CTC</th>
-                            <th class="px-6 py-4 font-black text-white text-[9px] uppercase tracking-widest bg-slate-800">Annual CTC</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100" id="structureTableBody"></tbody>
-                </table>
-            </div>
-
-            <!-- LOP & Others View -->
-            <div class="overflow-auto table-container hidden" id="lopOthersView">
-                <!-- Inner header for LOP Month filter -->
-                <div class="p-4 bg-slate-50 border-b flex items-center justify-between">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Filtered Adjustment Log</p>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-[9px] font-bold text-slate-400">View Month:</span>
-                        <select id="lopMonthFilter" class="bg-white border border-slate-200 rounded-lg px-3 py-1 text-[10px] font-bold outline-none">
-                            <option value="Apr-2026">Apr-2026</option>
-                            <option value="Mar-2026">Mar-2026</option>
-                        </select>
+        <!-- Toolbar -->
+        <div class="bg-white border border-slate-200 rounded-t-xl shrink-0 overflow-hidden">
+            <div class="toolbar-accent"></div>
+            <div class="flex items-center justify-between px-4 py-1">
+                <div class="flex items-center space-x-6">
+                    <nav class="flex space-x-6 h-full">
+                        <button onclick="switchView('ledger')" id="tab-ledger" class="py-3 text-[10px] uppercase font-black tracking-widest tab-active flex items-center gap-1.5">
+                            <i class="fas fa-table text-[9px]"></i> Payroll (<span id="month"></span>)
+                        </button>
+                        <button onclick="switchView('structure')" id="tab-structure" class="py-3 text-[10px] uppercase font-black tracking-widest text-slate-400 hover:text-indigo-600 flex items-center gap-1.5 transition-colors">
+                            <i class="fas fa-sitemap text-[9px]"></i> CTC Structure
+                        </button>
+                        <button onclick="switchView('lopOthers')" id="tab-lopOthers" class="py-3 text-[10px] uppercase font-black tracking-widest text-slate-400 hover:text-indigo-600 flex items-center gap-1.5 transition-colors">
+                            <i class="fas fa-sliders-h text-[9px]"></i> LOP & Adj.
+                        </button>
+                    </nav>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search record..." 
+                            class="pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-semibold outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 w-52 transition-all">
                     </div>
                 </div>
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/30 sticky top-0 z-10 border-b border-slate-100">
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleModal('employeeModal')" class="action-btn px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-all font-bold text-[9px] uppercase flex items-center border border-indigo-100">
+                        <i class="fas fa-plus mr-1.5 opacity-60"></i>Add To PayRoll
+                    </button>
+                    <button onclick="toggleModal('lopModal')" class="action-btn px-3 py-1.5 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-all font-bold text-[9px] uppercase flex items-center border border-rose-100">
+                        <i class="fas fa-calendar-minus mr-1.5 opacity-60"></i>LOP
+                    </button>
+                    <button onclick="toggleModal('extraPayModal')" class="action-btn px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-all font-bold text-[9px] uppercase flex items-center border border-emerald-100">
+                        <i class="fas fa-hand-holding-dollar mr-1.5 opacity-60"></i>Extra
+                    </button>
+                    <div class="w-px h-5 bg-slate-200 mx-1"></div>
+                    <!-- Export Button (per active tab) -->
+                    <div class="export-wrapper relative">
+                            <button onclick="exportCurrentTable('csv'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
+                               <i class="fas fa-file-excel text-emerald-500 text-[11px]"></i></i> Export
+                            </button>
+                        <div class="export-dropdown absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[99] overflow-hidden min-w-[170px]">
+                            <button onclick="exportCurrentTable('xlsx'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
+                                <i class="fas fa-file-excel text-emerald-500 text-[11px]"></i> Excel (.xlsx)
+                            </button>
+                            <button onclick="exportCurrentTable('csv'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
+                                <i class="fas fa-file-csv text-blue-500 text-[11px]"></i> CSV (.csv)
+                            </button>
+                            <button onclick="exportCurrentTable('print'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors border-t border-slate-100">
+                                <i class="fas fa-print text-slate-500 text-[11px]"></i> Print View
+                            </button>
+                        </div>
+                    </div>
+                    <div id="status"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="flex-1 overflow-hidden bg-white border border-t-0 border-slate-200 rounded-b-xl flex flex-col shadow-sm">
+            <!-- Ledger View -->
+            <div class="overflow-auto table-container" id="ledgerView">
+                <table class="w-full text-left" id="ledgerTable">
+                    <thead class="bg-gradient-to-r from-slate-50 to-slate-50/50 sticky top-0 z-10 border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-3 font-black text-slate-500 text-[9px] uppercase tracking-widest">Beneficiary Name</th>
-                            <th class="px-6 py-3 font-black text-slate-500 text-[9px] uppercase tracking-widest">Target Month</th>
-                            <th class="px-4 py-3 font-black text-rose-600 text-[9px] uppercase tracking-widest">Loss of Pay (Days/Amt)</th>
-                            <th class="px-4 py-3 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Extra Earnings</th>
-                            <th class="px-4 py-3 font-black text-slate-500 text-[9px] uppercase tracking-widest">Timestamp</th>
-                            <th class="px-6 py-3 font-black text-slate-500 text-[9px] uppercase tracking-widest text-right">Management</th>
+                            <th class="px-5 py-3.5 font-black text-slate-500 text-[9px] uppercase tracking-widest min-w-[200px]">Staff Profile</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Basic</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Conv.</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Med.</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Bonus</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Other</th>
+                            <th class="px-3 py-3.5 font-black text-indigo-500 text-[9px] uppercase tracking-widest">PF (EE)</th>
+                            <th class="px-3 py-3.5 font-black text-indigo-400 text-[9px] uppercase tracking-widest">PF (ER)</th>
+                            <th class="px-3 py-3.5 font-black text-rose-500 text-[9px] uppercase tracking-widest">ESI (EE)</th>
+                            <th class="px-3 py-3.5 font-black text-rose-400 text-[9px] uppercase tracking-widest">ESI (ER)</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Gratuity</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">PT</th>
+                            <th class="px-5 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Gross</th>
+                            <th class="px-3 py-3.5 font-black text-rose-500 text-[9px] uppercase tracking-widest">LOP</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Other Earnings</th>
+                            <th class="px-5 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Net Payable</th>
+                            <th class="px-5 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100" id="lopOthersTableBody"></tbody>
+                    <tbody class="divide-y divide-slate-50" id="payrollTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Structure View -->
+            <div class="overflow-auto table-container hidden" id="structureView">
+                <table class="w-full text-left" id="structureTable">
+                    <thead class="bg-gradient-to-r from-slate-50 to-slate-50/50 sticky top-0 z-10 border-b border-slate-200">
+                        <tr>
+                            <th class="px-5 py-3.5 font-black text-slate-500 text-[9px] uppercase tracking-widest min-w-[200px]">Staff Member</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Basic</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Conv.</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Med.</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Bonus</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Other</th>
+                            <th class="px-3 py-3.5 font-black text-indigo-500 text-[9px] uppercase tracking-widest">PF(EE)</th>
+                            <th class="px-3 py-3.5 font-black text-indigo-500 text-[9px] uppercase tracking-widest">PF(ER)</th>
+                            <th class="px-3 py-3.5 font-black text-rose-500 text-[9px] uppercase tracking-widest">ESI(EE)</th>
+                            <th class="px-3 py-3.5 font-black text-rose-500 text-[9px] uppercase tracking-widest">ESI(ER)</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Gratuity</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">PT</th>
+                            <th class="px-3 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">GROSS</th>
+                            <th class="px-3 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Monthly Net</th>
+                            <th class="px-3 py-3.5 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-slate-50/50">Monthly CTC</th>
+                            <th class="px-5 py-3.5 font-black text-indigo-900 text-[9px] uppercase tracking-widest bg-indigo-50/30">Annual CTC</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50" id="structureTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- LOP View -->
+            <div class="overflow-auto table-container hidden" id="lopOthersView">
+                <table class="w-full text-left" id="lopOthersTable">
+                    <thead class="bg-gradient-to-r from-slate-50 to-slate-50/50 sticky top-0 z-10 border-b border-slate-200">
+                        <tr>
+                            <th class="px-5 py-3.5 font-black text-slate-500 text-[9px] uppercase tracking-widest">Staff Name</th>
+                            <th class="px-4 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Month</th>
+                            <th class="px-4 py-3.5 font-black text-rose-600 text-[9px] uppercase tracking-widest">LOP (Days)</th>
+                            <th class="px-4 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Extra Pay</th>
+                            <th class="px-4 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Date Created</th>
+                            <th class="px-5 py-3.5 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50" id="lopOthersTableBody"></tbody>
                 </table>
             </div>
 
             <!-- Footer Summary -->
-            <div class="bg-slate-900 border-t border-slate-800 px-6 py-3.5 flex justify-between items-center shrink-0">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-3 flex justify-between items-center shrink-0 rounded-b-xl">
                 <div class="flex items-center space-x-6">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Records: <span class="text-white ml-1 font-black" id="footer-count">0</span></p>
-                    </div>
-                    <div class="h-4 w-px bg-slate-700"></div>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Integrity Check: <span class="text-emerald-400 ml-1">Verified</span></p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                        Records: <span class="text-white ml-1 font-black" id="footer-count">0</span>
+                    </p>
+
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                        Period: <span class="text-indigo-400 ml-1 font-black" id="footerMonth"></span>
+                    </p>
                 </div>
-                <div class="flex items-center space-x-5">
-                    <span class="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Estimated Disbursement:</span>
-                    <span class="text-base font-black text-white bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-4 py-1.5 rounded-xl shadow-inner" id="footer-total-net">₹ 0</span>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Total Disbursement:</span>
+                    <span class="text-xl font-black text-emerald-400" id="footer-total-net">₹ 0</span>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modal Overlays -->
-    <!-- (Enrollment, LOP, ExtraPay Modals as per original, keeping logic untouched but ensuring Tailwind 3 compatibility) -->
+    </div><!-- end dashboardContent -->
 
-    <!-- Enrollment Modal -->
-    <div id="employeeModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onclick="toggleModal('employeeModal')"></div>
-        <div class="bg-white rounded-3xl shadow-2xl z-50 w-full max-w-[650px] overflow-hidden border border-slate-200">
-            <div class="px-8 py-5 border-b flex justify-between items-center bg-slate-50/50">
+    <!-- ===================== MODALS ===================== -->
+
+    <!-- Modal: Employee (Enroll) -->
+    <div id="employeeModal" class="fixed inset-0 z-[60] flex items-center justify-center opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="toggleModal('employeeModal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-50 w-full max-w-xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-plus text-indigo-600 text-[10px]"></i>
+                    </div>
+                    <h3 class="font-black text-[11px] uppercase tracking-widest text-slate-700">Add PayRoll</h3>
+                </div>
+                <button onclick="toggleModal('employeeModal')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors">
+                    <i class="fas fa-times text-[11px]"></i>
+                </button>
+            </div>
+            <form id="employeeForm" class="p-7 max-h-[80vh] overflow-y-auto">
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Select Employee</label>
+                        <select id="empName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold focus:border-indigo-400 transition-all"></select>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-3 pb-2 border-b text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <i class="fas fa-coins text-[9px]"></i> Monthly Earnings Structure
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Basic Salary</label>
+                            <input type="number" id="basic" class="earning-input w-full p-2.5 border border-slate-200 rounded-lg font-bold focus:border-indigo-400 outline-none transition-all" value="0">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Conveyance</label>
+                            <input type="number" id="conveyance" class="earning-input w-full p-2.5 border border-slate-200 rounded-lg font-bold focus:border-indigo-400 outline-none transition-all" value="0">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Medical Allow.</label>
+                            <input type="number" id="medical" class="earning-input w-full p-2.5 border border-slate-200 rounded-lg font-bold focus:border-indigo-400 outline-none transition-all" value="0">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Stat. Bonus</label>
+                            <input type="number" id="bonus" class="earning-input w-full p-2.5 border border-slate-200 rounded-lg font-bold focus:border-indigo-400 outline-none transition-all" value="0">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Other Allow.</label>
+                            <input type="number" id="other" class="earning-input w-full p-2.5 border border-slate-200 rounded-lg font-bold focus:border-indigo-400 outline-none transition-all" value="0">
+                        </div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-2.5 rounded-xl text-center border border-indigo-100">
+                            <label class="text-[9px] font-black text-indigo-400 uppercase">Est. Monthly Net</label>
+                            <p class="font-black text-indigo-700 text-sm">₹ <span id="net">0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <div class="col-span-2 pb-2 border-b text-[10px] font-black text-slate-500 uppercase tracking-widest">Compulsory Deductions</div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">PF Employee (12%)</span>
+                            <input type="text" id="pfEmployee" class="w-full bg-transparent border-none text-xs font-black p-0 focus:ring-0" readonly>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">ESI Employee (0.75%)</span>
+                            <input type="text" id="esiEmployee" class="w-full bg-transparent border-none text-xs font-black p-0 focus:ring-0" readonly>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-xl text-white mt-2">
+                            <span class="text-[9px] font-bold text-slate-500 uppercase">Monthly CTC Cost</span>
+                            <p class="font-black text-sm">₹ <span id="monthlyCTC">0.00</span></p>
+                        </div>
+                        <div class="bg-indigo-600 p-4 rounded-xl text-white mt-2 shadow-lg shadow-indigo-100">
+                            <span class="text-[9px] font-bold text-indigo-300 uppercase">Annualized CTC</span>
+                            <p class="font-black text-sm">₹ <span id="annualCTC">0.00</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button type="submit" class="w-full bg-slate-900 text-white text-[10px] font-black py-4 rounded-xl uppercase tracking-widest hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-rocket text-[10px]"></i> Initialize Salary Profile
+                    </button>
+                </div>
+                <input type="hidden" id="pfEmployer" value="0">
+                <input type="hidden" id="esiEmployer" value="0">
+                <input type="hidden" id="monthlyGratuity" value="0">
+                <input type="hidden" id="pt" value="0">
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: LOP -->
+    <div id="lopModal" class="fixed inset-0 z-[60] flex items-center justify-center opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="toggleModal('lopModal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-50 w-full max-w-[340px] p-7 border border-slate-200">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center border border-rose-100">
+                    <i class="fas fa-calendar-times text-rose-500 text-[11px]"></i>
+                </div>
+                <h3 class="font-black text-[11px] text-rose-700 uppercase tracking-widest">Loss of Pay</h3>
+            </div>
+            <form id="lopform" class="space-y-4">
                 <div>
-                    <h3 class="font-black text-sm uppercase tracking-widest text-slate-800">Enroll Professional</h3>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Setup financial profile & compensation structure</p>
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Employee</label>
+                    <select id="lopSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-rose-500/10"></select>
                 </div>
-                <button onclick="toggleModal('employeeModal')" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-400 transition-colors"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="max-h-[75vh] overflow-y-auto">
-                <form id="employeeForm" class="p-8 space-y-8">
-                    <div class="grid grid-cols-1 gap-5">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Full Legal Name</label>
-                            <select id="empName" required class="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-bold"></select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-5">
-                        <div class="section-header before:bg-indigo-600">
-                            <h4 class="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Monthly Earnings Base</h4>
-                        </div>
-                        <div class="grid grid-cols-3 gap-4 bg-indigo-50/20 p-5 rounded-2xl border border-indigo-100/50">
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Basic Pay</label>
-                                <input type="number" step="0.01" id="basic" name="basic" class="earning-input w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold" value="0">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Conveyance</label>
-                                <input type="number" step="0.01" id="conveyance" name="conveyance" class="earning-input w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold" value="0">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Medical</label>
-                                <input type="number" step="0.01" id="medical" name="medical" class="earning-input w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold" value="0">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Stat. Bonus</label>
-                                <input type="number" step="0.01" id="bonus" name="bonus" class="earning-input w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold" value="0">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Other All.</label>
-                                <input type="number" step="0.01" id="other" name="other" class="earning-input w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold" value="0">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-indigo-600 uppercase">PF (Employee)</label>
-                                <input type="number" step="0.01" id="pfEmployee" class="w-full text-xs p-2.5 border border-indigo-200 bg-white rounded-xl outline-none font-black text-indigo-600" value="0" readonly>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-rose-600 uppercase">ESI (Employee)</label>
-                                <input type="number" step="0.01" id="esiEmployee" class="w-full text-xs p-2.5 border border-rose-200 bg-white rounded-xl outline-none font-black text-rose-600" value="0" readonly>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-purple-600 uppercase">Prof Tax</label>
-                                <input type="number" step="0.01" id="pt" class="w-full text-xs p-2.5 border border-purple-200 bg-white rounded-xl outline-none font-black text-purple-600" value="0" readonly>
-                            </div>
-                            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
-                            
-                            <div class="bg-slate-900 rounded-2xl p-4 text-white col-span-1 shadow-xl">
-                                <p class="text-[9px] uppercase font-black text-slate-500 tracking-widest">Gross</p>
-                                <p class="text-sm font-black tracking-tight">₹ <span id="gross">0.00</span></p>
-                            </div>
-                            <div class="bg-emerald-600 rounded-2xl p-4 text-white col-span-2 shadow-xl flex items-center justify-between">
-                                <div>
-                                    <p class="text-[9px] uppercase font-black text-emerald-100 tracking-widest">Monthly Take-Home</p>
-                                    <p class="text-xl font-black tracking-tight">₹ <span id="net">0.00</span></p>
-                                </div>
-                                <i class="fas fa-wallet text-emerald-400 opacity-50 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-5">
-                        <div class="section-header before:bg-emerald-600">
-                            <h4 class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Cost to Company (CTC)</h4>
-                        </div>
-                        <div class="grid grid-cols-3 gap-4 bg-emerald-50/20 p-5 rounded-2xl border border-emerald-100/50">
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">PF (Employer)</label>
-                                <input type="number" step="0.01" id="pfEmployer" class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-white outline-none font-bold" value="0" readonly>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">ESI (Employer)</label>
-                                <input type="number" id="esiEmployer" step="0.01" class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-white outline-none font-bold" value="0" readonly>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[9px] font-black text-slate-500 uppercase">Gratuity</label>
-                                <input id="monthlyGratuity" type="number" step="0.01" class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-white outline-none font-bold" value="0" readonly>
-                            </div>
-                            <div class="col-span-3 grid grid-cols-2 gap-4 mt-2">
-                                <div class="bg-white border-2 border-indigo-100 rounded-2xl p-4 shadow-sm">
-                                    <p class="text-[9px] uppercase font-black text-slate-400 tracking-widest">Monthly CTC</p>
-                                    <p class="text-lg font-black text-indigo-700 tracking-tight">₹ <span id="monthlyCTC">0.00</span></p>
-                                </div>
-                                <div class="bg-indigo-900 rounded-2xl p-4 text-white shadow-xl">
-                                    <p class="text-[9px] uppercase font-black text-indigo-300 tracking-widest">Annual Valuation</p>
-                                    <p class="text-xl font-black tracking-tight">₹ <span id="annualCTC">0.00</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end pt-5 border-t border-slate-100">
-                        <button type="submit" class="bg-indigo-600 text-white text-[11px] font-black px-12 py-4 rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all uppercase tracking-widest hover:-translate-y-1 active:translate-y-0">Complete Enrollment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- LOP Modal -->
-    <div id="lopModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="toggleModal('lopModal')"></div>
-        <div class="bg-white rounded-3xl shadow-2xl z-50 w-full max-w-[380px] p-8 border border-slate-100">
-            <h3 class="font-black text-sm text-rose-700 uppercase tracking-widest mb-6">Apply Loss of Pay</h3>
-            <form id="lopform">
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Target Employee</label>
-                        <select id="lopSelect" class="w-full text-xs p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-black outline-none focus:ring-4 focus:ring-rose-500/10"></select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Duration of Absence (Days)</label>
-                        <input type="text" id="lop" placeholder="e.g. 2.5" class="w-full text-xs p-3.5 border border-slate-200 rounded-xl outline-none focus:border-rose-400 font-bold placeholder:text-slate-300">
-                    </div>
-                    <button type="submit" class="w-full bg-rose-600 text-white text-[11px] font-black py-4 rounded-2xl shadow-xl shadow-rose-100 uppercase tracking-widest transition-all hover:bg-rose-700">Apply Deduction</button>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">LOP Days</label>
+                    <input type="text" id="lop" placeholder="e.g. 1.5" class="w-full p-3 border border-slate-200 rounded-xl font-bold focus:border-rose-400 outline-none transition-all">
                 </div>
+                <button type="submit" class="w-full bg-rose-600 text-white text-[10px] font-black py-3.5 rounded-xl uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-100 transition-all">
+                    Confirm Adjustment
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Extra Pay Modal -->
-    <div id="extraPayModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none modal">
-        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="toggleModal('extraPayModal')"></div>
-        <div class="bg-white rounded-3xl shadow-2xl z-50 w-full max-w-[380px] p-8 border border-slate-100">
-            <h3 class="font-black text-sm text-emerald-700 uppercase tracking-widest mb-6">Disburse Extra Earnings</h3>
-            <form id="epayForm">
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Recipient Professional</label>
-                        <select id="extraPaySelect" class="w-full text-xs p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-black outline-none focus:ring-4 focus:ring-emerald-500/10"></select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Extra Disbursement (₹)</label>
-                        <input id="epay" type="number" placeholder="0.00" class="w-full text-xs p-3.5 border border-slate-200 rounded-xl outline-none focus:border-emerald-400 font-black placeholder:text-slate-300">
-                    </div>
-                    <button type="submit" class="w-full bg-emerald-600 text-white text-[11px] font-black py-4 rounded-2xl shadow-xl shadow-emerald-100 uppercase tracking-widest transition-all hover:bg-emerald-700">Add to PayRoll</button>
+    <!-- Modal: Extra Pay -->
+    <div id="extraPayModal" class="fixed inset-0 z-[60] flex items-center justify-center opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="toggleModal('extraPayModal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-50 w-full max-w-[340px] p-7 border border-slate-200">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center border border-emerald-100">
+                    <i class="fas fa-plus-circle text-emerald-500 text-[11px]"></i>
                 </div>
+                <h3 class="font-black text-[11px] text-emerald-700 uppercase tracking-widest">Extra Earnings</h3>
+            </div>
+            <form id="epayForm" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Employee</label>
+                    <select id="extraPaySelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500/10"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Amount (₹)</label>
+                    <input id="epay" type="number" placeholder="0.00" class="w-full p-3 border border-slate-200 rounded-xl font-bold focus:border-emerald-400 outline-none transition-all">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white text-[10px] font-black py-3.5 rounded-xl uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">
+                    Add to Payout
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-10 right-10 z-[100] transform translate-y-32 opacity-0 transition-all duration-500">
-        <div class="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-4 border border-slate-700">
-            <div class="bg-emerald-500 w-6 h-6 rounded-full flex items-center justify-center"><i class="fas fa-check text-[10px] text-white"></i></div>
-            <span id="toastMsg" class="font-black text-[10px] uppercase tracking-widest">Transaction Successful</span>
+    <!-- Modal: Edit Adjustment -->
+    <div id="editAdjModal" class="fixed inset-0 z-[60] flex items-center justify-center opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="toggleModal('editAdjModal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-50 w-full max-w-[340px] p-7 border border-slate-200">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center border border-indigo-100">
+                    <i class="fas fa-edit text-indigo-500 text-[11px]"></i>
+                </div>
+                <h3 class="font-black text-[11px] text-indigo-700 uppercase tracking-widest">Edit LOP & ExtraPay</h3>
+            </div>
+            <form id="editAdjForm" class="space-y-4">
+                <input type="hidden" id="editAdjId">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Employee</label>
+                    <input type="text" id="editAdjEmpName" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-500 outline-none" readonly>
+                </div>
+                <div id="editLopSection">
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">LOP (Days)</label>
+                    <input type="text" id="editLopValue" class="w-full p-3 border border-slate-200 rounded-xl font-bold focus:border-indigo-400 outline-none transition-all">
+                </div>
+                <div id="editEpaySection">
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1.5">Extra Pay (₹)</label>
+                    <input type="number" id="editEpayValue" class="w-full p-3 border border-slate-200 rounded-xl font-bold focus:border-indigo-400 outline-none transition-all">
+                </div>
+                <button type="submit" class="w-full bg-slate-900 text-white text-[10px] font-black py-3.5 rounded-xl uppercase tracking-widest hover:bg-black shadow-lg transition-all">
+                    Update Record
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 z-[100] flex items-center justify-center opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-3xl shadow-2xl z-50 w-full max-w-[300px] p-7 text-center border border-slate-200">
+            <div id="feedbackIconCont" class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-5">
+                <i id="feedbackIcon" class="text-2xl"></i>
+            </div>
+            <h4 id="feedbackTitle" class="font-black text-xs uppercase tracking-widest text-slate-800 mb-1.5">Title</h4>
+            <p id="feedbackMsg" class="text-slate-500 text-[11px] leading-relaxed mb-6">Message goes here.</p>
+            <div id="feedbackActionCont" class="space-y-2">
+                <button onclick="closeFeedback()" class="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Dismiss</button>
+            </div>
+            <div id="confirmActionCont" class="hidden grid grid-cols-2 gap-3">
+                <button onclick="closeFeedback()" class="py-3 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+                <button id="confirmBtnAction" class="py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 z-[100] transform translate-y-20 opacity-0 transition-all duration-300">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center space-x-3 border border-slate-700">
+            <div class="w-7 h-7 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check text-emerald-400 text-[10px]"></i>
+            </div>
+            <span id="toastMsg" class="font-black text-[10px] uppercase tracking-widest">Operation Successful</span>
         </div>
     </div>
 
     <script>
-        let payrollRecords = [];
-        let adjustmentRecords = [];
-        
-        const filterSelect = document.getElementById("monthFilter");
-        const lopMonthFilter = document.getElementById("lopMonthFilter");
-        let month = filterSelect.value;
-        let monthCont = document.getElementById("month");
-        
-        // Sync months
+    // ===================== AUTH SYSTEM =====================
+    const AUTH_KEY = 'geo_payroll_auth';
+    const PWD_KEY  = 'geo_payroll_pwd';
+    let currentView = 'ledger';
+
+    function getStoredPwd() {
+        return localStorage.getItem(PWD_KEY) || 'payroll@123';
+    }
+
+    function isAuthenticated() {
+        return sessionStorage.getItem(AUTH_KEY) === '1';
+    }
+
+    function initAuth() {
+        if (isAuthenticated()) {
+            unlockUI();
+        }
+    }
+
+    function unlockUI() {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('dashboardContent').classList.remove('hidden');
+        document.getElementById('dashboardContent').classList.add('flex');
+        // Load data only after auth
+        getSalStructure();
+        fetchAdjustments();
+        fetchPayRoll();
+    }
+
+    function lockDashboard() {
+        sessionStorage.removeItem(AUTH_KEY);
+        document.getElementById('authOverlay').style.display = 'flex';
+        document.getElementById('dashboardContent').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('flex');
+        document.getElementById('authPassword').value = '';
+        document.getElementById('authError').classList.add('hidden');
+        showLoginPanel();
+    }
+
+    document.getElementById('authForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const entered = document.getElementById('authPassword').value;
+        const errEl   = document.getElementById('authError');
+            $.ajax({
+            url:'/admin/payroll/authenticateUser', type:'GET',
+            data:{password:entered},
+            dataType:'json',
+            success:function(res){
+                console.log(res);
+                if(res.status==='success'){
+                sessionStorage.setItem(AUTH_KEY, '1');
+                errEl.classList.add('hidden');
+                unlockUI();
+                }
+                else{
+                errEl.classList.remove('hidden');
+                document.getElementById('authPassword').value = '';
+                document.getElementById('authPassword').focus();
+                }
+                },  
+            error:function(err){ 
+                console.log(err);
+                 errEl.classList.remove('hidden');
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authPassword').focus();
+            }
+        });
+
+    });
+
+    document.getElementById('changePwdForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const curr    = document.getElementById('currentPwd').value;
+        const newP    = document.getElementById('newPwd').value;
+        const confirm = document.getElementById('confirmPwd').value;
+        const errEl   = document.getElementById('changePwdError');
+
+
+        if (newP.length < 6) {
+            errEl.textContent = 'New password must be at least 6 characters.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+        if (newP !== confirm) {
+            errEl.textContent = 'Passwords do not match.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
+        $.ajax({
+            url:'/admin/payroll/passwordChange', type:'POST',
+            data:{password:curr,newPassword:confirm},
+             headers: {'X-CSRF-TOKEN': csrfToken},
+            dataType:'json',
+            success:function(res){
+                console.log(res);
+                if(res.status==='success'){
+
+            const btn = document.querySelector('#loginPanel button[type="submit"]');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i> Password Updated!';
+            btn.classList.add('bg-emerald-600');
+            btn.classList.remove('bg-indigo-600');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+                }
+                else{
+                          const err = document.getElementById('authError');
+            err.textContent = '';
+            err.classList.add('hidden');    
+                }
+                },  
+            error:function(err){ 
+                console.log(err);
+            err.textContent = '';
+            err.classList.add('hidden');
+            }
+        });
+
+ 
+    });
+
+    function showChangePassword() {
+        document.getElementById('loginPanel').classList.add('hidden');
+        document.getElementById('changePwdPanel').classList.remove('hidden');
+    }
+
+    function showLoginPanel() {
+        document.getElementById('changePwdPanel').classList.add('hidden');
+        document.getElementById('loginPanel').classList.remove('hidden');
+    }
+
+    function toggleAuthPwd(inputId, iconId) {
+        const inp  = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (inp.type === 'password') {
+            inp.type  = 'text';
+            icon.className = 'fas fa-eye-slash text-[11px]';
+        } else {
+            inp.type  = 'password';
+            icon.className = 'fas fa-eye text-[11px]';
+        }
+    }
+
+    function checkStrength(val) {
+        const bars   = ['s1','s2','s3','s4'];
+        const label  = document.getElementById('strengthLabel');
+        let score    = 0;
+        if (val.length >= 6) score++;
+        if (val.length >= 10) score++;
+        if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        const colors  = ['#f43f5e','#f97316','#eab308','#22c55e'];
+        const labels  = ['Weak','Fair','Good','Strong'];
+        bars.forEach((id,i) => {
+            const el = document.getElementById(id);
+            el.style.background = i < score ? colors[score-1] : 'rgba(255,255,255,0.1)';
+        });
+        label.textContent = val.length ? labels[score-1] || '' : '';
+    }
+
+    // ===================== CORE PAYROLL LOGIC =====================
+    let processStatus = 'Processed';
+    let payrollRecords = [];
+    let adjustmentsCache = [];
+    const select = document.getElementById("monthFilter");
+    let month = select.value;
+    let monthCont = document.getElementById("month");
+    monthCont.innerHTML = month;
+
+    select.addEventListener("change", function() {
+        month = this.value;
         monthCont.innerHTML = month;
+        document.getElementById('footerMonth').textContent = month;
+        renderLedgerTable(month);
+        getSalStructure();
+        fetchAdjustments(month);
+    });
 
-        // --- Event Listeners ---
-        filterSelect.addEventListener("change", function() {
-            month = this.value;
-            lopMonthFilter.value = month; // Keep in sync
-            monthCont.innerHTML = month;      
-            renderLedgerTable(month);
-            getSalStructure();
-            fetchAdjustments();     
-        });
+    // ===================== FEEDBACK / MODALS =====================
+    function showFeedback(type, title, msg, onConfirm = null) {
+        const modal       = document.getElementById('feedbackModal');
+        const iconCont    = document.getElementById('feedbackIconCont');
+        const icon        = document.getElementById('feedbackIcon');
+        const fTitle      = document.getElementById('feedbackTitle');
+        const fMsg        = document.getElementById('feedbackMsg');
+        const actionCont  = document.getElementById('feedbackActionCont');
+        const confirmCont = document.getElementById('confirmActionCont');
+        const confirmBtn  = document.getElementById('confirmBtnAction');
 
-        lopMonthFilter.addEventListener("change", function() {
-            renderLOPTable(adjustmentRecords, this.value);
-        });
+        fTitle.innerText = title;
+        fMsg.innerText   = msg;
+        actionCont.classList.add('hidden');
+        confirmCont.classList.add('hidden');
+        iconCont.className = 'w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-5';
 
-        // --- Data Fetching ---
-        function fetchPayRoll(){
+        if (type === 'success') {
+            iconCont.classList.add('bg-emerald-50','text-emerald-500');
+            icon.className = 'fas fa-check-circle text-2xl';
+            actionCont.classList.remove('hidden');
+        } else if (type === 'error') {
+            iconCont.classList.add('bg-rose-50','text-rose-500');
+            icon.className = 'fas fa-exclamation-triangle text-2xl';
+            actionCont.classList.remove('hidden');
+        } else if (type === 'confirm') {
+            iconCont.classList.add('bg-indigo-50','text-indigo-600');
+            icon.className = 'fas fa-question-circle text-2xl';
+            confirmCont.classList.remove('hidden');
+            confirmBtn.onclick = () => { closeFeedback(); if (onConfirm) onConfirm(); };
+        }
+        modal.classList.remove('opacity-0','pointer-events-none');
+    }
+
+    function closeFeedback() {
+        document.getElementById('feedbackModal').classList.add('opacity-0','pointer-events-none');
+    }
+
+    function confirmPayrollProcess() {
+        showFeedback('confirm','Run Payroll',`Are you sure you want to process payroll records for ${month}? This will finalize payouts.`, processPayroll);
+    }
+
+    function updatePayrollProcess(type) {
+        showFeedback('confirm',`${type} Payroll`,`Are you sure you want to ${type} payroll records for ${month}?`, () => updatePayroll(type));
+    }
+
+    // ===================== AJAX CALLS (unchanged) =====================
+ function fetchPayRoll(){
             $.ajax({
                 url: '/admin/payroll/fetchpayroll',
                 type: 'GET',
@@ -458,7 +865,7 @@
             });
         }
 
-        function processPayroll(){
+function processPayroll(){
             const con = confirm("Confirm final execution of payroll for " + month + "?");
             const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
             if(con){
@@ -476,6 +883,16 @@
                 });
             }
         }
+
+    function updatePayroll(type) {
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{action:'updateProcess',csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",month:month,type},
+            dataType:'json',
+            success:function(){ showFeedback('success','Payroll Approved',`Payroll for ${month} has been Approved.`); fetchPayRoll(); },
+            error:function(){ showFeedback('error','Execution Error','An error occurred while processing the engine. Check logs.'); }
+        });
+    }
 
         function getSalStructure(){
             $.ajax({
@@ -502,295 +919,744 @@
             });
         }
 
-        function getEmployees(){
-            $.ajax({
-                url: '/admin/getemployees',
-                type: 'GET',
-                success: function(data){
-                    const items = typeof data === 'string' ? JSON.parse(data) : data;
-                    populateSelect('empName', items, 'eid', 'name');
-                    populateSelect('lopSelect', items, 'eid', 'name');
-                    populateSelect('extraPaySelect', items, 'eid', 'name');
-                },error: function(err){ console.log(err); }
-            });
-        }
-
-        function populateSelect(selectId, items, valueKey, textKey) {
-            const select = document.getElementById(selectId);
-            if(!select) return;
-            select.innerHTML = "";
-            const defaultOption = document.createElement("option");
-            defaultOption.value = "";
-            defaultOption.textContent = "-- Select Staff Member --";
-            select.appendChild(defaultOption);
-            if(items && Array.isArray(items)) {
-                items.forEach(item => {
-                    const option = document.createElement("option");
-                    option.value = item[valueKey];
-                    option.textContent = item[textKey];
-                    select.appendChild(option);
-                });
-            }
-        }
-
-        // --- Render Logic ---
-        function renderLedgerTable(selectedMonth) {
-            const tbody = document.getElementById('payrollTableBody');
-            tbody.innerHTML = '';
-            
-            const filtered = payrollRecords.filter(emp => emp.month === selectedMonth);
-            
-            filtered.forEach(emp => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-50 group text-[10px]';
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-black text-[9px]">
-                                ${emp.employeeBasicInfo.firstName.charAt(0)}${emp.employeeBasicInfo.lastName.charAt(0)}
-                            </div>
-                            <div>
-                                <p class="font-black text-slate-800 uppercase tracking-tighter">${emp.employeeBasicInfo.firstName} ${emp.employeeBasicInfo.lastName}</p>
-                                <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.salaryStructure.designation || 'Operational Staff'}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-3 py-4 font-bold">₹${(emp.basic || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.conveyance || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.medicalAllowance || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.statutoryBonus || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.otherAllowance || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-indigo-50/20 font-black text-indigo-700">₹${emp.pfEmployeeShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-indigo-50/20 font-black text-indigo-700 opacity-60">₹${emp.pfEmployerShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-rose-50/20 font-black text-rose-700">₹${emp.esiEmployeeShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-rose-50/20 font-black text-rose-700 opacity-60">₹${emp.esiEmployerShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 font-bold text-slate-600">₹${(emp.monthlyGratuity || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-bold text-slate-600">₹${(emp.pt || 0).toLocaleString()}</td>
-                    <td class="px-6 py-4 bg-emerald-50/20 font-black text-emerald-700 text-[11px]">₹${(emp.netPayeble || 0).toLocaleString()}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            updateStats(filtered);
-        }
-
-        function renderStructureTable(data) {
-            const tbody = document.getElementById('structureTableBody');
-            tbody.innerHTML = '';
-            if(!data) return;
-
-            data.forEach(emp => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-50 text-[10px]';
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <p class="font-black text-slate-800 uppercase tracking-tighter">${emp.employeeBasicInfo.firstName} ${emp.employeeBasicInfo.lastName}</p>
-                        <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.designation || 'Staff'}</p>
-                    </td>
-                    <td class="px-3 py-4 font-medium">₹${(emp.basicPay || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.conveyance || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.medicalAllowence || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.statutoryBonus || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-medium text-slate-500">₹${(emp.otherAllowences || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-indigo-50/30 font-bold text-indigo-700">₹${emp.pfEmployeeShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-indigo-50/30 font-bold text-indigo-700">₹${emp.pfEmployerShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-rose-50/30 font-bold text-rose-700">₹${emp.esiEmployeeShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-rose-50/30 font-bold text-rose-700">₹${emp.esiEmployerShare.toLocaleString()}</td>
-                    <td class="px-3 py-4 font-bold text-slate-600">₹${(emp.monthlyGratuity || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-bold text-slate-600">₹${(emp.pt || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 font-black text-emerald-700">₹${(emp.netPay || 0).toLocaleString()}</td>
-                    <td class="px-3 py-4 bg-slate-50 font-black text-indigo-600">₹${(emp.monthlyCtc || 0).toLocaleString()}</td>
-                    <td class="px-6 py-4 bg-slate-800 font-black text-white">₹${(emp.annualCtc || 0).toLocaleString()}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderLOPTable(data = [], selectedMonth) {
-            const tbody = document.getElementById('lopOthersTableBody');
-            tbody.innerHTML = '';
-            
-            const filtered = data.filter(item => item.month === selectedMonth);
-            
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-20 text-center text-slate-300 font-black uppercase text-[10px] tracking-[0.2em]">No transactional adjustments for ${selectedMonth}</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 text-[10px]';
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-black text-slate-800 uppercase">${item.employeeBasicInfo.firstName} ${item.employeeBasicInfo.lastName}</td>
-                    <td class="px-6 py-4 font-bold text-slate-400 uppercase tracking-tighter">${item.month}</td>
-                    <td class="px-4 py-4"><span class="${item.lopindays > 0 ? 'bg-rose-50 text-rose-700 border border-rose-100 px-2 py-1 rounded-md font-black' : 'text-slate-300'}">${item.lopindays > 0 ? item.lopindays + ' Units' : 'None'}</span></td>
-                    <td class="px-4 py-4"><span class="${item.extraPay > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-1 rounded-md font-black' : 'text-slate-300'}">${item.extraPay > 0 ? '₹' + item.extraPay.toLocaleString() : 'None'}</span></td>
-                    <td class="px-4 py-4 text-slate-400 font-medium italic">${item.created || 'Recently Added'}</td>
-                    <td class="px-6 py-4 text-right">
-                         <button class="w-8 h-8 flex items-center justify-center hover:bg-rose-50 text-rose-300 hover:text-rose-600 rounded-xl transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // --- Logic & Stats ---
-        function updateStats(filteredData = []) {
-            const count = filteredData.length;
-            const gross = filteredData.reduce((acc, curr) => acc + parseFloat(curr.grossMonthly || 0), 0);
-            const ded = filteredData.reduce((acc, curr) => acc + (parseFloat(curr.pfEmployeeShare || 0) + parseFloat(curr.esiEmployeeShare || 0) + parseFloat(curr.pt || 0)), 0);
-            const net = filteredData.reduce((acc, curr) => acc + parseFloat(curr.netPayeble || 0), 0);
-
-            document.getElementById('stat-total-staff').innerText = count;
-            document.getElementById('stat-gross').innerText = '₹ ' + gross.toLocaleString(undefined, {maximumFractionDigits: 0});
-            document.getElementById('stat-deduction').innerText = '₹ ' + ded.toLocaleString(undefined, {maximumFractionDigits: 0});
-            document.getElementById('stat-net').innerText = '₹ ' + net.toLocaleString(undefined, {maximumFractionDigits: 0});
-            
-            document.getElementById('footer-count').innerText = count;
-            document.getElementById('footer-total-net').innerText = '₹ ' + net.toLocaleString();
-        }
-
-        function calculatePayload() {
-            const basic = parseFloat(document.getElementById("basic").value) || 0;
-            const conveyance = parseFloat(document.getElementById("conveyance").value) || 0;
-            const medical = parseFloat(document.getElementById("medical").value) || 0;
-            const bonus = parseFloat(document.getElementById("bonus").value) || 0;
-            const other = parseFloat(document.getElementById("other").value) || 0;
-            
-            const grossMonthly = basic + conveyance + medical + bonus + other;
-
-            let pfEmployee = 0, pfEmployer = 0;
-            if (basic > 0) {
-                if (basic > 15000) { pfEmployee = 1800; pfEmployer = 1950; } 
-                else { pfEmployee = basic * 0.12; pfEmployer = basic * 0.13; }
-            }
-
-            let esiEmployee = 0, esiEmployer = 0;
-            if (grossMonthly > 0 && grossMonthly <= 21000) {
-                esiEmployee = grossMonthly * 0.0075;
-                esiEmployer = grossMonthly * 0.0325;    
-            }
-            
-            let pt = grossMonthly > 25000 ? 200 : 0;
-            const gratuityMonthly = basic > 0 ? ((basic * 15) / 26) / 12 : 0;
-            const netPay = grossMonthly - (pfEmployee + esiEmployee + pt);
-            const monthlyCTC = grossMonthly + (pfEmployer + esiEmployer + gratuityMonthly);
-
-            return {
-                name: document.getElementById('empName').options[document.getElementById('empName').selectedIndex]?.text || "Unknown",
-                basic, conveyance, medical, bonus, other, grossMonthly,
-                pfEmployee, esiEmployee, pt, netPay,
-                pfEmployer, esiEmployer, gratuityMonthly,
-                monthly: monthlyCTC, annual: monthlyCTC * 12
-            };
-        }
-
-        function updateCalculations() {
-            const data = calculatePayload();
-            document.getElementById("pfEmployee").value = data.pfEmployee.toFixed(2);
-            document.getElementById("esiEmployee").value = data.esiEmployee.toFixed(2);
-            document.getElementById("pfEmployer").value = data.pfEmployer.toFixed(2);
-            document.getElementById("pt").value = data.pt.toFixed(2);
-            document.getElementById("esiEmployer").value = data.esiEmployer.toFixed(2);
-            document.getElementById("monthlyGratuity").value = data.gratuityMonthly.toFixed(2);
-            document.getElementById('gross').innerText = data.grossMonthly.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('net').innerText = data.netPay.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('monthlyCTC').innerText = data.monthly.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('annualCTC').innerText = data.annual.toLocaleString(undefined, {minimumFractionDigits: 2});
-        }
-
-        // --- Action Handlers ---
-        document.getElementById('employeeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const data = calculatePayload();
-            const csrfToken = document.getElementById("csrfToken").value;
-            $.ajax({
-                url: '/admin/payroll/addPayroll',
-                type: 'POST',
-                headers: {'X-CSRF-TOKEN': csrfToken},
-                data: data,
-                success: function(data){
-                    showSuccess(`Profile Enrolled: ${data.name}`);
-                    fetchPayRoll();
-                    toggleModal('employeeModal');
-                    e.target.reset();
-                },error: function(err){ console.log(err); }
-            });
+    function fetchEmps(type,month,selectid) {
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{action:'getEmployeeData',csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",type:type,month:month},
+            dataType:'json',
+            success:function(res){ populateSelect(selectid, res, 'eid','employee'); },
+            error:function(err){ console.log(err); }
         });
+    }
 
-        document.getElementById("lopform").addEventListener("submit", function(e){
-            e.preventDefault();
-            const employee = document.getElementById("lopSelect").value;
-            const lop = document.getElementById("lop").value;
-            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-            addExtraDetails(month, 'LOP', employee, lop, null, this, csrfToken);
-        });
-
-        document.getElementById("epayForm").addEventListener("submit", function(e){
-            e.preventDefault();
-            const employee = document.getElementById("extraPaySelect").value;
-            const epay = document.getElementById("epay").value;
-            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-            addExtraDetails(month, 'EPAY', employee, null, epay, this, csrfToken);
-        });
-
-        function addExtraDetails(month, type, eid, lop=null, epay=null, form, csrfToken){
-            const data = {month: month, type: type, eid: eid, lop: lop ?? 0, epay: epay ?? 0};
-            $.ajax({
-                url: '/admin/payroll/extraDetails',
-                type: 'POST',
-                headers: {'X-CSRF-TOKEN': csrfToken},
-                data: data,
-                dataType: 'json',
-                success: function(res){ 
-                    showSuccess(`${type} Logged Successfully`);
-                    form.reset();
-                    toggleModal(type === 'LOP' ? 'lopModal' : 'extraPayModal');
-                    fetchAdjustments(); 
-                },
-                error: function(err){ console.log(err); }
-            });
-        }
-
-        // --- UI State Management ---
-        function switchView(view) {
-            const configs = {
-                'ledger': { el: 'ledgerView', tab: 'tab-ledger' },
-                'structure': { el: 'structureView', tab: 'tab-structure' },
-                'lopOthers': { el: 'lopOthersView', tab: 'tab-lopOthers' }
-            };
-            Object.keys(configs).forEach(key => {
-                const cfg = configs[key];
-                document.getElementById(cfg.el).classList.toggle('hidden', key !== view);
-                document.getElementById(cfg.tab).classList.toggle('tab-active', key === view);
-                document.getElementById(cfg.tab).classList.toggle('text-slate-400', key !== view);
-            });
-        }
-
-        function toggleModal(id) {
-            const m = document.getElementById(id);
-            const isOpen = m.classList.contains('opacity-0');
-            m.classList.toggle('opacity-0', !isOpen);
-            m.classList.toggle('pointer-events-none', !isOpen);
-            if(isOpen && id === 'employeeModal') updateCalculations();
-        }
-
-        function showSuccess(msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
-            t.classList.remove('translate-y-32', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3000);
-        }
-
-        document.querySelectorAll('.earning-input').forEach(i => {
-            i.addEventListener('input', updateCalculations);
-        });
-
-        window.onload = () => {
-            getEmployees();
-            fetchPayRoll();
-            getSalStructure();
-            fetchAdjustments();
+    // ===================== VIEW SWITCHING =====================
+    function switchView(view) {
+        currentView = view;
+        const views = {
+            'ledger':    { el:'ledgerView',    tab:'tab-ledger' },
+            'structure': { el:'structureView', tab:'tab-structure' },
+            'lopOthers': { el:'lopOthersView', tab:'tab-lopOthers' }
         };
+        Object.keys(views).forEach(key => {
+            const cfg = views[key];
+            const el  = document.getElementById(cfg.el);
+            const tab = document.getElementById(cfg.tab);
+            if (key === view) {
+                el.classList.remove('hidden');
+                tab.classList.add('tab-active');
+                tab.classList.remove('text-slate-400');
+            } else {
+                el.classList.add('hidden');
+                tab.classList.remove('tab-active');
+                tab.classList.add('text-slate-400');
+            }
+        });
+    }
+
+    function changeButton(status) {
+        const container = document.getElementById("status");
+        if (status === 'unprocessed') {
+            container.innerHTML = `<button onclick="confirmPayrollProcess()" class="action-btn px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md transition-all font-black text-[9px] uppercase flex items-center gap-1.5"><i class="fas fa-play text-[9px]"></i>Run Payroll</button>`;
+        } else if (status === 'Processed') {
+            container.innerHTML = `<button onclick="updatePayrollProcess('Approve')" class="action-btn px-4 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 shadow-md transition-all font-black text-[9px] uppercase flex items-center gap-1.5"><i class="fas fa-check text-[9px]"></i>Approve</button>`;
+        } else if (status === 'Approved') {
+            container.innerHTML = `<button onclick="updatePayrollProcess('disburse')" class="action-btn px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-md transition-all font-black text-[9px] uppercase flex items-center gap-1.5"><i class="fas fa-paper-plane text-[9px]"></i>Disburse</button>`;
+        }
+    }
+
+    // ===================== SEARCH FILTER =====================
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const tableMap = { ledger:'payrollTableBody', structure:'structureTableBody', lopOthers:'lopOthersTableBody' };
+        const tbodyId  = tableMap[currentView];
+        if (!tbodyId) return;
+        const rows = document.querySelectorAll('#' + tbodyId + ' tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    }
+
+    // ===================== EXPORT =====================
+    function getExportData() {
+        console.log("called");
+        const filtered = payrollRecords.filter(emp => emp.month === month);
+
+        if (currentView === 'ledger') {
+            const headers = ['Employee','Designation','Basic','Conveyance','Medical','Bonus','Other Allow.','PF (EE)','PF (ER)','ESI (EE)','ESI (ER)','Gratuity','PT','Gross','LOP Days','Other Earnings','Net Payable'];
+            const rows = filtered.map(emp => [
+                emp.employee, emp.Designation||'Payroll Staff',
+                Number(emp.basic)||0, Number(emp.conveyance)||0, Number(emp.medicalAllowance)||0,
+                Number(emp.statutoryBonus)||0, Number(emp.otherAllowance)||0,
+                Number(emp.pfEmployeeShare)||0, Number(emp.pfEmployerShare)||0,
+                Number(emp.esiEmployeeShare)||0, Number(emp.esiEmployerShare)||0,
+                Number(emp.monthlyGratuity)||0, Number(emp.pt)||0,
+                Number(emp.gross)||0, Number(emp.lopDays)||0,
+                Number(emp.otherEarnings)||0, Number(emp.netPayeble)||0
+            ]);
+            return { headers, rows, name: 'Payroll_' + month };
+        }
+
+        if (currentView === 'structure') {
+            const headers = ['Employee','Basic','Conveyance','Medical','Bonus','Other','PF(EE)','PF(ER)','ESI(EE)','ESI(ER)','Gratuity','PT','Gross','Monthly Net','Monthly CTC','Annual CTC'];
+            const rows = [];
+            document.querySelectorAll('#structureTableBody tr').forEach(function(tr) {
+                if (tr.style.display === 'none') return;
+                const row = [];
+                tr.querySelectorAll('td').forEach(function(td) {
+                    row.push(td.textContent.replace(/[₹,\n]/g,'').trim());
+                });
+                if (row.length) rows.push(row);
+            });
+            return { headers, rows, name: 'CTC_Structure_' + month };
+        }
+
+        if (currentView === 'lopOthers') {
+            const adjFiltered = adjustmentsCache.filter(function(a){ return a.month === month; });
+            const headers = ['Employee','Month','LOP (Days)','Extra Pay','Date Created'];
+            const rows = adjFiltered.map(function(a){ return [
+                a.employee, a.month,
+                a.lopindays > 0 ? a.lopindays : 0,
+                a.extraPay  > 0 ? a.extraPay  : 0,
+                a.created || ''
+            ]; });
+            return { headers, rows, name: 'LOP_Adj_' + month };
+        }
+
+        return { headers: [], rows: [], name: 'Export' };
+    }
+
+    // ---- Pure-JS ZIP + XLSX builder (zero dependencies) ----
+    var _xlsxBuilder = (function() {
+        // CRC32 table
+        var crcTable = (function() {
+            var t = [];
+            for (var n = 0; n < 256; n++) {
+                var c = n;
+                for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                t[n] = c;
+            }
+            return t;
+        })();
+
+        function crc32(buf) {
+            var crc = 0xFFFFFFFF;
+            for (var i = 0; i < buf.length; i++) crc = crcTable[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function strToBytes(s) {
+            var bytes = [];
+            for (var i = 0; i < s.length; i++) {
+                var c = s.charCodeAt(i);
+                if (c < 128) { bytes.push(c); }
+                else if (c < 2048) { bytes.push(192 | (c >> 6), 128 | (c & 63)); }
+                else { bytes.push(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63)); }
+            }
+            return new Uint8Array(bytes);
+        }
+
+        function u16le(n) { return [n & 0xFF, (n >> 8) & 0xFF]; }
+        function u32le(n) { return [n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, (n >> 24) & 0xFF]; }
+
+        function concat() {
+            var arrays = Array.prototype.slice.call(arguments);
+            var len = arrays.reduce(function(a, b){ return a + b.length; }, 0);
+            var out = new Uint8Array(len), offset = 0;
+            arrays.forEach(function(a){ out.set(a, offset); offset += a.length; });
+            return out;
+        }
+
+        // Build uncompressed ZIP
+        function zipSync(files) {
+            var localHeaders = [], centralDirs = [], offset = 0;
+
+            Object.keys(files).forEach(function(name) {
+                var data    = files[name];
+                var nameB   = strToBytes(name);
+                var crc     = crc32(data);
+                var size    = data.length;
+                var modDate = 0x4A21, modTime = 0x0000; // fixed date
+
+                var localHeader = concat(
+                    new Uint8Array([0x50,0x4B,0x03,0x04]), // local file sig
+                    new Uint8Array(u16le(20)),              // version needed
+                    new Uint8Array(u16le(0)),               // flags
+                    new Uint8Array(u16le(0)),               // compression (stored)
+                    new Uint8Array(u16le(modTime)),
+                    new Uint8Array(u16le(modDate)),
+                    new Uint8Array(u32le(crc)),
+                    new Uint8Array(u32le(size)),
+                    new Uint8Array(u32le(size)),
+                    new Uint8Array(u16le(nameB.length)),
+                    new Uint8Array(u16le(0)),               // extra field len
+                    nameB,
+                    data
+                );
+
+                var centralDir = concat(
+                    new Uint8Array([0x50,0x4B,0x01,0x02]), // central dir sig
+                    new Uint8Array(u16le(20)),              // version made by
+                    new Uint8Array(u16le(20)),              // version needed
+                    new Uint8Array(u16le(0)),
+                    new Uint8Array(u16le(0)),               // stored
+                    new Uint8Array(u16le(modTime)),
+                    new Uint8Array(u16le(modDate)),
+                    new Uint8Array(u32le(crc)),
+                    new Uint8Array(u32le(size)),
+                    new Uint8Array(u32le(size)),
+                    new Uint8Array(u16le(nameB.length)),
+                    new Uint8Array(u16le(0)),               // extra
+                    new Uint8Array(u16le(0)),               // comment
+                    new Uint8Array(u16le(0)),               // disk start
+                    new Uint8Array(u16le(0)),               // int attrs
+                    new Uint8Array(u32le(0)),               // ext attrs
+                    new Uint8Array(u32le(offset)),
+                    nameB
+                );
+
+                localHeaders.push(localHeader);
+                centralDirs.push(centralDir);
+                offset += localHeader.length;
+            });
+
+            var centralStart = offset;
+            var centralData  = concat.apply(null, centralDirs);
+            var eocd = concat(
+                new Uint8Array([0x50,0x4B,0x05,0x06]),
+                new Uint8Array(u16le(0)), new Uint8Array(u16le(0)),
+                new Uint8Array(u16le(centralDirs.length)),
+                new Uint8Array(u16le(centralDirs.length)),
+                new Uint8Array(u32le(centralData.length)),
+                new Uint8Array(u32le(centralStart)),
+                new Uint8Array(u16le(0))
+            );
+
+            var parts = localHeaders.concat([centralData, eocd]);
+            return concat.apply(null, parts);
+        }
+
+        function escXml(v) {
+            return String(v)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function colName(idx) {
+            var s = ''; idx++;
+            while (idx > 0) { idx--; s = String.fromCharCode(65 + (idx % 26)) + s; idx = Math.floor(idx/26); }
+            return s;
+        }
+
+        function buildXlsx(headers, rows) {
+            var allRows = [headers].concat(rows);
+            var sheetRows = allRows.map(function(row, ri) {
+                var cells = row.map(function(val, ci) {
+                    var addr = colName(ci) + (ri + 1);
+                    var isNum = val !== '' && val !== null && !isNaN(Number(val)) && val !== true && val !== false;
+                    if (isNum) return '<c r="' + addr + '"><v>' + Number(val) + '</v></c>';
+                    return '<c r="' + addr + '" t="inlineStr"><is><t>' + escXml(val) + '</t></is></c>';
+                }).join('');
+                return '<row r="' + (ri+1) + '">' + cells + '</row>';
+            }).join('');
+
+            var ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+            var odr = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+            var pkgr = 'http://schemas.openxmlformats.org/package/2006/relationships';
+
+            var sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<workbook xmlns="' + ns + '" xmlns:r="' + odr + '">'
+                + '<sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets></workbook>';
+
+            var wbXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<workbook xmlns="' + ns + '" xmlns:r="' + odr + '">'
+                + '<sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets></workbook>';
+
+            var wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<Relationships xmlns="' + pkgr + '">'
+                + '<Relationship Id="rId1" Type="' + odr + '/worksheet" Target="worksheets/sheet1.xml"/>'
+                + '</Relationships>';
+
+            var pkgRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<Relationships xmlns="' + pkgr + '">'
+                + '<Relationship Id="rId1" Type="' + odr + '/officeDocument" Target="xl/workbook.xml"/>'
+                + '</Relationships>';
+
+            var ctypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+                + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+                + '<Default Extension="xml" ContentType="application/xml"/>'
+                + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+                + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+                + '</Types>';
+
+            var enc = new TextEncoder();
+            var zipFiles = {
+                '[Content_Types].xml'          : enc.encode(ctypes),
+                '_rels/.rels'                  : enc.encode(pkgRels),
+                'xl/workbook.xml'              : enc.encode(wbXml),
+                'xl/_rels/workbook.xml.rels'   : enc.encode(wbRels),
+                'xl/worksheets/sheet1.xml'     : enc.encode(sheetXml)
+            };
+
+            var zipped = zipSync(zipFiles);
+            return new Blob([zipped], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        }
+
+        return { buildXlsx: buildXlsx };
+    })();
+
+    function exportCurrentTable(format) {
+        var data    = getExportData();
+        var headers = data.headers, rows = data.rows, name = data.name;
+        if (!headers.length) { alert('No data to export.'); return; }
+
+        if (format === 'xlsx') {
+            try {
+                var blob = _xlsxBuilder.buildXlsx(headers, rows);
+                var url  = URL.createObjectURL(blob);
+                var a    = document.createElement('a');
+                a.href = url; a.download = name + '.xlsx';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){ URL.revokeObjectURL(url); }, 200);
+            } catch(err) {
+                alert('Excel export failed: ' + err.message);
+                console.error(err);
+            }
+
+        } else if (format === 'csv') {
+            function esc(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }
+            var lines = [headers.map(esc).join(',')];
+            rows.forEach(function(row){ lines.push(row.map(esc).join(',')); });
+            var blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href = url; a.download = name + '.csv';
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a);
+            setTimeout(function(){ URL.revokeObjectURL(url); }, 200);
+
+        } else if (format === 'print') {
+            var thHtml = headers.map(function(h){ return '<th>' + h + '</th>'; }).join('');
+            var tbHtml = rows.map(function(row){
+                return '<tr>' + row.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>';
+            }).join('');
+            var win = window.open('', '_blank', 'width=1300,height=850');
+            if (!win) { alert('Please allow pop-ups for this page to use Print View.'); return; }
+            win.document.write('<!DOCTYPE html><html><head><title>' + name + '</title>'
+                + '<style>'
+                + 'body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#1e293b;margin:0}'
+                + 'h2{font-size:14px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 3px}'
+                + 'p{font-size:10px;color:#64748b;margin:0 0 14px}'
+                + 'table{width:100%;border-collapse:collapse}'
+                + 'th{background:#0f172a;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;padding:7px 9px;text-align:left;white-space:nowrap}'
+                + 'td{padding:5px 9px;border-bottom:1px solid #f1f5f9;font-size:10px;white-space:nowrap}'
+                + 'tr:nth-child(even) td{background:#f8fafc}'
+                + '@media print{@page{margin:8mm;size:landscape}}'
+                + '</style></head><body>'
+                + '<h2>' + name.replace(/_/g,' ') + '</h2>'
+                + '<p>Generated: ' + new Date().toLocaleString() + ' &nbsp;|&nbsp; Period: ' + month + '</p>'
+                + '<table><thead><tr>' + thHtml + '</tr></thead><tbody>' + tbHtml + '</tbody></table>'
+                + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},800);}<\/script>'
+                + '</body></html>');
+            win.document.close();
+        }
+    }
+
+    function toggleExportMenu(e) {
+        console.log(e);
+        e.stopPropagation();
+        var wrapper = e.currentTarget.closest('.export-wrapper');
+        var dd      = wrapper.querySelector('.export-dropdown');
+        var isOpen  = dd.classList.contains('open');
+        document.querySelectorAll('.export-dropdown').forEach(function(d){ d.classList.remove('open'); });
+        if (!isOpen) dd.classList.add('open');
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.export-wrapper')) {
+            document.querySelectorAll('.export-dropdown').forEach(function(d){ d.classList.remove('open'); });
+        }
+    });
+
+    // ===================== TABLE RENDERS =====================
+    function renderLedgerTable(targetMonth) {
+        const tbody = document.getElementById('payrollTableBody');
+        tbody.innerHTML = '';
+        const filteredRecords = payrollRecords.filter(emp => emp.month === targetMonth);
+        changeButton(filteredRecords[0] ? filteredRecords[0].statuss : 'unprocessed');
+
+        filteredRecords.forEach((emp, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-indigo-50/30 transition-colors text-[11px]';
+            tr.innerHTML = `
+                <td class="px-5 py-3.5">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center font-black text-[9px] text-indigo-600 border border-indigo-100">
+                            ${emp.employee.substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-black text-slate-800 uppercase tracking-tighter text-[11px]">${emp.employee}</p>
+                            <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.Designation || 'Payroll Staff'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.basic)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.conveyance)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.medicalAllowance)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.statutoryBonus)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.otherAllowance)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-indigo-600">₹${Number(emp.pfEmployeeShare).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-indigo-400 font-semibold">₹${Number(emp.pfEmployerShare).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-rose-500">₹${Number(emp.esiEmployeeShare).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-rose-400 font-semibold">₹${Number(emp.esiEmployerShare).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(Number(emp.monthlyGratuity)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(Number(emp.pt)||0).toLocaleString()}</td>
+                <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">₹${(Number(emp.gross)||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-rose-600">
+                    <span class="pill bg-rose-50 text-rose-700">${Number(emp.lopDays).toLocaleString()} Day(s)</span>
+                </td>
+                <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">₹${(Number(emp.otherEarnings)||0).toLocaleString()}</td>
+                <td class="px-5 py-3.5 font-black text-emerald-700 bg-emerald-50/30 text-base">₹${(Number(emp.netPayeble)||0).toLocaleString()}</td>
+                <td class="px-5 py-3.5 text-center">
+                    <button onclick="downloadPayslip(${index})" class="action-btn inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-tighter hover:bg-indigo-700 transition-all">
+                        <i class="fas fa-download text-[8px]"></i>Slip
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        updateStats(targetMonth);
+    }
+
+    function downloadPayslip(index) {
+        const emp = payrollRecords[index];
+        if (!emp) return;
+        const gross      = parseFloat(emp.netPayeble) + parseFloat(emp.pfEmployeeShare);
+        const deductions = parseFloat(emp.pfEmployeeShare) + parseFloat(emp.esiEmployeeShare) + parseFloat(emp.pt);
+        const payslipHTML = `<div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:800px;margin:auto;">
+            <div style="background:#0f172a;padding:24px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:44px;height:44px;background:#4f46e5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <span style="color:#fff;font-weight:900;font-size:18px;letter-spacing:-0.04em;">GS</span>
+                    </div>
+                    <div>
+                        <h1 style="margin:0;font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.02em;text-transform:uppercase;">Geosieben Payroll</h1>
+                        <p style="margin:0;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Internal Systems | Verified Document</p>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <h2 style="margin:0;font-size:22px;font-weight:900;color:#fff;">PAYSLIP</h2>
+                    <p style="margin:4px 0 0;font-size:12px;font-weight:700;color:#818cf8;text-transform:uppercase;">${emp.month}</p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:11px;">
+                <div><label style="color:#94a3b8;font-weight:700;text-transform:uppercase;display:block;font-size:9px;margin-bottom:2px;">Employee Name</label><p style="margin:0;font-weight:800;color:#1e293b;font-size:13px;text-transform:uppercase;">${emp.employee}</p></div>
+                <div><label style="color:#94a3b8;font-weight:700;text-transform:uppercase;display:block;font-size:9px;margin-bottom:2px;">Emp ID</label><p style="margin:0;font-weight:600;color:#334155;text-transform:uppercase;">EMP-${emp.eid||'N/A'}</p></div>
+                <div><label style="color:#94a3b8;font-weight:700;text-transform:uppercase;display:block;font-size:9px;margin-bottom:2px;">Designation</label><p style="margin:0;font-weight:600;color:#334155;">${emp.designation||'Staff Member'}</p></div>
+                <div><label style="color:#94a3b8;font-weight:700;text-transform:uppercase;display:block;font-size:9px;margin-bottom:2px;">Location</label><p style="margin:0;font-weight:600;color:#334155;">Remote / Office</p></div>
+            </div>
+            <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+                <div style="width:50%;border-right:1px solid #e2e8f0;">
+                    <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                        <tr style="background:#f8fafc;font-weight:700;color:#475569;text-transform:uppercase;font-size:10px;">
+                            <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">Earnings</td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">Amount (₹)</td>
+                        </tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">Basic Salary</td><td style="padding:7px 12px;text-align:right;">${emp.basic.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">Conveyance</td><td style="padding:7px 12px;text-align:right;">${emp.conveyance.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">Medical Allowance</td><td style="padding:7px 12px;text-align:right;">${emp.medicalAllowance.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">Statutory Bonus</td><td style="padding:7px 12px;text-align:right;">${emp.statutoryBonus.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;">Other Allowance</td><td style="padding:7px 12px;text-align:right;">${emp.otherAllowance.toLocaleString()}</td></tr>
+                    </table>
+                </div>
+                <div style="width:50%;">
+                    <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                        <tr style="background:#f8fafc;font-weight:700;color:#475569;text-transform:uppercase;font-size:10px;">
+                            <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">Deductions</td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">Amount (₹)</td>
+                        </tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">PF (Employee Share)</td><td style="padding:7px 12px;text-align:right;">${emp.pfEmployeeShare.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;border-bottom:1px solid #f8fafc;">ESI (Employee Share)</td><td style="padding:7px 12px;text-align:right;">${emp.esiEmployeeShare.toLocaleString()}</td></tr>
+                        <tr><td style="padding:7px 12px;">Professional Tax</td><td style="padding:7px 12px;text-align:right;">${emp.pt.toLocaleString()}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div style="display:flex;font-size:11px;font-weight:900;">
+                <div style="width:50%;padding:12px;display:flex;justify-content:space-between;background:#ecfdf5;border-right:1px solid #d1fae5;">
+                    <span style="text-transform:uppercase;letter-spacing:0.08em;color:#065f46;">Gross Earnings</span>
+                    <span style="font-size:15px;color:#047857;">₹ ${gross.toLocaleString()}</span>
+                </div>
+                <div style="width:50%;padding:12px;display:flex;justify-content:space-between;background:#fff1f2;">
+                    <span style="text-transform:uppercase;letter-spacing:0.08em;color:#9f1239;">Total Deductions</span>
+                    <span style="font-size:15px;color:#be123c;">₹ ${deductions.toLocaleString()}</span>
+                </div>
+            </div>
+            <div style="padding:24px;background:#0f172a;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <p style="margin:0 0 6px;font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.2em;">Net Payout Amount</p>
+                    <h3 style="margin:0;font-size:36px;font-weight:900;letter-spacing:-0.04em;">₹ ${emp.netPayeble.toLocaleString()}</h3>
+                </div>
+                <div style="text-align:right;">
+                    <p style="margin:0;font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;">PROCESSED & VERIFIED</p>
+                    <p style="margin:6px 0 0;font-size:9px;color:#475569;font-style:italic;">Credited to registered bank account.</p>
+                </div>
+            </div>
+            <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:flex-end;background:#f8fafc;border-top:1px solid #e2e8f0;">
+                <div style="font-size:9px;color:#94a3b8;line-height:1.6;">
+                    <p style="font-weight:700;margin-bottom:3px;color:#64748b;text-transform:uppercase;">Note:</p>
+                    <p style="margin:0;">• System generated statement. No physical signature required.</p>
+                    <p style="margin:0;">• Generated on: ${new Date().toLocaleString()}</p>
+                </div>
+                <div style="text-align:right;">
+                    <div style="width:160px;border-bottom:2px solid #e2e8f0;margin-left:auto;padding-bottom:8px;">
+                        <p style="margin:0;font-size:10px;font-weight:900;color:#6366f1;font-style:italic;">Digitally Signed</p>
+                    </div>
+                    <p style="margin:6px 0 0;font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;">Authorized Official</p>
+                </div>
+            </div>
+        </div>`;
+
+        const printWindow = window.open('', '_blank', 'width=820,height=900');
+        printWindow.document.write(`<html><head><title>Payslip_${emp.employee}_${emp.month}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+            </head><body style="margin:0;padding:0;">${payslipHTML}
+            <script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);};<\/script>
+        </body></html>`);
+        printWindow.document.close();
+    }
+
+    function renderStructureTable(data) {
+        const tbody = document.getElementById('structureTableBody');
+        tbody.innerHTML = '';
+        if (!data) return;
+        data.forEach(emp => {
+            const gross = parseFloat(emp.basicPay)+parseFloat(emp.conveyance)+parseFloat(emp.medicalAllowence)+parseFloat(emp.statutoryBonus)+parseFloat(emp.otherAllowences);
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
+            tr.innerHTML = `
+                <td class="px-5 py-3.5 font-black uppercase tracking-tighter text-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${(emp.employee||'').substring(0,2).toUpperCase()}</div>
+                        ${emp.employee}
+                    </div>
+                </td>
+                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.basicPay||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.conveyance||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.medicalAllowence||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.statutoryBonus||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.otherAllowences||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-indigo-600">₹${emp.pfEmployeeShare.toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-indigo-400 font-semibold">₹${emp.pfEmployerShare.toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-rose-500">₹${emp.esiEmployeeShare.toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-rose-400 font-semibold">₹${emp.esiEmployerShare.toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(emp.monthlyGratuity||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(emp.pt||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-emerald-600">₹${(gross||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-bold text-emerald-600">₹${(emp.netPay||0).toLocaleString()}</td>
+                <td class="px-3 py-3.5 font-black text-indigo-600 bg-slate-50/50">₹${(emp.monthlyCtc||0).toLocaleString()}</td>
+                <td class="px-5 py-3.5 font-black text-indigo-950 bg-indigo-50/30">₹${(emp.annualCtc||0).toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderLOPTable(data = []) {
+        const tbody = document.getElementById('lopOthersTableBody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-16 text-center"><div class="flex flex-col items-center gap-2 text-slate-300"><i class="fas fa-inbox text-4xl"></i><p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">No adjustments found for this cycle</p></div></td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
+            tr.innerHTML = `
+                <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${(item.employee||'').substring(0,2).toUpperCase()}</div>
+                        <span class="font-black uppercase text-slate-800">${item.employee}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3.5"><span class="pill bg-indigo-50 text-indigo-700">${item.month}</span></td>
+                <td class="px-4 py-3.5 font-black">${item.lopindays > 0 ? `<span class="pill bg-rose-50 text-rose-700">${item.lopindays} Days</span>` : '<span class="text-slate-300">--</span>'}</td>
+                <td class="px-4 py-3.5 font-black">${item.extraPay > 0 ? `<span class="pill bg-emerald-50 text-emerald-700">₹${item.extraPay.toLocaleString()}</span>` : '<span class="text-slate-300">--</span>'}</td>
+                <td class="px-4 py-3.5 text-slate-400 italic text-[10px]">${item.created||'--'}</td>
+                <td class="px-5 py-3.5 text-right">
+                    <button onclick="openEditAdjModal(${item.id})" class="action-btn w-7 h-7 rounded-lg text-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all inline-flex items-center justify-center">
+                        <i class="fas fa-edit text-[10px]"></i>
+                    </button>
+
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openEditAdjModal(id) {
+        const item = adjustmentsCache.find(a => a.id == id);
+        if (!item) return;
+        document.getElementById('editAdjId').value    = item.id;
+        document.getElementById('editAdjEmpName').value = item.employee;
+        const lopSec  = document.getElementById('editLopSection');
+        const epaySec = document.getElementById('editEpaySection');
+        if (item.lopindays > 0) {
+            lopSec.classList.remove('hidden');
+            document.getElementById('editLopValue').value  = item.lopindays;
+            document.getElementById('editEpayValue').value = item.extraPay;
+        } else {
+            lopSec.classList.add('hidden');
+            epaySec.classList.remove('hidden');
+            document.getElementById('editEpayValue').value = item.extraPay;
+            document.getElementById('editLopValue').value  = "";
+        }
+        toggleModal('editAdjModal');
+    }
+
+    document.getElementById('editAdjForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id   = document.getElementById('editAdjId').value;
+        const lop  = document.getElementById('editLopValue').value;
+        const epay = document.getElementById('editEpayValue').value;
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{ action:'updateExtraDetails', csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>", id, lop, epay },
+            dataType:'json',
+            success:function(){ showFeedback('success','Update Complete','Adjustment record updated successfully.'); toggleModal('editAdjModal'); getSalStructure(); fetchAdjustments(); fetchPayRoll(); },
+            error:function(){ showFeedback('error','Update Failed','An error occurred while updating the record.'); }
+        });
+    });
+
+    function updateStats(targetMonth) {
+        const filtered = payrollRecords.filter(emp => emp.month == targetMonth);
+        const count = filtered.length;
+        const gross = filtered.reduce((acc,curr) => acc + parseFloat(curr.gross||0), 0);
+        const ded   = filtered.reduce((acc,curr) => acc + (parseFloat(curr.pfEmployeeShare||0)+parseFloat(curr.esiEmployeeShare||0)+parseFloat(curr.pt||0)), 0);
+        const net   = filtered.reduce((acc,curr) => acc + parseFloat(curr.netPayeble||0), 0);
+        document.getElementById('stat-total-staff').innerText = count;
+        document.getElementById('stat-gross').innerText       = '₹ ' + gross.toLocaleString();
+        document.getElementById('stat-deduction').innerText   = '₹ ' + ded.toLocaleString();
+        document.getElementById('stat-net').innerText         = '₹ ' + net.toLocaleString();
+        document.getElementById('footer-count').innerText     = count;
+        document.getElementById('footer-total-net').innerText = '₹ ' + net.toLocaleString();
+        document.getElementById('footerMonth').textContent    = month;
+    }
+
+    function calculatePayload() {
+        const basic      = parseFloat(document.getElementById("basic").value) || 0;
+        const conveyance = parseFloat(document.getElementById("conveyance").value) || 0;
+        const medical    = parseFloat(document.getElementById("medical").value) || 0;
+        const bonus      = parseFloat(document.getElementById("bonus").value) || 0;
+        const other      = parseFloat(document.getElementById("other").value) || 0;
+        const grossMonthly = basic + conveyance + medical + bonus + other;
+        let pfEmployee = 0, pfEmployer = 0;
+        if (basic > 0) {
+            if (basic > 15000) { pfEmployee=1800; pfEmployer=1950; }
+            else { pfEmployee=basic*0.12; pfEmployer=basic*0.13; }
+        }
+        let esiEmployee = 0, esiEmployer = 0;
+        if (grossMonthly > 0 && grossMonthly <= 21000) {
+            esiEmployee = grossMonthly*0.0075;
+            esiEmployer = grossMonthly*0.0325;
+        }
+        let pt = grossMonthly > 25000 ? 200 : 0;
+        const gratuityMonthly = basic > 0 ? ((basic*15)/26)/12 : 0;
+        const totalEmployeeDeductions = pfEmployee + esiEmployee + pt;
+        const netPay = grossMonthly - totalEmployeeDeductions;
+        const employerContributions = pfEmployer + esiEmployer + gratuityMonthly;
+        const monthlyCTC = grossMonthly + employerContributions;
+        document.getElementById('pfEmployer').value         = pfEmployer;
+        document.getElementById('esiEmployer').value        = esiEmployer;
+        document.getElementById('monthlyGratuity').value    = gratuityMonthly;
+        document.getElementById('pt').value                 = pt;
+        return {
+            name: document.getElementById('empName').options[document.getElementById('empName').selectedIndex]?.value || "Unknown",
+            basic, conveyance, medical, bonus, other,
+            grossMonthly, pfEmployee, esiEmployee,
+            totalEmployeeDeductions, netPay, pfEmployer,
+            esiEmployer, pt, gratuityMonthly,
+            monthly: monthlyCTC, annual: monthlyCTC*12
+        };
+    }
+
+    function populateSelect(selectId, items, valueKey, textKey) {
+        const selectEl = document.getElementById(selectId);
+        if (!selectEl) return;
+        selectEl.innerHTML = "<option value=''>-- Choose Employee --</option>";
+        if (items && Array.isArray(items)) {
+            items.forEach(item => {
+                const option = document.createElement("option");
+                option.value       = item[valueKey];
+                option.textContent = item[textKey];
+                selectEl.appendChild(option);
+            });
+        }
+    }
+
+    function updateCalculations() {
+        const data = calculatePayload();
+        document.getElementById("pfEmployee").value    = '₹ ' + data.pfEmployee.toFixed(2);
+        document.getElementById("esiEmployee").value   = '₹ ' + data.esiEmployee.toFixed(2);
+        document.getElementById('net').innerText        = data.netPay.toLocaleString(undefined,{minimumFractionDigits:2});
+        document.getElementById('monthlyCTC').innerText = data.monthly.toLocaleString(undefined,{minimumFractionDigits:2});
+        document.getElementById('annualCTC').innerText  = data.annual.toLocaleString(undefined,{minimumFractionDigits:2});
+    }
+
+    document.getElementById('employeeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = calculatePayload();
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST', data:data,
+            success:function(){ showFeedback('success','Staff Profile Initialized',`${data.name} has been enrolled into the current cycle.`); fetchPayRoll(); getSalStructure(); },
+            error:function(){ showFeedback('error','Enrollment Failed','Could not initialize staff profile.'); }
+        });
+        toggleModal('employeeModal');
+        this.reset();
+    });
+
+    document.getElementById("lopform").addEventListener("submit",function(e){
+        e.preventDefault();
+        addExtraDetails(month,'LOP',document.getElementById("lopSelect").value,document.getElementById("lop").value,null,this);
+    });
+
+    document.getElementById("epayForm").addEventListener("submit",function(e){
+        e.preventDefault();
+        addExtraDetails(month,'EPAY',document.getElementById("extraPaySelect").value,null,document.getElementById("epay").value,this);
+    });
+
+    function addExtraDetails(month,type,eid,lop=null,epay=null,form){
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{action:'addExtraDetails',csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",month,type,eid,lop,epay},
+            dataType:'json',
+            success:function(){ showFeedback('success','Adjustment Saved',`${type} has been applied to the payroll record successfully.`); form.reset(); toggleModal(type==='LOP'?'lopModal':'extraPayModal'); fetchAdjustments(); },
+            error:function(){ showFeedback('error','Save Failed','Could not save adjustment details.'); }
+        });
+    }
+
+    function toggleModal(id) {
+        if (id !== 'editAdjModal') {
+            const selectid = (id==='employeeModal'?'empName':(id==='lopModal'?'lopSelect':'extraPaySelect'));
+            const type     = (id==='employeeModal'?'payroll':(id==='lopModal'?'lop':'epay'));
+            fetchEmps(type, month, selectid);
+        }
+        const m = document.getElementById(id);
+        if (m.classList.contains('opacity-0')) {
+            m.classList.remove('opacity-0','pointer-events-none');
+            if (id === 'employeeModal') updateCalculations();
+        } else {
+            m.classList.add('opacity-0','pointer-events-none');
+        }
+    }
+
+    document.querySelectorAll('.earning-input').forEach(i => {
+        i.addEventListener('input', updateCalculations);
+    });
+
+    // ===================== INIT =====================
+    document.getElementById('footerMonth').textContent = month;
+    initAuth();
     </script>
 </body>
 </html>

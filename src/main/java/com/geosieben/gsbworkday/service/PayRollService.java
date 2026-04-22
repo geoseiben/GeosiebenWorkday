@@ -10,6 +10,9 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +22,18 @@ import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Salary;
 import com.geosieben.gsbworkday.entity.SalaryExtraDetails;
 import com.geosieben.gsbworkday.entity.SalaryStructure;
+import com.geosieben.gsbworkday.entity.User;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.repository.DesignationInfoRepository;
 import com.geosieben.gsbworkday.repository.SalaryExtraRepository;
 import com.geosieben.gsbworkday.repository.SalaryStructureRepository;
+import com.geosieben.gsbworkday.repository.UserRepository;
 
 import jakarta.servlet.http.HttpSession;
 
 @Service
 public class PayRollService implements PayRollInterface{
+    private final PasswordEncoder passwordEncoder;
     private final SalaryRepository salaryRepository;
     @Autowired
     private BasicInfoRepository basicInfoRepository;
@@ -37,8 +43,11 @@ public class PayRollService implements PayRollInterface{
     private SalaryStructureRepository salaryStructureRepository;
     @Autowired
     private SalaryExtraRepository salaryExtraRepository;
-    PayRollService(SalaryRepository salaryRepository) {
+    @Autowired
+    private UserRepository userRepository;
+    PayRollService(SalaryRepository salaryRepository, PasswordEncoder passwordEncoder) {
         this.salaryRepository = salaryRepository;
+        this.passwordEncoder = passwordEncoder;
     }
     @Transactional
     @Override
@@ -182,6 +191,51 @@ return ResponseEntity.ok(response);
 
 public List<Salary> getPayRoll(){
     return salaryRepository.findAll();
+}
+@Override
+public ResponseEntity<Map<String, String>> authenticatePayRollUser(String password) {
+    Map<String,String> response =new HashMap<>();
+        String eid=(String)httpSession.getAttribute("eid");
+    User user =userRepository.findByEmployeeBasicInfo_EID(eid);
+    if(user!=null){
+    if(BCrypt.checkpw(password, user.getVaultPassword())){
+     response.put("status", "success");
+        response.put("message", "authenticated");
+    }
+    else{
+        response.put("status", "error");
+        response.put("message", "Incorrect Password");
+    }
+    }
+    else {
+        response.put("status", "error");
+        response.put("message", "User Not  Found");
+    }
+    return ResponseEntity.ok(response);
+}
+@Override
+public ResponseEntity<Map<String, String>> changePassword(String password, String newPassword) {
+        Map<String,String> response =new HashMap<>();
+        String eid=(String)httpSession.getAttribute("eid");
+    User user =userRepository.findByEmployeeBasicInfo_EID(eid);
+    if(user!=null){
+        sout
+        if(BCrypt.checkpw(password, user.getVaultPassword())){
+            String hashed = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+            user.setVaultPassword(hashed);
+            userRepository.save(user);
+        }
+        else{
+                    response.put("status", "error");
+        response.put("message", "Incorrect Current  Password"); 
+        }
+
+    }
+    else{
+        response.put("status", "error");
+        response.put("message", "User Not  Found");
+    }
+    return ResponseEntity.ok(response);
 }
 
 }

@@ -75,7 +75,7 @@ public class SeparationService implements SeparationInterface {
     public ResponseEntity<?> updateSeparationRequest(String action, int id, LocalDate lwd,String remarks) {
         Map<String,String> response=new HashMap<>();
        Separation request=separationRepository.findById(id).orElse(null);
-       if(!request.equals(null)){
+       if(request!=null){
         if(action.equals("approve") ||action.equals("reject")){
         int status =action.equals("approve")?1:2;
         request.setStatus(status);
@@ -104,4 +104,4 @@ return separationRepository.findById(separationid).orElse(null);
     }
    
 
-}
+}   

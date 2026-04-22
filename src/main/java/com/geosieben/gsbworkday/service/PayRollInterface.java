@@ -16,4 +16,8 @@ public List<SalaryStructure>  getStructures();
 public List<SalaryExtraDetails>  getExtraDetails();
 public ResponseEntity<Map<String,String>> addExtraDetails(String eid,double epay,double lop,String month,String type);
 public ResponseEntity<Map<String,String>> processPayRoll(String month);
+public ResponseEntity<Map<String,String>> authenticatePayRollUser(String password);
+public ResponseEntity<Map<String,String>> changePassword (String password,String newPassword);
+
+
 }
