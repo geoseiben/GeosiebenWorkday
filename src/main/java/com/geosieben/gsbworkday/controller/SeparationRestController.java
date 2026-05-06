@@ -7,10 +7,7 @@ import com.geosieben.gsbworkday.entity.Separation;
 import com.geosieben.gsbworkday.service.SeparationService;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

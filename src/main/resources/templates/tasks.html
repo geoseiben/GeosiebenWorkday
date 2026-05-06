@@ -228,6 +228,7 @@
             try {
                 const res = await fetch(`/myAllotments`);
                 tasks = await res.json();
+                console.log(tasks);
                 if (!tasks.length) return;
                 const savedId = localStorage.getItem('last_allotment_id');
                 activeTask = tasks.find(t => t.isRunning) || tasks.find(t => t.allotmentid == savedId) || tasks[0];
@@ -304,6 +305,7 @@
             try {
                
                 const res = await fetch(`/${activeTask.allotmentid}/${action}/${percentage??0}`);
+                console.log(res);
                 const updated = await res.json();
                 const idx = tasks.findIndex(t => t.allotmentid === updated.allotmentid);
                 tasks[idx] = updated; 

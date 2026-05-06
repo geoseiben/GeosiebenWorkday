@@ -38,7 +38,7 @@ public class SecurityConfig {
 
         String redirectUrl = "/dashboard"; // default
         if (authorities.stream().anyMatch(a -> a.getAuthority().equals("user"))) {
-            redirectUrl = "/userDashboard";
+            redirectUrl = "/dashboard";
         } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("admin"))) {
             redirectUrl = "/dashboard";
         }

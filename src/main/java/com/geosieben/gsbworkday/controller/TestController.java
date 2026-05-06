@@ -2,29 +2,28 @@ package com.geosieben.gsbworkday.controller;
 
 import com.geosieben.gsbworkday.dto.*;
 import com.geosieben.gsbworkday.entity.*;
+import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.service.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+
+
 
 
 
 
 @RestController
 public class TestController {
+    private final BasicInfoRepository basicInfoRepository;
     @Autowired
 private TestService testService;
     @Autowired
@@ -39,6 +38,11 @@ private TestService testService;
     private DepartmentService departmentService;
 
 
+    TestController(BasicInfoRepository basicInfoRepository) {
+        this.basicInfoRepository = basicInfoRepository;
+    }
+
+
     @PostMapping("/admin/testinfoo")
     public ResponseEntity<Map<String,String>> addTestInfo(@RequestParam String eid, @RequestParam String name, @RequestParam String designation){
         TestInfo testInfo=new TestInfo(eid,name);
@@ -47,16 +51,14 @@ private TestService testService;
     }
 @PostMapping("/admin/addemployeee")
     public ResponseEntity<Map<String, String>> addEmployee(
-            @ModelAttribute EmployeeRequestDto dto) {
-     return employeeService.addEmployee(dto);
-
+            @ModelAttribute EmployeeRequestDto dto,@RequestParam("image") MultipartFile file) {
+                        return employeeService.addEmployee(dto);
     }
     @GetMapping("/leaves/getbalance")
     public LeaveBalanceReposnseDto getLeaveBalance() {
         String eid = (String) httpSession.getAttribute("eid");
         return leaveServices.getLeaveBalance(eid);
     }
-
     @GetMapping("/admin/getemployees")
     public List<EmployeeResponseDto> getAllEmployee() {
         return employeeService.fetchEmployees();
@@ -68,7 +70,7 @@ private TestService testService;
     @GetMapping("/admin/pendingrequests")
     
     public List<PendingLeaveResponseDto> pendingRequests(){
-return leaveServices.fetchPendingLeaves();
+    return leaveServices.fetchPendingLeaves();
     }
 
     @PostMapping("/admin/updateLeave")
@@ -105,11 +107,14 @@ return leaveServices.fetchPendingLeaves();
     }
     @PostMapping("/it/update")
     public ResponseEntity<Map<String,String>> fetchupdateTicketcket(@RequestParam Integer ticketid,@RequestParam Integer status,@RequestParam String  remarks) throws UnsupportedEncodingException, MessagingException {
-       
-        
         return itTicketService.updateTicket(ticketid, status, remarks);
     }
-
-
-
+@GetMapping("/getPayRollEmployee")
+public List<EmployeeBasicInfo> getPayRollEmployee() {
+    return basicInfoRepository.payRollEmployee();
+}
+@GetMapping("/admin/getApprovedLeaves")
+public  List<Leaves> approvedLeaves() {
+   return leaveServices.approvedLeaves();
+}
 }

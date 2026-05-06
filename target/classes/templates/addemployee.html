@@ -195,7 +195,7 @@
                                     <span class="text-sm truncate">Choose image...</span>
                                 </div>
                             </div>
-                        </div>
+                        </div>  
                         <div class="space-y-1.5">
                             <label class="text-sm font-bold text-slate-700">Blood Group</label>
                             <select name="bloodGroup" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none bg-white">
@@ -259,7 +259,26 @@
                         <div class="space-y-1.5">
                             <label class="text-sm font-bold text-slate-700">Designation</label>
                             <select name="designation" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none bg-white">
-                                <option selected>Lead Developer</option><option>Senior Associate</option><option>Product Owner</option>
+                                            <option value="" disabled selected>Select Designation</option>
+                                            <option value="Analyst">Analyst</option>
+                                            <option value="Associate">Associate</option>
+                                            <option value="Finance Head">Finance Head</option>
+                                            <option value="Analyst">Analyst</option>
+                                            <option value="GIS Analyst">GIS Analyst</option>
+                                            <option value="Group Lead">Group Lead</option>
+                                            <option value="HR Admin">HR Admin</option>
+                                            <option value="HR Recruiter">HR Recruiter</option>
+                                            <option value="IT">IT</option>
+                                            <option value="Junior Associate">Junior Associate</option>
+                                            <option value="Managing Director">Managing Director</option>
+                                            <option value="Marketing Executive">Marketing Executive</option>
+                                            <option value="Office boy/Housekeeping">Office boy/Housekeeping</option>
+                                            <option value="Project Co-Ordinator">Project Co-Ordinator</option>
+                                            <option value="Project Manager">Project Manager</option>
+                                            <option value="Senior Analyst">Senior Analyst</option>
+                                            <option value="Senior Associate">Senior Associate</option>
+                                            <option value="Team Lead">Team Lead</option>
+                                            <option value="Web Developer">Web Developer</option>
                             </select>
                         </div>
                         <div class="space-y-1.5">
@@ -574,8 +593,7 @@
         e.preventDefault();
         const submitBtnText = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<div class="spinner"></div><span>Processing...</span>`;
-
+        submitBtn.innerHTML = `<div class="spinner"></div><span>Processing...</span>`;  
         try {
             const formData = new FormData(employeeForm);
             

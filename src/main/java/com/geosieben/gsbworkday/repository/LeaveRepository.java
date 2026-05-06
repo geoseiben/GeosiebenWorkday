@@ -17,5 +17,8 @@ public interface LeaveRepository extends JpaRepository<Leaves,Integer> {
             "FROM Leaves l JOIN l.employeeBasicInfo e where l.status=0")
     List<PendingLeaveResponseDto> findPendingLeaves();
 
+    @Query(value="SELECT * FROM tblleaves where status=1 order by id desc",nativeQuery = true)
+    List<Leaves> findApprovedLeaves();
+
 
 }

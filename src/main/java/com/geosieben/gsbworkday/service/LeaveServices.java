@@ -222,6 +222,11 @@ emailService.leaveApplicationHR(tomail,toname,empname,emp.getEID(),
     return ResponseEntity.ok(response);
     }
 
+    @Override
+    public List<Leaves> approvedLeaves() {
+return leaveRepository.findApprovedLeaves();
+    }
+
 }
 
 

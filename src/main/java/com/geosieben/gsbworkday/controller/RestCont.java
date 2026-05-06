@@ -1,5 +1,6 @@
 package com.geosieben.gsbworkday.controller;
 
+import com.geosieben.gsbworkday.service.LeaveServices;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
@@ -33,8 +34,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
+
 @RestController
 public class RestCont {
+    private final LeaveServices leaveServices;
     @Autowired
     private ClientService clientService;
     @Autowired
@@ -122,6 +125,9 @@ public ResponseEntity<?> processResignation(
     }
 @Autowired
 private BookerHoursRepository bookerHoursRepository ;
+RestCont(LeaveServices leaveServices) {
+    this.leaveServices = leaveServices;
+}
     @GetMapping("/{empid}/{allotmentid}")
     public BookedHours getHours(@PathVariable("empid") String empid,@PathVariable("allotmentid") int allotmentid) {
         return bookerHoursRepository.findbydateAndAllotmentforToday(empid, allotmentid);
@@ -130,5 +136,10 @@ private BookerHoursRepository bookerHoursRepository ;
 public EmployeeProfileProjection myProfile() {
     return basicInfoRepository.employeeProfile((String)httpSession.getAttribute("eid"));
 }
+@PostMapping("/admin/cancelLeave")
+public ResponseEntity<Map<String,String>> cancelLeaveds(@RequestParam("leaveId") int  id) {
+return leaveServices.calcelLeave(id);
+}
+
 
 }

@@ -3,6 +3,7 @@ package com.geosieben.gsbworkday.service;
 import com.geosieben.gsbworkday.repository.SalaryRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,11 +12,9 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.geosieben.gsbworkday.addon.AddonServ;
 import com.geosieben.gsbworkday.dto.PayRollRequest;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
@@ -24,7 +23,6 @@ import com.geosieben.gsbworkday.entity.SalaryExtraDetails;
 import com.geosieben.gsbworkday.entity.SalaryStructure;
 import com.geosieben.gsbworkday.entity.User;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
-import com.geosieben.gsbworkday.repository.DesignationInfoRepository;
 import com.geosieben.gsbworkday.repository.SalaryExtraRepository;
 import com.geosieben.gsbworkday.repository.SalaryStructureRepository;
 import com.geosieben.gsbworkday.repository.UserRepository;
@@ -219,23 +217,91 @@ public ResponseEntity<Map<String, String>> changePassword(String password, Strin
         String eid=(String)httpSession.getAttribute("eid");
     User user =userRepository.findByEmployeeBasicInfo_EID(eid);
     if(user!=null){
-        sout
         if(BCrypt.checkpw(password, user.getVaultPassword())){
             String hashed = BCrypt.hashpw(newPassword, BCrypt.gensalt());
             user.setVaultPassword(hashed);
             userRepository.save(user);
         }
         else{
-                    response.put("status", "error");
+        response.put("status", "error");
         response.put("message", "Incorrect Current  Password"); 
         }
 
     }
     else{
-        response.put("status", "error");
-        response.put("message", "User Not  Found");
+      
     }
     return ResponseEntity.ok(response);
 }
+@Override
+public List<EmployeeBasicInfo> fetchEmployees(String type, String month) {
+    List<EmployeeBasicInfo> emps=new ArrayList<EmployeeBasicInfo>();
+if(type.equals("payroll")){
+    emps= basicInfoRepository.payRollEmployee();
+}
+else if(type.equals("lop")){
+emps= basicInfoRepository.getlopEmplpoyees(month);
+}
+else if(type.equals("epay")){
+emps= basicInfoRepository.getextrapayEmplpoyees(month);
+}
+return emps;
+}
+@Override
+public Map<String,String> updateSalary(int salaryid, double lopDays, double extrapay, String month, int payid) {
+        Map<String,String> response =new HashMap<>();
+
+    SalaryStructure salary=(SalaryStructure) salaryStructureRepository.findById(salaryid).orElse(null);
+    if(salary!=null){
+        double noofdays=AddonServ.noofdaysinmonth(month);
+        double payabledays=noofdays-lopDays;
+         double basic = lopDays > 0 ? salary.getBasicPay().subtract( salary.getBasicPay().divide(BigDecimal.valueOf(noofdays), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(lopDays))).doubleValue(): salary.getBasicPay().doubleValue();
+          double conveyance = lopDays > 0 ? salary.getConveyance().subtract( salary.getConveyance().divide(BigDecimal.valueOf(noofdays), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(lopDays))).doubleValue(): salary.getConveyance().doubleValue();
+          double medicalAllowence = lopDays > 0 ? salary.getMedicalAllowence().subtract( salary.getMedicalAllowence().divide(BigDecimal.valueOf(noofdays), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(lopDays))).doubleValue(): salary.getMedicalAllowence().doubleValue();
+          double statutoryBonus = lopDays > 0 ? salary.getStatutoryBonus().subtract( salary.getStatutoryBonus().divide(BigDecimal.valueOf(noofdays), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(lopDays))).doubleValue(): salary.getStatutoryBonus().doubleValue();
+          double otherAllowences = lopDays > 0 ? salary.getOtherAllowences().subtract( salary.getOtherAllowences().divide(BigDecimal.valueOf(noofdays), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(lopDays))).doubleValue(): salary.getOtherAllowences().doubleValue();
+          double gross=basic+conveyance+medicalAllowence+statutoryBonus+otherAllowences;
+          double pfEmployee=salary.getBasicPay().doubleValue()>14999?1800:salary.getBasicPay().doubleValue()*0.12;
+          double pfEmployer=salary.getBasicPay().doubleValue()>14999?1950:salary.getBasicPay().doubleValue()*0.12;
+          double esiEmployee=gross>21000?0:salary.getBasicPay().doubleValue()*0.0075;
+          double pfEmployeePayable=(salary.getEsiEmployeeShare().doubleValue()==0 && esiEmployee>0)?esiEmployee:0;
+          esiEmployee=0;
+          double esiEmployer=gross>21000?0:salary.getBasicPay().doubleValue()*0.0325;
+          double netPay=(gross-pfEmployee)+extrapay+pfEmployeePayable;
+          double gratuity=((basic*15)/26)/12;
+          Salary sal=new Salary();
+          sal.setMonth(month);
+          sal.setNoofdays(BigDecimal.valueOf(noofdays));
+          sal.setLopDays(BigDecimal.valueOf(lopDays));
+          sal.setPayebaleDays(BigDecimal.valueOf(noofdays-lopDays));
+          sal.setBasic(BigDecimal.valueOf(basic));
+          sal.setConveyance(BigDecimal.valueOf(conveyance));
+          sal.setMedicalAllowance(BigDecimal.valueOf(medicalAllowence));
+          sal.setStatutoryBonus(BigDecimal.valueOf(statutoryBonus));
+          sal.setOtherAllowance(BigDecimal.valueOf(otherAllowences));
+          sal.setOtherEarnings(BigDecimal.valueOf(extrapay));
+          sal.setPfEmployeeShare(BigDecimal.valueOf(pfEmployee));
+          sal.setPfEmployerShare(BigDecimal.valueOf(pfEmployer));
+          sal.setEsiEmployeeShare(BigDecimal.valueOf(esiEmployee)); 
+          sal.setEsiEmployerShare(BigDecimal.valueOf(esiEmployer));
+          sal.setGross(BigDecimal.valueOf(gross));
+          sal.setNetPayeble(BigDecimal.valueOf(netPay));
+          sal.setOtherEarnings(BigDecimal.valueOf(extrapay));
+          sal.setMonthlyGratuity(BigDecimal.valueOf(gratuity));
+          salaryRepository.save(sal);
+          response.put("status", "success");
+          response.put("message", "updated"); 
+    }
+    else {
+        response.put("status", "error");
+        response.put("message", "not found"); 
+    }
+ return response;
+}
+@Override
+public ResponseEntity<Map<String, String>> updateSalaryExisting(int salaryid, int salid, double lopDays, double extraPay,String month) {
+        return ResponseEntity.ok(updateSalary(salid, lopDays, extraPay, month, salaryid));
+}
+
 
 }

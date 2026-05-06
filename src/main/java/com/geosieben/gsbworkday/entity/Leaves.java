@@ -14,15 +14,15 @@ public class Leaves {
     private LocalDate fromDate;
     private String fromsession;
     private String toSession;
-    private LocalDate toDate=LocalDate.now();
+    private LocalDate toDate;
     private String Description;
-    private LocalDate postingdate;
+    private LocalDate postingdate=LocalDate.now();
     private String adminRemark;
     private LocalDate AdminRemarkDate;
     private double NoofDays;
     private int status=0;
     @ManyToOne
-    @JoinColumn(name = "EID")
+    @JoinColumn(name = "EID")   
     private EmployeeBasicInfo employeeBasicInfo;
     @ManyToOne
     @JoinColumn(name = "appliedBy")

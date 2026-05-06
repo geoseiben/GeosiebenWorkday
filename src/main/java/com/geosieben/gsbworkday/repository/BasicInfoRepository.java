@@ -53,4 +53,24 @@ EmployeeProfileProjection employeeProfile(@Param("empid") String eid);
 
     EmployeeBasicInfo findEmployeeBasicInfoByEID(String s);
 
+    @Query(value = "SELECT e.* FROM employee_basic_info e "+
+        "JOIN employee_joining_info j on e.eid=j.eid "+
+        "LEFT JOIN salarystructure s on s.eid=e.eid "+
+        " WHERE e.employmentStatus=1 "+
+        " and e.eid not in(select eid from salarystructure )",nativeQuery = true)
+    public List<EmployeeBasicInfo> payRollEmployee();
+    
+@Query(value = "SELECT e.* FROM employee_basic_info e "+
+               "LEFT JOIN  salaryextradetails s ON e.eid=s.eid "+
+               "WHERE e.EID not in(SELECT eid from salaryextradetails"+
+               " where month=:month and lopindays>0) ",nativeQuery = true
+)
+public  List<EmployeeBasicInfo> getlopEmplpoyees(@Param("month") String month);
+
+@Query(value = "SELECT e.* FROM employee_basic_info e "+
+               "LEFT JOIN  salaryextradetails s ON e.eid=s.eid "+
+               "WHERE e.EID not in(SELECT eid from salaryextradetails"+
+               " where month=:month and extrapay>0) ",nativeQuery = true
+)
+public  List<EmployeeBasicInfo> getextrapayEmplpoyees(@Param("month") String month);
 }

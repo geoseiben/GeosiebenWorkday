@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geosieben Payroll Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -56,19 +56,15 @@
 
         .stat-card { transition: all 0.2s ease; }
 
-        /* Auth modal overlay */
         #authOverlay {
             background: linear-gradient(135deg, #f6f6f7 10%, #204ad4 100%);
         }
 
-        /* Password strength */
         .strength-bar { height: 3px; border-radius: 99px; transition: all 0.3s ease; }
 
-        /* Export dropdown */
         .export-dropdown { display:none; }
         .export-dropdown.open { display: block; }
 
-        /* Pill badge */
         .pill {
             display: inline-flex;
             align-items: center;
@@ -80,7 +76,6 @@
             text-transform: uppercase;
         }
 
-        /* Toolbar gradient line */
         .toolbar-accent {
             background: linear-gradient(90deg, #6366f1, #8b5cf6, transparent);
             height: 2px;
@@ -90,27 +85,76 @@
             .no-print { display: none !important; }
         }
 
-        /* Animated spinner */
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 0.8s linear infinite; }
 
-        /* Row hover */
         tbody tr { transition: background 0.1s ease; }
 
-        /* Input focus ring */
         input:focus, select:focus { 
             box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
             border-color: #6366f1 !important;
             outline: none;
         }
+
+        /* ===== INLINE EDIT STYLES ===== */
+        tr.editing-row td { background: #f0f4ff !important; }
+        tr.editing-row { outline: 2px solid #6366f1; outline-offset: -1px; }
+
+        .inline-edit-input {
+            width: 80px;
+            padding: 3px 6px;
+            border: 1.5px solid #a5b4fc;
+            border-radius: 6px;
+            font-size: 11px !important;
+            font-weight: 700;
+            background: #fff;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .inline-edit-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .inline-edit-input.wide { width: 110px; }
+        .inline-edit-input.narrow { width: 60px; }
+
+        .edit-save-btn {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 3px 8px; background: #6366f1; color: #fff;
+            border: none; border-radius: 6px; font-size: 9px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .edit-save-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+
+        .edit-cancel-btn {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 3px 8px; background: #f1f5f9; color: #64748b;
+            border: 1px solid #e2e8f0; border-radius: 6px; font-size: 9px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .edit-cancel-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+        .edit-icon-btn {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #94a3b8; cursor: pointer; transition: all 0.15s;
+            border: 1px solid transparent; background: transparent;
+        }
+        .edit-icon-btn:hover { color: #6366f1; background: #eef2ff; border-color: #c7d2fe; }
+
+        .computed-badge {
+            font-size: 9px; font-weight: 800; color: #6366f1;
+            background: #eef2ff; padding: 2px 6px; border-radius: 99px;
+        }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- ===== AUTH OVERLAY ===== -->
     <div id="authOverlay" class="fixed inset-0 z-[200] flex items-center justify-center">
         <div class="w-full max-w-sm mx-4">
-            <!-- Logo -->
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/20 rounded-2xl border border-indigo-500/30 mb-4">
                     <i class="fas fa-shield-alt text-indigo-400 text-2xl"></i>
@@ -119,7 +163,6 @@
                 <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Secure Access Required</p>
             </div>
 
-            <!-- Auth Panel -->
             <div id="loginPanel" class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                 <p class="text-taupe-200 text-[10px] font-bold uppercase tracking-widest mb-5">Enter Payroll Password</p>
                 <form id="authForm" class="space-y-4">
@@ -143,7 +186,6 @@
                 </div>
             </div>
 
-            <!-- Change Password Panel -->
             <div id="changePwdPanel" class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hidden">
                 <div class="flex items-center gap-2 mb-5">
                     <button onclick="showLoginPanel()" class="text-slate-500 hover:text-indigo-400 transition-colors">
@@ -168,7 +210,6 @@
                             <i id="eyeNew" class="fas fa-eye text-[11px]"></i>
                         </button>
                     </div>
-                    <!-- Strength bar -->
                     <div class="space-y-1">
                         <div class="flex gap-1">
                             <div id="s1" class="strength-bar flex-1 bg-white/10"></div>
@@ -193,10 +234,8 @@
     </div>
     <!-- ===== END AUTH OVERLAY ===== -->
 
-    <!-- ===== MAIN DASHBOARD (hidden until auth) ===== -->
     <div id="dashboardContent" class="hidden flex-1 flex flex-col overflow-hidden">
 
-    <!-- Main Content -->
     <main class="flex-1 flex flex-col overflow-hidden w-full px-6 py-5">
         <header class="glass-header text-white shrink-0 px-6 py-3 flex items-center justify-between z-30 rounded-t-xl">
             <div class="flex items-center space-x-3">
@@ -219,7 +258,6 @@
                     </select>
                     <i class="fas fa-caret-down text-[10px] text-slate-500 -ml-3 pointer-events-none"></i>
                 </div>
-                <!-- Lock button -->
                 <button onclick="lockDashboard()" class="flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all text-[10px] font-bold uppercase tracking-wider">
                     <i class="fas fa-lock text-[10px]"></i> Lock
                 </button>
@@ -309,11 +347,10 @@
                         <i class="fas fa-hand-holding-dollar mr-1.5 opacity-60"></i>Extra
                     </button>
                     <div class="w-px h-5 bg-slate-200 mx-1"></div>
-                    <!-- Export Button (per active tab) -->
                     <div class="export-wrapper relative">
-                            <button onclick="exportCurrentTable('csv'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
-                               <i class="fas fa-file-excel text-emerald-500 text-[11px]"></i></i> Export
-                            </button>
+                        <button onclick="exportCurrentTable('csv'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
+                           <i class="fas fa-file-excel text-emerald-500 text-[11px]"></i> Export
+                        </button>
                         <div class="export-dropdown absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[99] overflow-hidden min-w-[170px]">
                             <button onclick="exportCurrentTable('xlsx'); toggleExportMenu(event)" class="w-full text-left px-4 py-2.5 text-[10px] font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors">
                                 <i class="fas fa-file-excel text-emerald-500 text-[11px]"></i> Excel (.xlsx)
@@ -333,6 +370,7 @@
 
         <!-- Table Container -->
         <div class="flex-1 overflow-hidden bg-white border border-t-0 border-slate-200 rounded-b-xl flex flex-col shadow-sm">
+
             <!-- Ledger View -->
             <div class="overflow-auto table-container" id="ledgerView">
                 <table class="w-full text-left" id="ledgerTable">
@@ -382,6 +420,7 @@
                             <th class="px-3 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Monthly Net</th>
                             <th class="px-3 py-3.5 font-black text-indigo-600 text-[9px] uppercase tracking-widest bg-slate-50/50">Monthly CTC</th>
                             <th class="px-5 py-3.5 font-black text-indigo-900 text-[9px] uppercase tracking-widest bg-indigo-50/30">Annual CTC</th>
+                            <th class="px-5 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50" id="structureTableBody"></tbody>
@@ -398,7 +437,7 @@
                             <th class="px-4 py-3.5 font-black text-rose-600 text-[9px] uppercase tracking-widest">LOP (Days)</th>
                             <th class="px-4 py-3.5 font-black text-emerald-600 text-[9px] uppercase tracking-widest">Extra Pay</th>
                             <th class="px-4 py-3.5 font-black text-slate-400 text-[9px] uppercase tracking-widest">Date Created</th>
-                            <th class="px-5 py-3.5 text-right"></th>
+                            <th class="px-5 py-3.5 text-right font-black text-slate-400 text-[9px] uppercase tracking-widest">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50" id="lopOthersTableBody"></tbody>
@@ -411,7 +450,6 @@
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
                         Records: <span class="text-white ml-1 font-black" id="footer-count">0</span>
                     </p>
-
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
                         Period: <span class="text-indigo-400 ml-1 font-black" id="footerMonth"></span>
                     </p>
@@ -629,25 +667,17 @@
     const PWD_KEY  = 'geo_payroll_pwd';
     let currentView = 'ledger';
 
-    function getStoredPwd() {
-        return localStorage.getItem(PWD_KEY) || 'payroll@123';
-    }
-
-    function isAuthenticated() {
-        return sessionStorage.getItem(AUTH_KEY) === '1';
-    }
+    function getStoredPwd() { return localStorage.getItem(PWD_KEY) || 'payroll@123'; }
+    function isAuthenticated() { return sessionStorage.getItem(AUTH_KEY) === '1'; }
 
     function initAuth() {
-        if (isAuthenticated()) {
-            unlockUI();
-        }
+        if (isAuthenticated()) { unlockUI(); }
     }
 
     function unlockUI() {
         document.getElementById('authOverlay').style.display = 'none';
         document.getElementById('dashboardContent').classList.remove('hidden');
         document.getElementById('dashboardContent').classList.add('flex');
-        // Load data only after auth
         getSalStructure();
         fetchAdjustments();
         fetchPayRoll();
@@ -667,31 +697,28 @@
         e.preventDefault();
         const entered = document.getElementById('authPassword').value;
         const errEl   = document.getElementById('authError');
-            $.ajax({
+        $.ajax({
             url:'/admin/payroll/authenticateUser', type:'GET',
             data:{password:entered},
             dataType:'json',
             success:function(res){
                 console.log(res);
                 if(res.status==='success'){
-                sessionStorage.setItem(AUTH_KEY, '1');
-                errEl.classList.add('hidden');
-                unlockUI();
+                    sessionStorage.setItem(AUTH_KEY, '1');
+                    errEl.classList.add('hidden');
+                    unlockUI();
+                } else {
+                    errEl.classList.remove('hidden');
+                    document.getElementById('authPassword').value = '';
+                    document.getElementById('authPassword').focus();
                 }
-                else{
+            },  
+            error:function(){
                 errEl.classList.remove('hidden');
                 document.getElementById('authPassword').value = '';
                 document.getElementById('authPassword').focus();
-                }
-                },  
-            error:function(err){ 
-                console.log(err);
-                 errEl.classList.remove('hidden');
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authPassword').focus();
             }
         });
-
     });
 
     document.getElementById('changePwdForm').addEventListener('submit', function(e) {
@@ -751,38 +778,28 @@
         document.getElementById('loginPanel').classList.add('hidden');
         document.getElementById('changePwdPanel').classList.remove('hidden');
     }
-
     function showLoginPanel() {
         document.getElementById('changePwdPanel').classList.add('hidden');
         document.getElementById('loginPanel').classList.remove('hidden');
     }
-
     function toggleAuthPwd(inputId, iconId) {
         const inp  = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
-        if (inp.type === 'password') {
-            inp.type  = 'text';
-            icon.className = 'fas fa-eye-slash text-[11px]';
-        } else {
-            inp.type  = 'password';
-            icon.className = 'fas fa-eye text-[11px]';
-        }
+        if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash text-[11px]'; }
+        else { inp.type = 'password'; icon.className = 'fas fa-eye text-[11px]'; }
     }
-
     function checkStrength(val) {
-        const bars   = ['s1','s2','s3','s4'];
-        const label  = document.getElementById('strengthLabel');
-        let score    = 0;
+        const bars  = ['s1','s2','s3','s4'];
+        const label = document.getElementById('strengthLabel');
+        let score   = 0;
         if (val.length >= 6) score++;
         if (val.length >= 10) score++;
         if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
         if (/[^A-Za-z0-9]/.test(val)) score++;
-
-        const colors  = ['#f43f5e','#f97316','#eab308','#22c55e'];
-        const labels  = ['Weak','Fair','Good','Strong'];
+        const colors = ['#f43f5e','#f97316','#eab308','#22c55e'];
+        const labels = ['Weak','Fair','Good','Strong'];
         bars.forEach((id,i) => {
-            const el = document.getElementById(id);
-            el.style.background = i < score ? colors[score-1] : 'rgba(255,255,255,0.1)';
+            document.getElementById(id).style.background = i < score ? colors[score-1] : 'rgba(255,255,255,0.1)';
         });
         label.textContent = val.length ? labels[score-1] || '' : '';
     }
@@ -791,15 +808,17 @@
     let processStatus = 'Processed';
     let payrollRecords = [];
     let adjustmentsCache = [];
+    let structureCache = [];
+
     const select = document.getElementById("monthFilter");
     let month = select.value;
-    let monthCont = document.getElementById("month");
-    monthCont.innerHTML = month;
-
+    document.getElementById("month").innerHTML = month;
+console.log(month);
     select.addEventListener("change", function() {
         month = this.value;
-        monthCont.innerHTML = month;
+        document.getElementById("month").innerHTML = month;
         document.getElementById('footerMonth').textContent = month;
+        console.log(month);
         renderLedgerTable(month);
         getSalStructure();
         fetchAdjustments(month);
@@ -844,14 +863,13 @@
     }
 
     function confirmPayrollProcess() {
-        showFeedback('confirm','Run Payroll',`Are you sure you want to process payroll records for ${month}? This will finalize payouts.`, processPayroll);
+        showFeedback('confirm','Run Payroll',`Process payroll for ${month}? This will finalize payouts.`, processPayroll);
     }
-
     function updatePayrollProcess(type) {
         showFeedback('confirm',`${type} Payroll`,`Are you sure you want to ${type} payroll records for ${month}?`, () => updatePayroll(type));
     }
 
-    // ===================== AJAX CALLS (unchanged) =====================
+    // ===================== AJAX CALLS =====================
  function fetchPayRoll(){
             $.ajax({
                 url: '/admin/payroll/fetchpayroll',
@@ -921,10 +939,12 @@ function processPayroll(){
 
     function fetchEmps(type,month,selectid) {
         $.ajax({
-            url:'api/payRollApi.php', type:'POST',
-            data:{action:'getEmployeeData',csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",type:type,month:month},
+            url:'/admin/payroll/getemps', type:'GET',
+            data:{type:type,month:month},
             dataType:'json',
-            success:function(res){ populateSelect(selectid, res, 'eid','employee'); },
+            success:function(res){ 
+                console.log(res);
+                populateSelect(selectid, res, 'eid','firstName'); },
             error:function(err){ console.log(err); }
         });
     }
@@ -970,18 +990,14 @@ function processPayroll(){
         const tableMap = { ledger:'payrollTableBody', structure:'structureTableBody', lopOthers:'lopOthersTableBody' };
         const tbodyId  = tableMap[currentView];
         if (!tbodyId) return;
-        const rows = document.querySelectorAll('#' + tbodyId + ' tr');
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(query) ? '' : 'none';
+        document.querySelectorAll('#' + tbodyId + ' tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
         });
     }
 
     // ===================== EXPORT =====================
     function getExportData() {
-        console.log("called");
         const filtered = payrollRecords.filter(emp => emp.month === month);
-
         if (currentView === 'ledger') {
             const headers = ['Employee','Designation','Basic','Conveyance','Medical','Bonus','Other Allow.','PF (EE)','PF (ER)','ESI (EE)','ESI (ER)','Gratuity','PT','Gross','LOP Days','Other Earnings','Net Payable'];
             const rows = filtered.map(emp => [
@@ -996,39 +1012,28 @@ function processPayroll(){
             ]);
             return { headers, rows, name: 'Payroll_' + month };
         }
-
         if (currentView === 'structure') {
             const headers = ['Employee','Basic','Conveyance','Medical','Bonus','Other','PF(EE)','PF(ER)','ESI(EE)','ESI(ER)','Gratuity','PT','Gross','Monthly Net','Monthly CTC','Annual CTC'];
             const rows = [];
-            document.querySelectorAll('#structureTableBody tr').forEach(function(tr) {
+            document.querySelectorAll('#structureTableBody tr').forEach(tr => {
                 if (tr.style.display === 'none') return;
                 const row = [];
-                tr.querySelectorAll('td').forEach(function(td) {
-                    row.push(td.textContent.replace(/[₹,\n]/g,'').trim());
-                });
+                tr.querySelectorAll('td').forEach(td => row.push(td.textContent.replace(/[₹,\n]/g,'').trim()));
                 if (row.length) rows.push(row);
             });
             return { headers, rows, name: 'CTC_Structure_' + month };
         }
-
         if (currentView === 'lopOthers') {
-            const adjFiltered = adjustmentsCache.filter(function(a){ return a.month === month; });
+            const adjFiltered = adjustmentsCache.filter(a => a.month === month);
             const headers = ['Employee','Month','LOP (Days)','Extra Pay','Date Created'];
-            const rows = adjFiltered.map(function(a){ return [
-                a.employee, a.month,
-                a.lopindays > 0 ? a.lopindays : 0,
-                a.extraPay  > 0 ? a.extraPay  : 0,
-                a.created || ''
-            ]; });
+            const rows = adjFiltered.map(a => [a.employee, a.month, a.lopindays > 0 ? a.lopindays : 0, a.extraPay > 0 ? a.extraPay : 0, a.created || '']);
             return { headers, rows, name: 'LOP_Adj_' + month };
         }
-
         return { headers: [], rows: [], name: 'Export' };
     }
 
-    // ---- Pure-JS ZIP + XLSX builder (zero dependencies) ----
+    // ---- Pure-JS ZIP + XLSX builder ----
     var _xlsxBuilder = (function() {
-        // CRC32 table
         var crcTable = (function() {
             var t = [];
             for (var n = 0; n < 256; n++) {
@@ -1038,13 +1043,11 @@ function processPayroll(){
             }
             return t;
         })();
-
         function crc32(buf) {
             var crc = 0xFFFFFFFF;
             for (var i = 0; i < buf.length; i++) crc = crcTable[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
             return (crc ^ 0xFFFFFFFF) >>> 0;
         }
-
         function strToBytes(s) {
             var bytes = [];
             for (var i = 0; i < s.length; i++) {
@@ -1055,232 +1058,178 @@ function processPayroll(){
             }
             return new Uint8Array(bytes);
         }
-
         function u16le(n) { return [n & 0xFF, (n >> 8) & 0xFF]; }
         function u32le(n) { return [n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, (n >> 24) & 0xFF]; }
-
         function concat() {
             var arrays = Array.prototype.slice.call(arguments);
-            var len = arrays.reduce(function(a, b){ return a + b.length; }, 0);
+            var len = arrays.reduce(function(a,b){ return a+b.length; },0);
             var out = new Uint8Array(len), offset = 0;
-            arrays.forEach(function(a){ out.set(a, offset); offset += a.length; });
+            arrays.forEach(function(a){ out.set(a,offset); offset+=a.length; });
             return out;
         }
-
-        // Build uncompressed ZIP
         function zipSync(files) {
             var localHeaders = [], centralDirs = [], offset = 0;
-
             Object.keys(files).forEach(function(name) {
-                var data    = files[name];
-                var nameB   = strToBytes(name);
-                var crc     = crc32(data);
-                var size    = data.length;
-                var modDate = 0x4A21, modTime = 0x0000; // fixed date
-
+                var data = files[name], nameB = strToBytes(name), crc = crc32(data), size = data.length;
+                var modDate = 0x4A21, modTime = 0x0000;
                 var localHeader = concat(
-                    new Uint8Array([0x50,0x4B,0x03,0x04]), // local file sig
-                    new Uint8Array(u16le(20)),              // version needed
-                    new Uint8Array(u16le(0)),               // flags
-                    new Uint8Array(u16le(0)),               // compression (stored)
-                    new Uint8Array(u16le(modTime)),
-                    new Uint8Array(u16le(modDate)),
-                    new Uint8Array(u32le(crc)),
-                    new Uint8Array(u32le(size)),
-                    new Uint8Array(u32le(size)),
-                    new Uint8Array(u16le(nameB.length)),
-                    new Uint8Array(u16le(0)),               // extra field len
-                    nameB,
-                    data
+                    new Uint8Array([0x50,0x4B,0x03,0x04]),new Uint8Array(u16le(20)),new Uint8Array(u16le(0)),
+                    new Uint8Array(u16le(0)),new Uint8Array(u16le(modTime)),new Uint8Array(u16le(modDate)),
+                    new Uint8Array(u32le(crc)),new Uint8Array(u32le(size)),new Uint8Array(u32le(size)),
+                    new Uint8Array(u16le(nameB.length)),new Uint8Array(u16le(0)),nameB,data
                 );
-
                 var centralDir = concat(
-                    new Uint8Array([0x50,0x4B,0x01,0x02]), // central dir sig
-                    new Uint8Array(u16le(20)),              // version made by
-                    new Uint8Array(u16le(20)),              // version needed
-                    new Uint8Array(u16le(0)),
-                    new Uint8Array(u16le(0)),               // stored
-                    new Uint8Array(u16le(modTime)),
-                    new Uint8Array(u16le(modDate)),
-                    new Uint8Array(u32le(crc)),
-                    new Uint8Array(u32le(size)),
-                    new Uint8Array(u32le(size)),
-                    new Uint8Array(u16le(nameB.length)),
-                    new Uint8Array(u16le(0)),               // extra
-                    new Uint8Array(u16le(0)),               // comment
-                    new Uint8Array(u16le(0)),               // disk start
-                    new Uint8Array(u16le(0)),               // int attrs
-                    new Uint8Array(u32le(0)),               // ext attrs
-                    new Uint8Array(u32le(offset)),
-                    nameB
+                    new Uint8Array([0x50,0x4B,0x01,0x02]),new Uint8Array(u16le(20)),new Uint8Array(u16le(20)),
+                    new Uint8Array(u16le(0)),new Uint8Array(u16le(0)),new Uint8Array(u16le(modTime)),
+                    new Uint8Array(u16le(modDate)),new Uint8Array(u32le(crc)),new Uint8Array(u32le(size)),
+                    new Uint8Array(u32le(size)),new Uint8Array(u16le(nameB.length)),new Uint8Array(u16le(0)),
+                    new Uint8Array(u16le(0)),new Uint8Array(u16le(0)),new Uint8Array(u16le(0)),
+                    new Uint8Array(u32le(0)),new Uint8Array(u32le(offset)),nameB
                 );
-
-                localHeaders.push(localHeader);
-                centralDirs.push(centralDir);
-                offset += localHeader.length;
+                localHeaders.push(localHeader); centralDirs.push(centralDir); offset += localHeader.length;
             });
-
-            var centralStart = offset;
-            var centralData  = concat.apply(null, centralDirs);
+            var centralStart = offset, centralData = concat.apply(null,centralDirs);
             var eocd = concat(
-                new Uint8Array([0x50,0x4B,0x05,0x06]),
-                new Uint8Array(u16le(0)), new Uint8Array(u16le(0)),
-                new Uint8Array(u16le(centralDirs.length)),
-                new Uint8Array(u16le(centralDirs.length)),
-                new Uint8Array(u32le(centralData.length)),
-                new Uint8Array(u32le(centralStart)),
-                new Uint8Array(u16le(0))
+                new Uint8Array([0x50,0x4B,0x05,0x06]),new Uint8Array(u16le(0)),new Uint8Array(u16le(0)),
+                new Uint8Array(u16le(centralDirs.length)),new Uint8Array(u16le(centralDirs.length)),
+                new Uint8Array(u32le(centralData.length)),new Uint8Array(u32le(centralStart)),new Uint8Array(u16le(0))
             );
-
-            var parts = localHeaders.concat([centralData, eocd]);
-            return concat.apply(null, parts);
+            return concat.apply(null, localHeaders.concat([centralData,eocd]));
         }
-
         function escXml(v) {
-            return String(v)
-                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
-
         function colName(idx) {
-            var s = ''; idx++;
-            while (idx > 0) { idx--; s = String.fromCharCode(65 + (idx % 26)) + s; idx = Math.floor(idx/26); }
+            var s=''; idx++;
+            while(idx>0){idx--;s=String.fromCharCode(65+(idx%26))+s;idx=Math.floor(idx/26);}
             return s;
         }
-
-        function buildXlsx(headers, rows) {
-            var allRows = [headers].concat(rows);
-            var sheetRows = allRows.map(function(row, ri) {
-                var cells = row.map(function(val, ci) {
-                    var addr = colName(ci) + (ri + 1);
-                    var isNum = val !== '' && val !== null && !isNaN(Number(val)) && val !== true && val !== false;
-                    if (isNum) return '<c r="' + addr + '"><v>' + Number(val) + '</v></c>';
-                    return '<c r="' + addr + '" t="inlineStr"><is><t>' + escXml(val) + '</t></is></c>';
+        function buildXlsx(headers,rows) {
+            var allRows=[headers].concat(rows);
+            var sheetRows=allRows.map(function(row,ri){
+                var cells=row.map(function(val,ci){
+                    var addr=colName(ci)+(ri+1);
+                    var isNum=val!==''&&val!==null&&!isNaN(Number(val))&&val!==true&&val!==false;
+                    if(isNum) return '<c r="'+addr+'"><v>'+Number(val)+'</v></c>';
+                    return '<c r="'+addr+'" t="inlineStr"><is><t>'+escXml(val)+'</t></is></c>';
                 }).join('');
-                return '<row r="' + (ri+1) + '">' + cells + '</row>';
+                return '<row r="'+(ri+1)+'">'+cells+'</row>';
             }).join('');
-
-            var ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
-            var odr = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-            var pkgr = 'http://schemas.openxmlformats.org/package/2006/relationships';
-
-            var sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                + '<workbook xmlns="' + ns + '" xmlns:r="' + odr + '">'
-                + '<sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets></workbook>';
-
-            var wbXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                + '<workbook xmlns="' + ns + '" xmlns:r="' + odr + '">'
-                + '<sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets></workbook>';
-
-            var wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                + '<Relationships xmlns="' + pkgr + '">'
-                + '<Relationship Id="rId1" Type="' + odr + '/worksheet" Target="worksheets/sheet1.xml"/>'
-                + '</Relationships>';
-
-            var pkgRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                + '<Relationships xmlns="' + pkgr + '">'
-                + '<Relationship Id="rId1" Type="' + odr + '/officeDocument" Target="xl/workbook.xml"/>'
-                + '</Relationships>';
-
-            var ctypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-                + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-                + '<Default Extension="xml" ContentType="application/xml"/>'
-                + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-                + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-                + '</Types>';
-
-            var enc = new TextEncoder();
-            var zipFiles = {
-                '[Content_Types].xml'          : enc.encode(ctypes),
-                '_rels/.rels'                  : enc.encode(pkgRels),
-                'xl/workbook.xml'              : enc.encode(wbXml),
-                'xl/_rels/workbook.xml.rels'   : enc.encode(wbRels),
-                'xl/worksheets/sheet1.xml'     : enc.encode(sheetXml)
-            };
-
-            var zipped = zipSync(zipFiles);
-            return new Blob([zipped], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            var ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+            var odr='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+            var pkgr='http://schemas.openxmlformats.org/package/2006/relationships';
+            var wbXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="'+ns+'" xmlns:r="'+odr+'"><sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets></workbook>';
+            var wsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="'+ns+'"><sheetData>'+sheetRows+'</sheetData></worksheet>';
+            var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+pkgr+'"><Relationship Id="rId1" Type="'+odr+'/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';
+            var pkgRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+pkgr+'"><Relationship Id="rId1" Type="'+odr+'/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+            var ctypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
+            var enc=new TextEncoder();
+            var zipFiles={'[Content_Types].xml':enc.encode(ctypes),'_rels/.rels':enc.encode(pkgRels),'xl/workbook.xml':enc.encode(wbXml),'xl/_rels/workbook.xml.rels':enc.encode(wbRels),'xl/worksheets/sheet1.xml':enc.encode(wsXml)};
+            return new Blob([zipSync(zipFiles)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
         }
-
-        return { buildXlsx: buildXlsx };
+        return {buildXlsx:buildXlsx};
     })();
 
     function exportCurrentTable(format) {
-        var data    = getExportData();
-        var headers = data.headers, rows = data.rows, name = data.name;
-        if (!headers.length) { alert('No data to export.'); return; }
-
-        if (format === 'xlsx') {
-            try {
-                var blob = _xlsxBuilder.buildXlsx(headers, rows);
-                var url  = URL.createObjectURL(blob);
-                var a    = document.createElement('a');
-                a.href = url; a.download = name + '.xlsx';
-                document.body.appendChild(a); a.click();
-                document.body.removeChild(a);
-                setTimeout(function(){ URL.revokeObjectURL(url); }, 200);
-            } catch(err) {
-                alert('Excel export failed: ' + err.message);
-                console.error(err);
-            }
-
-        } else if (format === 'csv') {
-            function esc(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }
-            var lines = [headers.map(esc).join(',')];
-            rows.forEach(function(row){ lines.push(row.map(esc).join(',')); });
-            var blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-            var url  = URL.createObjectURL(blob);
-            var a    = document.createElement('a');
-            a.href = url; a.download = name + '.csv';
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a);
-            setTimeout(function(){ URL.revokeObjectURL(url); }, 200);
-
-        } else if (format === 'print') {
-            var thHtml = headers.map(function(h){ return '<th>' + h + '</th>'; }).join('');
-            var tbHtml = rows.map(function(row){
-                return '<tr>' + row.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>';
-            }).join('');
-            var win = window.open('', '_blank', 'width=1300,height=850');
-            if (!win) { alert('Please allow pop-ups for this page to use Print View.'); return; }
-            win.document.write('<!DOCTYPE html><html><head><title>' + name + '</title>'
-                + '<style>'
-                + 'body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#1e293b;margin:0}'
-                + 'h2{font-size:14px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 3px}'
-                + 'p{font-size:10px;color:#64748b;margin:0 0 14px}'
-                + 'table{width:100%;border-collapse:collapse}'
-                + 'th{background:#0f172a;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;padding:7px 9px;text-align:left;white-space:nowrap}'
-                + 'td{padding:5px 9px;border-bottom:1px solid #f1f5f9;font-size:10px;white-space:nowrap}'
-                + 'tr:nth-child(even) td{background:#f8fafc}'
-                + '@media print{@page{margin:8mm;size:landscape}}'
-                + '</style></head><body>'
-                + '<h2>' + name.replace(/_/g,' ') + '</h2>'
-                + '<p>Generated: ' + new Date().toLocaleString() + ' &nbsp;|&nbsp; Period: ' + month + '</p>'
-                + '<table><thead><tr>' + thHtml + '</tr></thead><tbody>' + tbHtml + '</tbody></table>'
-                + '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},800);}<\/script>'
-                + '</body></html>');
+        var data=getExportData(), headers=data.headers, rows=data.rows, name=data.name;
+        if(!headers.length){alert('No data to export.');return;}
+        if(format==='xlsx'){
+            try{
+                var blob=_xlsxBuilder.buildXlsx(headers,rows);
+                var url=URL.createObjectURL(blob);
+                var a=document.createElement('a');
+                a.href=url;a.download=name+'.xlsx';
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
+                setTimeout(function(){URL.revokeObjectURL(url);},200);
+            }catch(err){alert('Excel export failed: '+err.message);}
+        } else if(format==='csv'){
+            function esc(v){return '"'+String(v).replace(/"/g,'""')+'"';}
+            var lines=[headers.map(esc).join(',')];
+            rows.forEach(function(row){lines.push(row.map(esc).join(','));});
+            var blob=new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+            var url=URL.createObjectURL(blob);
+            var a=document.createElement('a');
+            a.href=url;a.download=name+'.csv';
+            document.body.appendChild(a);a.click();document.body.removeChild(a);
+            setTimeout(function(){URL.revokeObjectURL(url);},200);
+        } else if(format==='print'){
+            var thHtml=headers.map(function(h){return '<th>'+h+'</th>';}).join('');
+            var tbHtml=rows.map(function(row){return '<tr>'+row.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('');
+            var win=window.open('','_blank','width=1300,height=850');
+            if(!win){alert('Please allow pop-ups for Print View.');return;}
+            win.document.write('<!DOCTYPE html><html><head><title>'+name+'</title>'
+                +'<style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#1e293b;margin:0}'
+                +'h2{font-size:14px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 3px}'
+                +'p{font-size:10px;color:#64748b;margin:0 0 14px}table{width:100%;border-collapse:collapse}'
+                +'th{background:#0f172a;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;padding:7px 9px;text-align:left;white-space:nowrap}'
+                +'td{padding:5px 9px;border-bottom:1px solid #f1f5f9;font-size:10px;white-space:nowrap}'
+                +'tr:nth-child(even) td{background:#f8fafc}@media print{@page{margin:8mm;size:landscape}}</style>'
+                +'</head><body><h2>'+name.replace(/_/g,' ')+'</h2>'
+                +'<p>Generated: '+new Date().toLocaleString()+' &nbsp;|&nbsp; Period: '+month+'</p>'
+                +'<table><thead><tr>'+thHtml+'</tr></thead><tbody>'+tbHtml+'</tbody></table>'
+                +'<script>window.onload=function(){window.print();setTimeout(function(){window.close();},800);}<\/script>'
+                +'</body></html>');
             win.document.close();
         }
     }
 
     function toggleExportMenu(e) {
-        console.log(e);
         e.stopPropagation();
-        var wrapper = e.currentTarget.closest('.export-wrapper');
-        var dd      = wrapper.querySelector('.export-dropdown');
-        var isOpen  = dd.classList.contains('open');
-        document.querySelectorAll('.export-dropdown').forEach(function(d){ d.classList.remove('open'); });
-        if (!isOpen) dd.classList.add('open');
+        var wrapper=e.currentTarget.closest('.export-wrapper');
+        var dd=wrapper.querySelector('.export-dropdown');
+        var isOpen=dd.classList.contains('open');
+        document.querySelectorAll('.export-dropdown').forEach(function(d){d.classList.remove('open');});
+        if(!isOpen) dd.classList.add('open');
     }
-
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.export-wrapper')) {
-            document.querySelectorAll('.export-dropdown').forEach(function(d){ d.classList.remove('open'); });
+        if(!e.target.closest('.export-wrapper')) {
+            document.querySelectorAll('.export-dropdown').forEach(function(d){d.classList.remove('open');});
         }
     });
 
-    // ===================== TABLE RENDERS =====================
+    // ===================== INLINE EDIT HELPERS =====================
+
+    /**
+     * Recalculate derived payroll fields from editable inputs.
+     * Returns all computed values so they can be shown live in the row.
+     */
+    function recalcLedgerRow(basic, conveyance, medical, bonus, other) {
+        basic = parseFloat(basic)||0; conveyance = parseFloat(conveyance)||0;
+        medical = parseFloat(medical)||0; bonus = parseFloat(bonus)||0;
+        other = parseFloat(other)||0;
+        const gross = basic + conveyance + medical + bonus + other;
+        let pfEE=0, pfER=0;
+        if (basic > 0) { pfEE = basic>15000?1800:basic*0.12; pfER = basic>15000?1950:basic*0.13; }
+        let esiEE=0, esiER=0;
+        if (gross > 0 && gross <= 21000) { esiEE=gross*0.0075; esiER=gross*0.0325; }
+        const pt = gross > 25000 ? 200 : 0;
+        const gratuity = basic > 0 ? ((basic*15)/26)/12 : 0;
+        const netPay = gross - pfEE - esiEE - pt;
+        return { gross, pfEE, pfER, esiEE, esiER, gratuity, pt, netPay };
+    }
+
+    function recalcStructureRow(basic, conveyance, medical, bonus, other) {
+        basic = parseFloat(basic)||0; conveyance = parseFloat(conveyance)||0;
+        medical = parseFloat(medical)||0; bonus = parseFloat(bonus)||0;
+        other = parseFloat(other)||0;
+        const gross = basic + conveyance + medical + bonus + other;
+        let pfEE=0, pfER=0;
+        if (basic > 0) { pfEE = basic>15000?1800:basic*0.12; pfER = basic>15000?1950:basic*0.13; }
+        let esiEE=0, esiER=0;
+        if (gross > 0 && gross <= 21000) { esiEE=gross*0.0075; esiER=gross*0.0325; }
+        const pt = gross > 25000 ? 200 : 0;
+        const gratuity = basic > 0 ? ((basic*15)/26)/12 : 0;
+        const netPay = gross - pfEE - esiEE - pt;
+        const employerContrib = pfER + esiER + gratuity;
+        const monthlyCtc = gross + employerContrib;
+        const annualCtc = monthlyCtc * 12;
+        return { gross, pfEE, pfER, esiEE, esiER, gratuity, pt, netPay, monthlyCtc, annualCtc };
+    }
+
+    function fmt(n) { return '₹' + (parseFloat(n)||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}); }
+    function numFmt(n) { return (parseFloat(n)||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}); }
+
+
     function renderLedgerTable(targetMonth) {
         const tbody = document.getElementById('payrollTableBody');
         tbody.innerHTML = '';
@@ -1289,49 +1238,693 @@ function processPayroll(){
 
         filteredRecords.forEach((emp, index) => {
             const tr = document.createElement('tr');
+            tr.dataset.index = index;
+            tr.dataset.empId = emp.eid || '';
             tr.className = 'hover:bg-indigo-50/30 transition-colors text-[11px]';
-            tr.innerHTML = `
-                <td class="px-5 py-3.5">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center font-black text-[9px] text-indigo-600 border border-indigo-100">
-                            ${emp.employee.substring(0,2).toUpperCase()}
-                        </div>
-                        <div>
-                            <p class="font-black text-slate-800 uppercase tracking-tighter text-[11px]">${emp.employee}</p>
-                            <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.Designation || 'Payroll Staff'}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.basic)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.conveyance)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.medicalAllowance)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.statutoryBonus)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-600 font-semibold">₹${(Number(emp.otherAllowance)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-indigo-600">₹${Number(emp.pfEmployeeShare).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-indigo-400 font-semibold">₹${Number(emp.pfEmployerShare).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-rose-500">₹${Number(emp.esiEmployeeShare).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-rose-400 font-semibold">₹${Number(emp.esiEmployerShare).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(Number(emp.monthlyGratuity)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(Number(emp.pt)||0).toLocaleString()}</td>
-                <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">₹${(Number(emp.gross)||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-rose-600">
-                    <span class="pill bg-rose-50 text-rose-700">${Number(emp.lopDays).toLocaleString()} Day(s)</span>
-                </td>
-                <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">₹${(Number(emp.otherEarnings)||0).toLocaleString()}</td>
-                <td class="px-5 py-3.5 font-black text-emerald-700 bg-emerald-50/30 text-base">₹${(Number(emp.netPayeble)||0).toLocaleString()}</td>
-                <td class="px-5 py-3.5 text-center">
-                    <button onclick="downloadPayslip(${index})" class="action-btn inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-tighter hover:bg-indigo-700 transition-all">
-                        <i class="fas fa-download text-[8px]"></i>Slip
-                    </button>
-                </td>
-            `;
+
+            tr.innerHTML = buildLedgerRowHTML(emp, index, false);
             tbody.appendChild(tr);
         });
         updateStats(targetMonth);
     }
 
+    function buildLedgerRowHTML(emp, index, editMode) {
+        console.log(emp);
+        const basic     = Number(emp.basic)||0;
+        const conv      = Number(emp.conveyance)||0;
+        const med       = Number(emp.medicalAllowance)||0;
+        const bonus     = Number(emp.statutoryBonus)||0;
+        const other     = Number(emp.otherAllowance)||0;
+        const pfEE      = Number(emp.pfEmployeeShare)||0;
+        const pfER      = Number(emp.pfEmployerShare)||0;
+        const esiEE     = Number(emp.esiEmployeeShare)||0;
+        const esiER     = Number(emp.esiEmployerShare)||0;
+        const gratuity  = Number(emp.monthlyGratuity)||0;
+        const pt        = Number(emp.pt)||0;
+        const gross     = Number(emp.gross)||0;
+        const lopDays   = Number(emp.lopDays)||0;
+        const otherEarn = Number(emp.otherEarnings)||0;
+        const netPay    = Number(emp.netPayeble)||0;
+        const salaryid=emp.salaryid;
+        const salid=emp.salaryStructure.salid;
+        const monthH=emp.month;
+        console.log(monthH);
+        if (editMode) {
+            return `
+                <td class="px-5 py-2.5">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center font-black text-[9px] text-indigo-600 border border-indigo-100">
+                            ${(emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName).substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-black text-slate-800 uppercase tracking-tighter text-[11px]">${emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName}</p>
+                            <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.salaryStructure.designation || 'Payroll Staff'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="basic" type="number" value="${basic}" readonly><input  data-field="salid" type="hidden" value="${salid}" ><input  data-field="salaryid" type="hidden" value="${salaryid}" ><input  data-field="month" type="hidden" value="${monthH}" ></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="conveyance" type="number" value="${conv}" readonly></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="medicalAllowance" type="number" value="${med}" readonly></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="statutoryBonus" type="number" value="${bonus}"></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="otherAllowance" type="number" value="${other}"></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-pfEE-${index}">${fmt(pfEE)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-pfER-${index}">${fmt(pfER)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-esiEE-${index}">${fmt(esiEE)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-esiER-${index}">${fmt(esiER)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-grat-${index}">${fmt(gratuity)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="le-pt-${index}">${fmt(pt)}</span></td>
+                <td class="px-5 py-2"><span class="font-black text-emerald-600 computed-badge" id="le-gross-${index}">${fmt(gross)}</span></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="lopDays" type="number" step="0.5" value="${lopDays}"></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-field="otherEarnings" type="number" value="${otherEarn}"></td>
+                <td class="px-5 py-2"><span class="font-black text-emerald-700 text-base computed-badge" id="le-net-${index}">${fmt(netPay)}</span></td>
+                <td class="px-4 py-2 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="saveLedgerRow(${index})" class="edit-save-btn"><i class="fas fa-check text-[9px]"></i> Save</button>
+                        <button onclick="cancelLedgerEdit(${index})" class="edit-cancel-btn"><i class="fas fa-times text-[9px]"></i> Cancel</button>
+                    </div>
+                </td>
+            `;
+        }
+
+        return `
+            <td class="px-5 py-3.5">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center font-black text-[9px] text-indigo-600 border border-indigo-100">
+                        ${(emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName).substring(0,2).toUpperCase()}
+                    </div>
+                    <div>
+     <p class="font-black text-slate-800 uppercase tracking-tighter text-[11px]">${emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName}</p>
+                            <p class="text-[8px] text-slate-400 font-bold uppercase">${emp.salaryStructure.designation || 'Payroll Staff'}</p>
+                    </div>
+                </div>
+            </td>
+            <td class="px-3 py-3.5 text-slate-600 font-semibold">${fmt(basic)}</td>
+            <td class="px-3 py-3.5 text-slate-600 font-semibold">${fmt(conv)}</td>
+            <td class="px-3 py-3.5 text-slate-600 font-semibold">${fmt(med)}</td>
+            <td class="px-3 py-3.5 text-slate-600 font-semibold">${fmt(bonus)}</td>
+            <td class="px-3 py-3.5 text-slate-600 font-semibold">${fmt(other)}</td>
+            <td class="px-3 py-3.5 font-bold text-indigo-600">${fmt(pfEE)}</td>
+            <td class="px-3 py-3.5 text-indigo-400 font-semibold">${fmt(pfER)}</td>
+            <td class="px-3 py-3.5 font-bold text-rose-500">${fmt(esiEE)}</td>
+            <td class="px-3 py-3.5 text-rose-400 font-semibold">${fmt(esiER)}</td>
+            <td class="px-3 py-3.5 text-slate-500 font-semibold">${fmt(gratuity)}</td>
+            <td class="px-3 py-3.5 text-slate-500 font-semibold">${fmt(pt)}</td>
+            <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">${fmt(gross)}</td>
+            <td class="px-3 py-3.5 font-bold text-rose-600">
+                <span class="pill bg-rose-50 text-rose-700">${lopDays} Day(s)</span>
+            </td>
+            <td class="px-5 py-3.5 font-black text-emerald-600 bg-emerald-50/20">${fmt(otherEarn)}</td>
+            <td class="px-5 py-3.5 font-black text-emerald-700 bg-emerald-50/30 text-base">${fmt(netPay)}</td>
+            <td class="px-5 py-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="startLedgerEdit(${index})" class="edit-icon-btn" title="Edit row">
+                        <i class="fas fa-pen text-[10px]"></i>
+                    </button>
+                    <button onclick="downloadPayslip(${index})" class="action-btn inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-tighter hover:bg-indigo-700 transition-all">
+                        <i class="fas fa-download text-[8px]"></i>Slip
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    function startLedgerEdit(index) {
+        const tr = document.querySelector(`#payrollTableBody tr[data-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.add('editing-row');
+        tr.innerHTML = buildLedgerRowHTML(payrollRecords.filter(e=>e.month===month)[index], index, true);
+
+        // Attach live-recalc listeners
+        tr.querySelectorAll('input[data-field]').forEach(inp => {
+            inp.addEventListener('input', () => liveRecalcLedger(tr, index));
+        });
+    }
+
+    function liveRecalcLedger(tr, index) {
+        const get = f => parseFloat(tr.querySelector(`input[data-field="${f}"]`)?.value)||0;
+        const r = recalcLedgerRow(get('basic'), get('conveyance'), get('medicalAllowance'), get('statutoryBonus'), get('otherAllowance'));
+        const setPill = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = fmt(val); };
+        setPill(`le-pfEE-${index}`,   r.pfEE);
+        setPill(`le-pfER-${index}`,   r.pfER);
+        setPill(`le-esiEE-${index}`,  r.esiEE);
+        setPill(`le-esiER-${index}`,  r.esiER);
+        setPill(`le-grat-${index}`,   r.gratuity);
+        setPill(`le-pt-${index}`,     r.pt);
+        setPill(`le-gross-${index}`,  r.gross);
+        // net = gross - pfEE - esiEE - pt + otherEarnings - (lopDays/workingDays * gross)
+        const lopDays   = get('lopDays');
+        const otherEarn = get('otherEarnings'); 
+        const workingDays = getDaysFromFormat(month);
+        const lopDeduct = lopDays > 0 ? (r.gross / workingDays) * lopDays : 0;
+        const basic=lopDays>0?(parseFloat(get('basic'))-(parseFloat(get('basic'))/workingDays)*lopDays):parseFloat(get('basic'));
+        const conv=lopDays>0?(parseFloat(get('conveyance'))-(parseFloat(get('conveyance'))/workingDays)*lopDays):parseFloat(get('conveyance'));
+        const medicalAllowance=lopDays>0?(parseFloat(get('medicalAllowance'))-(parseFloat(get('medicalAllowance'))/workingDays)*lopDays):parseFloat(get('medicalAllowance'));
+        const statutoryBonus=lopDays>0?(parseFloat(get('statutoryBonus'))-(parseFloat(get('statutoryBonus'))/workingDays)*lopDays):parseFloat(get('statutoryBonus'));
+
+        const net = r.netPay - lopDeduct + otherEarn;
+        console.log({basic,conv,medicalAllowance,statutoryBonus,});
+        setPill(`le-net-${index}`, net);
+    }
+
+    function cancelLedgerEdit(index) {
+        const tr = document.querySelector(`#payrollTableBody tr[data-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.remove('editing-row');
+        const emp = payrollRecords.filter(e=>e.month===month)[index];
+        tr.innerHTML = buildLedgerRowHTML(emp, index, false);
+    }
+
+    function saveLedgerRow(index) {
+        const tr = document.querySelector(`#payrollTableBody tr[data-index="${index}"]`);
+        if (!tr) return;
+        const get = f => parseFloat(tr.querySelector(`input[data-field="${f}"]`)?.value)||tr.querySelector(`input[data-field="${f}"]`)?.value;
+        const emp = payrollRecords.filter(e=>e.month===month)[index];
+        const basic      = get('basic');
+        const conveyance = get('conveyance');
+        const medicalAllowance   = get('medicalAllowance');
+        const statutoryBonus  = get('statutoryBonus');
+        const otherAllowance   = get('otherAllowance');
+        const lopDays    = get('lopDays');
+        const otherEarnings  = get('otherEarnings');
+        const r = recalcLedgerRow(basic, conveyance, medicalAllowance, statutoryBonus, otherAllowance);
+        const workingDays = 26;
+        const lopDeduct = lopDays > 0 ? (r.gross / workingDays) * lopDays : 0;
+        const netPayeble = r.netPay - lopDeduct + otherEarnings;
+        const salaryid= get('salaryid');
+        const salid= get('salid');    
+         const monthh= get('month');
+         console.log({                action:'updatePayRollRecord',
+                csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",
+               salaryid:salaryid,
+                salid:salid,
+                lopDays:lopDays,
+                otherEarnings:otherEarnings,
+                month:monthh});
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{
+               salaryid:salaryid,
+                salid:salid,
+                lopDays:lopDays,
+                otherEarnings:otherEarnings,
+                month:monthh
+            },
+            dataType:'json',
+            success: function(res) {
+                fetchPayRoll();
+                 fetchAdjustments(month);
+                updateStats(month);
+                showToast('Payroll record updated');    
+            },
+            error: function() { showFeedback('error','Save Failed','Could not save payroll changes. Check API.'); }
+        });
+    }
+
+    // ===================== STRUCTURE TABLE =====================  
+
+    function renderStructureTable(data) {
+        const tbody = document.getElementById('structureTableBody');
+        tbody.innerHTML = '';
+        if (!data) return;
+        data.forEach((emp, index) => {
+            const tr = document.createElement('tr');
+            tr.dataset.sIndex = index;
+            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
+            tr.innerHTML = buildStructureRowHTML(emp, index, false);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function buildStructureRowHTML(emp, index, editMode) {
+        const basic    = parseFloat(emp.basicPay)||0;
+        const conv     = parseFloat(emp.conveyance)||0;
+        const med      = parseFloat(emp.medicalAllowence)||0;
+        const bonus    = parseFloat(emp.statutoryBonus)||0;
+        const other    = parseFloat(emp.otherAllowences)||0;
+        const pfEE     = parseFloat(emp.pfEmployeeShare)||0;
+        const pfER     = parseFloat(emp.pfEmployerShare)||0;
+        const esiEE    = parseFloat(emp.esiEmployeeShare)||0;
+        const esiER    = parseFloat(emp.esiEmployerShare)||0;
+        const gratuity = parseFloat(emp.monthlyGratuity)||0;
+        const pt       = parseFloat(emp.pt)||0;
+        const gross    = basic+conv+med+bonus+other;
+        const netPay   = parseFloat(emp.netPay)||0;
+        const mCtc     = parseFloat(emp.monthlyCtc)||0;
+        const aCtc     = parseFloat(emp.annualCtc)||0;
+        const initials = (emp.employee||'').substring(0,2).toUpperCase();
+        const salid=emp.salid;
+
+        if (editMode) {
+            return `
+                <td class="px-5 py-2.5 font-black uppercase tracking-tighter text-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${initials}</div>
+                        ${(emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName).substring(0,2).toUpperCase()}
+                    </div>
+                </td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-sf="basicPay" type="number" value="${basic}"><input  data-sf="salid" type="hidden" value="${salid}"> </td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-sf="conveyance" type="number" value="${conv}"></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-sf="medicalAllowence" type="number" value="${med}"></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-sf="statutoryBonus" type="number" value=s"${bonus}"></td>
+                <td class="px-3 py-2"><input class="inline-edit-input narrow" data-sf="otherAllowences" type="number" value="${other}"></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-pfEE-${index}">${fmt(pfEE)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-pfER-${index}">${fmt(pfER)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-esiEE-${index}">${fmt(esiEE)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-esiER-${index}">${fmt(esiER)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-grat-${index}">${fmt(gratuity)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-pt-${index}">${fmt(pt)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge" id="sf-gross-${index}">${fmt(gross)}</span></td>
+                <td class="px-3 py-2"><span class="computed-badge text-emerald-700" id="sf-net-${index}">${fmt(netPay)}</span></td>
+                <td class="px-3 py-2 bg-slate-50/50"><span class="computed-badge text-indigo-700" id="sf-mctc-${index}">${fmt(mCtc)}</span></td>
+                <td class="px-5 py-2 bg-indigo-50/30"><span class="computed-badge text-indigo-900 font-black" id="sf-actc-${index}">${fmt(aCtc)}</span></td>
+                <td class="px-4 py-2 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="saveStructureRow(${index})" class="edit-save-btn"><i class="fas fa-check text-[9px]"></i> Save</button>
+                        <button onclick="cancelStructureEdit(${index})" class="edit-cancel-btn"><i class="fas fa-times text-[9px]"></i> Cancel</button>
+                    </div>
+                </td>
+            `;
+        }
+
+        return `
+            <td class="px-5 py-3.5 font-black uppercase tracking-tighter text-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${initials}</div>
+                    ${(emp.employeeBasicInfo.firstName+' '+emp.employeeBasicInfo.lastName).substring(0,2).toUpperCase()}
+                </div>
+            </td>
+            <td class="px-3 py-3.5 font-semibold text-slate-600">${fmt(basic)}</td>
+            <td class="px-3 py-3.5 font-semibold text-slate-600">${fmt(conv)}</td>
+            <td class="px-3 py-3.5 font-semibold text-slate-600">${fmt(med)}</td>
+            <td class="px-3 py-3.5 font-semibold text-slate-600">${fmt(bonus)}</td>
+            <td class="px-3 py-3.5 font-semibold text-slate-600">${fmt(other)}</td>
+            <td class="px-3 py-3.5 font-bold text-indigo-600">${fmt(pfEE)}</td>
+            <td class="px-3 py-3.5 text-indigo-400 font-semibold">${fmt(pfER)}</td>
+            <td class="px-3 py-3.5 font-bold text-rose-500">${fmt(esiEE)}</td>
+            <td class="px-3 py-3.5 text-rose-400 font-semibold">${fmt(esiER)}</td>
+            <td class="px-3 py-3.5 text-slate-500 font-semibold">${fmt(gratuity)}</td>
+            <td class="px-3 py-3.5 text-slate-500 font-semibold">${fmt(pt)}</td>
+            <td class="px-3 py-3.5 font-bold text-emerald-600">${fmt(gross)}</td>
+            <td class="px-3 py-3.5 font-bold text-emerald-600">${fmt(netPay)}</td>
+            <td class="px-3 py-3.5 font-black text-indigo-600 bg-slate-50/50">${fmt(mCtc)}</td>
+            <td class="px-5 py-3.5 font-black text-indigo-950 bg-indigo-50/30">${fmt(aCtc)}</td>
+            <td class="px-5 py-3.5 text-center">
+                <button onclick="startStructureEdit(${index})" class="edit-icon-btn" title="Edit row">
+                    <i class="fas fa-pen text-[10px]"></i>
+                </button>
+            </td>
+        `;
+    }
+
+    function startStructureEdit(index) {
+        const tr = document.querySelector(`#structureTableBody tr[data-s-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.add('editing-row');
+        tr.innerHTML = buildStructureRowHTML(structureCache[index], index, true);
+        tr.querySelectorAll('input[data-sf]').forEach(inp => {
+            inp.addEventListener('input', () => liveRecalcStructure(tr, index));
+        });
+    }
+
+    function liveRecalcStructure(tr, index) {
+        const get = f => parseFloat(tr.querySelector(`input[data-sf="${f}"]`)?.value)||0;
+        const r = recalcStructureRow(get('basicPay'),get('conveyance'),get('medicalAllowence'),get('statutoryBonus'),get('otherAllowences'));
+        const setPill = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=fmt(val); };
+        setPill(`sf-pfEE-${index}`,  r.pfEE);
+        setPill(`sf-pfER-${index}`,  r.pfER);
+        setPill(`sf-esiEE-${index}`, r.esiEE);
+        setPill(`sf-esiER-${index}`, r.esiER);
+        setPill(`sf-grat-${index}`,  r.gratuity);
+        setPill(`sf-pt-${index}`,    r.pt);
+        setPill(`sf-gross-${index}`, r.gross);
+        setPill(`sf-net-${index}`,   r.netPay);
+        setPill(`sf-mctc-${index}`,  r.monthlyCtc);
+        setPill(`sf-actc-${index}`,  r.annualCtc);
+
+
+    }
+    function getDaysFromFormat(dateStr) {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
+  // Split "Apr-2026" into ["Apr", "2026"]
+  const [monthName, yearStr] = dateStr.split('-');
+  
+  const year = parseInt(yearStr);
+  const monthIndex = monthNames.indexOf(monthName);
+
+  if (monthIndex === -1) return "Invalid month name";
+
+  // Using monthIndex + 1 because the 0th day of the NEXT month 
+  // is the last day of the month you want.
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+    function cancelStructureEdit(index) {
+        const tr = document.querySelector(`#structureTableBody tr[data-s-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.remove('editing-row');
+        tr.innerHTML = buildStructureRowHTML(structureCache[index], index, false);
+    }
+
+    function saveStructureRow(index) {
+        const tr = document.querySelector(`#structureTableBody tr[data-s-index="${index}"]`);
+        if (!tr) return;
+        const get  = f => parseFloat(tr.querySelector(`input[data-sf="${f}"]`)?.value)||0;
+        const emp  = structureCache[index];
+        const basic   = get('basicPay');
+        const conv    = get('conveyance');
+        const med     = get('medicalAllowence');
+        const bonus   = get('statutoryBonus');
+        const other   = get('otherAllowences'); 
+        const r = recalcStructureRow(basic,conv,med,bonus,other);
+        const salid=get('salid');
+
+
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{
+                eid: emp.eid || '',
+                basicPay: basic.toFixed(2), conveyance: conv, medicalAllowence: med.toFixed(2),
+                statutoryBonus: bonus.toFixed(2), otherAllowences: other.toFixed(2),
+                pfEmployeeShare: r.pfEE.toFixed(2), pfEmployerShare: r.pfER.toFixed(2),
+                esiEmployeeShare: r.esiEE.toFixed(2), esiEmployerShare: r.esiER,
+                monthlyGratuity: r.gratuity.toFixed(2), pt: r.pt.toFixed(2),
+                netPay: r.netPay.toFixed(2), monthlyCtc: r.monthlyCtc.toFixed(2), annualCtc: r.annualCtc.toFixed(2),salid:salid
+            },
+            dataType:'json',
+            success: function(res) {
+                console.log(res);
+                                showToast('Structure updated');
+getSalStructure();
+                tr.classList.remove('editing-row');
+                tr.innerHTML = buildStructureRowHTML(structureCache[index], index, false);
+
+            },
+            error: function() { showFeedback('error','Save Failed','Could not save structure changes.'); }
+        });
+    }
+
+    // ===================== LOP TABLE =====================
+
+    function renderLOPTable(data = []) {
+        const tbody = document.getElementById('lopOthersTableBody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-16 text-center"><div class="flex flex-col items-center gap-2 text-slate-300"><i class="fas fa-inbox text-4xl"></i><p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">No adjustments found for this cycle</p></div></td></tr>`;
+            return;
+        }
+        data.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.dataset.lopIndex = index;
+            tr.dataset.lopId = item.id;
+            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
+            tr.innerHTML = buildLOPRowHTML(item, index, false);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function buildLOPRowHTML(item, index, editMode) {
+        const initials = (item.employee||'').substring(0,2).toUpperCase();
+        if (editMode) {
+            return `
+                <td class="px-5 py-2.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${initials}</div>
+                        <span class="font-black uppercase text-slate-800">${item.employee}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-2"><span class="pill bg-indigo-50 text-indigo-700">${item.month}</span></td>
+                <td class="px-4 py-2">
+                    <input class="inline-edit-input narrow" id="lop-lop-${index}" type="number" step="0.5" value="${item.lopindays > 0 ? item.lopindays : 0}" placeholder="0">
+                </td>
+                <td class="px-4 py-2">
+                    <input class="inline-edit-input narrow" id="lop-epay-${index}" type="number" value="${item.extraPay > 0 ? item.extraPay : 0}" placeholder="0">
+                </td>
+                <td class="px-4 py-2 text-slate-400 italic text-[10px]">${item.created||'--'}</td>
+                <td class="px-5 py-2 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                        <button onclick="saveLOPRow(${index}, ${item.id})" class="edit-save-btn"><i class="fas fa-check text-[9px]"></i> Save</button>
+                        <button onclick="cancelLOPEdit(${index})" class="edit-cancel-btn"><i class="fas fa-times text-[9px]"></i></button>
+                    </div>
+                </td>
+            `;
+        }
+        return `
+            <td class="px-5 py-3.5">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${initials}</div>
+                    <span class="font-black uppercase text-slate-800">${item.employee}</span>
+                </div>
+            </td>
+            <td class="px-4 py-3.5"><span class="pill bg-indigo-50 text-indigo-700">${item.month}</span></td>
+            <td class="px-4 py-3.5 font-black">${item.lopindays > 0 ? `<span class="pill bg-rose-50 text-rose-700">${item.lopindays} Days</span>` : '<span class="text-slate-300">--</span>'}</td>
+            <td class="px-4 py-3.5 font-black">${item.extraPay > 0 ? `<span class="pill bg-emerald-50 text-emerald-700">₹${item.extraPay.toLocaleString()}</span>` : '<span class="text-slate-300">--</span>'}</td>
+            <td class="px-4 py-3.5 text-slate-400 italic text-[10px]">${item.created||'--'}</td>
+            <td class="px-5 py-3.5 text-right">
+                <button onclick="startLOPEdit(${index})" class="edit-icon-btn" title="Edit row">
+                    <i class="fas fa-pen text-[10px]"></i>
+                </button>
+            </td>
+        `;
+    }
+
+    // Filtered cache reference for LOP table
+    let currentLOPData = [];
+
+    const _origFetchAdj = fetchAdjustments;
+    // Override to also store currentLOPData
+    fetchAdjustments = function(selectedMonth) {
+        selectedMonth = selectedMonth || month;
+        $.ajax({
+             url: '/admin/payroll/getExtraDetails',
+                type: 'GET',
+                dataType: 'json',
+            success:function(res){
+                adjustmentsCache = res;
+                currentLOPData = res.filter(item => item.month === selectedMonth);
+                renderLOPTable(currentLOPData);
+            },
+            error:function(err){ console.log(err); }
+        });
+    };
+
+    function startLOPEdit(index) {
+        const tr = document.querySelector(`#lopOthersTableBody tr[data-lop-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.add('editing-row');
+        tr.innerHTML = buildLOPRowHTML(currentLOPData[index], index, true);
+    }
+
+    function cancelLOPEdit(index) {
+        const tr = document.querySelector(`#lopOthersTableBody tr[data-lop-index="${index}"]`);
+        if (!tr) return;
+        tr.classList.remove('editing-row');
+        tr.innerHTML = buildLOPRowHTML(currentLOPData[index], index, false);
+    }
+
+    function saveLOPRow(index, id) {
+        const lop  = parseFloat(document.getElementById(`lop-lop-${index}`)?.value)||0;
+        const epay = parseFloat(document.getElementById(`lop-epay-${index}`)?.value)||0;
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{ action:'updateExtraDetails', csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>", id, lop, epay },
+            dataType:'json',
+            success:function(){
+                // Update cache
+                if (currentLOPData[index]) {
+                    currentLOPData[index].lopindays = lop;
+                    currentLOPData[index].extraPay  = epay;
+                    const gIdx = adjustmentsCache.findIndex(a=>a.id==id);
+                    if(gIdx>-1){ adjustmentsCache[gIdx].lopindays=lop; adjustmentsCache[gIdx].extraPay=epay; }
+                }
+                const tr = document.querySelector(`#lopOthersTableBody tr[data-lop-index="${index}"]`);
+                if(tr){ tr.classList.remove('editing-row'); tr.innerHTML = buildLOPRowHTML(currentLOPData[index], index, false); }
+                showToast('Adjustment updated');
+                fetchPayRoll();
+            },
+            error:function(){ showFeedback('error','Update Failed','An error occurred while updating the record.'); }
+        });
+    }
+
+    // ===================== TOAST =====================
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        toast.classList.remove('translate-y-20','opacity-0');
+        setTimeout(() => { toast.classList.add('translate-y-20','opacity-0'); }, 3000);
+    }
+
+    // Keep old modal-based edit (fallback from LOP table edit icon)
+    function openEditAdjModal(id) {
+        const item = adjustmentsCache.find(a => a.id == id);
+        if (!item) return;
+        document.getElementById('editAdjId').value       = item.id;
+        document.getElementById('editAdjEmpName').value  = item.employee;
+        const lopSec  = document.getElementById('editLopSection');
+        const epaySec = document.getElementById('editEpaySection');
+        if (item.lopindays > 0) {
+            lopSec.classList.remove('hidden');
+            document.getElementById('editLopValue').value  = item.lopindays;
+            document.getElementById('editEpayValue').value = item.extraPay;
+        } else {
+            lopSec.classList.add('hidden');
+            epaySec.classList.remove('hidden');
+            document.getElementById('editEpayValue').value = item.extraPay;
+            document.getElementById('editLopValue').value  = "";
+        }
+        toggleModal('editAdjModal');
+    }
+
+    document.getElementById('editAdjForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id   = document.getElementById('editAdjId').value;
+        const lop  = document.getElementById('editLopValue').value;
+        const epay = document.getElementById('editEpayValue').value;
+        $.ajax({
+            url:'api/payRollApi.php', type:'POST',
+            data:{ action:'updateExtraDetails', csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>", id, lop, epay },
+            dataType:'json',
+            success:function(){ showFeedback('success','Update Complete','Adjustment record updated successfully.'); toggleModal('editAdjModal'); getSalStructure(); fetchAdjustments(); fetchPayRoll(); },
+            error:function(){ showFeedback('error','Update Failed','An error occurred while updating the record.'); }
+        });
+    });
+
+    function updateStats(targetMonth) {
+        const filtered = payrollRecords.filter(emp => emp.month == targetMonth);
+        const count = filtered.length;
+        const gross = filtered.reduce((acc,curr) => acc + parseFloat(curr.gross||0), 0);
+        const ded   = filtered.reduce((acc,curr) => acc + (parseFloat(curr.pfEmployeeShare||0)+parseFloat(curr.esiEmployeeShare||0)+parseFloat(curr.pt||0)), 0);
+        const net   = filtered.reduce((acc,curr) => acc + parseFloat(curr.netPayeble||0), 0);
+        document.getElementById('stat-total-staff').innerText = count;
+        document.getElementById('stat-gross').innerText       = '₹ ' + gross.toLocaleString();
+        document.getElementById('stat-deduction').innerText   = '₹ ' + ded.toLocaleString();
+        document.getElementById('stat-net').innerText         = '₹ ' + net.toLocaleString();
+        document.getElementById('footer-count').innerText     = count;
+        document.getElementById('footer-total-net').innerText = '₹ ' + net.toLocaleString();
+        document.getElementById('footerMonth').textContent    = month;
+    }
+
+    function calculatePayload() {
+        const basic      = parseFloat(document.getElementById("basic").value) || 0;
+        const conveyance = parseFloat(document.getElementById("conveyance").value) || 0;
+        const medical    = parseFloat(document.getElementById("medical").value) || 0;
+        const bonus      = parseFloat(document.getElementById("bonus").value) || 0; 
+        const other      = parseFloat(document.getElementById("other").value) || 0;
+        const grossMonthly = basic + conveyance + medical + bonus + other;
+        let pfEmployee = 0, pfEmployer = 0;
+        if (basic > 0) { pfEmployee = basic>15000?1800:basic*0.12; pfEmployer = basic>15000?1950:basic*0.13; }
+        let esiEmployee = 0, esiEmployer = 0;
+        if (grossMonthly > 0 && grossMonthly <= 21000) { esiEmployee=grossMonthly*0.0075; esiEmployer=grossMonthly*0.0325; }
+        let pt = grossMonthly > 25000 ? 200 : 0;
+        const gratuityMonthly = basic > 0 ? ((basic*15)/26)/12 : 0;
+        const totalEmployeeDeductions = pfEmployee + esiEmployee + pt;
+        const netPay = grossMonthly - totalEmployeeDeductions;
+        const employerContributions = pfEmployer + esiEmployer + gratuityMonthly;
+        const monthlyCTC = grossMonthly + employerContributions;
+        document.getElementById('pfEmployer').value      = pfEmployer;
+        document.getElementById('esiEmployer').value     = esiEmployer;
+        document.getElementById('monthlyGratuity').value = gratuityMonthly;
+        document.getElementById('pt').value              = pt;
+        return {
+            name: document.getElementById('empName').options[document.getElementById('empName').selectedIndex]?.value || "Unknown",
+            basic, conveyance, medical, bonus, other,
+            grossMonthly, pfEmployee, esiEmployee,
+            totalEmployeeDeductions, netPay, pfEmployer,
+            esiEmployer, pt, gratuityMonthly,
+            monthly: monthlyCTC, annual: monthlyCTC*12
+        };
+    }
+
+    function populateSelect(selectId, items, valueKey, textKey) {
+        const selectEl = document.getElementById(selectId);
+        if (!selectEl) return;
+        selectEl.innerHTML = "<option value=''>-- Choose Employee --</option>";
+        if (items && Array.isArray(items)) {
+            items.forEach(item => {
+                const option = document.createElement("option");
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                selectEl.appendChild(option);
+            });
+        }
+    }
+
+    function updateCalculations() {
+        const data = calculatePayload();
+        document.getElementById("pfEmployee").value    = '₹ ' + data.pfEmployee.toFixed(2);
+        document.getElementById("esiEmployee").value   = '₹ ' + data.esiEmployee.toFixed(2);
+        document.getElementById('net').innerText        = data.netPay.toLocaleString(undefined,{minimumFractionDigits:2});
+        document.getElementById('monthlyCTC').innerText = data.monthly.toLocaleString(undefined,{minimumFractionDigits:2});
+        document.getElementById('annualCTC').innerText  = data.annual.toLocaleString(undefined,{minimumFractionDigits:2});
+    }
+
+document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = calculatePayload();
+            const csrfToken = document.getElementById("csrfToken").value;
+            $.ajax({
+                url: '/admin/payroll/addPayroll',
+                type: 'POST',
+                headers: {'X-CSRF-TOKEN': csrfToken},
+                data: data,
+                success: function(data){
+                    showSuccess(`Profile Enrolled: ${data.name}`);
+                    fetchPayRoll();
+                    toggleModal('employeeModal');
+                    e.target.reset();
+                },error: function(err){ console.log(err); }
+            });
+        });
+
+    document.getElementById("lopform").addEventListener("submit",function(e){
+        e.preventDefault();
+        addExtraDetails(month,'LOP',document.getElementById("lopSelect").value,document.getElementById("lop").value,null,this);
+    });
+
+    document.getElementById("epayForm").addEventListener("submit",function(e){
+        e.preventDefault();
+        addExtraDetails(month,'EPAY',document.getElementById("extraPaySelect").value,null,document.getElementById("epay").value,this);
+    });
+
+    function addExtraDetails(month, type, eid, lop=null, epay=null, form, csrfToken){
+            const data = {month: month, type: type, eid: eid, lop: lop ?? 0, epay: epay ?? 0};
+            $.ajax({
+                url: '/admin/payroll/extraDetails',
+                type: 'POST',
+                headers: {'X-CSRF-TOKEN': csrfToken},
+                data: data,
+                dataType: 'json',
+                success: function(res){ 
+                    showSuccess(`${type} Logged Successfully`);
+                    form.reset();
+                    toggleModal(type === 'LOP' ? 'lopModal' : 'extraPayModal');
+                    fetchAdjustments(); 
+                },
+                error: function(err){ console.log(err); }
+            });
+        }
+    function toggleModal(id) {
+        if (id !== 'editAdjModal') {
+            const selectid = (id==='employeeModal'?'empName':(id==='lopModal'?'lopSelect':'extraPaySelect'));
+            const type     = (id==='employeeModal'?'payroll':(id==='lopModal'?'lop':'epay'));
+            fetchEmps(type, month, selectid);
+        }
+        const m = document.getElementById(id);
+        if (m.classList.contains('opacity-0')) {
+            m.classList.remove('opacity-0','pointer-events-none');
+            if (id === 'employeeModal') updateCalculations();
+        } else {
+            m.classList.add('opacity-0','pointer-events-none');
+        }
+    }
+
+    document.querySelectorAll('.earning-input').forEach(i => {
+        i.addEventListener('input', updateCalculations);
+    });
+
     function downloadPayslip(index) {
-        const emp = payrollRecords[index];
+        const emp = payrollRecords.filter(e=>e.month===month)[index];
         if (!emp) return;
         const gross      = parseFloat(emp.netPayeble) + parseFloat(emp.pfEmployeeShare);
         const deductions = parseFloat(emp.pfEmployeeShare) + parseFloat(emp.esiEmployeeShare) + parseFloat(emp.pt);
@@ -1426,233 +2019,6 @@ function processPayroll(){
         </body></html>`);
         printWindow.document.close();
     }
-
-    function renderStructureTable(data) {
-        const tbody = document.getElementById('structureTableBody');
-        tbody.innerHTML = '';
-        if (!data) return;
-        data.forEach(emp => {
-            const gross = parseFloat(emp.basicPay)+parseFloat(emp.conveyance)+parseFloat(emp.medicalAllowence)+parseFloat(emp.statutoryBonus)+parseFloat(emp.otherAllowences);
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
-            tr.innerHTML = `
-                <td class="px-5 py-3.5 font-black uppercase tracking-tighter text-slate-800">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${(emp.employee||'').substring(0,2).toUpperCase()}</div>
-                        ${emp.employee}
-                    </div>
-                </td>
-                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.basicPay||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.conveyance||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.medicalAllowence||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.statutoryBonus||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-semibold text-slate-600">₹${(emp.otherAllowences||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-indigo-600">₹${emp.pfEmployeeShare.toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-indigo-400 font-semibold">₹${emp.pfEmployerShare.toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-rose-500">₹${emp.esiEmployeeShare.toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-rose-400 font-semibold">₹${emp.esiEmployerShare.toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(emp.monthlyGratuity||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 text-slate-500 font-semibold">₹${(emp.pt||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-emerald-600">₹${(gross||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-bold text-emerald-600">₹${(emp.netPay||0).toLocaleString()}</td>
-                <td class="px-3 py-3.5 font-black text-indigo-600 bg-slate-50/50">₹${(emp.monthlyCtc||0).toLocaleString()}</td>
-                <td class="px-5 py-3.5 font-black text-indigo-950 bg-indigo-50/30">₹${(emp.annualCtc||0).toLocaleString()}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderLOPTable(data = []) {
-        const tbody = document.getElementById('lopOthersTableBody');
-        tbody.innerHTML = '';
-        if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-16 text-center"><div class="flex flex-col items-center gap-2 text-slate-300"><i class="fas fa-inbox text-4xl"></i><p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">No adjustments found for this cycle</p></div></td></tr>`;
-            return;
-        }
-        data.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-indigo-50/20 transition-colors text-[11px]';
-            tr.innerHTML = `
-                <td class="px-5 py-3.5">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg flex items-center justify-center font-black text-[9px] text-slate-500 border border-slate-100">${(item.employee||'').substring(0,2).toUpperCase()}</div>
-                        <span class="font-black uppercase text-slate-800">${item.employee}</span>
-                    </div>
-                </td>
-                <td class="px-4 py-3.5"><span class="pill bg-indigo-50 text-indigo-700">${item.month}</span></td>
-                <td class="px-4 py-3.5 font-black">${item.lopindays > 0 ? `<span class="pill bg-rose-50 text-rose-700">${item.lopindays} Days</span>` : '<span class="text-slate-300">--</span>'}</td>
-                <td class="px-4 py-3.5 font-black">${item.extraPay > 0 ? `<span class="pill bg-emerald-50 text-emerald-700">₹${item.extraPay.toLocaleString()}</span>` : '<span class="text-slate-300">--</span>'}</td>
-                <td class="px-4 py-3.5 text-slate-400 italic text-[10px]">${item.created||'--'}</td>
-                <td class="px-5 py-3.5 text-right">
-                    <button onclick="openEditAdjModal(${item.id})" class="action-btn w-7 h-7 rounded-lg text-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all inline-flex items-center justify-center">
-                        <i class="fas fa-edit text-[10px]"></i>
-                    </button>
-
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function openEditAdjModal(id) {
-        const item = adjustmentsCache.find(a => a.id == id);
-        if (!item) return;
-        document.getElementById('editAdjId').value    = item.id;
-        document.getElementById('editAdjEmpName').value = item.employee;
-        const lopSec  = document.getElementById('editLopSection');
-        const epaySec = document.getElementById('editEpaySection');
-        if (item.lopindays > 0) {
-            lopSec.classList.remove('hidden');
-            document.getElementById('editLopValue').value  = item.lopindays;
-            document.getElementById('editEpayValue').value = item.extraPay;
-        } else {
-            lopSec.classList.add('hidden');
-            epaySec.classList.remove('hidden');
-            document.getElementById('editEpayValue').value = item.extraPay;
-            document.getElementById('editLopValue').value  = "";
-        }
-        toggleModal('editAdjModal');
-    }
-
-    document.getElementById('editAdjForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const id   = document.getElementById('editAdjId').value;
-        const lop  = document.getElementById('editLopValue').value;
-        const epay = document.getElementById('editEpayValue').value;
-        $.ajax({
-            url:'api/payRollApi.php', type:'POST',
-            data:{ action:'updateExtraDetails', csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>", id, lop, epay },
-            dataType:'json',
-            success:function(){ showFeedback('success','Update Complete','Adjustment record updated successfully.'); toggleModal('editAdjModal'); getSalStructure(); fetchAdjustments(); fetchPayRoll(); },
-            error:function(){ showFeedback('error','Update Failed','An error occurred while updating the record.'); }
-        });
-    });
-
-    function updateStats(targetMonth) {
-        const filtered = payrollRecords.filter(emp => emp.month == targetMonth);
-        const count = filtered.length;
-        const gross = filtered.reduce((acc,curr) => acc + parseFloat(curr.gross||0), 0);
-        const ded   = filtered.reduce((acc,curr) => acc + (parseFloat(curr.pfEmployeeShare||0)+parseFloat(curr.esiEmployeeShare||0)+parseFloat(curr.pt||0)), 0);
-        const net   = filtered.reduce((acc,curr) => acc + parseFloat(curr.netPayeble||0), 0);
-        document.getElementById('stat-total-staff').innerText = count;
-        document.getElementById('stat-gross').innerText       = '₹ ' + gross.toLocaleString();
-        document.getElementById('stat-deduction').innerText   = '₹ ' + ded.toLocaleString();
-        document.getElementById('stat-net').innerText         = '₹ ' + net.toLocaleString();
-        document.getElementById('footer-count').innerText     = count;
-        document.getElementById('footer-total-net').innerText = '₹ ' + net.toLocaleString();
-        document.getElementById('footerMonth').textContent    = month;
-    }
-
-    function calculatePayload() {
-        const basic      = parseFloat(document.getElementById("basic").value) || 0;
-        const conveyance = parseFloat(document.getElementById("conveyance").value) || 0;
-        const medical    = parseFloat(document.getElementById("medical").value) || 0;
-        const bonus      = parseFloat(document.getElementById("bonus").value) || 0;
-        const other      = parseFloat(document.getElementById("other").value) || 0;
-        const grossMonthly = basic + conveyance + medical + bonus + other;
-        let pfEmployee = 0, pfEmployer = 0;
-        if (basic > 0) {
-            if (basic > 15000) { pfEmployee=1800; pfEmployer=1950; }
-            else { pfEmployee=basic*0.12; pfEmployer=basic*0.13; }
-        }
-        let esiEmployee = 0, esiEmployer = 0;
-        if (grossMonthly > 0 && grossMonthly <= 21000) {
-            esiEmployee = grossMonthly*0.0075;
-            esiEmployer = grossMonthly*0.0325;
-        }
-        let pt = grossMonthly > 25000 ? 200 : 0;
-        const gratuityMonthly = basic > 0 ? ((basic*15)/26)/12 : 0;
-        const totalEmployeeDeductions = pfEmployee + esiEmployee + pt;
-        const netPay = grossMonthly - totalEmployeeDeductions;
-        const employerContributions = pfEmployer + esiEmployer + gratuityMonthly;
-        const monthlyCTC = grossMonthly + employerContributions;
-        document.getElementById('pfEmployer').value         = pfEmployer;
-        document.getElementById('esiEmployer').value        = esiEmployer;
-        document.getElementById('monthlyGratuity').value    = gratuityMonthly;
-        document.getElementById('pt').value                 = pt;
-        return {
-            name: document.getElementById('empName').options[document.getElementById('empName').selectedIndex]?.value || "Unknown",
-            basic, conveyance, medical, bonus, other,
-            grossMonthly, pfEmployee, esiEmployee,
-            totalEmployeeDeductions, netPay, pfEmployer,
-            esiEmployer, pt, gratuityMonthly,
-            monthly: monthlyCTC, annual: monthlyCTC*12
-        };
-    }
-
-    function populateSelect(selectId, items, valueKey, textKey) {
-        const selectEl = document.getElementById(selectId);
-        if (!selectEl) return;
-        selectEl.innerHTML = "<option value=''>-- Choose Employee --</option>";
-        if (items && Array.isArray(items)) {
-            items.forEach(item => {
-                const option = document.createElement("option");
-                option.value       = item[valueKey];
-                option.textContent = item[textKey];
-                selectEl.appendChild(option);
-            });
-        }
-    }
-
-    function updateCalculations() {
-        const data = calculatePayload();
-        document.getElementById("pfEmployee").value    = '₹ ' + data.pfEmployee.toFixed(2);
-        document.getElementById("esiEmployee").value   = '₹ ' + data.esiEmployee.toFixed(2);
-        document.getElementById('net').innerText        = data.netPay.toLocaleString(undefined,{minimumFractionDigits:2});
-        document.getElementById('monthlyCTC').innerText = data.monthly.toLocaleString(undefined,{minimumFractionDigits:2});
-        document.getElementById('annualCTC').innerText  = data.annual.toLocaleString(undefined,{minimumFractionDigits:2});
-    }
-
-    document.getElementById('employeeForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const data = calculatePayload();
-        $.ajax({
-            url:'api/payRollApi.php', type:'POST', data:data,
-            success:function(){ showFeedback('success','Staff Profile Initialized',`${data.name} has been enrolled into the current cycle.`); fetchPayRoll(); getSalStructure(); },
-            error:function(){ showFeedback('error','Enrollment Failed','Could not initialize staff profile.'); }
-        });
-        toggleModal('employeeModal');
-        this.reset();
-    });
-
-    document.getElementById("lopform").addEventListener("submit",function(e){
-        e.preventDefault();
-        addExtraDetails(month,'LOP',document.getElementById("lopSelect").value,document.getElementById("lop").value,null,this);
-    });
-
-    document.getElementById("epayForm").addEventListener("submit",function(e){
-        e.preventDefault();
-        addExtraDetails(month,'EPAY',document.getElementById("extraPaySelect").value,null,document.getElementById("epay").value,this);
-    });
-
-    function addExtraDetails(month,type,eid,lop=null,epay=null,form){
-        $.ajax({
-            url:'api/payRollApi.php', type:'POST',
-            data:{action:'addExtraDetails',csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>",month,type,eid,lop,epay},
-            dataType:'json',
-            success:function(){ showFeedback('success','Adjustment Saved',`${type} has been applied to the payroll record successfully.`); form.reset(); toggleModal(type==='LOP'?'lopModal':'extraPayModal'); fetchAdjustments(); },
-            error:function(){ showFeedback('error','Save Failed','Could not save adjustment details.'); }
-        });
-    }
-
-    function toggleModal(id) {
-        if (id !== 'editAdjModal') {
-            const selectid = (id==='employeeModal'?'empName':(id==='lopModal'?'lopSelect':'extraPaySelect'));
-            const type     = (id==='employeeModal'?'payroll':(id==='lopModal'?'lop':'epay'));
-            fetchEmps(type, month, selectid);
-        }
-        const m = document.getElementById(id);
-        if (m.classList.contains('opacity-0')) {
-            m.classList.remove('opacity-0','pointer-events-none');
-            if (id === 'employeeModal') updateCalculations();
-        } else {
-            m.classList.add('opacity-0','pointer-events-none');
-        }
-    }
-
-    document.querySelectorAll('.earning-input').forEach(i => {
-        i.addEventListener('input', updateCalculations);
-    });
 
     // ===================== INIT =====================
     document.getElementById('footerMonth').textContent = month;

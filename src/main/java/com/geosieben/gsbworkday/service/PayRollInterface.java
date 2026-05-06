@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import com.geosieben.gsbworkday.dto.PayRollRequest;
+import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.SalaryExtraDetails;
 import com.geosieben.gsbworkday.entity.SalaryStructure;;
 
@@ -18,6 +17,8 @@ public ResponseEntity<Map<String,String>> addExtraDetails(String eid,double epay
 public ResponseEntity<Map<String,String>> processPayRoll(String month);
 public ResponseEntity<Map<String,String>> authenticatePayRollUser(String password);
 public ResponseEntity<Map<String,String>> changePassword (String password,String newPassword);
-
+public List<EmployeeBasicInfo> fetchEmployees(String type,String month);
+public Map<String,String> updateSalary(int salaryid,double lop,double extrapay,String month,int payid);
+public ResponseEntity<Map<String, String>> updateSalaryExisting(int salaryid,int salid,double lopDays,double extraPay,String month);
 
 }
