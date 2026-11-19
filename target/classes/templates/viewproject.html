@@ -7,7 +7,6 @@
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
      <meta name="csrf-param" th:content="${_csrf.parameterName}">
 <meta name="csrf-token" th:content="${_csrf.token}">
-            <script src="https://cdn.tailwindcss.com"></script>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
                 body { font-family: 'Inter', sans-serif; }
@@ -130,9 +129,8 @@
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         </head>
+        <head th:replace="includes/header :: header"></head>
         <body > <!-- Reduced overall padding -->
-            <head th:replace="includes/header :: header"></head>
-
             <div class="w-full ">
                 <!-- Project Header & Summary -->   
                 <header id="projectDetails" class="bg-white shadow-xl rounded-lg p-3 lg:p-4 border border-indigo-200 mb-4"> <!-- Reduced padding and shadow -->

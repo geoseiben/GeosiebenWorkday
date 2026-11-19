@@ -1,10 +1,925 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Enterprise Velocity Portal</title>
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Tailwind Play CDN configured with Jakarta Sans -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#1d63b8',
+                            600: '#154e96',
+                            700: '#1034A6',
+                            800: '#0d2575',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+    <head th:replace="~{includes/header :: header}"></head>
 </head>
-<body>
-<h1>adminDashboard</h1>
+
+<body class="bg-slate-50 text-slate-900 antialiased font-sans min-h-screen selection:bg-brand-500 selection:text-white">
+    <div class="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6">
+
+        <!-- ================= TOP APP BAR ================= -->
+        <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-700 to-sky-500 flex items-center justify-center text-white shadow-md shadow-brand-700/20 flex-shrink-0">
+                    <i class="fa-solid fa-shapes text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900" id="greetingText">Welcome back</h1>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                            Production v4.0
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Velocity Corporate Ecosystem &bull; Real-time Operations Console</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 border border-slate-200 text-xs font-semibold text-slate-600">
+                    <i class="fa-regular fa-calendar text-slate-400"></i>
+                    <span id="todayDate">&mdash;</span>
+                </div>
+                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-xs font-bold text-emerald-700">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Core Engines Active
+                </div>
+            </div>
+        </header>
+
+        <!-- ================= LIVE ANNOUNCEMENT TICKER ================= -->
+        <div class="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center h-12">
+            <div class="absolute left-0 top-0 bottom-0 z-20 px-4 bg-white/95 backdrop-blur border-r border-slate-100 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-brand-700 shadow-[4px_0_12px_rgba(0,0,0,0.02)]">
+                <i class="fa-solid fa-bolt text-brand-600 animate-bounce"></i>
+                <span class="hidden sm:inline">Operational Pulse</span>
+            </div>
+            <div class="overflow-hidden w-full pl-28 sm:pl-48">
+                <div class="inline-flex whitespace-nowrap animate-[marquee_45s_linear_infinite] hover:[animation-play-state:paused] py-2" id="celebrationTicker">
+                    <!-- Dynamic updates populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= STATS SECTION: ALL 6 VERTICALS ================= -->
+        <section sec:authorize="hasAnyAuthority('admin','hr')" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+            
+            <!-- 1. Workforce -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-brand-500/40 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">Workforce</span>
+                    <span class="w-7 h-7 rounded-lg bg-blue-50 text-brand-700 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-users"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="activeEmployees">--</div>
+                <div id="active" class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"></div>
+            </div>
+
+            <!-- 2. Leaves -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-amber-400/50 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">Pending Leaves</span>
+                    <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-regular fa-calendar-xmark"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="pendingLeaves">--</div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 mt-1">
+                    <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Action required
+                </span>
+            </div>
+
+            <!-- 3. IT Tickets -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-400/50 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">IT Tickets</span>
+                    <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-headset"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="pendingIT">--</div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 mt-1">
+                    <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Open Incidents
+                </span>
+            </div>
+
+            <!-- 4. Hiring & Talent Pipeline -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-emerald-400/50 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">Hiring Pipeline</span>
+                    <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="openPositions">--</div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mt-1" id="candidatesActive">
+                    -- candidates active
+                </span>
+            </div>
+
+            <!-- 5. Separation / Attrition -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-400/50 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">Attrition (YTD)</span>
+                    <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="seperatedEmployees">--</div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 mt-1" id="attritionRateTrend">
+                    <i class="fa-solid fa-arrow-trend-down text-[9px]"></i> --% rate
+                </span>
+            </div>
+
+            <!-- 6. Delivery & Performance -->
+            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-purple-400/50 transition-all duration-200">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-xs font-semibold tracking-wide">Active Projects</span>
+                    <span class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-diagram-project"></i>
+                    </span>
+                </div>
+                <div class="text-2xl font-black text-slate-900 tracking-tight" id="activeProjects">--</div>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-1" id="projectsOnTrack">
+                    -- on schedule
+                </span>
+            </div>
+
+        </section>
+
+        <!-- ================= LIVE METRICS SUITE ================= -->
+        <section sec:authorize="hasAnyAuthority('admin','hr')" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Enterprise Visual Analytics</h2>
+                    <p class="text-xs text-slate-500">Aggregated live feeds across resource nodes</p>
+                </div>
+            </div>
+
+            <!-- Charts Row 1: 4 Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Attendance Dynamics -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Attendance 8W Trend</h3>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Weekly</span>
+                    </div>
+                    <div class="relative w-full h-36">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Department Density -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Headcount Density</h3>
+                        <i class="fa-solid fa-chart-pie text-slate-400 text-xs"></i>
+                    </div>
+                    <div class="relative w-full h-36">
+                        <canvas id="deptChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Leave Distribution -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Leave Distribution</h3>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Qtr</span>
+                    </div>
+                    <div class="relative w-full h-36">
+                        <canvas id="leaveTypeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- IT Ticket SLA Status -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">IT Incident Queue</h3>
+                        <i class="fa-solid fa-ticket-simple text-slate-400 text-xs"></i>
+                    </div>
+                    <div class="relative w-full h-36">
+                        <canvas id="itStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2: 2 Column Layout (Delivery & Performance) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                
+                <!-- Financial Execution: Project Budget vs Actual -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Project Budget vs. Actual Burn</h3>
+                            <p class="text-xs text-slate-500">Allocated capital vs. real expenditure per deliverable</p>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs font-semibold text-slate-600">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-brand-700"></span>Budget</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span>Actual</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-52">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Performance Benchmarks -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-slate-900 tracking-tight">KPI Department Targets</h3>
+                        <i class="fa-solid fa-bullseye text-brand-700 text-xs"></i>
+                    </div>
+                    <div id="perfCompare" class="space-y-3 flex-1 flex flex-col justify-center">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ACTIONS & ACTIVITY CONSOLE ================= -->
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+            
+            <!-- Left Console: Quick Command Grid & Notices (8 Cols) -->
+            <div class="xl:col-span-8 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-900">Operational Actions</h2>
+                    <span class="text-xs text-slate-500">Direct Navigation Shortlinks</span>
+                </div>
+
+                <!-- Action Tiles Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    
+                    <a href="/leaves/apply" class="group bg-white border border-slate-200/80 hover:border-brand-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-brand-700 group-hover:scale-110 group-hover:bg-brand-700 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-calendar-plus text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Apply Leave</p>
+                            <span class="text-[10px] text-slate-500">Time off request</span>
+                        </div>
+                    </a>
+
+                    <a href="/myTasks" class="group bg-white border border-slate-200/80 hover:border-emerald-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="relative w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-fingerprint text-base"></i>
+                            <span id="clock-status-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900" id="clock-status-text">Attendance</p>
+                            <span class="text-[10px] text-slate-500">Clock & shifts</span>
+                        </div>
+                    </a>
+
+                    <button sec:authorize="hasAnyAuthority('admin','hr')" id="open-modal-btn" type="button" class="group bg-white border border-slate-200/80 hover:border-indigo-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
+                        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-diagram-project text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Log Project</p>
+                            <span class="text-[10px] text-slate-500">Create deliverable</span>
+                        </div>
+                    </button>
+
+                    <a sec:authorize="hasAnyAuthority('admin')" href="/admin/addemployee" class="group bg-white border border-slate-200/80 hover:border-purple-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-user-plus text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Onboarding</p>
+                            <span class="text-[10px] text-slate-500">Add candidate</span>
+                        </div>
+                    </a>
+
+                    <a href="/performance" class="group bg-white border border-slate-200/80 hover:border-amber-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-award text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">KPI & Reviews</p>
+                            <span class="text-[10px] text-slate-500">Quarterly marks</span>
+                        </div>
+                    </a>
+
+                    <a href="/separtion/resign" class="group bg-white border border-slate-200/80 hover:border-rose-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-person-walking-dashed-line-arrow-right text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Separation</p>
+                            <span class="text-[10px] text-slate-500">Resignation / Exit</span>
+                        </div>
+                    </a>
+
+                    <a sec:authorize="hasAnyAuthority('admin','hr')" href="/admin/generateLetters" class="group bg-white border border-slate-200/80 hover:border-cyan-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-cyan-50 text-cyan-600 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-file-signature text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Letters</p>
+                            <span class="text-[10px] text-slate-500">Templates & dispatch</span>
+                        </div>
+                    </a>
+
+                    <a sec:authorize="hasAnyAuthority('admin','hr')" href="/admin/resourceManager" class="group bg-white border border-slate-200/80 hover:border-teal-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                        <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 group-hover:scale-110 group-hover:bg-teal-600 group-hover:text-white transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-network-wired text-base"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">Resources</p>
+                            <span class="text-[10px] text-slate-500">Hardware & Access</span>
+                        </div>
+                    </a>
+
+                </div>
+
+                <!-- Strategic Advisory Card -->
+                <div class="bg-gradient-to-r from-brand-700 to-brand-800 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-bell-concierge text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-brand-100">Performance Assessment Windows Open</h4>
+                            <p class="text-xs text-white/80 mt-0.5">Mid-Year reviews are now officially live. Coordinate ratings with Leads before the 28th.</p>
+                        </div>
+                    </div>
+                    <a href="/performance" class="px-4 py-2 rounded-xl bg-white text-brand-800 hover:bg-brand-50 text-xs font-bold whitespace-nowrap shadow-sm transition-colors">Complete Forms &rarr;</a>
+                </div>
+
+            </div>
+
+            <!-- Right Feed: Real-time Live Log & Deadlines (4 Cols) -->
+            <div class="xl:col-span-4 space-y-4">
+                
+                <!-- Live Event Stream -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Live Audit Activity</h3>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    </div>
+                    <div id="activityFeed" class="divide-y divide-slate-100 max-h-56 overflow-y-auto space-y-2 mt-2 pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Top Ranked Contributors -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Top KPI Performers</h3>
+                        <span class="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full">Quarterly</span>
+                    </div>
+                    <div id="topPerformers" class="space-y-3 mt-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Deadlines -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Upcoming Milestones</h3>
+                        <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
+                    </div>
+                    <div id="upcomingDeadlines" class="space-y-2.5 mt-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- ================= ADD PROJECT MODAL ================= -->
+    <div id="add-project-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
+            
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center text-xs font-bold">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-900">Initiate Project / Pilot</h3>
+                </div>
+                <button type="button" id="cancel-add-project-icon" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="add-project-form" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Project Name</label>
+                    <input type="text" name="projectName" required placeholder="e.g. Geodetic Cloud Platform 3.0"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Deliverable Type</label>
+                        <select id="project-type" name="projectType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                            <option value="Project">Standard Project</option>
+                            <option value="Pilot">R&D Pilot</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Department Category</label>
+                        <select id="category" name="categoryId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Designated Lead</label>
+                        <select id="project-lead" name="projectLeadId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                            <option value="">Select Lead</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Client Stakeholder</label>
+                        <select id="associated-client" name="clientId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                            <option value="">Select Client</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="pilot-fields" class="hidden grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Start Date</label>
+                        <input type="date" name="startDate" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Target End</label>
+                        <input type="date" name="deadline" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Estimated Hours</label>
+                        <input type="text" name="hours" placeholder="40.0" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Repository Path</label>
+                        <input type="text" name="filepath" placeholder="https://git..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+
+                <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" id="cancel-add-project" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition">Cancel</button>
+                    <button type="submit" id="submit-btn" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-brand-700 hover:bg-brand-600 text-white shadow-md shadow-brand-700/20 transition-all">
+                        Register Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messenger fragment integration preserved -->
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script th:src="@{/js/script.js}" type="text/javascript"></script>
+
+    <script th:inline="javascript">
+        /* Chart.js Configuration Setup */
+        if (window.Chart) {
+            Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+            Chart.defaults.font.size = 10.5;
+            Chart.defaults.color = '#64748b';
+            Chart.defaults.plugins.legend.display = false;
+        }
+
+        const PALETTE = ['#1034A6', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#94a3b8'];
+        const CHARTS = {};
+
+        function makeChart(canvasId, config) {
+            if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return null;
+            CHARTS[canvasId] = new Chart(ctx, config);
+            return CHARTS[canvasId];
+        }
+
+        /* Enterprise Mock Data Backup */
+        const MOCK = {
+            stats: {
+                pendingLeaves: 7,
+                pendingIT: 4,
+                activeEmployees: 86,
+                activeMale: 54,
+                activeFemale: 32,
+                openPositions: 9,
+                activeCandidates: 28,
+                separated: 5,
+                attritionRatePct: 3.8,
+                avgAttendancePct: 94.2,
+                attendanceDeltaPct: 2.1,
+                activeProjects: 16,
+                projectsOnTrack: 13
+            },
+            departments: {
+                labels: ['Engineering', 'Spatial GIS', 'Operations', 'Quality Assurance', 'Sales'],
+                values: [38, 22, 14, 8, 4]
+            },
+            attendance: {
+                labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8'],
+                values: [92, 91, 94, 93, 95, 94, 96, 94]
+            },
+            leaveTypes: {
+                labels: ['Casual', 'Privilege', 'Sick', 'Comp-Off'],
+                values: [42, 28, 20, 10]
+            },
+            itTickets: {
+                labels: ['New', 'In-Progress', 'Escalated', 'Resolved'],
+                values: [4, 7, 2, 29]
+            },
+            budget: {
+                labels: ['GIS Migration', 'Survey Automation', 'HR Cloud', 'API Gateway', 'Infra Tuning'],
+                budget: [14.0, 9.5, 6.0, 11.0, 5.5],
+                actual: [12.8, 10.2, 5.1, 10.9, 4.8]
+            },
+            teamPerformance: [
+                { name: 'Core GIS Engineering', value: 92, target: 85, color: '#1034A6' },
+                { name: 'Data Pipeline QA', value: 88, target: 80, color: '#22c55e' },
+                { name: 'Survey Ground Ops', value: 81, target: 85, color: '#f59e0b' },
+                { name: 'HR Shared Services', value: 95, target: 90, color: '#8b5cf6' }
+            ],
+            activity: [
+                { icon: 'fa-rocket', bg: 'bg-blue-50', color: 'text-brand-700', title: 'New Drone Fleet Mapping Logged', detail: 'Project ID: #782 - Geospatial', time: '2 hours ago' },
+                { icon: 'fa-calendar-check', bg: 'bg-emerald-50', color: 'text-emerald-600', title: 'Casual Leave Approved', detail: 'Pavana C A - 2 Days', time: '4 hours ago' },
+                { icon: 'fa-user-check', bg: 'bg-purple-50', color: 'text-purple-600', title: 'Candidate Clearance Sent', detail: 'DevOps Lead - Offer Issued', time: 'Yesterday' },
+                { icon: 'fa-shield-halved', bg: 'bg-amber-50', color: 'text-amber-600', title: 'SOC-2 Compliance Audit Passed', detail: 'Infra Systems Verified', time: '2 days ago' }
+            ],
+            topPerformers: [
+                { name: 'Ananya Rao', role: 'Staff Backend Lead', score: 98, initials: 'AR', color: 'bg-brand-700' },
+                { name: 'Karthik Iyer', role: 'Photogrammetry Lead', score: 94, initials: 'KI', color: 'bg-emerald-600' },
+                { name: 'Divyashree NK', role: 'Finance Controller', score: 93, initials: 'DN', color: 'bg-purple-600' }
+            ],
+            deadlines: [
+                { name: 'LiDAR Feature Extraction Deliverable', due: 'In 2 days', urgency: 'urgent' },
+                { name: 'Quarterly HR Performance Review Sign-off', due: 'In 4 days', urgency: 'soon' },
+                { name: 'Client Cloud Portal UAT Deployment', due: 'In 10 days', urgency: 'normal' }
+            ]
+        };
+
+        /* Stats Renderers */
+        function renderTopStats(s) {
+            if (s.pendingLeaves != null) $('#pendingLeaves').text(s.pendingLeaves);
+            if (s.pendingIT != null) $('#pendingIT').text(s.pendingIT);
+            if (s.activeEmployees != null) $('#activeEmployees').text(s.activeEmployees);
+            if (s.activeMale != null && s.activeFemale != null) {
+                $('#active').html(`<span>Male: ${s.activeMale}</span> &bull; <span>Female: ${s.activeFemale}</span>`);
+            }
+            if (s.openPositions != null) $('#openPositions').text(s.openPositions + ' Roles');
+            if (s.activeCandidates != null) $('#candidatesActive').text(`${s.activeCandidates} active candidates`);
+            if (s.separated != null) $('#seperatedEmployees').text(s.separated);
+            if (s.attritionRatePct != null) $('#attritionRateTrend').html(`<i class="fa-solid fa-arrow-trend-down text-[9px]"></i> ${s.attritionRatePct}% annualized`);
+            if (s.activeProjects != null) $('#activeProjects').text(s.activeProjects);
+            if (s.projectsOnTrack != null) $('#projectsOnTrack').text(`${s.projectsOnTrack} on schedule`);
+        }
+
+        function fetchAdminStats() {
+            renderTopStats(MOCK.stats);
+            $.ajax({
+                url: '/admin/stats',
+                type: 'GET',
+                dataType: 'json',
+                success: function (r) {
+                    renderTopStats({
+                        pendingLeaves: r.pendingLeaves,
+                        pendingIT: r.pendingtickets,
+                        activeEmployees: r.totalActiveEmployees,
+                        activeMale: r.activeMale,
+                        activeFemale: r.activeFemale,
+                        separated: r.totalSeparated,
+                        attritionRatePct: r.attritionRatePct || MOCK.stats.attritionRatePct,
+                        activeProjects: r.activeProjects || MOCK.stats.activeProjects,
+                        projectsOnTrack: r.projectsOnTrack || MOCK.stats.projectsOnTrack,
+                        openPositions: r.openPositions || MOCK.stats.openPositions,
+                        activeCandidates: r.activeCandidates || MOCK.stats.activeCandidates
+                    });
+                },
+                error: function () { /* Retains MOCK seamlessly */ }
+            });
+        }
+
+        /* Chart Initializations */
+        function initCharts() {
+            // 1. Attendance Chart
+            makeChart('attendanceChart', {
+                type: 'line',
+                data: {
+                    labels: MOCK.attendance.labels,
+                    datasets: [{
+                        data: MOCK.attendance.values,
+                        borderColor: '#1034A6',
+                        backgroundColor: 'rgba(16, 52, 166, 0.06)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1034A6'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 70, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Department Density
+            makeChart('deptChart', {
+                type: 'doughnut',
+                data: {
+                    labels: MOCK.departments.labels,
+                    datasets: [{
+                        data: MOCK.departments.values,
+                        backgroundColor: PALETTE,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    cutout: '68%',
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { boxPadding: 6 } }
+                }
+            });
+
+            // 3. Leave Distribution
+            makeChart('leaveTypeChart', {
+                type: 'pie',
+                data: {
+                    labels: MOCK.leaveTypes.labels,
+                    datasets: [{
+                        data: MOCK.leaveTypes.values,
+                        backgroundColor: ['#1034A6', '#22c55e', '#f59e0b', '#ec4899'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { boxPadding: 6 } }
+                }
+            });
+
+            // 4. IT Incident Chart
+            makeChart('itStatusChart', {
+                type: 'bar',
+                data: {
+                    labels: MOCK.itTickets.labels,
+                    datasets: [{
+                        data: MOCK.itTickets.values,
+                        backgroundColor: ['#ef4444', '#f59e0b', '#6366f1', '#22c55e'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 5. Budget vs Actual
+            makeChart('budgetChart', {
+                type: 'bar',
+                data: {
+                    labels: MOCK.budget.labels,
+                    datasets: [
+                        { label: 'Budget ($k)', data: MOCK.budget.budget, backgroundColor: '#1034A6', borderRadius: 6 },
+                        { label: 'Actual ($k)', data: MOCK.budget.actual, backgroundColor: '#f59e0b', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 6. Benchmark targets
+            const perfEl = document.getElementById('perfCompare');
+            if (perfEl) {
+                perfEl.innerHTML = MOCK.teamPerformance.map(t => `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span class="text-slate-700">${t.name}</span>
+                            <span class="${t.value >= t.target ? 'text-emerald-600' : 'text-amber-600'} font-bold">${t.value}% / ${t.target}%</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden relative">
+                            <div class="h-full rounded-full" style="width: ${t.value}%; background-color: ${t.color}"></div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        /* Clock-In Indicator Toggle */
+        function updateClockInVisuals(isActive) {
+            const dot = document.getElementById('clock-status-dot');
+            const text = document.getElementById('clock-status-text');
+            if (isActive) {
+                dot.classList.remove('hidden');
+                text.innerText = 'Clocked In';
+                text.classList.add('text-emerald-700');
+            } else {
+                dot.classList.add('hidden');
+                text.innerText = 'Attendance';
+                text.classList.remove('text-emerald-700');
+            }
+        }
+
+        /* Feeds Renderers */
+        function renderActivityFeed(items) {
+            const el = document.getElementById('activityFeed');
+            if (!el) return;
+            el.innerHTML = items.map(a => `
+                <div class="flex items-start gap-3 py-1.5">
+                    <div class="w-7 h-7 rounded-lg ${a.bg} ${a.color} flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                        <i class="fa-solid ${a.icon}"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-slate-800 leading-tight">${a.title}</p>
+                        <p class="text-[11px] text-slate-500 truncate">${a.detail}</p>
+                        <span class="text-[10px] text-slate-400 font-medium">${a.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTopPerformers(items) {
+            const el = document.getElementById('topPerformers');
+            if (!el) return;
+            el.innerHTML = items.map((p, i) => `
+                <div class="flex items-center gap-3">
+                    <span class="w-5 text-xs font-bold text-slate-400">#${i + 1}</span>
+                    <div class="w-8 h-8 rounded-full ${p.color} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm">
+                        ${p.initials}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-slate-800 truncate">${p.name}</p>
+                        <p class="text-[10px] text-slate-500 truncate">${p.role}</p>
+                    </div>
+                    <span class="text-xs font-black text-emerald-600">${p.score}%</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDeadlines(items) {
+            const el = document.getElementById('upcomingDeadlines');
+            if (!el) return;
+            el.innerHTML = items.map(d => {
+                const badgeClass = d.urgency === 'urgent' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-700 border-slate-200';
+                return `
+                    <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                        <p class="text-xs font-medium text-slate-800 truncate">${d.name}</p>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border ${badgeClass} whitespace-nowrap">${d.due}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function populateCelebrations() {
+            const ticker = document.getElementById('celebrationTicker');
+            if (!ticker) return;
+            const events = [
+                { name: 'Sarah Jenkins', type: 'Birthday Today', icon: 'fa-cake-candles', color: 'text-brand-700' },
+                { name: 'David Chen', type: '5th Work Anniversary', icon: 'fa-medal', color: 'text-amber-500' },
+                { name: 'Photogrammetry 4.0 Launch', type: 'Production Deploy Complete', icon: 'fa-rocket', color: 'text-emerald-600' },
+                { name: 'Q3 Townhall', type: 'Friday at 4:00 PM', icon: 'fa-bullhorn', color: 'text-purple-600' }
+            ];
+            const html = events.map(e => `
+                <div class="inline-flex items-center gap-2 px-6 border-r border-slate-200 text-xs">
+                    <i class="fa-solid ${e.icon} ${e.color}"></i>
+                    <span class="font-bold text-slate-900">${e.name}</span>
+                    <span class="text-slate-500 font-medium">(${e.type})</span>
+                </div>
+            `).join('');
+            ticker.innerHTML = html + html;
+        }
+
+        /* Modal Toggle */
+        const toggleModal = show => {
+            const m = $('#add-project-modal');
+            show ? m.removeClass('hidden').addClass('flex') : m.addClass('hidden').removeClass('flex');
+            if (!show) { $('#add-project-form')[0].reset(); $('#pilot-fields').addClass('hidden'); }
+        };
+
+        /* Form Selects Population */
+        function projectNeeds() {
+            $.ajax({
+                url: '/admin/getprojectrequired', type: 'GET', dataType: 'json',
+                success: function (r) {
+                    populateSelect('category', r[1], 'categoryId', 'catagoryShortname');
+                    populateSelect('project-lead', r[0], 'eid', 'name');
+                    populateSelect('associated-client', r[2], 'cid', 'clientId');
+                }
+            });
+        }
+
+        function populateSelect(id, items, valKey, textKey) {
+            const s = document.getElementById(id);
+            if (!s || !items) return;
+            s.innerHTML = '<option value="">Select option</option>';
+            items.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i[valKey];
+                opt.textContent = i[textKey];
+                s.appendChild(opt);
+            });
+        }
+
+        /* Document Initialization */
+        $(document).ready(function () {
+            // Update Greet & Date
+            const h = new Date().getHours();
+            const user = /*[[${username}]]*/ 'Team Member';
+            const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+            $('#greetingText').text(`${greeting}, ${user}`);
+            $('#todayDate').text(new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }));
+
+            // Initial calls
+            fetchAdminStats();
+            initCharts();
+            populateCelebrations();
+            renderActivityFeed(MOCK.activity);
+            renderTopPerformers(MOCK.topPerformers);
+            renderDeadlines(MOCK.deadlines);
+            projectNeeds();
+
+            // Check running assignments for clock-in visual
+            $.ajax({
+                url: '/getRunningAllotments', type: 'GET', dataType: 'json',
+                success: function (r) { updateClockInVisuals(r !== null); }
+            });
+
+            // Modal Events
+            $('#open-modal-btn').on('click', () => toggleModal(true));
+            $('#cancel-add-project, #cancel-add-project-icon').on('click', () => toggleModal(false));
+
+            $('#project-type').on('change', function () {
+                this.value === 'Pilot' ? $('#pilot-fields').removeClass('hidden') : $('#pilot-fields').addClass('hidden');
+            });
+
+            // Project Form Submission
+            $('#add-project-form').on('submit', function (e) {
+                e.preventDefault();
+                const $btn = $('#submit-btn');
+                $btn.prop('disabled', true).text('Submitting...');
+                $.ajax({
+                    url: '/admin/addproject',
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': $('#csrfToken').val() },
+                    data: $(this).serialize(),
+                    success: function () {
+                        toggleModal(false);
+                        fetchAdminStats();
+                    },
+                    error: () => alert('Unable to save project. Verify access privileges.'),
+                    complete: () => $btn.prop('disabled', false).text('Register Project')
+                });
+            });
+        });
+    </script>
 </body>
 </html>

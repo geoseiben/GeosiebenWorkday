@@ -1,5 +1,6 @@
 package com.geosieben.gsbworkday.controller;
 
+import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -19,6 +20,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class AuthController {
 
+    private final BasicInfoRepository basicInfoRepository;
+    AuthController(BasicInfoRepository basicInfoRepository) {
+        this.basicInfoRepository = basicInfoRepository;
+    }
     @GetMapping("/login")
     public String loginpage(){
         return "login";
@@ -49,11 +54,10 @@ public class AuthController {
     }
 @GetMapping("/admin/activeEmployees")
 public  String activeEmployees(Model model, HttpSession httpSession){
-    String eid = (String) httpSession.getAttribute("eid");
-    System.out.println(eid);
+    model.addAttribute("employees",basicInfoRepository.getManageEmployeeList());
     return "activeemployees";
 }
-
+    
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -91,7 +95,7 @@ public  String activeEmployees(Model model, HttpSession httpSession){
     public String myTasks() {
         return"tasks";
     }
-    @GetMapping("/admin/generateLetters")
+    @GetMapping("/admin/letterGenerator")   
     public String genLeters(){
         return "generateLetters";
     }

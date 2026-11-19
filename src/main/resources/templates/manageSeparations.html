@@ -10,103 +10,146 @@
     <title>Separation Management | Admin Portal</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        :root {
-            --brand-primary: #6366f1;
-            --bg-main: #f8fafc;
-            --border-color: #e2e8f0;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif']
+                    },
+                    keyframes: {
+                        rowIn: { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+                        shimmer: { '0%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0 50%' } },
+                        bump: { '0%': { transform: 'scale(1)' }, '40%': { transform: 'scale(1.25)' }, '100%': { transform: 'scale(1)' } }
+                    },
+                    animation: {
+                        rowIn: 'rowIn 0.35s ease forwards',
+                        shimmer: 'shimmer 1.4s ease infinite',
+                        bump: 'bump 0.3s ease'
+                    }
+                }
+            }
         }
+    </script>
 
-        body { background: var(--bg-main); font-family: 'Inter', sans-serif; color: #0f172a; }
-        h2 { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        .glass-card { background: #ffffff; border: 1px solid var(--border-color); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); border-radius: 12px; }
-        
-        #enhancedDataTable thead th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-            padding: 12px;
-            border-bottom: 2px solid var(--border-color);
+    <!--
+        Reusable component classes (status pills, icon buttons, avatar, skeleton
+        bar, the DataTables search/pagination controls DataTables itself
+        generates with fixed class names) are defined here with @apply so the
+        JS below can keep referencing them by name while every declaration is
+        still pure Tailwind utilities underneath.
+    -->
+    <style type="text/tailwindcss">
+        @layer base {
+            body { @apply bg-slate-50 text-slate-900 font-sans; }
+            h2 { @apply font-display; }
         }
+        @layer components {
+            .glass-card { @apply bg-white border border-slate-200 shadow-sm rounded-xl; }
 
-        .status-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; border: 1px solid transparent; }
-        .pill-pending { background: #fff7ed; color: #9a3412; border-color: #ffedd5; }
-        .pill-approved { background: #ecfdf5; color: #065f46; border-color: #d1fae5; }
-        .pill-rejected { background: #fef2f2; color: #991b1b; border-color: #fee2e2; }
-        
-        .remarks-input { 
-            font-size: 0.8rem; 
-            border-radius: 6px; 
-            border: 1px solid #cbd5e1; 
-            padding: 5px 8px;
-            width: 100%;
+            .status-pill { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase border transition-transform duration-150 hover:scale-[1.04]; }
+            .status-pill i { @apply text-[10px]; }
+            .pill-pending   { @apply bg-orange-50 text-orange-800 border-orange-100; }
+            .pill-approved  { @apply bg-emerald-50 text-emerald-800 border-emerald-100; }
+            .pill-rejected  { @apply bg-red-50 text-red-800 border-red-100; }
+            .pill-completed { @apply bg-indigo-50 text-indigo-800 border-indigo-100; }
+            .pill-withdrawn { @apply bg-slate-100 text-slate-600 border-slate-200; }
+
+            .remarks-input { @apply text-[13px] rounded-md border border-slate-300 px-2 py-1.5 w-full transition-shadow duration-150 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 disabled:bg-slate-100 disabled:cursor-not-allowed; }
+
+            .btn-icon { @apply w-8 h-8 inline-flex items-center justify-center rounded-md border-0 text-[13px] transition-transform duration-150 active:scale-90 hover:-translate-y-0.5; }
+            .btn-approve  { @apply bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white; }
+            .btn-reject   { @apply bg-red-50 text-red-600 hover:bg-red-600 hover:text-white; }
+            .btn-withdraw { @apply bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white; }
+            .btn-complete { @apply bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white; }
+            .btn-view     { @apply bg-violet-50 text-indigo-500 hover:bg-indigo-500 hover:text-white; }
+
+            .emp-avatar { @apply w-9 h-9 rounded-full object-cover border-2 border-white ring-1 ring-slate-200 transition-transform duration-200 flex-shrink-0; }
+            .emp-cell { @apply flex items-center gap-2.5; }
+            tr:hover .emp-avatar { @apply scale-[1.08] ring-indigo-500; }
+
+            .skeleton-bar { @apply h-3 rounded bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:400%_100%] animate-shimmer; }
+
+            /* DataTables generates these elements/classnames itself at runtime */
+            .dataTables_wrapper .dataTables_filter input {
+                @apply text-[13px] rounded-md border border-slate-300 px-3 py-1.5 ml-2 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15;
+            }
+            .dataTables_wrapper .dataTables_filter label { @apply text-[13px] text-slate-500 font-medium; }
+            .dataTables_wrapper .dataTables_length select {
+                @apply text-[13px] rounded-md border border-slate-300 px-2 py-1 mx-1 focus:outline-none focus:border-indigo-500;
+            }
+            .dataTables_wrapper .dataTables_length label { @apply text-[13px] text-slate-500 font-medium; }
+            .dataTables_wrapper .dataTables_info { @apply text-[13px] text-slate-500; }
+            .dataTables_wrapper .dataTables_paginate { @apply flex items-center gap-1; }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                @apply text-[13px] px-2.5 py-1 rounded-md border border-transparent text-slate-600 cursor-pointer;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                @apply bg-indigo-500 text-white border-indigo-500;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+                @apply text-slate-300 cursor-not-allowed;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+                @apply bg-slate-100;
+            }
         }
-        .remarks-input:disabled { background-color: #f1f5f9; cursor: not-allowed; }
-
-        .btn-icon {
-            width: 32px; height: 32px;
-            display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 6px; transition: all 0.2s; border: none; font-size: 0.85rem;
-        }
-        .btn-approve { background: #ecfdf5; color: #059669; }
-        .btn-approve:hover { background: #059669; color: white; }
-        
-        .btn-reject { background: #fef2f2; color: #dc2626; }
-        .btn-reject:hover { background: #dc2626; color: white; }
-
-        .btn-withdraw { background: #fff7ed; color: #ea580c; }
-        .btn-withdraw:hover { background: #ea580c; color: white; }
-
-        .btn-view { color: #6366f1; background: #f5f3ff; }
-        .btn-view:hover { background: #6366f1; color: white; }
     </style>
 </head>
+<head th:replace="includes/header :: header"></head>
 <body>
-
-<header th:replace="~{includes/header :: header}"></header>
-
-<div class="container-fluid py-4">
-    <div class="glass-card p-0 overflow-hidden">
-        <div class="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
-            <h2 class="fw-bold text-slate-800 mb-0">Separation Requests <span id="queueCount" class="badge bg-slate-100 text-slate-600 ms-2">0</span></h2>
+<div class="max-w-full px-4 py-6">
+    <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
+            <h2 class="font-bold text-slate-800 m-0 text-xl">
+                Separation Requests
+                <span id="queueCount" class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-sm font-semibold ml-2 transition-transform duration-200">0</span>
+            </h2>
         </div>
-        
-        <div class="table-responsive">
-            <table id="enhancedDataTable" class="table align-middle mb-0">
+
+        <div class="overflow-x-auto">
+            <table id="enhancedDataTable" class="w-full align-middle border-collapse">
                 <thead>
                     <tr>
-                        <th style="width: 50px">#</th>
-                        <th>Employee</th>
-                        <th>Type/Reason</th>
-                        <th>Resigned</th>
-                        <th>LWD</th>
-                        <th>Status</th>
-                        <th>Admin Remarks</th>
-                        <th class="text-center">Actions</th>
+                        <th class="w-[50px] bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">#</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Employee</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Type/Reason</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Resigned</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">LWD</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Status</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Admin Remarks</th>
+                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody"></tbody>
+                <tbody id="tableBody">
+                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
+                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
+                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+    // Status map: 0 Pending, 1 Approved, 2 Rejected, 3 Completed, 4 Withdrawn
+    const STATUS = {
+        PENDING: 0,
+        APPROVED: 1,
+        REJECTED: 2,
+        COMPLETED: 3,
+        WITHDRAWN: 4
+    };
+
     $(document).ready(function() {
         fetchData();
     });
@@ -117,15 +160,66 @@
             type: 'GET',
             success: function(res) {
                 renderTable(res);
-                $('#queueCount').text(res ? res.length : 0);
+                const count = res ? res.length : 0;
+                $('#queueCount').text(count).addClass('animate-bump');
+                setTimeout(() => $('#queueCount').removeClass('animate-bump'), 300);
             }
         });
     }
 
     function formatDate(dateStr) {
-        if(!dateStr) return 'N/A';
+        if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    }
+
+    function initials(first, last) {
+        return `${(first || '?').charAt(0)}${(last || '').charAt(0)}`.toUpperCase();
+    }
+
+    function avatarUrl(item) {
+        if (item.profileImage) return item.profileImage;
+        const name = encodeURIComponent(`${item.firstName || ''} ${item.lastName || ''}`.trim() || 'NA');
+        return `https://ui-avatars.com/api/?name=${name}&background=6366f1&color=fff&bold=true&size=64`;
+    }
+
+    function statusMeta(status) {
+        switch (status) {
+            case STATUS.PENDING:   return { pill: 'pill-pending',   icon: 'fa-hourglass-half', label: 'Pending' };
+            case STATUS.APPROVED:  return { pill: 'pill-approved',  icon: 'fa-check',          label: 'Approved' };
+            case STATUS.REJECTED:  return { pill: 'pill-rejected',  icon: 'fa-xmark',          label: 'Rejected' };
+            case STATUS.COMPLETED: return { pill: 'pill-completed', icon: 'fa-flag-checkered', label: 'Completed' };
+            case STATUS.WITHDRAWN: return { pill: 'pill-withdrawn', icon: 'fa-rotate-left',    label: 'Withdrawn' };
+            default:                return { pill: 'pill-pending',   icon: 'fa-circle-question', label: 'Unknown' };
+        }
+    }
+
+    function buildActionButtons(item, status) {
+        let buttons = `
+            <a href="/admin/separation/view?separationid=${encodeURIComponent(item.separationid)}" class="btn-icon btn-view" title="View Details">
+                <i class="fas fa-eye"></i>
+            </a>`;
+
+        if (status === STATUS.PENDING) {
+            buttons += `
+                <button onclick="handleUpdate('approve', ${item.separationid})" class="btn-icon btn-approve" title="Approve">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="handleUpdate('reject', ${item.separationid})" class="btn-icon btn-reject" title="Reject">
+                    <i class="fas fa-times"></i>
+                </button>`;
+        } else if (status === STATUS.APPROVED) {
+            buttons += `
+                <button onclick="handleUpdate('complete', ${item.separationid})" class="btn-icon btn-complete" title="Mark Completed">
+                    <i class="fas fa-flag-checkered"></i>
+                </button>
+                <button onclick="handleUpdate('withdraw', ${item.separationid})" class="btn-icon btn-withdraw" title="Withdraw Approval">
+                    <i class="fas fa-rotate-left"></i>
+                </button>`;
+        }
+        // Rejected, Completed, Withdrawn: view only (terminal states)
+
+        return buttons;
     }
 
     function renderTable(data) {
@@ -137,86 +231,87 @@
         $tbody.empty();
 
         data.forEach((item, index) => {
-            let statusPill = '';
-            let actionButtons = `
-                <a href="/admin/separation/view?separationid=${encodeURIComponent(item.separationid)}" class="btn-icon btn-view" title="View Details">
-                    <i class="fas fa-eye"></i>
-                </a>`;
+            console.log(item);
+            const status = parseInt(item.status);
+            const meta = statusMeta(status);
+            const statusPill = `<span class="status-pill ${meta.pill}"><i class="fas ${meta.icon}"></i>${meta.label}</span>`;
+            const actionButtons = buildActionButtons(item, status);
+            const isEditable = status === STATUS.PENDING;
 
-            // Logic based on status
-            // 0 = Pending, 1 = Approved, 2 = Rejected
-            if (item.status === 0) {
-                statusPill = `<span class="status-pill pill-pending">Pending</span>`;
-                actionButtons += `
-                    <button onclick="handleUpdate('approve', ${item.separationid})" class="btn-icon btn-approve" title="Approve">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button onclick="handleUpdate('reject', ${item.separationid})" class="btn-icon btn-reject" title="Reject">
-                        <i class="fas fa-times"></i>
-                    </button>`;
-            } else if (item.status === 1) {
-                statusPill = `<span class="status-pill pill-approved">Approved</span>`;
-                actionButtons += `
-                    <button onclick="handleUpdate('withdraw', ${item.separationid})" class="btn-icon btn-withdraw" title="Withdraw Approval">
-                        <i class="fas fa-rotate-left"></i>
-                    </button>`;
-            } else {
-                statusPill = `<span class="status-pill pill-rejected">Rejected</span>`;
-            }
-
-            $tbody.append(`
-                <tr data-id="${item.separationid}">
-                    <td class="text-slate-400 fw-medium">${index + 1}</td>
-                    <td>
-                        <div class="fw-semibold text-slate-700">${item.firstName} ${item.lastName}</div>
-                        <div class="text-xs text-slate-400">ID: ${item.eid}</div>
+            const $row = $(`
+                <tr data-id="${item.separationid}" class="opacity-0 animate-rowIn hover:bg-slate-50 transition-colors" style="animation-delay: ${Math.min(index * 30, 300)}ms">
+                    <td class="px-3 py-2.5 border-t border-slate-100 text-slate-400 font-medium">${index + 1}</td>
+                    <td class="px-3 py-2.5 border-t border-slate-100">
+                        <div class="emp-cell">
+                            <img class="emp-avatar" src="${item.image?'../'+item.image:avatarUrl(item)}" alt="${initials(item.firstName, item.lastName)}"
+                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(initials(item.firstName, item.lastName))}&background=94a3b8&color=fff';">
+                            <div>
+                                <div class="font-semibold text-slate-700">${item.firstName} ${item.lastName}</div>
+                                <div class="text-xs text-slate-400">ID: ${item.eid}</div>
+                            </div>
+                        </div>
                     </td>
-                    <td>
-                        <div class="fw-medium text-slate-600" style="font-size: 0.85rem">${item.separationType}</div>
-                        <div class="text-truncate text-slate-400 text-xs" style="max-width: 150px;">${item.reasonforLeaving}</div>
+                    <td class="px-3 py-2.5 border-t border-slate-100">
+                        <div class="font-medium text-slate-600 text-[13px]">${item.separationType}</div>
+                        <div class="truncate text-slate-400 text-xs max-w-[150px]">${item.reasonforLeaving}</div>
                     </td>
-                    <td style="font-size: 0.85rem">${formatDate(item.resignationDate)}</td>
-                    <td class="fw-bold text-indigo-600" style="font-size: 0.85rem">${formatDate(item.lastWorkingDay)}</td>
-                    <td>${statusPill}</td>
-                    <td>
-                        <input type="text" id="remarks-${item.separationid}" 
-                               class="remarks-input" 
-                               placeholder="Admin notes..." 
+                    <td class="px-3 py-2.5 border-t border-slate-100 text-[13px]">${formatDate(item.resignationDate)}</td>
+                    <td class="px-3 py-2.5 border-t border-slate-100 font-bold text-indigo-600 text-[13px]">${formatDate(item.lastWorkingDay)}</td>
+                    <td class="px-3 py-2.5 border-t border-slate-100">${statusPill}</td>
+                    <td class="px-3 py-2.5 border-t border-slate-100">
+                        <input type="text" id="remarks-${item.separationid}"
+                               class="remarks-input"
+                               placeholder="Admin notes..."
                                value="${item.adminRemarks || ''}"
-                               ${item.status !== 0 ? 'disabled' : ''}>
+                               ${!isEditable ? 'disabled' : ''}>
                     </td>
-                    <td class="text-center">
-                        <div class="d-flex justify-content-center gap-2">
+                    <td class="px-3 py-2.5 border-t border-slate-100 text-center">
+                        <div class="flex justify-center gap-2">
                             ${actionButtons}
                         </div>
                     </td>
                 </tr>
             `);
+
+            $tbody.append($row);
         });
 
         $('#enhancedDataTable').DataTable({
             pageLength: 10,
-            dom: '<"p-3 d-flex justify-content-between"f>rt<"p-3 d-flex justify-content-between"ip>',
+            dom: '<"p-3 flex justify-between items-center"f>rt<"p-3 flex justify-between items-center"ip>',
             language: { search: "", searchPlaceholder: "Search requests..." }
         });
     }
 
     async function handleUpdate(action, id) {
         const remarks = $(`#remarks-${id}`).val();
-        
+
         if (action === 'reject' && (!remarks || !remarks.trim())) {
             return Swal.fire('Note Required', 'Please provide a reason for rejection.', 'warning');
         }
 
+        const actionCopy = {
+            approve: 'approve',
+            reject: 'reject',
+            withdraw: 'withdraw approval for',
+            complete: 'mark as completed'
+        }[action] || action;
+
         const confirm = await Swal.fire({
             title: `Are you sure?`,
-            text: `You are about to ${action} this request.`,
+            text: `You are about to ${actionCopy} this request.`,
             icon: action === 'withdraw' ? 'warning' : 'question',
             showCancelButton: true,
-            confirmButtonColor: action === 'approve' ? '#059669' : (action === 'withdraw' ? '#ea580c' : '#dc2626')
+            confirmButtonColor: action === 'approve' ? '#059669'
+                : action === 'withdraw' ? '#ea580c'
+                : action === 'complete' ? '#4f46e5'
+                : '#dc2626'
         });
 
         if (!confirm.isConfirmed) return;
+
+        const $row = $(`tr[data-id="${id}"]`);
+        $row.css({ transition: 'opacity 0.2s ease', opacity: 0.5 });
 
         const csrfToken = document.querySelector('meta[name="_csrf"]').content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
@@ -224,9 +319,9 @@
         try {
             const response = await fetch('/admin/separtion/updateStatus', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    [csrfHeader]: csrfToken 
+                    [csrfHeader]: csrfToken
                 },
                 body: new URLSearchParams({ action, id, remarks: remarks || '' })
             });
@@ -234,9 +329,12 @@
             const res = await response.json();
             if (res.status === 'success') {
                 Swal.fire({ icon: 'success', title: 'Updated!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-                fetchData(); 
+                fetchData();
+            } else {
+                $row.css('opacity', 1);
             }
         } catch (e) {
+            $row.css('opacity', 1);
             Swal.fire('Error', 'Something went wrong', 'error');
         }
     }

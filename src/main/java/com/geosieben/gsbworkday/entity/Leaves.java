@@ -21,13 +21,13 @@ public class Leaves {
     private LocalDate AdminRemarkDate;
     private double NoofDays;
     private int status=0;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "EID")   
     private EmployeeBasicInfo employeeBasicInfo;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "appliedBy")
     private EmployeeBasicInfo appliedBy;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "approvedBy")
     private EmployeeBasicInfo approvedBy;
 

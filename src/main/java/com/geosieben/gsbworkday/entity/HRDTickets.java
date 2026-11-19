@@ -14,10 +14,11 @@ public class HRDTickets {
     private String subject;
     private String description;
     private int status;
+    @SuppressWarnings("unused")
     private LocalDateTime raisedOn =LocalDateTime.now();
     @Column(columnDefinition = "timestamp default current_timestamp on update current_timestamp")
     private LocalDateTime updatedAt=LocalDateTime.now();
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="raisedBy")
     private EmployeeBasicInfo employeeBasicInfo;
 

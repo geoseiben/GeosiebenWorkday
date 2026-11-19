@@ -9,6 +9,7 @@ public class TestInfo {
     @Id
     @Column(name="id",columnDefinition = "varchar(3)")
     private String id;
+    @SuppressWarnings("unused")
     private String name;
 
     public TestInfo(String id,String name) {

@@ -2,7 +2,7 @@ package com.geosieben.gsbworkday.entity;
 
 import java.time.LocalDate;
 
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,7 +17,7 @@ public class Separation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int separationid;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="EID")
     private EmployeeBasicInfo employeeBasicInfo;
     private String separationType;
@@ -27,11 +27,11 @@ public class Separation {
     private String description;
     private int status=0;
     private int eligibleForReHire;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="ApprovedBy")
     private EmployeeBasicInfo ApprovedBy;
     private LocalDate ApprovedOn;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="appliedBy")
     private EmployeeBasicInfo appliedBy;
     private String adminRemarks=null;

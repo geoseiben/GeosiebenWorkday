@@ -14,7 +14,7 @@ public class Clients {
     private String clientId;
     private String clientName;
     private LocalDateTime createdOn=LocalDateTime.now();
-   @ManyToOne
+   @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="addedBy")
    private EmployeeBasicInfo employeeBasicInfo;
 

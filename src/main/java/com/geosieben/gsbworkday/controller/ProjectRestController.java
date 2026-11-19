@@ -13,7 +13,7 @@ import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.Project;
 import com.geosieben.gsbworkday.entity.ProjectAllocation;
 import com.geosieben.gsbworkday.entity.RootProject;
-import com.geosieben.gsbworkday.repository.BookerHoursRepository;
+import com.geosieben.gsbworkday.repository.BookedHoursRepository;
 import com.geosieben.gsbworkday.service.ClientService;
 import com.geosieben.gsbworkday.service.ExcelService;
 import com.geosieben.gsbworkday.service.ProjectService;
@@ -22,7 +22,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,17 +35,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RestController
 public class ProjectRestController {
 
-    private final BookerHoursRepository bookerHoursRepository;
-@Autowired
+    private  BookedHoursRepository bookerHoursRepository;
 private ClientService clientService; 
-@Autowired
 private ExcelService excelService;
-@Autowired
 private ProjectService projectService;
 
-    ProjectRestController(BookerHoursRepository bookerHoursRepository) {
-        this.bookerHoursRepository = bookerHoursRepository;
-    }
+
+public ProjectRestController(BookedHoursRepository bookerHoursRepository, ClientService clientService,
+        ExcelService excelService, ProjectService projectService) {
+    this.bookerHoursRepository = bookerHoursRepository;
+    this.clientService = clientService;
+    this.excelService = excelService;
+    this.projectService = projectService;
+}
 @GetMapping("/projectStatsByclient")
 public List<ClientWiseProjectResponseDto> projectStatsByclient() {
     return clientService.getPrejectStats();

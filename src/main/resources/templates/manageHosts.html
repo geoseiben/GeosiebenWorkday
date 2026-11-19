@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Hosts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.5/css/responsive.bootstrap5.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css">
+
+    <style>
+        /* ═══════════════════════════════════════
+           ROOT & RESET
+        ═══════════════════════════════════════ */
+        :root {
+            --primary:       #3B3FD8;
+            --primary-dark:  #2d31b0;
+            --primary-light: #eef0ff;
+            --text-primary:  #111827;
+            --text-secondary:#6b7280;
+            --text-muted:    #9ca3af;
+            --border:        rgba(0,0,0,.08);
+            --border-strong: rgba(0,0,0,.15);
+            --surface:       #ffffff;
+            --surface-alt:   #f8f9fa;
+            --surface-hover: #f0f1ff;
+            --radius-sm:     5px;
+            --radius-md:     8px;
+            --radius-lg:     12px;
+            /* status colors */
+            --idle-bg:   #E1F5EE; --idle-text:   #085041; --idle-dot:   #1D9E75;
+            --assign-bg: #E6F1FB; --assign-text: #0C447C; --assign-dot: #378ADD;
+            --inactive-bg:#FAECE7;--inactive-text:#4A1B0C;--inactive-dot:#D85A30;
+            --outward-bg: #FFF3E0; --outward-text: #E65100; --outward-dot: #FF6F00;
+            --lease-bg: #F3E8FF; --lease-text: #6B21A8; --lease-dot: #9333EA;
+            --leasereturn-bg: #FDE8E8; --leasereturn-text: #7F1D1D; --leasereturn-dot: #DC2626;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        /* ═══════════════════════════════════════
+           PAGE WRAPPER
+        ═══════════════════════════════════════ */
+        .page-wrap {
+            max-width: 99%;
+            margin: 16px auto;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 0.5px solid var(--border-strong);
+            overflow: hidden;
+        }
+
+        /* ═══════════════════════════════════════
+           PAGE HEADER BAR
+        ═══════════════════════════════════════ */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 0.5px solid var(--border);
+            background: var(--surface);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-header-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-light);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .page-header-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .page-header-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* ═══════════════════════════════════════
+           STAT STRIP
+        ═══════════════════════════════════════ */
+        .stat-strip {
+            display: flex;
+            border-bottom: 0.5px solid var(--border);
+            background: var(--surface-alt);
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 8px 16px;
+            border-right: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-item:last-child { border-right: none; }
+
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            line-height: 1;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        /* ═══════════════════════════════════════
+           DATATABLE TOOLBAR OVERRIDES
+        ═══════════════════════════════════════ */
+        .dt-toolbar-wrap {
+            padding: 8px 12px;
+            border-bottom: 0.5px solid var(--border);
+            background: var(--surface);
+        }
+
+        .dataTables_wrapper .dt-buttons {
+            display: flex;
+            gap: 4px;
+            float: none !important;
+            flex-wrap: wrap;
+        }
+
+        .dataTables_wrapper .dt-buttons .btn,
+        .dataTables_wrapper .dt-buttons button {
+            background: var(--surface-alt) !important;
+            color: var(--text-secondary) !important;
+            border: 0.5px solid var(--border-strong) !important;
+            border-radius: var(--radius-sm) !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            box-shadow: none !important;
+            transition: background .15s;
+        }
+
+        .dataTables_wrapper .dt-buttons .btn:hover,
+        .dataTables_wrapper .dt-buttons button:hover {
+            background: #e9ebee !important;
+        }
+
+        div.dt-container .dt-search input,
+        div.dt-container select.dt-input {
+            border: 0.5px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            font-size: 11px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        div.dt-container .dt-search input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59,63,216,.12);
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* ═══════════════════════════════════════
+           TABLE
+        ═══════════════════════════════════════ */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table#example {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        table#example thead tr {
+            background: var(--surface-alt);
+        }
+
+        table#example thead th {
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            color: var(--text-secondary) !important;
+            text-transform: uppercase;
+            letter-spacing: .45px;
+            padding: 7px 10px !important;
+            border-bottom: 0.5px solid var(--border-strong) !important;
+            border-top: none !important;
+            border-right: none !important;
+            border-left: none !important;
+            background: var(--surface-alt) !important;
+            white-space: nowrap;
+        }
+
+        table#example tbody td {
+            font-size: 12px;
+            padding: 5px 10px !important;
+            border-bottom: 0.5px solid var(--border) !important;
+            border-top: none !important;
+            border-right: none !important;
+            border-left: none !important;
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+            color: var(--text-primary);
+        }
+
+        table#example tbody tr:nth-of-type(odd) td {
+            background: var(--surface-alt);
+        }
+
+        table#example tbody tr:hover td {
+            background: var(--surface-hover) !important;
+        }
+
+        /* ═══════════════════════════════════════
+           STATUS BADGES
+        ═══════════════════════════════════════ */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .status-badge.Idle     { background: var(--idle-bg);    color: var(--idle-text);    }
+        .status-badge.Idle::before { background: var(--idle-dot); }
+
+        .status-badge.Assigned { background: var(--assign-bg);  color: var(--assign-text);  }
+        .status-badge.Assigned::before { background: var(--assign-dot); }
+
+        .status-badge.Inactive { background: var(--inactive-bg);color: var(--inactive-text);}
+        .status-badge.Inactive::before { background: var(--inactive-dot); }
+
+        /* ═══════════════════════════════════════
+           ACTION BUTTONS
+        ═══════════════════════════════════════ */
+        .actions-cell { white-space: nowrap; }
+
+        .actions-cell .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            border: 0.5px solid;
+            transition: opacity .15s;
+            text-decoration: none;
+            cursor: pointer;
+            margin-right: 3px;
+            line-height: 1.4;
+        }
+
+        .actions-cell .btn:hover { opacity: .8; }
+
+        /* specific action button variants */
+        .btn-act-assign   { background: var(--idle-bg);    color: var(--idle-text);    border-color: var(--idle-dot) !important; }
+        .btn-act-return   { background: var(--inactive-bg);color: var(--inactive-text);border-color: var(--inactive-dot) !important; }
+        .btn-act-outward  { background: var(--outward-bg);  color: var(--outward-text); border-color: var(--outward-dot) !important; }
+        .btn-act-lease    { background: var(--lease-bg);  color: var(--lease-text); border-color: var(--lease-dot) !important; }
+        .btn-act-leasereturn { background: var(--leasereturn-bg); color: var(--leasereturn-text); border-color: var(--leasereturn-dot) !important; }
+        .btn-act-ack      { background: #FAEEDA;           color: #412402;             border-color: #BA7517 !important; }
+        .btn-act-viewack  { background: var(--assign-bg);  color: var(--assign-text);  border-color: var(--assign-dot) !important; }
+        .btn-act-view     { background: var(--surface-alt);color: var(--text-secondary);border-color: var(--border-strong) !important; }
+
+        /* ═══════════════════════════════════════
+           PAGINATION
+        ═══════════════════════════════════════ */
+        .dataTables_wrapper .dataTables_paginate {
+            padding-top: 0;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: var(--radius-sm) !important;
+            font-size: 11px !important;
+            padding: 3px 8px !important;
+            border: 0.5px solid var(--border) !important;
+            margin: 0 1px;
+            color: var(--text-secondary) !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+            background: var(--surface-hover) !important;
+            border-color: var(--border-strong) !important;
+            color: var(--primary) !important;
+        }
+
+        /* footer row */
+        .dt-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 12px;
+            border-top: 0.5px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* ═══════════════════════════════════════
+           UPLOAD MODAL (Bootstrap)
+        ═══════════════════════════════════════ */
+        #uploadAckModal .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 12px 40px rgba(0,0,0,.18);
+        }
+
+        #uploadAckModal .modal-header {
+            background: var(--surface-alt);
+            border-bottom: 0.5px solid var(--border);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            padding: 12px 16px;
+        }
+
+        #uploadAckModal .modal-title { font-size: 13px; font-weight: 600; }
+
+        #uploadAckModal .modal-body  { padding: 16px; }
+        #uploadAckModal .modal-footer{ border-top: 0.5px solid var(--border); padding: 10px 16px; }
+
+        #btnSpinner { margin-right: 4px; }
+
+        /* ═══════════════════════════════════════
+           CUSTOM MODAL (full-page)
+        ═══════════════════════════════════════ */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            z-index: 1055;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background: rgba(0,0,0,.48);
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 48px;
+            backdrop-filter: blur(3px);
+        }
+
+        .custom-modal-content {
+            background: var(--surface);
+            padding: 24px;
+            border: none;
+            width: 92%;
+            max-width: 860px;
+            border-radius: var(--radius-lg);
+            position: relative;
+            box-shadow: 0 16px 48px rgba(0,0,0,.22);
+            animation: fadeInModal .2s ease;
+            margin-bottom: 48px;
+        }
+
+        .close-btn {
+            color: var(--text-muted);
+            font-size: 24px;
+            font-weight: 600;
+            position: absolute;
+            top: 12px; right: 16px;
+            cursor: pointer;
+            line-height: 1;
+            transition: color .15s;
+        }
+        .close-btn:hover { color: var(--primary); }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(-8px) scale(.98); }
+            to   { opacity: 1; transform: translateY(0)   scale(1); }
+        }
+
+        .modal-header-custom {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            border-bottom: 0.5px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .modal-header-custom .modal-icon  { font-size: 1.5rem; color: var(--primary); }
+        .modal-header-custom .modal-title  { font-size: 1.1rem; font-weight: 600; margin: 0; color: var(--text-primary); }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            margin-bottom: 4px;
+        }
+
+        .form-control, .form-select {
+            font-size: 12px;
+            border: 0.5px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59,63,216,.12);
+        }
+
+        .form-control.bg-light { background: var(--surface-alt) !important; color: var(--text-primary); font-weight: 500; }
+
+        .peripheral-info { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+        /* cards inside modal */
+        .modal-card {
+            background: var(--surface-alt);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+
+        .modal-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* modal footer buttons */
+        #modal-footer-actions .btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ═══════════════════════════════════════
+           FORM CHECK (peripheral checkboxes)
+        ═══════════════════════════════════════ */
+        .peripheral-checkbox { accent-color: var(--primary); }
+        .outward-checkbox { accent-color: var(--outward-dot); }
+        .lease-checkbox { accent-color: var(--lease-dot); }
+        .lease-return-checkbox { accent-color: var(--leasereturn-dot); }
+
+        /* Outward component styling */
+        .outward-component-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            transition: all .15s;
+        }
+
+        .outward-component-item:hover {
+            background: var(--outward-bg);
+            border-color: var(--outward-dot);
+        }
+
+        .outward-component-item input:checked + label {
+            font-weight: 600;
+            color: var(--outward-text);
+        }
+
+        .outward-component-item label {
+            margin: 0;
+            cursor: pointer;
+            flex-grow: 1;
+            font-size: 11px;
+        }
+
+        .component-detail {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ═══════════════════════════════════════
+           LEASE COMPONENT TABLE
+        ═══════════════════════════════════════ */
+        .lease-table-wrap {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 0.5px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+        }
+        table.lease-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        table.lease-table thead th {
+            position: sticky; top: 0;
+            background: var(--surface-alt);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: var(--text-secondary);
+            padding: 6px 8px;
+            border-bottom: 0.5px solid var(--border-strong);
+            white-space: nowrap;
+        }
+        table.lease-table tbody td {
+            padding: 6px 8px;
+            border-bottom: 0.5px solid var(--border);
+            vertical-align: middle;
+        }
+        table.lease-table tbody tr:hover td { background: var(--lease-bg); }
+        .lease-status-returned { color: var(--idle-dot); font-weight: 700; }
+        .lease-status-missing  { color: var(--inactive-dot); font-weight: 700; }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+<body>
+    <div class="page-wrap">
+
+        <!-- ── PAGE HEADER ── -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-header-icon">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <div>
+                    <p class="page-header-title">Host Inventory Management</p>
+                    <p class="page-header-sub">Track, assign and return IT assets</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── STAT STRIP ── -->
+        <div class="stat-strip" id="statStrip">
+            <div class="stat-item">
+                <div>
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value" id="statTotal">—</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-dot" style="background:var(--idle-dot)"></div>
+                <div>
+                    <div class="stat-label">Idle</div>
+                    <div class="stat-value" style="color:var(--idle-dot)" id="statIdle">—</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-dot" style="background:var(--assign-dot)"></div>
+                <div>
+                    <div class="stat-label">Assigned</div>
+                    <div class="stat-value" style="color:var(--assign-dot)" id="statAssigned">—</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-dot" style="background:var(--inactive-dot)"></div>
+                <div>
+                    <div class="stat-label">Inactive</div>
+                    <div class="stat-value" style="color:var(--inactive-dot)" id="statInactive">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TABLE ── -->
+        <div class="table-container p-2">
+            <table id="example" class="table nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Host ID</th>
+                        <th>Cabinet</th>
+                        <th>Host Type</th>
+                        <th>LAN No</th>
+                        <th>IP Address</th>
+                        <th>Processor</th>
+                        <th>RAM</th>
+                        <th>OS</th>
+                        <th>User Name</th>
+                        <th>Status</th>
+                        <th class="actions-cell">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+    </div><!-- /page-wrap -->
+
+    <!-- ── UPLOAD ACK MODAL (Bootstrap) ── -->
+    <div class="modal fade" id="uploadAckModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-file-arrow-up me-2 text-primary"></i>Upload Acknowledgment Document</h5>
+                </div>
+                <form id="ackUploadForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="modal_assignment_id" name="assignmentId">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fa-solid fa-paperclip"></i> Select File (PDF / Image)</label>
+                            <input type="file" name="ackFile" id="ackFile" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" id="btnUpload" class="btn btn-sm btn-primary">
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span id="btnText">Upload</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+        <div class="modal fade" id="uploadLeaseAckModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-file-arrow-up me-2 text-primary"></i>Upload Lease Acknowledgment Document</h5>
+                </div>
+                <form id="leaseAckUploadForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="modal_lease_id" name="leaseid">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fa-solid fa-paperclip"></i> Select File (PDF / Image)</label>
+                            <input type="file" name="ackFile" id="ackFile" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" id="btnLeaseUpload" class="btn btn-sm btn-primary">
+                            <span id="btnLeaseSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span id="btnLeaseText">Upload</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CUSTOM FULL MODAL ── -->
+    <div id="customModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header-custom">
+                <i id="modal-header-icon" class="modal-icon fa-solid fa-desktop"></i>
+                <h4 id="modalTitle" class="modal-title"></h4>
+            </div>
+            <div id="modal-body"></div>
+            <div class="mt-3 text-end" id="modal-footer-actions">
+                <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+                <button class="btn btn-sm btn-primary" id="modal-action-btn">Save</button>
+            </div>
+        </div>
+    </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <!-- ── SCRIPTS ── -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.2/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.5/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.5/js/responsive.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
+ 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script th:inline="javascript">
+$(document).ready(function() {
+    let hostData = [];
+    let table;
+    let aid;
+    let leaseAid;
+
+    /* ── Upload Ack ── */
+$('#example').on('click', '.ack-btn', function() {
+    const assignmentId = $(this).data('assignmentid');
+    $('#modal_assignment_id').val(assignmentId);
+    $('#uploadAckModal').modal('show');
+});
+
+// Lease Ack
+$('#example').on('click', '.lease-ack-btn', function() { // <--- Changed class name
+    const leaseId = $(this).data('leaseid');
+    $('#modal_lease_id').val(leaseId);
+    $('#uploadLeaseAckModal').modal('show');
+});
+
+    $('#ackUploadForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#btnLeaseUpload');
+        const $spinner = $('#btnLeaseSpinner');
+        const $btnText = $('#btnLeaseText');
+        $btn.prop('disabled', true);
+        $spinner.removeClass('d-none');
+        $btnText.text(' Uploading...');
+
+        let formData = new FormData(this);
+        formData.append("action", "uploadAck");
+
+        $.ajax({
+            url: 'api/itApi.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                const res = typeof response === 'string' ? JSON.parse(response) : response;
+                if (res.status === 'success') {
+                    Swal.fire({ icon:'success', title:'Uploaded!', text: res.message || 'Acknowledgment saved.', timer:2000, showConfirmButton:false });
+                    $('#uploadAckModal').modal('hide');
+                    $('#ackUploadForm').trigger("reset");
+                    if (typeof table !== 'undefined') table.ajax.reload();
+                } else {
+                    Swal.fire({ icon:'error', title:'Upload Failed', text: res.message });
+                }
+            },
+            error: function() {
+                Swal.fire({ icon:'error', title:'Server Error', text:'Could not connect to the server. Please try again.' });
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                $btnText.text('Upload');
+            }
+        });
+    });
+
+        $('#leaseAckUploadForm').on('submit', function(e) {
+        e.preventDefault();
+        // const $btn = $('#btnUpload');
+        // const $spinner = $('#btnSpinner');
+        // const $btnText = $('#btnText');
+        // $btn.prop('disabled', true);
+        // $spinner.removeClass('d-none');
+        // $btnText.text(' Uploading...');
+
+    document.getElementById("btnLeaseUpload").disabled=true;
+
+        let formData = new FormData(this);
+        formData.append("action", "uploadLeaseAck");
+        $.ajax({
+            url: 'api/itApi.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                const res = typeof response === 'string' ? JSON.parse(response) : response;
+                if (res.status === 'success') {
+                    Swal.fire({ icon:'success', title:'Uploaded!', text: res.message || 'Acknowledgment saved.', timer: 2000, showConfirmButton:false });
+                    $('#uploadLeaseAckModal').modal('hide');
+                    $('#leaseAckUploadForm').trigger("reset");
+                    if (typeof table !== 'undefined') table.ajax.reload();
+                } else {
+                    Swal.fire({ icon:'error', title:'Upload Failed', text: res.message });
+                }
+            },
+            error: function() {
+                Swal.fire({ icon:'error', title:'Server Error', text:'Could not connect to the server. Please try again.' });
+            },
+            complete: function() {
+                    document.getElementById("btnLeaseUpload").disabled=false;
+
+            }
+        });
+    });
+
+    /* ── Get Assignment ID ── */
+    function getaid(action) {
+        $.ajax({
+            url:`/it/${action}`, type:'GET',
+            data:{ action:action },
+            dataType:'json',
+            success: function(res){ 
+            aid = res.assignmentid; },
+            error: function(err){ console.error('Error fetching Assignment ID:', err); }
+        });
+    }
+   getaid('getAssignmentId');
+
+    /* ── Get Lease ID (format: ITLS + YYYY + 00001) ── */
+    function getLeaseId(callback) {
+    console.log("getLeaseId called");
+        $.ajax({
+            url:'/it/getLeaseId', type:'GET',
+            dataType:'json',
+            success: function(res){
+                console.log(res);
+                leaseAid = res;
+                if (typeof callback === 'function') callback(leaseAid);
+            },
+            error: function(err){
+                console.error('Error fetching Lease ID:', err);
+                // fallback client-side generated id so the workflow is never blocked
+                leaseAid = 'ITLS' + CURRENT_YEAR + '00001';
+                if (typeof callback === 'function') callback(leaseAid);
+            }
+        });
+    }
+
+    /* Thymeleaf-injected server-side vars.
+       These come from model attributes set by the Spring controller for this
+       view (e.g. model.addAttribute("issuerFullName", ...)). Each line below
+       uses Thymeleaf's inline-JS comment syntax so the value is substituted
+       server-side; the trailing empty string is only a fallback if this file
+       is ever opened outside of Thymeleaf (e.g. static preview). */
+    const ISSUER_FULL_NAME          = /*[[${issuerFullName}]]*/ "";
+    const ISSUER_EMPLOYEE_ID        = /*[[${issuerEmployeeId}]]*/ "";
+    const CURRENT_YEAR              = /*[[${currentYear}]]*/ "";
+    const ASSIGNMENT_RUNNING_NUMBER = /*[[${assignmentRunningNumber}]]*/ "";
+
+    /* ── Helpers ── */
+    function formatCustomDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        const day = String(date.getDate()).padStart(2,'0');
+        const year = date.getFullYear();
+        const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+        return `${day}-${months[date.getMonth()]}-${year}`;
+    }
+
+    function showCustomModal(title, bodyHtml, isConfirm = false, actionCallback = null) {
+        const footerDiv = $('#modal-footer-actions');
+        $('#modalTitle').text(title);
+        $('#modal-body').html(bodyHtml);
+        $('#modal-header-icon').removeClass().addClass(`modal-icon fa-solid ${isConfirm ? 'fa-triangle-exclamation text-danger' : 'fa-info-circle'}`);
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button class="btn btn-sm btn-primary" id="modal-action-btn">OK</button>
+        `);
+        $('#modal-cancel-btn').toggle(isConfirm);
+        $('#modal-action-btn').text(isConfirm ? 'Confirm' : 'OK')
+            .removeClass('btn-primary btn-danger btn-success')
+            .addClass(isConfirm ? 'btn-danger' : 'btn-primary')
+            .off('click').on('click', function() {
+                if (actionCallback) actionCallback();
+                $('#customModal').hide();
+            });
+        $('#modal-cancel-btn').on('click', function() { $('#customModal').hide(); });
+        $('#customModal').css('display', 'flex');
+    }
+
+    function renderPeripheralInput(hostData, key, iconClass, label) {
+        const assetName = hostData[key] || 'Not Linked';
+        const assetId   = hostData[`${key}_assetid`] || '';
+        const isLinked  = assetId !== '';
+        return `
+            <div class="col-md-4 mb-3">
+                <label class="form-label"><i class="fa-solid ${iconClass}"></i> ${label}</label>
+                <div class="form-control bg-light text-secondary" style="font-size:11px;">${assetName}</div>
+                <input type="hidden" id="${key}Linked" value="${isLinked ? '1' : '0'}">
+                <div class="peripheral-info">Asset ID: ${assetId || 'N/A'}</div>
+            </div>`;
+    }
+
+    function renderReturnPeripheralCheckboxes(host) {
+        const peripheralList = [
+            { label:'Cabinet',        key:'cabinet',        icon:'fa-desktop' },
+            { label:'Monitor 1',      key:'monitor1',       icon:'fa-desktop' },
+            { label:'Monitor 2',      key:'monitor2',       icon:'fa-desktop' },
+            { label:'Mouse',          key:'mouse',          icon:'fa-computer-mouse' },
+            { label:'Keyboard',       key:'keyboard',       icon:'fa-keyboard' },
+            { label:'Charger',        key:'charger',        icon:'fa-plug' },
+            { label:'Goggle',         key:'goggle',         icon:'fa-glasses' },
+            { label:'Headphone',      key:'headphone',      icon:'fa-headset' },
+            { label:'Emitter',        key:'emitter',        icon:'fa-tower-broadcast' },
+            { label:'Emitter Charger',key:'emitter_charger',icon:'fa-tower-broadcast' },
+        ];
+        let html = '<div class="row">';
+        let hasLinked = false;
+        peripheralList.forEach(item => {
+            if (host[`${item.key}_assetid`]) {
+                hasLinked = true;
+                const assetName = host[item.key] || 'N/A';
+                const assetId   = host[`${item.key}_assetid`];
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--surface-alt);border:0.5px solid var(--border);">
+                            <input class="form-check-input peripheral-checkbox m-0" type="checkbox" id="return-${item.key}" data-key="${item.key}" value="1" checked>
+                            <label class="mb-0 w-100" for="return-${item.key}" style="font-size:11px;cursor:pointer;">
+                                <i class="fa-solid ${item.icon} me-1" style="color:var(--text-muted)"></i>
+                                <strong>${item.label}</strong>: ${assetName} <span style="color:var(--text-muted)">(${assetId})</span>
+                            </label>
+                        </div>
+                    </div>`;
+            }
+        });
+        html += '</div>';
+        if (!hasLinked) return '<p class="text-info small mb-0">No peripherals are currently linked to this host.</p>';
+        return html;
+    }
+
+    /* ── LEASE FUNCTIONALITY ── */
+
+    // The master list of components a host can carry. Each entry is looked up on the
+    // host record as: {key}, {key}_assetid, {key}_model, {key}_serialno
+    const LEASE_COMPONENT_LIST = [
+        { label:'Cabinet',          key:'cabinet',          icon:'fa-desktop' },
+        { label:'Cabinet PC',       key:'cabpc',            icon:'fa-microchip' },
+        { label:'Processor',        key:'processor',        icon:'fa-microchip' },
+        { label:'SSD',              key:'ssd',              icon:'fa-hard-drive' },
+        { label:'HDD',              key:'hdd',              icon:'fa-hard-drive' },
+        { label:'Monitor 1',        key:'monitor1',         icon:'fa-desktop' },
+        { label:'Monitor 1 PC',     key:'monitor1pc',       icon:'fa-microchip' },
+        { label:'Monitor 1 VC',     key:'monitor1vc',       icon:'fa-video' },
+        { label:'Monitor 2',        key:'monitor2',         icon:'fa-desktop' },
+        { label:'Monitor 2 PC',     key:'monitor2pc',       icon:'fa-microchip' },
+        { label:'Monitor 2 VC',     key:'monitor2vc',       icon:'fa-video' },
+        { label:'Mouse',            key:'mouse',            icon:'fa-computer-mouse' },
+        { label:'Keyboard',         key:'keyboard',         icon:'fa-keyboard' },
+        { label:'Charger',          key:'charger',          icon:'fa-plug' },
+        { label:'Headphone',        key:'headphone',        icon:'fa-headset' },
+        { label:'VGA',              key:'vga',              icon:'fa-video' },
+        { label:'Adapter',          key:'adapter',          icon:'fa-plug' },
+        { label:'Emitter',          key:'emitter',          icon:'fa-tower-broadcast' },
+        { label:'Emitter Charger',  key:'emitter_charger',  icon:'fa-plug' },
+        { label:'Goggle',           key:'goggle',           icon:'fa-glasses' },
+        { label:'Adapter 1',        key:'ad1',              icon:'fa-usb' },
+        { label:'Adapter 2',        key:'ad2',              icon:'fa-usb' },
+        { label:'UPS',              key:'ups',              icon:'fa-plug-circle-bolt' },
+    ];
+
+    function renderLeaseComponentTable(host) {
+        let rows = '';
+        let hasComponents = false;
+        LEASE_COMPONENT_LIST.forEach(item => {
+            const assetId = host[`${item.key}_assetid`];
+            if (assetId) {
+                hasComponents = true;
+                const assetName = host[item.key] || 'N/A';
+                const model     = host[`${item.key}_model`] || 'N/A';
+                const serialno  = host[`${item.key}_serialno`] || 'N/A';
+                rows += `
+                    <tr>
+                        <td>
+                            <input class="form-check-input lease-checkbox m-0" type="checkbox"
+                                id="lease-${item.key}" data-key="${item.key}" data-label="${item.label}"
+                                data-assetid="${assetId}" data-assetname="${assetName}"
+                                data-model="${model}" data-serialno="${serialno}" value="1" checked>
+                        </td>
+                        <td>${assetId}</td>
+                        <td><i class="fa-solid ${item.icon} me-1" style="color:var(--lease-dot)"></i>${item.label} — ${assetName}</td>
+
+                    </tr>`;
+            }
+        });
+
+        if (!hasComponents) {
+            return '<p class="text-warning small mb-0"><i class="fa-solid fa-circle-exclamation me-1"></i>No components are linked to this host.</p>';
+        }
+
+        return `
+            <div class="lease-table-wrap">
+                <table class="lease-table">
+                    <thead>
+                        <tr>
+                            <th style="width:6%"></th>
+                            <th style="width:16%">Asset ID</th>
+                            <th style="width:46%">Asset Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function showLeaseModal(host) {
+        showCustomModal('Loading', '<p class="text-center py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i> Preparing lease form…</p>');
+
+        $.ajax({
+            url:'/admin/getemployees', type:'GET',
+            dataType:'json',
+            success: function(members){
+                getLeaseId(function(){
+                    $('#customModal').hide();
+                    if (members && Array.isArray(members) && members.length > 0) {
+                        renderLeaseForm(host, members);
+                    } else {
+                        showCustomModal('Error','<p class="text-danger">The employee list API returned no data.</p>');
+                    }
+                });
+            },
+            error: function(){
+                $('#customModal').hide();
+                showCustomModal('Error','<p class="text-danger">Error fetching employee data.</p>');
+            }
+        });
+    }
+
+    function renderLeaseForm(host, members) {
+        const memberOptions = members.map(m =>
+            `<option value="${m.EID}" data-phoneno="${m.PhoneNumber || 'N/A'}">${m.fullname}</option>`
+        ).join('');
+
+        const modalBody = `
+            <form id="leaseHostForm">
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-server"></i> Host Information</div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-tag"></i> Host ID</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.hostid}" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-desktop"></i> Host Name</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.hostname}" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-hashtag"></i> Lease ID</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${leaseAid}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-user-tie"></i> Lease Details</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-user"></i> Select Employee</label>
+                            <select class="form-select form-select-sm" id="leaseEmployee" required>
+                                <option value="" selected disabled>-- Select Employee --</option>
+                                ${memberOptions}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-calendar-day"></i> Lease Date</label>
+                            <input type="date" class="form-control form-control-sm" id="leaseDate" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-comment"></i> Lease Remarks</label>
+                            <textarea class="form-control form-control-sm" id="leaseRemarks" rows="2" placeholder="Purpose of the lease, expected duration, destination, etc." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-boxes-stacked"></i> Select Components to Lease</div>
+                    ${renderLeaseComponentTable(host)}
+                </div>
+                <p class="text-info small mb-0"><i class="fa-solid fa-info-circle me-1"></i>Select the components going out with this host under this lease.</p>
+            </form>`;
+
+        $('#modalTitle').text(`Lease Host: ${host.hostid}`);
+        $('#modal-header-icon').removeClass().addClass('modal-icon fa-solid fa-handshake text-primary');
+        $('#modal-body').html(modalBody);
+
+        const footerDiv = $('#modal-footer-actions');
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button class="btn btn-sm btn-outline-primary me-2" id="print-lease-form-btn"><i class="fa-solid fa-print me-1"></i>Print Form</button>
+            <button class="btn btn-sm" style="background:var(--lease-dot);color:#fff;" id="confirm-lease-btn"><i class="fa-solid fa-handshake me-1"></i>Confirm Lease</button>
+        `);
+        $('#modal-cancel-btn').off('click').on('click', function(){ $('#customModal').hide(); });
+        $('#customModal').css('display','flex');
+
+        const collectSelectedComponents = () => {
+            const selected = [];
+            $('.lease-checkbox:checked').each(function(){
+                selected.push({
+                    key: $(this).data('key'),
+                    label: $(this).data('label'),
+                    assetid: $(this).data('assetid'),
+                    assetname: $(this).data('assetname'),
+                    model: $(this).data('model'),
+                    serialno: $(this).data('serialno')
+                });
+            });
+            return selected;
+        };
+
+        const collectUnselectedComponents = () => {
+            const unselected = [];
+            $('.lease-checkbox:not(:checked)').each(function(){
+                unselected.push({
+                    key: $(this).data('key'),
+                    label: $(this).data('label'),
+                    assetid: $(this).data('assetid'),
+                    assetname: $(this).data('assetname'),
+                    model: $(this).data('model'),
+                    serialno: $(this).data('serialno')
+                });
+            });
+            return unselected;
+        };
+
+        const getEmployeeContext = () => {
+            const $sel = $('#leaseEmployee option:selected');
+            return {
+                employeeId: $('#leaseEmployee').val(),
+                employeeFullName: $sel.text(),
+                employeePhoneNo: $sel.data('phoneno')
+            };
+        };
+
+        $('#print-lease-form-btn').off('click').on('click', function(){
+            if (!$('#leaseHostForm')[0].checkValidity()){ $('#leaseHostForm')[0].reportValidity(); return; }
+            const selected = collectSelectedComponents();
+            if (selected.length === 0) {
+                showCustomModal('No Selection','<p class="text-warning">Please select at least one component to lease.</p>');
+                return;
+            }
+            const ctx = getEmployeeContext();
+            printLeaseForm(host, ctx.employeeId, ctx.employeeFullName, ctx.employeePhoneNo, $('#leaseDate').val(), $('#leaseRemarks').val(), selected);
+        });
+
+        $('#confirm-lease-btn').off('click').on('click', function(){
+            if (!$('#leaseHostForm')[0].checkValidity()){ $('#leaseHostForm')[0].reportValidity(); return; }
+            const selected = collectSelectedComponents();
+            const unselected = collectUnselectedComponents();
+            if (selected.length === 0) {
+                showCustomModal('No Selection','<p class="text-warning">Please select at least one component to lease.</p>');
+                return;
+            }
+            const ctx = getEmployeeContext();
+
+            const leaseData = {
+                action: 'leaseHost',
+                hostid: host.hostid,
+                leaseid: leaseAid,
+                employeeId: ctx.employeeId,
+                leaseDate: $('#leaseDate').val(),
+                leaseRemarks: $('#leaseRemarks').val(),
+                components: JSON.stringify(selected),
+                unselected: JSON.stringify(unselected)
+            };
+
+            $.ajax({
+                url: 'api/itApi.php',
+                type: 'POST',
+                data: leaseData,
+                dataType: 'json',
+                success: function(res){
+                    if (res.status === 'success') {
+                        showCustomModal('Lease Confirmed', `<p>Host <strong>${host.hostid}</strong> has been leased to <strong>${ctx.employeeFullName}</strong> under Lease ID <strong>${leaseAid}</strong>.</p>`);
+                        fetchdata();
+                    } else {
+                        showCustomModal('Error', `<p class="text-danger">${res.message || 'Failed to process lease.'}</p>`);
+                    }
+                },
+                error: function(){
+                    showCustomModal('Error','<p class="text-danger">Server error while processing lease.</p>');
+                }
+            });
+        });
+    }
+
+    function printLeaseForm(host, employeeId, employeeFullName, employeePhoneNo, leaseDate, leaseRemarks, selectedComponents) {
+        const formattedDate = formatCustomDate(leaseDate);
+        let componentRows = '';
+
+        selectedComponents.forEach((comp, index) => {
+            componentRows += `<tr>
+                <td>${index + 1}</td>
+                <td>${comp.label} — ${comp.assetname}</td>
+                <td>${comp.assetid}</td>
+
+                <td class="text-center">1</td>
+            </tr>`;
+        });
+
+        for (let i = selectedComponents.length; i < 4; i++) {
+            componentRows += `<tr>
+                <td>${i + 1}</td>
+                <td style="height:20px"></td>
+                <td></td><td></td><td></td><td></td>
+            </tr>`;
+        }
+
+        const printContent = buildPrintHtml('IT ASSET LEASE FORM', leaseAid, `
+            <div class="full-section">
+                <p class="section-title">LEASE DETAILS</p>
+                <div class="main-table">
+                    <div class="drow"><div class="dfield"><span class="dlabel">Host Name / ID:</span><span>${host.hostname} / ${host.hostid}</span></div><div class="dfield"><span class="dlabel">Host Type:</span><span>${host.hosttype}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Leased To:</span><span>${employeeFullName} (EID: ${employeeId})</span></div><div class="dfield"><span class="dlabel">Employee Phone:</span><span>${employeePhoneNo}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Issued By:</span><span>${ISSUER_FULL_NAME} (${ISSUER_EMPLOYEE_ID})</span></div><div class="dfield"><span class="dlabel">Lease Date:</span><span>${formattedDate}</span></div></div>
+                    <div class="drow"><div class="dfield" style="width:100%;border-right:none"><span class="dlabel">Remarks / Purpose:</span><div class="condition-box">${leaseRemarks}</div></div></div>
+                </div>
+            </div>
+            <div class="section">
+                <p class="section-title">LEASED COMPONENTS CHECKLIST</p>
+                <table class="ptable">
+                    <thead>
+                        <tr>
+                            <th style="width:6%;text-align:center">S.No</th>
+                            <th style="width:30%">Component</th>
+                            <th style="width:20%">Asset ID</th>
+
+                            <th style="width:8%;text-align:center">Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>${componentRows}</tbody>
+                </table>
+            </div>
+        `, `
+            <p style="font-size:11px;margin-bottom:10px;"><strong>Lessee Declaration:</strong> I acknowledge receipt of the above-listed host and components on lease, and agree to return them in working condition by the agreed date.</p>
+            <table class="sig-table">
+                <thead>
+                    <tr>
+                        <th style="width:40%;text-align:center">Lessee Signature &amp; Name</th>
+                        <th style="width:20%;text-align:center">Date</th>
+                        <th style="width:40%;text-align:center">IT Department Signature</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><div class="sig-line"></div></td>
+                        <td><div class="sig-line"></div></td>
+                        <td style="position:relative">
+                            <div class="sig-line"></div>
+                            <div class="dig-stamp">Digitally Issued by ${ISSUER_FULL_NAME}<br>EID: ${ISSUER_EMPLOYEE_ID} | Date: ${formattedDate}</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        `);
+
+        openPrint(printContent);
+    }
+
+    /* ── LEASE RETURN ── */
+
+    function renderLeaseReturnTable(host) {
+        // Prefer the components that were actually recorded against this lease, when the
+        // backend provides them (host.leasedComponents as an array or JSON string).
+        let leased = host.leasedComponents;
+        if (typeof leased === 'string') {
+            try { leased = JSON.parse(leased); } catch(e) { leased = null; }
+        }
+
+        let items = [];
+        if (Array.isArray(leased) && leased.length > 0) {
+            items = leased.map(c => ({
+                key: c.key, label: c.label || c.key, assetid: c.assetid,
+                assetname: c.assetname || c.name || 'N/A',
+                model: c.model || 'N/A', serialno: c.serialno || 'N/A'
+            }));
+        } else {
+            LEASE_COMPONENT_LIST.forEach(item => {
+                const assetId = host[`${item.key}_assetid`];
+                if (assetId) {
+                    items.push({
+                        key: item.key, label: item.label, assetid: assetId,
+                        assetname: host[item.key] || 'N/A',
+                        model: host[`${item.key}_model`] || 'N/A',
+                        serialno: host[`${item.key}_serialno`] || 'N/A'
+                    });
+                }
+            });
+        }
+
+        if (items.length === 0) {
+            return '<p class="text-info small mb-0">No leased components on record for this lease.</p>';
+        }
+
+        let rows = '';
+        items.forEach(item => {
+            rows += `
+                <tr>
+                    <td>
+                        <input class="form-check-input lease-return-checkbox m-0" type="checkbox"
+                            id="leaseret-${item.key}" data-key="${item.key}" data-label="${item.label}"
+                            data-assetid="${item.assetid}" data-assetname="${item.assetname}"
+                            data-model="${item.model}" data-serialno="${item.serialno}" value="1" checked>
+                    </td>
+                    <td>${item.assetid}</td>
+                    <td>${item.label} — ${item.assetname}</td>
+
+                </tr>`;
+        });
+
+        return `
+            <div class="lease-table-wrap">
+                <table class="lease-table">
+                    <thead>
+                        <tr>
+                            <th style="width:8%">Returned</th>
+                            <th style="width:16%">Asset ID</th>
+                            <th style="width:44%">Component</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function showLeaseReturnModal(host) {
+        if (!host.leaseid) {
+            showCustomModal('Error','<p class="text-danger">Host is missing a valid Lease ID. Cannot process lease return.</p>');
+            return;
+        }
+
+        const modalBody = `
+            <form id="leaseReturnForm">
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-handshake"></i> Lease Info</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-user"></i> Leased To</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.leaseUsername || host.leaseUser || 'N/A'} (EID: ${host.leaseEid || host.eid || 'N/A'})" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-hashtag"></i> Lease ID</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.leaseid}" readonly>  
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-calendar-check"></i> Return Date</label>
+                            <input type="date" class="form-control form-control-sm" id="leaseReturnDate" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-comment-medical"></i> Return Remarks / Condition</label>
+                            <textarea class="form-control form-control-sm" id="leaseReturnRemarks" rows="2" placeholder="Condition of the returned items, missing items, defects, etc." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-box-open"></i> Leased Components — Check if Returned</div>
+                    ${renderLeaseReturnTable(host)}
+                </div>
+                <p class="text-danger small mt-2 mb-0"><i class="fa-solid fa-circle-exclamation me-1"></i>Confirming will close this lease and update the host status.</p>
+            </form>`;
+
+        $('#modalTitle').text(`Lease Return: ${host.leaseid}`);
+        $('#modal-header-icon').removeClass().addClass('modal-icon fa-solid fa-rotate-left').css('color','var(--leasereturn-dot)');
+        $('#modal-body').html(modalBody);
+
+        const footerDiv = $('#modal-footer-actions');
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button class="btn btn-sm btn-outline-secondary me-2" id="print-lease-return-btn"><i class="fa-solid fa-print me-1"></i>Print Return Form</button>
+            <button class="btn btn-sm" style="background:var(--leasereturn-dot);color:#fff;" id="confirm-lease-return-btn"><i class="fa-solid fa-check-double me-1"></i>Confirm Lease Return</button>
+        `);
+
+        $('#modal-cancel-btn').on('click', function(){ $('#customModal').hide(); });
+        $('#customModal').css('display','flex');
+
+        const collectReturnedComponents = () => {
+            const items = [];
+            $('.lease-return-checkbox').each(function(){
+                items.push({
+                    key: $(this).data('key'),
+                    label: $(this).data('label'),
+                    assetid: $(this).data('assetid'),
+                    assetname: $(this).data('assetname'),
+                    model: $(this).data('model'),
+                    serialno: $(this).data('serialno'),
+                    returned: $(this).is(':checked') ? 1 : 0
+                });
+            });
+            return items;
+        };
+
+        $('#print-lease-return-btn').off('click').on('click', function(){
+            if (!$('#leaseReturnForm')[0].checkValidity()){ $('#leaseReturnForm')[0].reportValidity(); return; }
+            printLeaseReturnForm(host, $('#leaseReturnDate').val(), $('#leaseReturnRemarks').val(), collectReturnedComponents());
+        });
+
+        $('#confirm-lease-return-btn').off('click').on('click', function(){
+            if (!$('#leaseReturnForm')[0].checkValidity()){ $('#leaseReturnForm')[0].reportValidity(); return; }
+            const items = collectReturnedComponents();
+            const data = {
+                action: 'returnLease',
+                hostid: host.hostid,
+                leaseid: host.leaseid,
+                returnDate: $('#leaseReturnDate').val(),
+                returnRemarks: $('#leaseReturnRemarks').val(),
+                returnedComponents: JSON.stringify(items)
+            };
+            $.ajax({
+                url:'api/itApi.php', type:'POST', data:data, dataType:'json',
+                success: function(res){
+                    if (res && res.status === 'error') {
+                        showCustomModal('Error', `<p class="text-danger">${res.message || 'Failed to process lease return.'}</p>`);
+                        return;
+                    }
+                    showCustomModal('Lease Return Processed', `<p>Lease <strong>${host.leaseid}</strong> for host <strong>${host.hostid}</strong> has been successfully closed.</p>`);
+                    fetchdata();
+                },
+                error: function(){
+                    showCustomModal('Error',`<p class="text-danger">Failed to process lease return for <strong>${host.leaseid}</strong>.</p>`);
+                }
+            });
+        });
+    }
+
+    function printLeaseReturnForm(host, returnDate, returnRemarks, returnedItems) {
+        const formattedReturnDate = formatCustomDate(returnDate);
+
+        let rows = '';
+        returnedItems.forEach(item => {
+            const statusHtml = item.returned
+                ? '<span class="lease-status-returned">Returned (✓)</span>'
+                : '<span class="lease-status-missing">Missing (✗)</span>';
+            rows += `<tr>
+                <td>${item.label} — ${item.assetname}</td>
+                <td>${item.assetid}</td>
+
+                <td class="text-center">1</td>
+                <td>${statusHtml}</td>
+            </tr>`;
+        });
+        for (let i = returnedItems.length; i < 4; i++) {
+            rows += `<tr><td style="height:20px"></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        }
+
+        const printContent = buildPrintHtml('IT ASSET LEASE RETURN FORM', host.leaseid, `
+            <div class="full-section">
+                <p class="section-title">LEASE RETURN DETAILS</p>
+                <div class="main-table">
+                    <div class="drow"><div class="dfield"><span class="dlabel">Returned By:</span><span>${host.leaseUsername || host.username || 'N/A'} (EID: ${host.leaseEid || host.eid || 'N/A'})</span></div><div class="dfield"><span class="dlabel">Received By (IT):</span><span>${ISSUER_FULL_NAME} (EID: ${ISSUER_EMPLOYEE_ID})</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Host Name / ID:</span><span>${host.hostname} / ${host.hostid}</span></div><div class="dfield"><span class="dlabel">Lease ID:</span><span>${host.leaseid}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Return Date:</span><span>${formattedReturnDate}</span></div><div class="dfield"><span class="dlabel">Host Type / OS:</span><span>${host.hosttype} / ${host.os}</span></div></div>
+                    <div class="drow"><div class="dfield" style="width:100%;border-right:none"><span class="dlabel">Return Remarks / Condition:</span><div class="condition-box">${returnRemarks}</div></div></div>
+                </div>
+            </div>
+            <div class="section">
+                <p class="section-title">LEASED COMPONENTS — RETURN STATUS</p>
+                <table class="ptable">
+                    <thead>
+                        <tr>
+                            <th style="width:28%">Component</th>
+                            <th style="width:18%">Asset ID</th>
+  
+                            <th style="width:8%;text-align:center">Qty</th>
+                            <th style="width:14%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `, `
+            <p style="font-size:11px;margin-bottom:10px;"><strong>Confirmation:</strong> I confirm that the above lease has been closed and the components listed have been physically inspected against the stated return status.</p>
+            <table class="sig-table">
+                <thead><tr>
+                    <th style="width:40%;text-align:center">Lessee Signature &amp; Name</th>
+                    <th style="width:20%;text-align:center">Date</th>
+                    <th style="width:40%;text-align:center">IT Department Signature</th>
+                </tr></thead>
+                <tbody><tr>
+                    <td><div class="sig-line"></div></td>
+                    <td><div class="sig-line"></div></td>
+                    <td style="position:relative">
+                        <div class="sig-line"></div>
+                        <div class="dig-stamp">Digitally Acknowledged by ${ISSUER_FULL_NAME}<br>EID: ${ISSUER_EMPLOYEE_ID} | Date: ${formattedReturnDate}</div>
+                    </td>
+                </tr></tbody>
+            </table>
+        `);
+
+        openPrint(printContent);
+    }
+
+    /* ── Assignment Form ── */
+    function renderAssignmentSelectionForm(rowData, members) {
+        const memberOptions = members.map(m =>
+            `<option value="${m.eid}" data-phoneno="${m.PhoneNumber || 'N/A'}">${m.name}</option>`
+        ).join('');
+
+        const formHtml = `
+            <form id="assignHostForm">
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-user-tie"></i> Assignment Details</div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-user"></i> Select Employee</label>
+                            <select class="form-select form-select-sm" id="employeeName" required>
+                                <option value="" selected disabled>-- Select Employee --</option>
+                                ${memberOptions}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-location-dot"></i> Remarks / Location</label>
+                            <input type="text" class="form-control form-control-sm" id="remarks" placeholder="Dept, Project, Cubicle No." required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-calendar-day"></i> Assignment Date</label>
+                            <input type="date" class="form-control form-control-sm" id="assignedDate" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-cubes-stacked"></i> Linked Peripherals (Read-Only)</div>
+                    <div class="row">
+                        ${renderPeripheralInput(rowData,'cabinet','fa-desktop','Cabinet')}
+                        ${renderPeripheralInput(rowData,'cabinetpc','fa-desktop','Cabinet PC')}
+                        ${renderPeripheralInput(rowData,'processor','fa-microchip','Processor')}
+                        ${renderPeripheralInput(rowData,'ssd','fa-hard-drive','SSD')}
+                        ${renderPeripheralInput(rowData,'hdd','fa-hard-drive','HDD')}
+                        ${renderPeripheralInput(rowData,'monitor1','fa-desktop','Monitor 1')}
+                        ${renderPeripheralInput(rowData,'monitor1pc','fa-desktop','Monitor 1 PC')}
+                        ${renderPeripheralInput(rowData,'monitor1vc','fa-desktop','Monitor 1 VC')}
+                        ${renderPeripheralInput(rowData,'monitor2','fa-desktop','Monitor 2')}
+                        ${renderPeripheralInput(rowData,'monitor2pc','fa-desktop','Monitor 2 PC')}
+                        ${renderPeripheralInput(rowData,'monitor2vc','fa-desktop','Monitor 2 VC')}
+                        ${renderPeripheralInput(rowData,'mouse','fa-computer-mouse','Mouse')}
+                        ${renderPeripheralInput(rowData,'keyboard','fa-keyboard','Keyboard')}
+                        ${renderPeripheralInput(rowData,'headphone','fa-headset','Headphone')}
+                        ${renderPeripheralInput(rowData,'emitter','fa-tower-broadcast','Emitter')}
+                        ${renderPeripheralInput(rowData,'emitter_charger','fa-tower-broadcast','Emitter Charger')}
+                        ${renderPeripheralInput(rowData,'goggle','fa-glasses','Goggle')}
+                    </div>
+                </div>
+            </form>`;
+
+        $('#modalTitle').text(`Assign Host: ${rowData.hostname}`);
+        $('#modal-header-icon').removeClass().addClass('modal-icon fa-solid fa-user-tag');
+        const footerDiv = $('#modal-footer-actions');
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button class="btn btn-sm btn-primary" id="modal-action-btn"><i class="fa-solid fa-file-lines me-1"></i>Generate Assignment Form</button>
+        `);
+        $('#modal-cancel-btn').off('click').on('click', function(){ $('#customModal').hide(); });
+        $('#modal-body').html(formHtml);
+        $('#customModal').css('display','flex');
+
+        $('#modal-action-btn').off('click').on('click', function(){
+            if (!$('#assignHostForm')[0].checkValidity()){ $('#assignHostForm')[0].reportValidity(); return; }
+
+            const employeeId        = $('#employeeName').val();
+            const $sel              = $('#employeeName option:selected');
+            const employeeFullName  = $sel.text();
+            const employeePhoneNo   = $sel.data('phoneno');
+            const remarks           = $('#remarks').val();
+            const assignedDate      = $('#assignedDate').val();
+
+            const cabinetName   = rowData.cabinet    || 'N/A'; const cabinetQty   = $('#cabinetLinked').val();
+            const monitor1Name  = rowData.monitor1   || 'N/A'; const monitor1Qty  = $('#monitor1Linked').val();
+            const monitor1Pc    = rowData.monitor1pc || 'N/A'; const monitor1PcQty= $('#monitor1pcLinked').val();
+            const monitor1Vc    = rowData.monitor1vc || 'N/A'; const monitor1VcQty= $('#monitor1vcLinked').val();
+            const monitor2Name  = rowData.monitor2   || 'N/A'; const monitor2Qty  = $('#monitor2Linked').val();
+            const monitor2Pc    = rowData.monitor2pc || 'N/A'; const monitor2PcQty= $('#monitor2pcLinked').val();
+            const monitor2Vc    = rowData.monitor2vc || 'N/A'; const monitor2VcQty= $('#monitor2vcLinked').val();
+            const mouseName     = rowData.mouse      || 'N/A'; const mouseQty     = $('#mouseLinked').val();
+            const keyboardName  = rowData.keyboard   || 'N/A'; const keyboardQty  = $('#keyboardLinked').val();
+            const chargerName   = rowData.charger    || 'N/A'; const chargerQty   = $('#chargerLinked').val();
+            const goggleName    = rowData.goggle     || 'N/A'; const goggleQty    = $('#goggleLinked').val();
+            const headphoneName = rowData.headphone  || 'N/A'; const headphoneQty = $('#headphoneLinked').val();
+            const vgaName       = rowData.vga        || 'N/A'; const vgaQty       = $('#vgaLinked').val();
+            const adapterName   = rowData.adapter    || 'N/A'; const adapterQty   = $('#adapterLinked').val();
+            const emmitterName  = rowData.emitter    || 'N/A'; const emmitterQty  = rowData.emitter_assetid ? '1' : '0';
+            const echargerName  = rowData.emitter_charger || 'N/A';
+            const echargerQty   = (echargerName && echargerName!='N/A') ? 1 : 0;
+
+            renderAssignmentReview(
+                rowData, employeeId, employeeFullName, employeePhoneNo, remarks, assignedDate,
+                monitor1Name, cabinetName, cabinetQty, monitor1Qty, monitor1Pc, monitor1PcQty, monitor1Vc, monitor1VcQty,
+                monitor2Name, monitor2Qty, monitor2Pc, monitor2PcQty, monitor2Vc, monitor2VcQty,
+                mouseName, mouseQty, keyboardName, keyboardQty, chargerName, chargerQty,
+                goggleName, goggleQty, headphoneName, headphoneQty, vgaName, vgaQty,
+                adapterName, adapterQty, emmitterName, emmitterQty, echargerName, echargerQty
+            );
+        });
+    }
+
+    /* ── Assignment Review ── */
+    function renderAssignmentReview(host, employeeId, employeeFullName, employeePhoneNo, remarks, assignedDate,
+        monitor1Name, cabinetName, cabinetQty, monitor1Qty, monitor1Pc, monitor1PcQty, monitor1Vc, monitor1VcQty,
+        monitor2Name, monitor2Qty, monitor2Pc, monitor2PcQty, monitor2Vc, monitor2VcQty,
+        mouseName, mouseQty, keyboardName, keyboardQty, chargerName, chargerQty,
+        goggleName, goggleQty, headphoneName, headphoneQty, vgaName, vgaQty,
+        adapterName, adapterQty, emmitterName, emmitterQty, echargerName, echargerQty) {
+
+        const renderPeripheralReview = (name, qty, type) => {
+            const count = parseInt(qty);
+            if (count > 0 && name && name !== 'N/A') {
+                return `<div class="col-md-6 mb-2">
+                    <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--idle-bg);border:0.5px solid var(--idle-dot)20;">
+                        <i class="fa-solid fa-check-circle" style="color:var(--idle-dot);font-size:11px;"></i>
+                        <div style="font-size:11px;">
+                            <strong>${type}</strong><br>
+                            <span style="color:var(--text-muted)">${name} &mdash; ${count} unit${count>1?'s':''}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            return '';
+        };
+
+        const formattedDate = formatCustomDate(assignedDate);
+        const totalQty = [cabinetQty,monitor1Qty,monitor1PcQty,monitor1VcQty,monitor2Qty,monitor2PcQty,
+            monitor2VcQty,mouseQty,keyboardQty,chargerQty,goggleQty,headphoneQty,
+            vgaQty,adapterQty,emmitterQty,echargerQty]
+            .reduce((sum,q) => sum + (parseInt(q)||0), 0);
+
+        const html = `
+            <div class="modal-card">
+                <div class="modal-card-title"><i class="fa-solid fa-server"></i> Host &amp; Assignment</div>
+                <div class="row g-3" style="font-size:12px;">
+                    <div class="col-md-3"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">HOST ID</div><strong>${host.hostid}</strong></div>
+                    <div class="col-md-3"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">HOST NAME</div><strong>${host.hostname}</strong></div>
+                    <div class="col-md-3"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">EMPLOYEE</div>${employeeFullName} (${employeeId})</div>
+                    <div class="col-md-3"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">PHONE</div>${employeePhoneNo}</div>
+                    <div class="col-md-3"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">DATE</div>${formattedDate}</div>
+                    <div class="col-md-9"><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">LOCATION / REMARKS</div>${remarks}</div>
+                </div>
+            </div>
+            <div class="modal-card">
+                <div class="modal-card-title"><i class="fa-solid fa-cubes-stacked"></i> Peripherals to Assign</div>
+                <div class="row">
+                    ${renderPeripheralReview(cabinetName,  cabinetQty,   'Cabinet')}
+                    ${renderPeripheralReview(monitor1Name, monitor1Qty,  'Monitor 1')}
+                    ${renderPeripheralReview(monitor1Pc,   monitor1PcQty,'Monitor 1 PC')}
+                    ${renderPeripheralReview(monitor1Vc,   monitor1VcQty,'Monitor 1 VC')}
+                    ${renderPeripheralReview(monitor2Name, monitor2Qty,  'Monitor 2')}
+                    ${renderPeripheralReview(monitor2Pc,   monitor2PcQty,'Monitor 2 PC')}
+                    ${renderPeripheralReview(monitor2Vc,   monitor2VcQty,'Monitor 2 VC')}
+                    ${renderPeripheralReview(mouseName,    mouseQty,     'Mouse')}
+                    ${renderPeripheralReview(keyboardName, keyboardQty,  'Keyboard')}
+                    ${renderPeripheralReview(headphoneName,headphoneQty, 'Headphone')}
+                    ${renderPeripheralReview(vgaName,      vgaQty,       'VGA Cable')}
+                    ${renderPeripheralReview(adapterName,  adapterQty,   'Adapter')}
+                    ${renderPeripheralReview(emmitterName, emmitterQty,  'Emitter')}
+                    ${renderPeripheralReview(echargerName, echargerQty,  'Emitter Charger')}
+                    ${renderPeripheralReview(goggleName,   goggleQty,    'Goggle')}
+                    ${totalQty === 0 ? '<div class="col-12"><p class="text-muted small mb-0">No linked peripherals are being assigned with this host.</p></div>' : ''}
+                </div>
+            </div>
+            <p class="text-danger small mb-0"><i class="fa-solid fa-circle-exclamation me-1"></i>Confirming will update host status to <strong>Assigned</strong>.</p>`;
+
+        $('#modalTitle').text('Review and Confirm Assignment');
+        $('#modal-header-icon').removeClass().addClass('modal-icon fa-solid fa-clipboard-check');
+        $('#modal-body').html(html);
+
+        const footerDiv = $('#modal-footer-actions');
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="back-btn"><i class="fa-solid fa-arrow-left me-1"></i>Back</button>
+            <button class="btn btn-sm btn-outline-secondary me-2" id="print-form-btn"><i class="fa-solid fa-print me-1"></i>Print Form</button>
+            <button class="btn btn-sm btn-success" id="confirm-assignment-btn"><i class="fa-solid fa-check me-1"></i>Confirm Assignment</button>
+        `);
+        $('#customModal').css('display','flex');
+
+        $('#back-btn').off('click').on('click', function(){ fetchMembersAndRenderModal(host); });
+
+        $('#print-form-btn').off('click').on('click', function(){
+            printAssignmentForm(host, employeeId, employeeFullName, employeePhoneNo, remarks, assignedDate,
+                monitor1Name, cabinetName, cabinetQty, monitor1Qty, monitor1Pc, monitor1PcQty, monitor1Vc, monitor1VcQty,
+                monitor2Name, monitor2Qty, monitor2Pc, monitor2PcQty, monitor2Vc, monitor2VcQty,
+                mouseName, mouseQty, keyboardName, keyboardQty, chargerName, chargerQty,
+                goggleName, goggleQty, headphoneName, headphoneQty, vgaName, vgaQty,
+                adapterName, adapterQty, emmitterName, emmitterQty, echargerName, echargerQty);
+        });
+
+        $('#confirm-assignment-btn').off('click').on('click', function(){
+            $('#customModal').hide();
+                const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+
+            $.ajax({
+                url:'/it/assignHost', type:'POST',
+                headers:{'X-CSRF-TOKEN':csrfToken},
+                data:{assignmentid:aid, hostid:host.hostid, employeeId:employeeId, remarks:remarks, assignedDate:assignedDate },
+                success: function(){
+                    showCustomModal('Success', `<p>Host <strong>${host.hostname}</strong> has been successfully assigned to <strong>${employeeFullName}</strong>.</p>`);
+                    fetchdata();
+                    getaid('getAssignmentId');
+                },
+                error: function(){
+                    showCustomModal('Error', `<p class="text-danger">Failed to assign host <strong>${host.hostname}</strong>. Please check API/Server logs.</p>`);
+                }
+            });
+        });
+    }
+
+    /* ── Print Assignment Form ── */
+    function printAssignmentForm(host, employeeId, employeeFullName, employeePhoneNo, remarks, assignedDate,
+        monitor1Name, cabinetName, cabinetQty, monitor1Qty, monitor1Pc, monitor1PcQty, monitor1Vc, monitor1VcQty,
+        monitor2Name, monitor2Qty, monitor2Pc, monitor2PcQty, monitor2Vc, monitor2VcQty,
+        mouseName, mouseQty, keyboardName, keyboardQty, chargerName, chargerQty,
+        goggleName, goggleQty, headphoneName, headphoneQty, vgaName, vgaQty,
+        adapterName, adapterQty, emmitterName, emmitterQty, echargerName, echargerQty) {
+
+        const formattedDate = formatCustomDate(assignedDate);
+
+        let powerAdapterQty = 1;
+        if (parseInt(monitor1PcQty) === 1) powerAdapterQty++;
+        if (parseInt(monitor2PcQty) === 1) powerAdapterQty++;
+        let displayAdapterQty = 0;
+        if (parseInt(monitor1VcQty) === 1) displayAdapterQty++;
+        if (parseInt(monitor2VcQty) === 1) displayAdapterQty++;
+
+        const powerAdapterRow = powerAdapterQty > 1
+            ? `<tr><td>Power Adapter</td><td>Standard Power Adapters</td><td>N/A</td><td class="text-center">${powerAdapterQty}</td></tr>` : '';
+        const displayAdapterRow = displayAdapterQty > 1
+            ? `<tr><td>Display Cables</td><td>Standard Display Cables</td><td>N/A</td><td class="text-center">${displayAdapterQty}</td></tr>` : '';
+
+        const renderRow = (itemLabel, assetDetails, qty, key) => {
+            if (parseInt(qty) === 1 && assetDetails !== 'N/A') {
+                const assetId = host[`${key}_assetid`] || 'N/A';
+                return `<tr><td>${itemLabel}</td><td>${assetDetails}</td><td>${assetId}</td><td class="text-center">1</td></tr>`;
+            }
+            return '';
+        };
+
+        const peripheralRows = `
+            ${renderRow('Cabinet',         cabinetName,   cabinetQty,   'cabinet')}
+            ${renderRow('Monitor 1',       monitor1Name,  monitor1Qty,  'monitor1')}
+            ${renderRow('Monitor 2',       monitor2Name,  monitor2Qty,  'monitor2')}
+            ${renderRow('Mouse',           mouseName,     mouseQty,     'mouse')}
+            ${renderRow('Keyboard',        keyboardName,  keyboardQty,  'keyboard')}
+            ${renderRow('Headphone',       headphoneName, headphoneQty, 'headphone')}
+            ${renderRow('Emitter',         emmitterName,  emmitterQty,  'emmitter')}
+            ${renderRow('Emitter Charger', echargerName,  echargerQty,  'emitter_charger')}
+            ${renderRow('Goggle',          goggleName,    goggleQty,    'goggle')}
+            ${powerAdapterRow}
+            ${displayAdapterRow}
+            <tr style="height:20px"><td></td><td></td><td></td><td></td></tr>
+            <tr style="height:20px"><td></td><td></td><td></td><td></td></tr>`;
+
+        const printContent = buildPrintHtml('IT ASSET REQUISITION FORM', aid, `
+            <div class="full-section">
+                <p class="section-title">SYSTEM SPECIFICATIONS</p>
+                <div class="main-table">
+                    <div class="drow"><div class="dfield"><span class="dlabel">Host Name:</span><span>${host.hostname}</span></div><div class="dfield"><span class="dlabel">Host Type:</span><span>${host.hosttype}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Processor:</span><span>${host.processor}</span></div><div class="dfield"><span class="dlabel">OS:</span><span>${host.os}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Graphics:</span><span>${host.graphics || 'N/A'}</span></div><div class="dfield"><span class="dlabel">RAM / Storage:</span><span>${host.ram} / ${host.ssd} SSD / ${host.hdd} HDD</span></div></div>
+                </div>
+                <p class="section-title">ASSIGNMENT DETAILS</p>
+                <div class="main-table">
+                    <div class="drow"><div class="dfield"><span class="dlabel">Assigned To:</span><span>${employeeFullName} (EID: ${employeeId})</span></div><div class="dfield"><span class="dlabel">Issued By:</span><span>${ISSUER_FULL_NAME} (${ISSUER_EMPLOYEE_ID})</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Date of Issue:</span><span>${formattedDate}</span></div><div class="dfield"><span class="dlabel">Employee Phone:</span><span>${employeePhoneNo}</span></div></div>
+                    <div class="drow"><div class="dfield" style="width:100%;border-right:none"><span class="dlabel">Deployment Location / Remarks:</span><span>${remarks}</span></div></div>
+                </div>
+            </div>
+            <div class="section">
+                <p class="section-title">EQUIPMENT CHECKLIST — HOST AND PERIPHERALS</p>
+                <table class="ptable">
+                    <thead><tr><th style="width:25%">Item</th><th style="width:35%">Asset Name/Model</th><th style="width:25%">Asset ID</th><th style="width:15%;text-align:center">Qty</th></tr></thead>
+                    <tbody>${peripheralRows}</tbody>
+                </table>
+            </div>
+        `, `
+            <p style="font-size:11px;margin-bottom:10px;"><strong>Employee Declaration:</strong> I hereby confirm receipt of the above-listed assets in satisfactory working condition and agree to adhere to company IT asset policies.</p>
+            <table class="sig-table">
+                <thead><tr>
+                    <th style="width:40%;text-align:center">Employee Signature &amp; Name</th>
+                    <th style="width:20%;text-align:center">Date</th>
+                    <th style="width:40%;text-align:center">IT Department Signature</th>
+                </tr></thead>
+                <tbody><tr>
+                    <td><div class="sig-line"></div></td>
+                    <td><div class="sig-line"></div></td>
+                    <td style="position:relative">
+                        <div class="sig-line"></div>
+                        <div class="dig-stamp">Digitally Signed by ${ISSUER_FULL_NAME}<br>EID: ${ISSUER_EMPLOYEE_ID} | Date: ${formattedDate}</div>
+                    </td>
+                </tr></tbody>
+            </table>
+        `);
+
+        openPrint(printContent);
+    }
+
+    /* ── Fetch Members & Open Modal ── */
+    function fetchMembersAndRenderModal(rowData) {
+        showCustomModal('Loading', '<p class="text-center py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i> Fetching employee list…</p>');
+        $.ajax({
+            url:'/admin/getemployees', type:'GET',
+            dataType:'json',
+            success: function(members){
+                $('#customModal').hide();
+                if (members && Array.isArray(members) && members.length > 0) {
+                    renderAssignmentSelectionForm(rowData, members);
+                } else {
+                    showCustomModal('Error','<p class="text-danger">The employee list API returned no data.</p>');
+                }
+            },
+            error: function(){
+                showCustomModal('Error','<p class="text-danger">Error fetching employee data.</p>');
+            }
+        });
+    }
+
+    /* ── Print Return Form ── */
+    function printReturnForm(host, returnDate, returnRemarks, returnedPeripherals) {
+        const formattedReturnDate = formatCustomDate(returnDate);
+
+        const peripheralList = [
+            { label:'Cabinet',         name:host.cabinet,          assetid:host.cabinet_assetid,          key:'cabinet' },
+            { label:'Monitor 1',       name:host.monitor1,         assetid:host.monitor1_assetid,         key:'monitor1' },
+            { label:'Monitor 2',       name:host.monitor2,         assetid:host.monitor2_assetid,         key:'monitor2' },
+            { label:'Mouse',           name:host.mouse,            assetid:host.mouse_assetid,            key:'mouse' },
+            { label:'Keyboard',        name:host.keyboard,         assetid:host.keyboard_assetid,         key:'keyboard' },
+            { label:'Charger',         name:host.charger,          assetid:host.charger_assetid,          key:'charger' },
+            { label:'Headphone',       name:host.headphone,        assetid:host.headphone_assetid,        key:'headphone' },
+            { label:'Emitter',         name:host.emitter,          assetid:host.emitter_assetid,          key:'emitter' },
+            { label:'Emitter Charger', name:host.emitter_charger,  assetid:host.emitter_charger_assetid,  key:'emitter_charger' },
+            { label:'Goggle',          name:host.goggle,           assetid:host.goggle_assetid,           key:'goggle' },
+        ];
+
+        let peripheralRows = '';
+        let hasPeripherals = false;
+        let monitorCount = 0;
+
+        peripheralList.forEach(item => {
+            if (item.key === 'monitor1' || item.key === 'monitor2') { if (item.assetid) monitorCount++; }
+            if (item.assetid) {
+                hasPeripherals = true;
+                const isReturned = returnedPeripherals[item.key] === 1;
+                const statusHtml = isReturned
+                    ? '<span style="color:green;font-weight:bold">Returned (✓)</span>'
+                    : '<span style="color:red;font-weight:bold">Missing (✗)</span>';
+                peripheralRows += `<tr>
+                    <td>${item.label}</td>
+                    <td>${item.name || 'N/A'}</td>
+                    <td>${item.assetid}</td>
+                    <td class="text-center">1</td>
+                    <td>${statusHtml}</td>
+                </tr>`;
+            }
+        });
+
+        let powerAdapterQty = 1;
+        if (monitorCount === 1) powerAdapterQty = 2;
+        if (monitorCount === 2) powerAdapterQty = 3;
+        if (powerAdapterQty > 1) {
+            hasPeripherals = true;
+            peripheralRows += `<tr><td>Power Adapter</td><td>Standard Power Adapter</td><td>N/A</td><td class="text-center">${powerAdapterQty}</td><td><span style="color:green;font-weight:bold">Returned (✓)</span></td></tr>`;
+        }
+
+        let displayAdapterQty = monitorCount;
+        if (displayAdapterQty > 0) {
+            peripheralRows += `<tr><td>Display Cables</td><td>Standard Display Cables</td><td>N/A</td><td class="text-center">${displayAdapterQty}</td><td><span style="color:green;font-weight:bold">Returned (✓)</span></td></tr>`;
+        }
+
+        peripheralRows += `
+            <tr style="height:20px"><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr style="height:20px"><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr style="height:20px"><td></td><td></td><td></td><td></td><td></td></tr>`;
+
+        const peripheralSection = hasPeripherals ? `
+            <div class="section">
+                <p class="section-title">PERIPHERALS STATUS CHECK</p>
+                <table class="ptable">
+                    <thead><tr><th style="width:20%">Item</th><th style="width:30%">Asset Name/Model</th><th style="width:20%">Asset ID</th><th style="width:10%;text-align:center">Qty</th><th style="width:20%">Return Status</th></tr></thead>
+                    <tbody>${peripheralRows}</tbody>
+                </table>
+            </div>` : '';
+
+        const printContent = buildPrintHtml('IT ASSET RETURN ACKNOWLEDGEMENT FORM', host.assignmentid, `
+            <div class="full-section">
+                <p class="section-title">RETURN DETAILS</p>
+                <div class="main-table">
+                    <div class="drow"><div class="dfield"><span class="dlabel">Handed Over By:</span><span>${host.username || 'N/A'} (EID: ${host.eid || 'N/A'})</span></div><div class="dfield"><span class="dlabel">Received By (IT):</span><span>${ISSUER_FULL_NAME} (EID: ${ISSUER_EMPLOYEE_ID})</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Host Name / ID:</span><span>${host.hostname} / ${host.hostid}</span></div><div class="dfield"><span class="dlabel">Assignment ID:</span><span>${host.assignmentid || 'N/A'}</span></div></div>
+                    <div class="drow"><div class="dfield"><span class="dlabel">Type / OS:</span><span>${host.hosttype} / ${host.os}</span></div><div class="dfield"><span class="dlabel">Return Date:</span><span>${formattedReturnDate}</span></div></div>
+                    <div class="drow"><div class="dfield" style="width:100%;border-right:none"><span class="dlabel">Return Remarks / Condition:</span><div class="condition-box">${returnRemarks}</div></div></div>
+                </div>
+            </div>
+            ${peripheralSection}
+        `, `
+            <p style="font-size:11px;margin-bottom:10px;"><strong>Employee Confirmation:</strong> I confirm that the above-listed host and peripherals have been physically returned to the IT department in the stated condition.</p>
+            <table class="sig-table">
+                <thead><tr>
+                    <th style="width:40%;text-align:center">Employee Signature &amp; Name</th>
+                    <th style="width:20%;text-align:center">Date</th>
+                    <th style="width:40%;text-align:center">IT Department Signature</th>
+                </tr></thead>
+                <tbody><tr>
+                    <td><div class="sig-line"></div></td>
+                    <td><div class="sig-line"></div></td>
+                    <td style="position:relative">
+                        <div class="sig-line"></div>
+                        <div class="dig-stamp">Digitally Acknowledged by ${ISSUER_FULL_NAME}<br>EID: ${ISSUER_EMPLOYEE_ID} | Date: ${formattedReturnDate}</div>
+                    </td>
+                </tr></tbody>
+            </table>
+        `);
+
+        openPrint(printContent);
+    }
+
+    /* ── Show Return Host Modal ── */
+    function showReturnHostModal(host) {
+        if (!host.assignmentid) {
+            showCustomModal('Error','<p class="text-danger">Host is missing a valid Assignment ID. Cannot process return.</p>');
+            return;
+        }
+
+        const modalBody = `
+            <form id="returnHostForm">
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-user-tag"></i> Assignment Info</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-user"></i> Assigned Employee</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.username || 'N/A'} (EID: ${host.eid || 'N/A'})" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-receipt"></i> Assignment ID</label>
+                            <input type="text" class="form-control form-control-sm bg-light" value="${host.assignmentid}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-calendar-check"></i> Return Date</label>
+                            <input type="date" class="form-control form-control-sm" id="returnDate" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label"><i class="fa-solid fa-comment-medical"></i> Return Remarks / Condition</label>
+                            <textarea class="form-control form-control-sm" id="returnRemarks" rows="2" placeholder="Condition of the host, reason for return, defects, etc." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card">
+                    <div class="modal-card-title"><i class="fa-solid fa-box-open"></i> Peripherals Checklist — Check if Returned</div>
+                    ${renderReturnPeripheralCheckboxes(host)}
+                </div>
+                <p class="text-danger small mt-2 mb-0"><i class="fa-solid fa-circle-exclamation me-1"></i>Confirming will mark host as <strong>Idle</strong> and clear the employee assignment.</p>
+            </form>`;
+
+        $('#modalTitle').text(`Return Host: ${host.hostid}`);
+        $('#modal-header-icon').removeClass().addClass('modal-icon fa-solid fa-rotate-left text-danger');
+        $('#modal-body').html(modalBody);
+
+        const footerDiv = $('#modal-footer-actions');
+        footerDiv.empty().append(`
+            <button class="btn btn-sm btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button class="btn btn-sm btn-outline-secondary me-2" id="print-return-form-btn"><i class="fa-solid fa-print me-1"></i>Print Return Form</button>
+            <button class="btn btn-sm btn-danger" id="confirm-return-btn"><i class="fa-solid fa-check-double me-1"></i>Confirm Return</button>
+        `);
+
+        $('#modal-cancel-btn').on('click', function(){ $('#customModal').hide(); });
+
+        const collectPeripherals = () => {
+            const ret = {};
+            $('.peripheral-checkbox').each(function(){
+                ret[$(this).data('key')] = $(this).is(':checked') ? 1 : 0;
+            });
+            return ret;
+        };
+
+        $('#print-return-form-btn').off('click').on('click', function(){
+            if (!$('#returnHostForm')[0].checkValidity()){ $('#returnHostForm')[0].reportValidity(); return; }
+            printReturnForm(host, $('#returnDate').val(), $('#returnRemarks').val(), collectPeripherals());
+        });
+
+        $('#confirm-return-btn').off('click').on('click', function(){
+            if (!$('#returnHostForm')[0].checkValidity()){ $('#returnHostForm')[0].reportValidity(); return; }
+            const data = {
+                hostid:host.hostid, employeeId:host.eid, assignmentid:host.assignmentid,
+                returnDate:$('#returnDate').val(), returnRemarks:$('#returnRemarks').val(),
+                returnedPeripherals: collectPeripherals()
+            };
+                const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+            $.ajax({
+                url:'/it/returnHost', 
+                headers:{'X-CSRF-TOKEN':csrfToken},
+                type:'POST',
+                 data:data,
+                success: function(){
+                    showCustomModal('Return Processed',`<p>Host <strong>${host.hostid}</strong> return has been successfully processed.</p>`);
+                    fetchdata();
+                },
+                error: function(){
+                    showCustomModal('Error',`<p class="text-danger">Failed to process return for host <strong>${host.hostid}</strong>.</p>`);
+                }
+            });
+        });
+
+        $('#customModal').css('display','flex');
+    }
+
+    /* ── Shared print HTML builder ── */
+    function buildPrintHtml(docTitle, docId, bodyContent, signatureContent) {
+        return `<html><head><title>${docTitle}</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+            body{font-family:'Roboto',sans-serif;margin:0;padding:20px;color:#000;font-size:10px;}
+            .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+            .logo-container{width:120px;text-align:left;}
+            .title-container{flex-grow:1;text-align:center;}
+            .title-container h1{color:#1a237e;font-size:18px;margin:0;font-weight:700;}
+            .title-container h3{font-size:13px;margin:2px 0;font-weight:400;color:#333;}
+            .doc-id{width:130px;text-align:right;font-size:9px;color:#555;font-weight:700;}
+            .separator{border-bottom:3px solid #1a237e;margin-bottom:15px;padding-bottom:2px;}
+            .section-title{background:#1a237e;color:#fff;font-weight:700;font-size:11px;padding:6px 10px;text-transform:uppercase;margin:0;display:block;}
+            .full-section{border:1px solid #ccc;padding:10px;margin-bottom:15px;}
+            .section{margin-bottom:15px;}
+            .main-table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;}
+            .drow{display:flex;border-bottom:1px solid #ddd;}
+            .drow:last-child{border-bottom:none;}
+            .dfield{padding:7px 10px;width:50%;border-right:1px solid #ddd;}
+            .dfield:last-child{border-right:none;}
+            .dlabel{font-weight:bold;color:#333;display:block;margin-bottom:2px;font-size:10px;}
+            .ptable{width:100%;border-collapse:collapse;font-size:10px;}
+            .ptable thead th{background:#f0f0f5;border:1px solid #ccc;padding:5px 7px;text-align:left;font-weight:700;color:#333;}
+            .ptable td{border:1px solid #ddd;padding:4px 7px;vertical-align:middle;}
+            .condition-box{border:1px solid #ccc;padding:5px;min-height:35px;background:#f9f9f9;white-space:pre-wrap;margin-top:4px;font-size:10px;}
+            .sig-block{margin-top:25px;}
+            .sig-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+            .sig-table th{font-size:10px;padding:4px 0;border-top:1px solid #333;border-bottom:1px solid #333;font-weight:700;}
+            .sig-table td{border:none;padding:5px 0;height:55px;position:relative;}
+            .sig-line{border-bottom:1px solid #333;height:1px;width:90%;margin:0 auto;}
+            .dig-stamp{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:94%;padding:3px;text-align:center;font-size:8.5px;color:#1a237e;font-weight:bold;border:1px dashed #1a237e;background:#eef2ff;line-height:1.4;}
+            .footer-note{text-align:center;margin-top:18px;font-size:8px;color:#555;}
+        </style></head><body>
+        <div class="header">
+            <div class="logo-container"><img src="assets/images/gsblogo.png" alt="Logo" style="height:30px;"></div>
+            <div class="title-container"><h1>${docTitle}</h1><h3>Geosieben Consulting Private Limited</h3></div>
+            <div class="doc-id">DOC ID: ${docId}</div>
+        </div>
+        <div class="separator"></div>
+        ${bodyContent}
+        <div class="sig-block">${signatureContent}</div>
+        <p class="footer-note">CONFIDENTIAL — IT Asset Management Document. This form serves as the official record of asset custody.</p>
+        </body></html>`;
+    }
+
+    function openPrint(html) {
+        const win = window.open('','_blank');
+        if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
+        else { showCustomModal('Print Blocked','<p>Please allow pop-ups for this site to generate the printable form.</p>'); }
+    }
+
+    /* ── Init DataTable ── */
+    function initTable() {
+        if ($.fn.DataTable.isDataTable('#example')) {
+            $('#example').DataTable().clear().destroy();
+        }
+
+        const safeVal = d => d || '—';
+
+        const statusMap = {
+            0: { cls:'status-badge Idle',     label:'Idle'     },
+            1: { cls:'status-badge Assigned', label:'Assigned' },
+            2: { cls:'status-badge Inactive', label:'Inactive' },
+            3: { cls:'status-badge Assigned', label:'Leased' },
+
+        };
+
+        table = $('#example').DataTable({
+            data: hostData,
+            responsive: true,
+            dom: 'lBfrtip',
+            lengthMenu: [ [10,25,50,-1], [10,25,50,'All'] ],
+            pageLength:100,
+            columns: [
+                { data:'hostid',    title:'Host ID' },
+                { data:'hostname',  title:'Host Name' },
+                { data:'cabinet',  title:'Cabinet' },
+                { data:'lanno',     title:'LAN No' },
+                { data:'ipAddress', title:'IP Address' },
+                { data:'processor', title:'Processor' },
+                { data:'ram',       title:'RAM' },
+                  { data:null,  title:'User Name',              render: function(row){
+                       
+                        return row.username!=null ? row.username:(row.leaseUser!=null?row.leaseUser:'');
+                    } }, 
+                                   { data:'workmail',        title:'Email', render:safeVal },
+               
+                {
+                    data:'status', title:'Status',
+                    render: function(data){
+                        const s = statusMap[parseInt(data)] || { cls:'badge bg-dark', label:'Unknown' };
+                        return `<span class="${s.cls}">${s.label}</span>`;
+                    }
+                },
+                  { data:null,  title:'Assignment ID',              render: function(row){
+                       
+                        return row.assignmentid!=null ? row.assignmentid:(row.leaseid!=null?row.leaseid:'');
+                    } },
+                {
+                    data:null, title:'Actions', orderable:false, searchable:false, className:'actions-cell',
+                    render: function(data, type, row){
+                        const btns = [];
+                        if (parseInt(row.status) === 0) {
+                            btns.push(`<button class="btn btn-act-assign assign-btn" data-id="${row.hostid}"><i class="fa-solid fa-user-plus"></i> Assign</button>`);
+                            btns.push(`<button class="btn btn-act-lease lease-btn" data-id="${row.hostid}"><i class="fa-solid fa-handshake"></i> Lease</button>`);
+                        }
+                        if (parseInt(row.status) === 1) {
+                            btns.push(`<button class="btn btn-act-return return-btn" data-id="${row.hostid}"><i class="fa-solid fa-rotate-left"></i> Return</button>`);
+                        }
+                        if (row.leaseid && !row.leaseDocumentPath) {
+                            btns.push(`<button class="btn btn-act-ack ack-btn" data-leaseid="${row.leaseid}"><i class="fa-solid fa-file-arrow-up"></i> Lease Ack</button>`);
+                        }
+                        if (row.leaseid && !row.leaseReturned) {
+                            btns.push(`<button class="btn btn-act-leasereturn leasereturn-btn" data-id="${row.hostid}"><i class="fa-solid fa-rotate-left"></i> Return Lease</button>`);
+                        }
+                        if (row.assignmentid && !row.ackFilepath) {
+                            btns.push(`<button class="btn btn-act-ack ack-btn" data-assignmentid="${row.assignmentid}"><i class="fa-solid fa-file-arrow-up"></i> Ack</button>`);
+                        }
+                        
+                        if (row.ackFilepath|| row.leaseDocumentPath) {
+                            btns.push(`<button class="btn btn-act-viewack view-ack-btn" data-filepath="api/${row.ackFilepath??row.leaseDocumentPath}"><i class="fa-solid fa-file-pdf"></i> View Ack</button>`);
+                        }
+                        btns.push(`<a href="viewHost.php?hostid=${row.hostid}"><button class="btn btn-act-view"><i class="fa-solid fa-eye"></i> View</button></a>`);
+                        return btns.join('');
+                    }
+                }
+            ]
+        });
+
+        /* update stat strip */
+        const total    = hostData.length;
+        const idle     = hostData.filter(h => parseInt(h.status) === 0).length;
+        const assigned = hostData.filter(h => parseInt(h.status) === 1).length;
+        const inactive = hostData.filter(h => parseInt(h.status) === 2).length;
+        const leased = hostData.filter(h => parseInt(h.status) === 3).length;
+
+        $('#statTotal').text(total);
+        $('#statIdle').text(idle);
+        $('#statAssigned').text(assigned);
+        $('#statInactive').text(inactive);
+
+        /* view ack */
+        $('#example').on('click','.view-ack-btn', function(){
+            const fp = $(this).data('filepath');
+            if (fp) window.open(fp,'_blank');
+        });
+    }
+
+    /* ── Fetch Data ── */
+    function fetchdata() {
+        $.ajax({
+            url:'/it/getHosts', 
+            type:'GET',
+            dataType:'json',
+            success: function(response){
+                hostData = Array.isArray(response)
+                    ? response.map(h => ({ ...h, status:parseInt(h.status), assignmentid:h.assignmentid||null }))
+                    : [];
+                initTable();
+            },
+            error: function(err){
+                console.log(err);
+                hostData = [];
+                initTable();
+                showCustomModal('Data Error','<p class="text-danger">Failed to fetch host data from the API.</p>');
+            }
+        });
+    }
+    fetchdata();
+
+    /* ── Event Delegation ── */
+    $('#example').on('click','.assign-btn', function(){
+        const host = hostData.find(h => h.hostid === $(this).data('id'));
+        if (host) fetchMembersAndRenderModal(host);
+    });
+
+    $('#example').on('click','.lease-btn', function(){
+        const host = hostData.find(h => h.hostid === $(this).data('id'));
+        if (host) {
+            showLeaseModal(host);
+        } else {
+            showCustomModal('Error','<p class="text-danger">Host not found in loaded data.</p>');
+        }
+    });
+
+    $('#example').on('click','.leasereturn-btn', function(){
+        const host = hostData.find(h => h.hostid === $(this).data('id'));
+        if (host) {
+            showLeaseReturnModal(host);
+        } else {
+            showCustomModal('Error','<p class="text-danger">Host not found in loaded data.</p>');
+        }
+    });
+
+    $('#example').on('click','.return-btn', function(e){
+        e.preventDefault(); e.stopPropagation();
+        const host = hostData.find(h => h.hostid === $(this).data('id'));
+        if (host && parseInt(host.status) === 1) {
+            showReturnHostModal(host);
+        } else if (host) {
+            showCustomModal('Not Allowed',`<p>Host <strong>${host.hostid}</strong> must be <strong>Assigned</strong> to process a return.</p>`);
+        } else {
+            showCustomModal('Error','<p class="text-danger">Host not found in loaded data.</p>');
+        }
+    });
+
+    /* ── Modal close ── */
+    $('.close-btn').on('click', function(){ $('#customModal').hide(); });
+    $('#customModal').on('click', function(e){ if (e.target.id==='customModal') $('#customModal').hide(); });
+
+});
+</script>
+</body>
+</html>

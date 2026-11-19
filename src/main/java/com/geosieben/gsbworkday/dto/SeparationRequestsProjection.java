@@ -14,4 +14,5 @@ String getLastName();
 String getEID();
 LocalDate getDateOfJoining();
 String getAdminRemarks();
+String getImage();
 }

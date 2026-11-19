@@ -3,7 +3,6 @@ package com.geosieben.gsbworkday.service;
 import com.geosieben.gsbworkday.entity.User;
 import com.geosieben.gsbworkday.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,11 +10,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CustomUserDetails implements UserDetailsService {
-    @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private HttpSession httpSession;
+
+    public CustomUserDetails(UserRepository userRepository, HttpSession httpSession) {
+        this.userRepository = userRepository;
+        this.httpSession = httpSession;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -25,7 +27,8 @@ public class CustomUserDetails implements UserDetailsService {
         }
 
         httpSession.setAttribute("eid",user.getEmployeeBasicInfo().getEID());
-        //System.out.println("Role: " + user.getEmployeeBasicInfo().getEID());
+        httpSession.setAttribute("uname", user.getUsername());
+        httpSession.setAttribute("username", user);
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmployeeBasicInfo().getEID())

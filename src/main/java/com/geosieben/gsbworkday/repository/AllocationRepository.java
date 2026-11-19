@@ -6,11 +6,10 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
+import com.geosieben.gsbworkday.dto.AllotmentsProjection;
 import com.geosieben.gsbworkday.entity.ProjectAllocation;
 
-@Repository
 public interface AllocationRepository extends JpaRepository<ProjectAllocation ,Integer>{
 @Query(value = "SELECT * FROM projectallocation WHERE pid = ?1", nativeQuery = true)
 List<ProjectAllocation> findByProjectPid(int pid);
@@ -28,12 +27,21 @@ Optional<ProjectAllocation> findRelatedProdTask(String feeder, int pid);
 Optional<ProjectAllocation> findProdByFeederAndPid(String feeder, int pid); 
 @Query(value="SELECT * FROM projectallocation  WHERE (((type='Prod'OR type='Pilot') AND allottedto=:allottedto) OR ((type='QC') AND qcAssinee=:allottedto)) and isRunning=1",nativeQuery=true)
 Optional<ProjectAllocation> getRunningTasks(@Param("allottedto") String allottedto);
-@Query(value = "SELECT * FROM projectallocation WHERE feederAlloted = :feeder AND pid = :pid AND type = :type LIMIT 1", nativeQuery = true)
+@Query(value = "SELECT * FROM projectallocation WHERE feederAlloted = :feeder AND pid = :pid AND type = :type and qcAssignee=:qcAssignee LIMIT 1", nativeQuery = true)
 ProjectAllocation getQcTask(
     @Param("feeder") String feeder, 
     @Param("pid") int pid, 
-    @Param("type") String type
+    @Param("type") String type,
+    @Param("qcAssignee") String qcAssignee
 );
+
+@Query(value="SELECT pa.allotmentid,COALESCE(b.completionPercentage,0) as completionPercentage,pa.isRunning,pa.type,pa.deadline, "+
+"pa.qcDeadline,pa.feederAlloted,pa.elapsedTime,pa.startTime,"+
+"pa.hrsAssigned,pa.qcHrs FROM projectallocation pa "+
+"LEFT JOIN (select allotmentid,max(completionpercentage) as completionPercentage FROM bookedhours GROUP BY  allotmentid) b on b.allotmentid =pa.allotmentid "+
+"WHERE ((pa.type='Prod' OR pa.type='Pilot') AND pa.allottedto=:eid AND pa.status NOT IN (3,10)) "+
+"OR (pa.type='QC' AND pa.qcAssinee=:eid and pa.status not in (6,7))",nativeQuery = true)
+public List<AllotmentsProjection> getMyAllotments(@Param("eid") String eid);
 }
  
 

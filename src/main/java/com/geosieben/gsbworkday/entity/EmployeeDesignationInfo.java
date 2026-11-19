@@ -1,8 +1,12 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Data
+@NoArgsConstructor
 @Table(name = "employee_designation_info")
 public class EmployeeDesignationInfo {
     @Id
@@ -15,29 +19,15 @@ public class EmployeeDesignationInfo {
     @MapsId
     @JoinColumn(name = "EID")
     private EmployeeBasicInfo employeeBasicInfo;
-
-    public EmployeeDesignationInfo(EmployeeBasicInfo employeeBasicInfo, String designation) {
-        this.employeeBasicInfo = employeeBasicInfo;
+    @ManyToOne
+    @JoinColumn(name="department")
+    private Department department;
+    public EmployeeDesignationInfo(String eID, String designation, EmployeeBasicInfo employeeBasicInfo,
+            Department department) {
+        EID = eID;
         this.designation = designation;
-    }
-
-    public EmployeeDesignationInfo() {
-
-    }
-
-    public EmployeeBasicInfo getEmployeeBasicInfo() {
-        return employeeBasicInfo;
-    }
-
-    public void setEmployeeBasicInfo(EmployeeBasicInfo employeeBasicInfo) {
         this.employeeBasicInfo = employeeBasicInfo;
+        this.department = department;
     }
 
-    public String getDesignation() {
-        return designation;
-    }
-
-    public void setDesignation(String designation) {
-        this.designation = designation;
-    }
 }

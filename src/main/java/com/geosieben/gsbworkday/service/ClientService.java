@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +17,16 @@ import com.geosieben.gsbworkday.repository.ClientRepository;
 import jakarta.servlet.http.HttpSession;
 @Service
 public class ClientService implements ClientInterFace{
-    @Autowired
     private ClientRepository clientRepository;
-    @Autowired
     private BasicInfoRepository basicInfoRepository;
-    @Autowired
     private HttpSession httpSession;
+    
+    public ClientService(ClientRepository clientRepository, BasicInfoRepository basicInfoRepository,
+            HttpSession httpSession) {
+        this.clientRepository = clientRepository;
+        this.basicInfoRepository = basicInfoRepository;
+        this.httpSession = httpSession;
+    }
     @Override
     public ResponseEntity<Map<String, String>> saveclientInfo(String clientid,String clientName) {
         Map<String, String> response=new HashMap<>();

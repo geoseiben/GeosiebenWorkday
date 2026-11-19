@@ -13,16 +13,16 @@ public class RootProject {
     private int projectStatus=0;
     private String projectType;
     private LocalDateTime createdOn=LocalDateTime.now();
-   @ManyToOne
+   @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="projectLead")
    private EmployeeBasicInfo projectlead;
-   @ManyToOne
+   @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="createdBy")
    private EmployeeBasicInfo createdBy;
-     @ManyToOne
+     @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="category")
    private ProjectCategories category;
-        @ManyToOne
+        @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="clientId")
    private Clients client;
 

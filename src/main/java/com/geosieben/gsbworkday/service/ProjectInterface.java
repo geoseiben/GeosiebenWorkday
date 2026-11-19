@@ -21,4 +21,6 @@ public List<ProjectAllocation> getProjectAllocationData(int projectid);
 public List<EmployeeBasicInfo> findEmployees();
 public ResponseEntity<Map<String,String>> assignTask(int allotmentId,String prodAssignee,LocalDate deadline,String qcAssignee,LocalDate qcDeadline);
 public ResponseEntity<Map<String,String>> updateAllotment(UpdateAllotmentDto dto);
+
+
 }

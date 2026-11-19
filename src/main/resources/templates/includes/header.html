@@ -1,166 +1,919 @@
 <header th:fragment="header"
-        class="bg-white border-b sticky top-0 z-[1000] shadow-sm"
-        style="font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow: visible !important;">
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
+        class="g7-header bg-white/95 backdrop-blur-md text-[#1B2030] sticky top-0 z-[1000] border-b border-[#DCE3F0] shadow-[0_1px_0_rgba(16,20,38,.04),0_8px_24px_-16px_rgba(16,20,38,.22)] select-none"
+        style="font-family: 'Inter', system-ui, -apple-system, sans-serif;">
 
-            <div class="flex items-center gap-10">
-                <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/dashboard'">
-                    <div class="w-10 h-10 bg-[#4f46e5] rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105">
-                        <span class="text-white font-black text-lg tracking-tighter">G7</span>
-                    </div>
-                    <a href="/dashboard" class="no-underline">
-                        <span class="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 hidden sm:block tracking-tight">
-                            Geosieben
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        @keyframes g7-headerIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes g7-livePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,.45); } 50% { box-shadow: 0 0 0 4px rgba(22,163,74,0); } }
+
+        .g7-header { animation: g7-headerIn .35s cubic-bezier(.22,.9,.32,1) both; }
+
+        /* Active top-level nav pill */
+        .g7-navbtn.is-active {
+            color: #0055FF;
+            background-color: #EEF4FF;
+            font-weight: 600;
+        }
+        .g7-navbtn.is-active::after {
+            content: "";
+            position: absolute;
+            bottom: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 2.5px;
+            border-radius: 2px 2px 0 0;
+            background: #0055FF;
+        }
+
+        /* Active link inside dropdowns & mobile drawer */
+        .g7-link.is-active {
+            color: #0055FF !important;
+            background-color: #EEF4FF !important;
+            font-weight: 600;
+        }
+
+        /* Desktop dropdown flap hinge */
+        .g7-dd {
+            transform-origin: top center;
+            transform: perspective(750px) rotateX(-12deg) translateY(-2px);
+            transition: opacity .18s ease, transform .24s cubic-bezier(.22,.9,.32,1), visibility .24s;
+        }
+        .group:hover .g7-dd, .group:focus-within .g7-dd, .group.is-open .g7-dd {
+            transform: perspective(750px) rotateX(0deg) translateY(0);
+        }
+
+        /* Staggered row flip */
+        .g7-dd a, .g7-dd button, .g7-dd .g7-sub, .g7-subdd a {
+            opacity: 0;
+            transform-origin: top center;
+            transform: perspective(360px) rotateX(-30deg);
+            transition: opacity .15s ease, transform .18s cubic-bezier(.22,.9,.32,1), background-color .15s ease, color .15s ease;
+        }
+        .group:hover .g7-dd a, .group:focus-within .g7-dd a, .group.is-open .g7-dd a,
+        .group:hover .g7-dd button, .group:focus-within .g7-dd button, .group.is-open .g7-dd button,
+        .group:hover .g7-dd .g7-sub, .group:focus-within .g7-dd .g7-sub, .group.is-open .g7-dd .g7-sub,
+        .group\/sub:hover .g7-subdd a, .group\/sub:focus-within .g7-subdd a, .group\/sub.is-open .g7-subdd a {
+            opacity: 1;
+            transform: perspective(360px) rotateX(0deg);
+        }
+
+        .g7-dd a:nth-child(1), .g7-dd button:nth-child(1), .g7-dd .g7-sub:nth-child(1) { transition-delay: .02s; }
+        .g7-dd a:nth-child(2), .g7-dd button:nth-child(2), .g7-dd .g7-sub:nth-child(2) { transition-delay: .045s; }
+        .g7-dd a:nth-child(3), .g7-dd button:nth-child(3), .g7-dd .g7-sub:nth-child(3) { transition-delay: .07s; }
+        .g7-dd a:nth-child(4), .g7-dd button:nth-child(4) { transition-delay: .095s; }
+        .g7-dd a:nth-child(5) { transition-delay: .12s; }
+        .g7-dd a:nth-child(6) { transition-delay: .145s; }
+        .g7-dd a:nth-child(7) { transition-delay: .17s; }
+
+        /* Sub-dropdown horizontal hinge */
+        .g7-subdd {
+            transform-origin: left center;
+            transform: perspective(600px) rotateY(-16deg);
+            transition: opacity .18s ease, transform .22s cubic-bezier(.22,.9,.32,1), visibility .22s;
+        }
+        .group\/sub:hover .g7-subdd, .group\/sub:focus-within .g7-subdd, .group\/sub.is-open .g7-subdd {
+            transform: perspective(600px) rotateY(0deg);
+        }
+
+        /* Left active tick indicator */
+        .g7-dd a, .g7-dd button { position: relative; }
+        .g7-dd a::before, .g7-dd button::before {
+            content: ""; position: absolute; left: 0; top: 50%; width: 2.5px; height: 0;
+            background: #0055FF; border-radius: 0 2px 2px 0; transform: translateY(-50%);
+            transition: height .16s ease;
+        }
+        .g7-dd a:hover::before, .g7-dd button:hover::before, .g7-dd a.is-active::before { height: 58%; }
+
+        .g7-live { animation: g7-livePulse 2.6s ease-in-out infinite; }
+
+        /* Fixed Mobile Drawer Overlay */
+        .g7-mobilenav {
+            position: fixed;
+            top: 3.5rem;
+            left: 0;
+            right: 0;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+            overflow: hidden;
+            transition: max-height .32s cubic-bezier(.22,.9,.32,1), opacity .22s ease, visibility .32s;
+            z-index: 999;
+        }
+        .g7-mobilenav.is-open {
+            max-height: calc(100dvh - 3.5rem);
+            opacity: 1;
+            visibility: visible;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Backdrop behind mobile drawer */
+        .g7-backdrop {
+            position: fixed;
+            inset: 3.5rem 0 0 0;
+            background: rgba(16, 20, 38, 0.38);
+            backdrop-filter: blur(3px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .25s ease, visibility .25s;
+            z-index: 998;
+        }
+        .g7-backdrop.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Accordion transitions for mobile items */
+        .g7-mbody {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows .24s ease-out;
+        }
+        .g7-mbody > div { overflow: hidden; }
+        .g7-mgroup.is-expanded .g7-mbody { grid-template-rows: 1fr; }
+        .g7-mgroup.is-expanded .g7-mchevron { transform: rotate(180deg); color: #0055FF; }
+        .g7-mgroup.is-expanded { border-color: #C7D7FE; box-shadow: 0 2px 8px -4px rgba(0,85,255,.14); }
+
+        #g7MobileIconOpen, #g7MobileIconClose { position: absolute; inset: 0; transition: opacity .22s ease, transform .22s ease; }
+        #g7MobileIconClose { opacity: 0; transform: rotate(-45deg) scale(.7); }
+        #g7MobileNavBtn[aria-expanded="true"] #g7MobileIconOpen { opacity: 0; transform: rotate(45deg) scale(.7); }
+        #g7MobileNavBtn[aria-expanded="true"] #g7MobileIconClose { opacity: 1; transform: rotate(0deg) scale(1); }
+
+        .g7-signout::before { content: ""; position: absolute; inset: 0; background: #FBEAE8; transform: scaleX(0); transform-origin: left; transition: transform .2s ease; z-index: -1; border-radius: 0.5rem; }
+        .g7-signout:hover::before { transform: scaleX(1); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .g7-header, .g7-dd, .g7-dd a, .g7-dd button, .g7-subdd, .g7-live, .g7-mobilenav, .g7-mbody, .g7-backdrop {
+                animation: none !important; transition: none !important;
+            }
+            .g7-dd, .g7-subdd { transform: none !important; }
+            .g7-dd a, .g7-dd button, .g7-dd .g7-sub, .g7-subdd a { opacity: 1 !important; transform: none !important; }
+        }
+    </style>
+
+    <div class="w-full max-w-[99%] mx-auto px-3 sm:px-4 lg:px-6">
+        <div class="flex justify-between items-center h-14">
+
+            <!-- Left: Brand + Desktop Navigation -->
+            <div class="flex items-center gap-3.5 2xl:gap-6 min-w-0">
+                <!-- Brand Wordmark: GsbConnectz+ -->
+                <a href="/dashboard" aria-label="Go to dashboard"
+                   class="flex items-center cursor-pointer group/logo bg-transparent border-0 p-0 shrink-0 no-underline">
+                    <div class="flex flex-col leading-none">
+                        <div class="inline-flex items-start font-['Inter',_sans-serif] text-[18px] sm:text-[20px] font-bold tracking-[-0.03em] text-[#11151F]">
+                            <span>GsbConnectz</span>
+                            <span class="text-[#2563EB] text-[13px] sm:text-[14px] font-bold leading-none -mt-0.5 ml-0.5 transition-transform duration-300 group-hover/logo:rotate-90 group-hover/logo:scale-110">+</span>
+                        </div>
+                        <span class="text-[8.5px] sm:text-[9px] font-semibold tracking-[0.14em] uppercase text-[#5A6478] mt-1">
+                            QUALITY INSPIRES
                         </span>
-                    </a>
-                </div>
+                    </div>
+                </a>
 
-                <nav class="hidden md:flex items-center">
-                    <div sec:authorize="hasAnyAuthority('admin')" class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
+                <div class="hidden xl:block h-5 w-[1px] bg-[#E2E8F4]"></div>
+
+                <!-- Desktop Nav -->
+                <nav id="g7DesktopNav" class="hidden xl:flex items-center relative gap-0.5 2xl:gap-1">
+
+                    <!-- Employee -->
+                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
                             Employee
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a href="/admin/addemployee" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Add Employee</a>
-                            <a href="/admin/activeEmployees" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Active Employees</a>
-                            <button onclick="showView('reports')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Real-time Feed</button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[210px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/admin/addemployee" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Add Employee</a>
+                            <a href="/admin/activeEmployees" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Active Employees</a>
+                            <a href="/admin/separatedEmployees" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Separated Employees</a>
+                            <div class="border-t border-[#EEF2F9] my-1"></div>
+                            <button type="button" onclick="showView('reports')" class="flex items-center justify-between w-full text-left px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg">
+                                <span>Real-time Feed</span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>
+                            </button>
                         </div>
                     </div>
 
-                    <div sec:authorize="hasAnyAuthority('admin','user','hr')" class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
+                    <!-- HRD -->
+                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            HRD
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[230px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/requestDocuments" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Request Document</a>
+                            <a href="/admin/hrQueries" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>HR Queries</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/admin/documentRequests" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Doc Requests</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/admin/warningHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Warning History</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/admin/separtion/manage" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Separation</a>
+                            <a href="/admin/yep" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Year End Process</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/admin/letterGenerator" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Document Generator</a>
+                        </div>
+                    </div>
+
+                    <!-- Attendance -->
+                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Attendance
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[200px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/admin/attendance" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Attendance Portal</a>
+                            <a href="/admin/masterReport" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Master Report</a>
+                        </div>
+                    </div>
+
+                    <!-- Leaves -->
+                    <div sec:authorize="hasAnyAuthority('admin','user','hr','it')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
                             Leaves
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a href="/leaves/apply" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Apply Leave</a>
-                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/pendingLeaves" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Leave Requests</a>
-                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/approvedLeaves" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Approved Leaves</a>
-
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[200px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/leaves/apply" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Apply Leave</a>
+                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/pendingLeaves" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Leave Requests</a>
+                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/approvedLeaves" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Approved Leaves</a>
                         </div>
                     </div>
 
-                    <div class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
+                    <!-- Comp-Off -->
+                    <div class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Comp-Off
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[205px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/myCompOffs" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Request Comp-Off</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/compOffRequests" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Comp-Off Requests</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/CompOff" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Comp-Off History</a>
+                        </div>
+                    </div>
+
+                    <!-- Separation -->
+                    <div class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
                             Separation
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a href="/separtion/resign" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Resign</a>                           
-                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/separtion/manage" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Manage</a>                           
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[175px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/separtion/resign" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Resign</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/separtion/manage" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Manage</a>
                         </div>
                     </div>
 
-                    <div class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
+                    <!-- IT -->
+                    <div class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
                             IT
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a sec:authorize="hasAuthority('admin')" href="/it/dashboard" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">IT Dashboard</a>
-                            <a href="/raiseTicket" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline block">Raise Ticket</a>
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Active Tickets</button>
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg">Closed Tickets</button>
-                        </div>
-                    </div>  
-
-                    <div sec:authorize="hasAuthority('admin')" class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
-                            Production
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-52 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <div class="relative group/sub">
-                                <button class="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg transition-colors">
-                                    <span>Projects</span>   
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-                                <div class="hidden group-hover/sub:block absolute left-full top-0 ml-1 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2">
-                                    <a href="/admin/project/clients_stats" class="block px-4 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Client Stats</a>
-                                    <a href="/admin/project/active" class="block px-4 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Active Projects</a>
-                                    <a href="/admin/project/history" class="block px-4 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Project History</a>
-                                </div>
-                            </div>
-                            <div class="relative group/sub">
-                                <button class="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg transition-colors">
-                                    <span>Pilots</span>
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-                                <div class="hidden group-hover/sub:block absolute left-full top-0 ml-1 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2">
-                                    <a href="/admin/pilot/clients_stats" class="block px-4 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Pilot Analytics</a>
-                                    <a href="/admin/pilot/onboarding" class="block px-4 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Onboarding</a>
-                                </div>
-                            </div>
-                            <div class="border-t border-gray-100 my-1"></div>
-                            <a href="/admin/clients" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Manage Clients</a>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[235px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/it/raiseticket" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Raise Ticket</a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/floorLayout" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Floor Layout</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/creadentialsManager" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Credentials Manager</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/subscriptions" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Subscription Manager</a>
                         </div>
                     </div>
 
-                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-16 flex items-center">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-gray-600 group-hover:text-[#4f46e5] transition-colors">
-                            Careers
-                            <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                    <!-- Assets -->
+                    <div class="relative group h-14 flex items-center" sec:authorize="hasAnyAuthority('it','admin')" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Assets
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div class="hidden group-hover:block absolute top-[60px] left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl p-2 z-[9999]">
-                            <a href="/admin/careers/addCandidate" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Register Candidate</a>
-                            <a href="/admin/careers/manageCandidates" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-lg no-underline">Manage Candidates</a>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[205px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/it/itInventory" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Inventory</a>
+                            <a href="/it/addHost" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Add Host</a>
+                            <a href="/it/manageHosts" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Manage Hosts</a>
+                            <div class="border-t border-[#EEF2F9] my-1"></div>
+                            <a href="/it/assignmentHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Assignment</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/it/leaseHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Lease</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/it/outwardHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Outward</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/it/disposalHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Dispose</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Learn -->
+                    <div class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Learn
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[180px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/course/learn" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Explore Courses</a>
+                            <a sec:authorize="hasAnyAuthority('admin','hr')" href="/course/manageCourse" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Manage</a>
+                        </div>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="relative group h-14 flex items-center" sec:authorize="hasAnyAuthority('user','admin')" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Projects
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[180px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/course/learn" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">My Projects</a>
+                            <a href="/myTasks" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">My Tasks</a>
+                        </div>
+                    </div>
+
+                    <!-- Reports -->
+                    <div class="relative group h-14 flex items-center" sec:authorize="hasAnyAuthority('user','admin')" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Reports
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[185px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/admin/reports/targetHours" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Target Hours</a>
+                            <a href="/admin/reports/allotmentReport" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Allotments</a>
+                        </div>
+                    </div>
+
+                    <!-- Production -->
+                    <div sec:authorize="hasAuthority('admin')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Production
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[215px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <div class="g7-sub relative group/sub">
+                                <button type="button" class="flex items-center justify-between w-full px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg transition-colors duration-150 focus:outline-none">
+                                    <span>Projects</span>
+                                    <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                                <div class="g7-subdd invisible opacity-0 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100 absolute left-full top-0 ml-1.5 min-w-[185px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5">
+                                    <a href="/admin/project/clients_stats" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Client Stats</a>
+                                    <a href="/admin/project/active" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Active Projects</a>
+                                    <a href="/admin/project/history" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Project History</a>
+                                </div>
+                            </div>
+                            <div class="g7-sub relative group/sub">
+                                <button type="button" class="flex items-center justify-between w-full px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg transition-colors duration-150 focus:outline-none">
+                                    <span>Pilots</span>
+                                    <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                                <div class="g7-subdd invisible opacity-0 group-hover/sub:visible group-hover/sub:opacity-100 group-focus-within/sub:visible group-focus-within/sub:opacity-100 absolute left-full top-0 ml-1.5 min-w-[185px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5">
+                                    <a href="/admin/pilot/clients_stats" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Pilot Analytics</a>
+                                    <a href="/admin/pilot/onboarding" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Onboarding</a>
+                                </div>
+                            </div>
+                            <div class="border-t border-[#EEF2F9] my-1"></div>
+                            <a href="/admin/clients" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Manage Clients</a>
+                        </div>
+                    </div>
+
+                    <!-- Careers -->
+                    <div sec:authorize="hasAnyAuthority('admin','hr')" class="relative group h-14 flex items-center" data-nav-group>
+                        <button type="button" class="g7-navbtn relative flex items-center gap-1 h-[32px] px-2 2xl:px-2.5 rounded-lg text-[12.5px] 2xl:text-[13px] font-medium text-[#5A6175] transition-all duration-150 hover:text-[#1B2030] hover:bg-[#F3F7FF] group-hover:text-[#0055FF] focus:outline-none">
+                            Careers
+                            <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full right-0 min-w-[235px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
+                            <a href="/admin/careers/recrutmentDashboard" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Recruitment Dashboard</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
+                            <a href="/admin/careers/addCandidate" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Register Candidate</a>
+                            <a href="/admin/careers/manageCandidates" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Manage Candidates</a>
+                            <a href="/admin/careers/inactiveCandidates" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                                <span>Inactive Candidates</span>
+                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
+                            </a>
                         </div>
                     </div>
                 </nav>
             </div>
 
-            <div class="flex items-center">
-                <div class="relative group h-16 flex items-center">
-                    <button class="flex items-center gap-2 p-1 hover:bg-gray-50 rounded-full transition-all duration-200 border border-transparent hover:border-gray-200">
-                        <img class="h-9 w-9 rounded-full border-2 border-indigo-100 shadow-sm"
-                             src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff"
-                             alt="User">
-                        <svg class="w-4 h-4 text-gray-400 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-                    
-                    <div class="hidden group-hover:block absolute top-[60px] right-0 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl p-2 z-[9999] animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div class="px-4 py-3 mb-1 border-b border-gray-50">
-                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Account</p>
+            <!-- Right: Profile & Mobile Toggle -->
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <!-- User Profile Dropdown -->
+                <div id="g7ProfileMenu" class="relative group h-14 flex items-center">
+                    <button type="button" onclick="g7ToggleProfile(event)" aria-expanded="false"
+                            class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-full transition-all duration-150 border border-transparent hover:bg-[#F5F8FF] hover:border-[#DCE3F0] focus:outline-none">
+                        <span class="relative shrink-0">
+                            <img class="h-8 w-8 rounded-full object-cover shadow-[0_0_0_2px_#fff,0_0_0_3px_rgba(0,85,255,.35)]"
+                                 th:src="${session.uname != null ? 'https://ui-avatars.com/api/?name=' + session.uname + '&background=0055FF&color=FFFFFF&bold=true' : 'https://ui-avatars.com/api/?name=User&background=0055FF&color=FFFFFF&bold=true'}"
+                                 src="https://ui-avatars.com/api/?name=User&background=0055FF&color=FFFFFF&bold=true"
+                                 alt="Profile photo">
+                            <span class="g7-live absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#16A34A] border-2 border-white" aria-hidden="true"></span>
+                        </span>
+                        <div class="hidden lg:flex flex-col items-start leading-tight max-w-[130px] 2xl:max-w-[160px]">
+                            <span class="text-xs 2xl:text-[13px] font-semibold text-[#1B2030] truncate w-full text-left" th:text="${session.uname != null ? session.uname : 'User Profile'}">User</span>
+                            <span class="text-[10.5px] text-[#8C93A4] truncate w-full text-left" th:if="${session.username != null}" th:text="${session.username.email}">user@geosieben.com</span>
                         </div>
-                        
-                        <a href="/myprofile" class="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-xl transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            My Profile
+                        <svg class="hidden sm:block w-3 h-3 text-[#9298A8] transition-transform duration-200 group-hover:rotate-180 group-[.is-open]:rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-[.is-open]:visible group-[.is-open]:opacity-100 absolute top-full right-0 w-60 sm:w-64 bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_32px_-10px_rgba(18,23,43,.22)] p-1.5 z-50">
+                        <div class="flex items-center justify-between gap-2 px-2.5 py-2.5 mb-1 border-b border-[#EEF2F9]">
+                            <div class="min-w-0">
+                                <p class="text-[13px] font-semibold text-[#1B2030] truncate" th:text="${session.uname != null ? session.uname : 'User Profile'}">User Profile</p>
+                                <p class="text-[11px] text-[#8C93A4] truncate" th:if="${session.username != null}" th:text="${session.username.email}">user@geosieben.com</p>
+                            </div>
+                            <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EEF4FF] text-[#0055FF]" th:text="${session.role != null ? session.role : 'Staff'}">Staff</span>
+                        </div>
+
+                        <a href="/myprofile" class="g7-link flex items-center gap-2.5 w-full text-left px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                            <svg class="w-4 h-4 text-[#8C93A4]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span>My Profile</span>
                         </a>
-                        
-                        <button onclick="showView('settings')" class="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-[#4f46e5] rounded-xl transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            App Settings
+                        <button type="button" onclick="showView('settings')" class="flex items-center gap-2.5 w-full text-left px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg">
+                            <svg class="w-4 h-4 text-[#8C93A4]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>App Settings</span>
                         </button>
 
-                        <div class="border-t border-gray-100 my-1"></div>
-                        
-                        <form th:action="@{/logout}" method="post">
+                        <div class="border-t border-[#EEF2F9] my-1"></div>
+
+                        <form th:action="@{/logout}" method="post" class="m-0">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <button type="submit" class="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                Sign Out
+                            <button type="submit" class="g7-signout relative flex items-center gap-2.5 w-full text-left px-2.5 py-2 text-[13px] text-[#C1443A] rounded-lg font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                <span>Sign Out</span>
                             </button>
                         </form>
                     </div>
                 </div>
+
+                <!-- Hamburger Button -->
+                <button type="button" onclick="g7ToggleMobileNav()" aria-label="Open menu" aria-expanded="false" id="g7MobileNavBtn"
+                        class="xl:hidden relative inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#E5EBF5] bg-[#F8FAFD] text-[#4A5268] hover:text-[#1B2030] hover:bg-[#EEF4FF] hover:border-[#C7D7FE] active:scale-95 transition-all focus:outline-none">
+                    <span class="relative block w-5 h-5">
+                        <svg id="g7MobileIconOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="g7MobileIconClose" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </span>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Backdrop for Mobile Drawer -->
+    <div id="g7MobileBackdrop" onclick="g7CloseMobileNav()" class="g7-backdrop xl:hidden"></div>
+
+    <!-- Fixed Mobile Navigation Drawer -->
+    <div id="g7MobileNav" class="g7-mobilenav xl:hidden border-t border-[#DCE3F0] bg-[#F7F9FC] shadow-[0_24px_40px_-15px_rgba(16,20,38,.3)]">
+        <div class="max-w-2xl mx-auto p-3 pb-6 space-y-2.5">
+
+            <!-- Quick Search Filter for Mobile Menu -->
+            <div class="relative">
+                <svg class="w-4 h-4 text-[#8C93A4] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                <input type="text" id="g7MobileSearch" oninput="g7FilterMobileNav(this.value)" placeholder="Filter menu items..."
+                       class="w-full h-9 pl-9 pr-3 text-[13px] bg-white border border-[#DCE3F0] rounded-lg text-[#1B2030] placeholder-[#9298A8] focus:outline-none focus:border-[#0055FF] focus:ring-2 focus:ring-[#0055FF]/15 transition-all" />
+            </div>
+
+            <nav id="g7MobileAccordionList" class="space-y-1.5">
+
+                <!-- Employee -->
+                <div sec:authorize="hasAnyAuthority('admin','hr')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </span>
+                            <span>Employee</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/admin/addemployee" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Add Employee</a>
+                            <a href="/admin/activeEmployees" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Active Employees</a>
+                            <a href="/admin/separatedEmployees" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Separated Employees</a>
+                            <button type="button" onclick="g7CloseMobileNav(); showView('reports')" class="flex items-center justify-between w-full text-left py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg">
+                                <span>Real-time Feed</span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HRD -->
+                <div sec:authorize="hasAnyAuthority('admin','hr')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </span>
+                            <span>HRD</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/requestDocuments" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Request Document</a>
+                            <a href="/admin/hrQueries" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>HR Queries</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/admin/documentRequests" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Doc Requests</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/admin/warningHistory" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Warning History</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/admin/separtion/manage" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Separation</a>
+                            <a href="/admin/yep" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Year End Process</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/admin/letterGenerator" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Document Generator</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance -->
+                <div sec:authorize="hasAnyAuthority('admin','hr')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <span>Attendance</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/admin/attendance" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Attendance Portal</a>
+                            <a href="/admin/masterReport" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Master Report</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaves -->
+                <div sec:authorize="hasAnyAuthority('admin','user','hr','it')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </span>
+                            <span>Leaves</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/leaves/apply" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Apply Leave</a>
+                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/pendingLeaves" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Leave Requests</a>
+                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/approvedLeaves" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Approved Leaves</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comp-Off -->
+                <div class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </span>
+                            <span>Comp-Off</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/myCompOffs" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Request Comp-Off</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/compOffRequests" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Comp-Off Requests</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/CompOff" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Comp-Off History</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Separation -->
+                <div class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            </span>
+                            <span>Separation</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/separtion/resign" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Resign</a>
+                            <a sec:authorize="hasAnyAuthority('hr','admin')" href="/admin/separtion/manage" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Manage</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IT -->
+                <div class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </span>
+                            <span>IT</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/it/raiseticket" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Raise Ticket</a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/floorLayout" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Floor Layout</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/creadentialsManager" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Credentials Manager</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a sec:authorize="hasAnyAuthority('admin','it')" href="/it/subscriptions" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Subscription Manager</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assets -->
+                <div sec:authorize="hasAnyAuthority('it','admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                            </span>
+                            <span>Assets</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/it/itInventory" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Inventory</a>
+                            <a href="/it/addHost" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Add Host</a>
+                            <a href="/it/manageHosts" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Manage Hosts</a>
+                            <a href="/it/assignmentHistory" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Assignment</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/it/leaseHistory" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Lease</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/it/outwardHistory" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Outward</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/it/disposalHistory" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Dispose</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learn -->
+                <div class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            </span>
+                            <span>Learn</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/course/learn" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Explore Courses</a>
+                            <a sec:authorize="hasAnyAuthority('admin','hr')" href="/course/manageCourse" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Manage</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects -->
+                <div sec:authorize="hasAnyAuthority('user','admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            </span>
+                            <span>Projects</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/course/learn" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">My Projects</a>
+                            <a href="/myTasks" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">My Tasks</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div sec:authorize="hasAnyAuthority('user','admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </span>
+                            <span>Reports</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/admin/reports/targetHours" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Target Hours</a>
+                            <a href="/admin/reports/allotmentReport" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Allotments</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Production -->
+                <div sec:authorize="hasAuthority('admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <span>Production</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <p class="px-2.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-[#9298A8]">Projects</p>
+                            <a href="/admin/project/clients_stats" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Client Stats</a>
+                            <a href="/admin/project/active" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Active Projects</a>
+                            <a href="/admin/project/history" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Project History</a>
+                            <p class="px-2.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-[#9298A8]">Pilots</p>
+                            <a href="/admin/pilot/clients_stats" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Pilot Analytics</a>
+                            <a href="/admin/pilot/onboarding" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Onboarding</a>
+                            <div class="border-t border-[#F0F4FA] my-1"></div>
+                            <a href="/admin/clients" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Manage Clients</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Careers -->
+                <div sec:authorize="hasAnyAuthority('admin','hr')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                    <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </span>
+                            <span>Careers</span>
+                        </span>
+                        <svg class="g7-mchevron w-4 h-4 text-[#9298A8] transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="g7-mbody">
+                        <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
+                            <a href="/admin/careers/recrutmentDashboard" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Recruitment Dashboard</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                            <a href="/admin/careers/addCandidate" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Register Candidate</a>
+                            <a href="/admin/careers/manageCandidates" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Manage Candidates</a>
+                            <a href="/admin/careers/inactiveCandidates" class="g7-link flex items-center justify-between py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline"><span>Inactive Candidates</span><span class="text-[9.5px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C]">WIP</span></a>
+                        </div>
+                    </div>
+                </div>
+
+            </nav>
+
+            <!-- Quick Account Actions Footer inside Mobile Drawer -->
+            <div class="pt-2 border-t border-[#E2E8F4] grid grid-cols-2 gap-2">
+                <a href="/myprofile" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-[#DCE3F0] rounded-lg text-xs font-medium text-[#1B2030] hover:border-[#0055FF] hover:text-[#0055FF] no-underline">
+                    <svg class="w-3.5 h-3.5 text-[#0055FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span>My Profile</span>
+                </a>
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-[#FFF5F5] border border-[#FADBD8] rounded-lg text-xs font-medium text-[#C1443A] hover:bg-[#FBEAE8]">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <span>Sign Out</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            window.g7ToggleMobileNav = function () {
+                const panel = document.getElementById('g7MobileNav');
+                const backdrop = document.getElementById('g7MobileBackdrop');
+                const btn = document.getElementById('g7MobileNavBtn');
+                const profile = document.getElementById('g7ProfileMenu');
+                if (!panel || !btn) return;
+
+                const willOpen = !panel.classList.contains('is-open');
+                if (profile) profile.classList.remove('is-open');
+                panel.classList.toggle('is-open', willOpen);
+                if (backdrop) backdrop.classList.toggle('is-open', willOpen);
+                btn.setAttribute('aria-expanded', String(willOpen));
+                document.body.style.overflow = willOpen ? 'hidden' : '';
+            };
+
+            window.g7CloseMobileNav = function () {
+                const panel = document.getElementById('g7MobileNav');
+                const backdrop = document.getElementById('g7MobileBackdrop');
+                const btn = document.getElementById('g7MobileNavBtn');
+                if (!panel) return;
+                panel.classList.remove('is-open');
+                if (backdrop) backdrop.classList.remove('is-open');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            };
+
+            window.g7ToggleSection = function (button) {
+                const currentGroup = button.closest('.g7-mgroup');
+                if (!currentGroup) return;
+                const isExpanding = !currentGroup.classList.contains('is-expanded');
+
+                document.querySelectorAll('#g7MobileNav .g7-mgroup.is-expanded').forEach((grp) => {
+                    if (grp !== currentGroup) grp.classList.remove('is-expanded');
+                });
+
+                currentGroup.classList.toggle('is-expanded', isExpanding);
+            };
+
+            window.g7ToggleProfile = function (event) {
+                event.stopPropagation();
+                const profile = document.getElementById('g7ProfileMenu');
+                if (!profile) return;
+                window.g7CloseMobileNav();
+                const willOpen = !profile.classList.contains('is-open');
+                profile.classList.toggle('is-open', willOpen);
+                event.currentTarget.setAttribute('aria-expanded', String(willOpen));
+            };
+
+            window.g7FilterMobileNav = function (query) {
+                const term = (query || '').trim().toLowerCase();
+                document.querySelectorAll('#g7MobileAccordionList .g7-mgroup').forEach((group) => {
+                    const headerText = group.querySelector('button span').textContent.toLowerCase();
+                    const links = group.querySelectorAll('a, .g7-mbody button');
+                    let anyLinkMatch = false;
+
+                    links.forEach((link) => {
+                        const match = !term || headerText.includes(term) || link.textContent.toLowerCase().includes(term);
+                        link.style.display = match ? '' : 'none';
+                        if (match) anyLinkMatch = true;
+                    });
+
+                    group.style.display = anyLinkMatch ? '' : 'none';
+                    if (term && anyLinkMatch) {
+                        group.classList.add('is-expanded');
+                    } else if (!term) {
+                        group.classList.remove('is-expanded');
+                    }
+                });
+            };
+
+            // Highlight active route on Desktop & Auto-open matching Mobile Accordion
+            const currentPath = window.location.pathname.replace(/\/+$/, '');
+            if (currentPath) {
+                document.querySelectorAll('.g7-header a.g7-link').forEach((link) => {
+                    const href = (link.getAttribute('href') || '').replace(/\/+$/, '');
+                    if (href && href === currentPath) {
+                        link.classList.add('is-active');
+                        const desktopGroup = link.closest('[data-nav-group]');
+                        if (desktopGroup) {
+                            const navBtn = desktopGroup.querySelector('.g7-navbtn');
+                            if (navBtn) navBtn.classList.add('is-active');
+                        }
+                        const mobileGroup = link.closest('.g7-mgroup');
+                        if (mobileGroup) mobileGroup.classList.add('is-expanded');
+                    }
+                });
+            }
+
+            // Touch/Click support for nested desktop flyouts
+            document.querySelectorAll('.g7-sub > button').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const sub = btn.closest('.g7-sub');
+                    const willOpen = !sub.classList.contains('is-open');
+                    document.querySelectorAll('.g7-sub.is-open').forEach((s) => s.classList.remove('is-open'));
+                    if (willOpen) sub.classList.add('is-open');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                const profile = document.getElementById('g7ProfileMenu');
+                if (profile && !profile.contains(e.target)) {
+                    profile.classList.remove('is-open');
+                    const btn = profile.querySelector('button');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+                document.querySelectorAll('.g7-sub.is-open').forEach((s) => {
+                    if (!s.contains(e.target)) s.classList.remove('is-open');
+                });
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    window.g7CloseMobileNav();
+                    const profile = document.getElementById('g7ProfileMenu');
+                    if (profile) profile.classList.remove('is-open');
+                    document.querySelectorAll('.g7-sub.is-open').forEach((s) => s.classList.remove('is-open'));
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1280) window.g7CloseMobileNav();
+            });
+        })();
+    </script>
 </header>

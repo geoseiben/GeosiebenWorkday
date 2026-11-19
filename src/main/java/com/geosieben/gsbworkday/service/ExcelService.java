@@ -2,6 +2,9 @@ package com.geosieben.gsbworkday.service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +12,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,10 +22,15 @@ import com.geosieben.gsbworkday.repository.ProjectRepository;
 
 @Service
 public class ExcelService {
-    @Autowired
+    private final String UPLOAD_DIR = "src/main/resources/static/uploads/employee/";
     private AllocationRepository repository;
-    @Autowired
     private ProjectRepository projectRepository;
+
+    
+    public ExcelService(AllocationRepository repository, ProjectRepository projectRepository) {
+        this.repository = repository;
+        this.projectRepository = projectRepository;
+    }
 
     public void saveExcelData(MultipartFile file,int projectid) throws IOException {
         List<ProjectAllocation> products = new ArrayList<>();
@@ -52,6 +59,31 @@ Project updated=(Project)projectRepository.save(project);
         
         repository.saveAll(products);
         workbook.close();
+    }
+
+    public String uploadImage(MultipartFile file){
+
+        if (file.isEmpty()) {
+           // return ResponseEntity.badRequest().body("Please select a file to upload.");
+        }
+
+        try {
+            // Ensure directory exists
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Save file
+            byte[] bytes = file.getBytes();
+            Path path = Paths.get(UPLOAD_DIR + file.getOriginalFilename());
+            Files.write(path, bytes);
+
+          //  return ResponseEntity.ok("File uploaded successfully: " + file.getOriginalFilename());
+        } catch (IOException e) {
+           // return ResponseEntity.internalServerError().body("Failed to upload: " + e.getMessage());
+        }
+        return  "uploads/employee/"+ file.getOriginalFilename();
     }
 
     

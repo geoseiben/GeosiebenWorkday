@@ -3,6 +3,7 @@ package com.geosieben.gsbworkday.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,7 +18,7 @@ public class TeamLeadTargetHours {
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private int id;
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="tlId")
 private EmployeeBasicInfo teamLead;
 private String month;

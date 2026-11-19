@@ -2,6 +2,12 @@
  * Safe View Switcher
  * Prevents "null" errors if the element doesn't exist on the current page
  */
+
+        function toggleMenu() {
+            const overlay = document.getElementById('nav-overlay');
+            overlay.classList.toggle('hidden');
+            overlay.classList.toggle('flex');
+        }
 function showView(viewId) {
     const views = document.querySelectorAll('.view-content');
 
@@ -36,6 +42,10 @@ function updateActiveLinkStyles(viewId) {
         if (viewId === 'settings' && text.includes('config')) link.classList.add('active');
     });
 }
+function greet(){
+    alert("triggered");
+}
+
 function openChat(name, avatar) {
     activeName.innerText = name;
     headerName.innerText = name;

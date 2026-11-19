@@ -1,6 +1,5 @@
 package com.geosieben.gsbworkday.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,8 +10,11 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/admin/project")
 @Controller
 public class ProductionProjectController {
-    @Autowired
     HttpSession httpSession;
+    
+    public ProductionProjectController(HttpSession httpSession) {
+        this.httpSession = httpSession;
+    }
     @GetMapping("/clients_stats")
     public String clientStats() {
         return "clientProjectStats";

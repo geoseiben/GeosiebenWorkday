@@ -4,143 +4,411 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geosieben | Core Secure</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
         :root {
-            --geo-brand: #0040ff;
-            --geo-brand-soft: rgba(0, 64, 255, 0.05);
-            --geo-bg: #f8fafc;
-            --geo-card: #ffffff;
+            --brand: #256cc2;
+            --brand-dark: #1b5297;
+            --brand-light: #ebf3fa;
+            --panel-bg: #f3f7fd;
+            --panel-border: #d2e2f5;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #cbd5e1;
+            --danger: #d64545;
+            --danger-bg: #fdecec;
         }
 
-        body { 
-            font-family: 'Space Grotesk', sans-serif; 
-            background-color: var(--geo-bg);
-            color: #0f172a;
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0; height: 100%;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            background: #ffffff;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+
+        .screen {
+            display: grid;
+            grid-template-columns: 46% 54%;
+            min-height: 100vh;
+        }
+        @media (max-width: 860px) {
+            .screen { grid-template-columns: 1fr; }
+            .promo { display: none; }
+        }
+
+        /* ---------------- Left: brand / promo panel ---------------- */
+        .promo {
+            position: relative;
+            background: var(--panel-bg);
+            display: flex; flex-direction: column;
+            padding: 44px 48px;
             overflow: hidden;
         }
 
-        .cyber-grid {
-            position: fixed; inset: 0;
-            background-image: 
-                linear-gradient(to right, rgba(0, 64, 255, 0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 64, 255, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: -1;
+        .promo-blob {
+            position: absolute; border-radius: 50%;
+            background: rgba(37, 108, 194, 0.08);
+        }
+        .blob-1 { width: 340px; height: 340px; top: -120px; right: -100px; }
+        .blob-2 { width: 220px; height: 220px; bottom: -80px; left: -60px; background: rgba(37, 108, 194, 0.06); }
+
+        .promo-logo {
+            display: flex; align-items: center; gap: 10px;
+            position: relative; z-index: 1;
+        }
+        .promo-logo .mark {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--brand);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .promo-logo span {
+            font-weight: 700; font-size: 19px; color: var(--text-primary);
         }
 
-        .cyber-grid::after {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, var(--geo-bg) 90%);
+        .promo-illustration {
+            flex: 1;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; z-index: 1;
         }
 
-        .industrial-card {
-            background: var(--geo-card);
-            border: 1px solid #e2e8f0;
-            position: relative;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 20px 48px -12px rgba(0, 64, 255, 0.08);
+        .promo-copy {
+            position: relative; z-index: 1;
+        }
+        .promo-copy h2 {
+            font-size: 22px; font-weight: 600; margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+        .promo-copy p {
+            font-size: 13.5px; color: var(--text-secondary);
+            margin: 0; line-height: 1.6; max-width: 38ch;
         }
 
-        .mono-input {
-            font-family: 'JetBrains Mono', monospace;
+        .feature-cards {
+            position: relative; z-index: 1;
+            height: 96px; margin-top: 22px;
+        }
+        .feature-card {
+            position: absolute; inset: 0;
             background: #ffffff;
-            border: 1px solid #cbd5e1;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex; gap: 12px; align-items: center;
+            box-shadow: 0 6px 18px -8px rgba(37, 108, 194, 0.18);
+            opacity: 0;
+            animation: card-cycle 12s infinite;
+        }
+        .feature-card:nth-child(1) { animation-delay: 0s; }
+        .feature-card:nth-child(2) { animation-delay: 4s; }
+        .feature-card:nth-child(3) { animation-delay: 8s; }
+
+        @keyframes card-cycle {
+            0%    { opacity: 0; transform: translateY(6px); }
+            4%    { opacity: 1; transform: translateY(0); }
+            29%   { opacity: 1; transform: translateY(0); }
+            33%   { opacity: 0; transform: translateY(-6px); }
+            100%  { opacity: 0; }
         }
 
-        .mono-input:focus {
-            border-color: var(--geo-brand);
-            box-shadow: 4px 4px 0px 0px var(--geo-brand-soft);
+        .feature-card .icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: var(--brand-light);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .feature-card .fc-title { font-size: 13px; font-weight: 600; margin: 0 0 2px 0; }
+        .feature-card .fc-text { font-size: 11.5px; color: var(--text-secondary); margin: 0; }
+
+        .dots {
+            display: flex; gap: 6px; margin-top: 14px; position: relative; z-index: 1;
+        }
+        .dots span {
+            width: 6px; height: 6px; border-radius: 999px;
+            background: #c2d8f2;
+            animation: dot-cycle 12s infinite;
+        }
+        .dots span:nth-child(1) { animation-delay: 0s; }
+        .dots span:nth-child(2) { animation-delay: 4s; }
+        .dots span:nth-child(3) { animation-delay: 8s; }
+        @keyframes dot-cycle {
+            0%, 100% { background: #c2d8f2; }
+            5%, 32%  { background: var(--brand); }
+        }
+
+        /* ---------------- Right: form panel ---------------- */
+        .auth {
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px 24px;
+        }
+
+        .auth-box {
+            width: 100%; max-width: 360px;
+            opacity: 0;
+            animation: fade-in 0.4s ease forwards;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-box .mobile-logo {
+            display: none; align-items: center; gap: 9px; margin-bottom: 26px;
+        }
+        @media (max-width: 860px) {
+            .auth-box .mobile-logo { display: flex; }
+        }
+        .mobile-logo .mark {
+            width: 30px; height: 30px; border-radius: 7px; background: var(--brand);
+        }
+        .mobile-logo span { font-weight: 700; font-size: 17px; }
+
+        .auth-box h1 {
+            font-size: 22px; font-weight: 600; margin: 0 0 6px 0;
+        }
+        .auth-box .subtitle {
+            font-size: 13.5px; color: var(--text-secondary); margin: 0 0 26px 0;
+        }
+
+        .tabs {
+            display: flex; gap: 4px; background: #f1f5f9;
+            border-radius: 8px; padding: 3px; margin-bottom: 24px;
+        }
+        .tabs button {
+            flex: 1; border: none; background: transparent;
+            font-family: inherit; font-size: 12.5px; font-weight: 500;
+            padding: 8px 0; border-radius: 6px; cursor: pointer;
+            color: var(--text-secondary);
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .tabs button.active {
+            background: #ffffff; color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .alert {
+            display: flex; gap: 8px; align-items: flex-start;
+            background: var(--danger-bg);
+            border: 1px solid #f6c9c9;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 20px;
+            font-size: 13px; color: #a02c2c;
+        }
+        .alert svg { flex-shrink: 0; margin-top: 1px; }
+
+        form { display: flex; flex-direction: column; gap: 17px; }
+
+        .field label {
+            display: block; font-size: 12.5px; font-weight: 500;
+            color: var(--text-primary); margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            font-family: inherit; font-size: 14px; color: var(--text-primary);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 11px 13px;
             outline: none;
-            transform: translate(-1px, -1px);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .field input::placeholder { color: #a2acb3; }
+        .field input:hover { border-color: #94a3b8; }
+        .field input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(37, 108, 194, 0.18);
         }
 
-        .btn-geo {
-            background: var(--geo-brand);
-            color: white; font-weight: 700;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+        .field-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px;
+        }
+        .field-row label { margin-bottom: 0; }
+        .field-row a { font-size: 12px; color: var(--brand); text-decoration: none; font-weight: 500; }
+        .field-row a:hover { text-decoration: underline; }
+
+        .remember {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text-secondary);
+        }
+        .remember input { width: 15px; height: 15px; accent-color: var(--brand); cursor: pointer; }
+
+        .btn-primary {
+            margin-top: 4px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 12px;
+            background: var(--brand);
+            color: #ffffff;
+            font-family: inherit; font-weight: 600; font-size: 14px;
+            border: none; border-radius: 7px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, transform 0.05s ease;
+        }
+        .btn-primary:hover { background: var(--brand-dark); }
+        .btn-primary:active { transform: translateY(1px); }
+        .btn-primary:disabled { opacity: 0.75; cursor: progress; }
+
+        #btnLoader { display: none; }
+        #btnLoader svg { animation: spin 0.75s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 22px 0 18px 0;
+            font-size: 11.5px; color: var(--text-secondary);
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
         }
 
-        .btn-geo:hover {
-            box-shadow: 0 8px 20px -4px rgba(0, 64, 255, 0.4);
-            transform: translateY(-2px);
-            filter: brightness(1.1);
+        .help-row {
+            text-align: center; font-size: 12.5px; color: var(--text-secondary);
         }
+        .help-row a { color: var(--brand); text-decoration: none; font-weight: 500; }
+        .help-row a:hover { text-decoration: underline; }
 
-        .corner { position: absolute; width: 12px; height: 12px; border: 2px solid var(--geo-brand); opacity: 0.8; }
-        .c-tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
-        .c-tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
-        .c-bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
-        .c-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
-        .tag-label {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--geo-brand);
-            color: white; padding: 2px 8px; font-size: 10px;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 relative">
+<body>
 
-    <div class="cyber-grid"></div>
+    <div class="screen">
 
-    <div class="w-full max-w-[420px] relative">
-        <div class="text-center mb-12">
-            <div class="inline-flex relative mb-6">
-                <div class="relative w-16 h-16 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center shadow-sm">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0040ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
+        <!-- Promo / brand panel -->
+        <div class="promo">
+            <div class="promo-blob blob-1"></div>
+            <div class="promo-blob blob-2"></div>
+
+           <div style="display: inline-flex; align-items: center; gap: 12px; font-family: Arial, sans-serif;">
+  <!-- Shield Icon Container -->
+  <div style="background-color: #0d6efd; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+<img src="../static/images/gsblogo.png" alt="">
+  </div>
+
+  <!-- Text Container -->
+  <div style="display: flex; flex-direction: column; line-height: 1.1;">
+    <span style="font-size: 20px; font-weight: bold; color: #1a1a1a;">
+      GsbConnectz<b><sup><i class="fa-solid fa-plus" aria-hidden="true" style="font-size: 10px; color: #0d6efd; margin-left: 1px; text-decoration: solid;"></i></sup></b>
+    </span>
+    <span style="font-size: 9px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 1.2p  x; margin-top: 3px;">
+      Quality Inspires
+    </span>
+  </div>
+</div>
+            <div class="promo-illustration">
+                <svg width="230" height="180" viewBox="0 0 230 180" fill="none">
+                    <rect x="30" y="60" width="170" height="100" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <rect x="46" y="78" width="70" height="8" rx="4" fill="#c2d8f2"/>
+                    <rect x="46" y="94" width="110" height="8" rx="4" fill="#ebf3fa"/>
+                    <rect x="46" y="110" width="90" height="8" rx="4" fill="#ebf3fa"/>
+                    <circle cx="168" cy="96" r="20" fill="var(--brand)" opacity="0.12"/>
+                    <path d="M160 96l6 6 12-12" stroke="var(--brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <circle cx="60" cy="138" r="5" fill="var(--brand)"/>
+                    <circle cx="76" cy="138" r="5" fill="#7ba3db"/>
+                    <circle cx="92" cy="138" r="5" fill="#c2d8f2"/>
+                </svg>
+            </div>
+
+            <div class="promo-copy">
+                <h2>People-first access, secured.</h2>
+                <p>Sign in to manage payroll, attendance, and your team — all from one place.</p>
+            </div>
+
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+                    </div>
+                    <div>
+                        <p class="fc-title">Run payroll in minutes</p>
+                        <p class="fc-text">Automated, compliant, and always on time.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                    </div>
+                    <div>
+                        <p class="fc-title">Track attendance easily</p>
+                        <p class="fc-text">Real-time check-ins across every location.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                    </div>
+                    <div>
+                        <p class="fc-title">Empower self-service</p>
+                        <p class="fc-text">Let employees manage leave and payslips.</p>
+                    </div>
                 </div>
             </div>
-            <h1 class="text-4xl font-bold tracking-tight text-slate-900 font-display">Geosieben</h1>
+
+            <div class="dots"><span></span><span></span><span></span></div>
         </div>
 
-        <div class="industrial-card p-10 rounded-xl">
-            <div class="corner c-tl"></div><div class="corner c-tr"></div>
-            <div class="corner c-bl"></div><div class="corner c-br"></div>
-
-            <div class="mb-8 flex justify-between items-start">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900 uppercase tracking-tight">Sign In</h2>
-                    <p class="text-slate-400 text-xs font-mono mt-0.5">Secured</p>
-                </div>
-                <div class="tag-label rounded-sm">Verified</div>
-            </div>
-
-            <div th:if="${param.error}" class="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs font-mono">
-                AUTHENTICATION_FAILED: INVALID_CREDENTIALS
-            </div>
-
-            <form id="loginForm" th:action="@{/login}" method="post" onsubmit="handleLogin(event)" class="space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Employee-Id</label>
-                    <input type="text" name="username" placeholder="GSB-XXXX" required class="mono-input w-full px-4 py-4 rounded-lg text-sm text-slate-900">
+        <!-- Auth panel -->
+        <div class="auth">
+            <div class="auth-box">
+                <div class="mobile-logo">
+                    <div class="mark"></div>
+                    <span>Geosieben</span>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Password</label>
+                <h1>Welcome back</h1>
+                <p class="subtitle">Sign in to Core Secure to continue.</p>
+
+                <div class="tabs">
+                    <button type="button" class="active">Employee Login</button>
+                    <button type="button">Admin Login</button>
+                </div>
+
+                <div th:if="${param.error}" class="alert">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d64545" stroke-width="2.2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                    <span>Incorrect Login ID or password. Please try again.</span>
+                </div>
+
+                <form id="loginForm" th:action="@{/login}" method="post" onsubmit="handleLogin(event)">
+                    <div class="field">
+                        <label for="username">Login ID</label>
+                        <input type="text" id="username" name="username" placeholder="Employee ID or email" required autocomplete="username">
                     </div>
-                    <input type="password" name="password" placeholder="••••••••••••" required class="mono-input w-full px-4 py-4 rounded-lg text-sm text-slate-900">
-                </div>
 
-                <button id="submitBtn" type="submit" class="btn-geo w-full py-4 rounded-lg flex items-center justify-center gap-3 shadow-lg">
-                    <span id="btnText" class="flex items-center gap-2">Initialize Session <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></span>
-                    <div id="btnLoader" class="hidden">
-                        <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                    <div class="field">
+                        <div class="field-row">
+                            <label for="password">Password</label>
+                            <a href="#">Forgot password?</a>
+                        </div>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
                     </div>
-                </button>
-            </form>
+
+                    <label class="remember">
+                        <input type="checkbox" name="remember">
+                        Keep me signed in
+                    </label>
+
+                    <button id="submitBtn" type="submit" class="btn-primary">
+                        <span id="btnText">Login</span>
+                        <span id="btnLoader">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#ffffff" stroke-width="3" opacity="0.35"/><path d="M21 12a9 9 0 0 0-9-9" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/></svg>
+                        </span>
+                    </button>
+                </form>
+
+                <div class="divider">or</div>
+                <p class="help-row">Need help signing in? <a href="#">Contact your admin</a></p>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -151,15 +419,19 @@
             const loader = document.getElementById('btnLoader');
             const form = document.getElementById('loginForm');
 
-            txt.classList.add('hidden');
-            loader.classList.remove('hidden');
+            txt.textContent = 'Signing in...';
+            loader.style.display = 'inline-flex';
             btn.disabled = true;
 
-            // Artificial delay for industrial "feel" before submitting
-            setTimeout(() => {
-                form.submit();
-            }, 1000);
+            setTimeout(() => form.submit(), 400);
         }
+
+        document.querySelectorAll('.tabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

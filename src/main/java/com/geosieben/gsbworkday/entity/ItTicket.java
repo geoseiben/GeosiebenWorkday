@@ -19,17 +19,15 @@ public class ItTicket {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
     @Column(name = "Remarks")
     private String adminRemarks;
     private  String hostname;
     @Column(name = "anydeskid")
     private String anyDesk;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="EID")
     private EmployeeBasicInfo employeeBasicInfo;
 

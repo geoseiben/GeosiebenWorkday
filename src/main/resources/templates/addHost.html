@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Registration</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular'],
+                    },
+                    colors: {
+                        ink: '#0b1220',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Inter', ui-sans-serif, sans-serif; }
+        .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        /* Reveal animation for dependent cable/accessory groups */
+        .reveal { animation: reveal-in .18s ease-out; }
+        @keyframes reveal-in {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom select chevron so native appearance can be stripped consistently */
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+            background-size: 1rem 1rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+
+        /* ══ Section polish ═══════════════════════════════════ */
+        section.bg-white {
+            transition: box-shadow .18s ease, border-color .18s ease;
+        }
+        section.bg-white:hover {
+            box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.08);
+            border-color: #e2e8f0;
+        }
+
+        .icon-chip-blue   { background: #eff6ff; color: #2563eb; }
+        .icon-chip-violet { background: #f5f3ff; color: #7c3aed; }
+        .icon-chip-teal   { background: #f0fdfa; color: #0d9488; }
+        .icon-chip-amber  { background: #fffbeb; color: #d97706; }
+
+        label.field-label { color: #475569; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { animation: none; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-ink min-h-screen">
+<head th:replace="includes/header :: header"></head>
+
+<!-- ══ Top bar ═══════════════════════════════════════════ -->
+<div class="bg-ink border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2 text-white font-extrabold tracking-tight text-[15px]">
+        <i data-lucide="cpu" class="w-5 h-5 text-blue-400"></i>
+        ASSET<span class="text-blue-400">CORE</span>s
+    </a>
+    <div class="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800 text-emerald-400">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        DATABASE ONLINE
+    </div>
+</div>
+
+<div class="max-w-[1900px] mx-auto px-4 sm:px-6 py-6">
+    <form id="hostform">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:items-stretch">
+
+            <!-- ══ LEFT COLUMN ═══════════════════════════════════ -->
+            <div class="lg:col-span-8 space-y-5">
+
+                <div>
+                    <h1 class="text-xl font-bold text-ink">Host Registration</h1>
+                    <p class="text-sm text-slate-500 mt-0.5">Link hardware identifiers and infrastructure components to a network host.</p>
+                </div>
+
+                <!-- Network Identity -->
+                <section class="bg-white border border-slate-200 rounded-2xl p-5">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                            <i data-lucide="globe" class="w-4 h-4 text-blue-600"></i>
+                        </div>
+                        <span class="text-[11px] font-bold tracking-wide text-slate-500">Network Identity</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                        <div class="sm:col-span-5">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Hostname</label>
+                            <input type="text" id="hostName" name="hostName" placeholder="e.g. DESKTOP-XX" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Host Type</label>
+                            <select id="hostType" name="hostType" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                                <option value="">Select…</option>
+                                <option>Desktop</option>
+                                <option>Laptop</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Static IP</label>
+                            <input type="text" id="ipAddress" name="ipAddress" placeholder="192.168.1.X" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">LAN No.</label>
+                            <input type="text" id="lanno" name="lanno" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Operating System</label>
+                            <select id="os" name="os" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                                <option value="">Select…</option>
+                                <option>Windows 11 Pro</option>
+                                <option>Windows 10 Pro</option>
+                                <option>Linux</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Internal Components -->
+                <section class="bg-white border border-slate-200 rounded-2xl p-5">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-8 h-8 rounded-lg icon-chip-violet flex items-center justify-center shrink-0">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-[11px] font-bold tracking-wide text-slate-500">Internal Components</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                        <div class="sm:col-span-4">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Processor</label>
+                            <input type="text" id="processor" name="processor" placeholder="e.g. Intel Core i5-12400" required
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Memory (RAM)</label>
+                          <select id="ram" name="ram" required class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+    <option value="">Select RAM…</option>
+
+    <!-- DDR5 Variants -->
+    <optgroup label="DDR5">
+        <option value="8GB DDR5">8GB DDR5</option>
+        <option value="16GB DDR5">16GB DDR5</option>
+        <option value="32GB DDR5">32GB DDR5</option>
+        <option value="64GB DDR5">64GB DDR5</option>
+        <option value="128GB DDR5">128GB DDR5</option>
+    </optgroup>
+
+    <!-- DDR4 Variants -->
+    <optgroup label="DDR4">
+        <option value="4GB DDR4">4GB DDR4</option>
+        <option value="8GB DDR4">8GB DDR4</option>
+        <option value="16GB DDR4">16GB DDR4</option>
+        <option value="32GB DDR4">32GB DDR4</option>
+        <option value="64GB DDR4">64GB DDR4</option>
+        <option value="128GB DDR4">128GB DDR4</option>
+    </optgroup>
+
+    <!-- DDR3 Variants -->
+    <optgroup label="DDR3">
+        <option value="2GB DDR3">2GB DDR3</option>
+        <option value="4GB DDR3">4GB DDR3</option>
+        <option value="8GB DDR3">8GB DDR3</option>
+        <option value="16GB DDR3">16GB DDR3</option>
+    </optgroup>
+</select>
+                        </div>
+<div class="sm:col-span-5">
+    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Graphics</label>
+    <select id="graphics" name="graphics" required
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+        <option value="">Select Graphics…</option>
+
+        <!-- Integrated Graphics -->
+        <optgroup label="Integrated / Shared">
+            <option value="Integrated / Shared Graphics">Integrated / Shared Graphics</option>
+            <option value="Intel HD Graphics">Intel HD Graphics</option>
+            <option value="Intel UHD Graphics">Intel UHD Graphics</option>
+            <option value="Intel Iris Xe Graphics">Intel Iris Xe Graphics</option>
+            <option value="AMD Radeon Graphics (Integrated)">AMD Radeon Graphics (Integrated)</option>
+            <option value="Apple M-Series Integrated Graphics">Apple M-Series Integrated</option>
+        </optgroup>
+
+        <!-- NVIDIA Dedicated GPUs -->
+        <optgroup label="NVIDIA Dedicated">
+            <option value="NVIDIA GeForce GTX Series">NVIDIA GeForce GTX Series</option>
+            <option value="NVIDIA GeForce RTX 20 Series">NVIDIA GeForce RTX 20 Series</option>
+            <option value="NVIDIA GeForce RTX 30 Series">NVIDIA GeForce RTX 30 Series</option>
+            <option value="NVIDIA GeForce RTX 40 Series">NVIDIA GeForce RTX 40 Series</option>
+            <option value="NVIDIA Quadro / Workstation">NVIDIA Quadro / Workstation</option>
+        </optgroup>
+
+        <!-- AMD Dedicated GPUs -->
+        <optgroup label="AMD Dedicated">
+            <option value="AMD Radeon RX 500 Series">AMD Radeon RX 500 Series</option>
+            <option value="AMD Radeon RX 6000 Series">AMD Radeon RX 6000 Series</option>
+            <option value="AMD Radeon RX 7000 Series">AMD Radeon RX 7000 Series</option>
+            <option value="AMD Radeon Pro Workstation">AMD Radeon Pro Workstation</option>
+        </optgroup>
+
+        <!-- Intel Dedicated GPUs -->
+        <optgroup label="Intel Dedicated">
+            <option value="Intel Arc Graphics">Intel Arc Graphics</option>
+        </optgroup>
+
+        <!-- Fallback -->
+        <option value="Other / Not Specified">Other / Not Specified</option>
+    </select>
+</div>
+<div class="sm:col-span-6">
+    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Primary SSD</label>
+    <select id="ssd" name="ssd"
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+        <option value="">Select Primary SSD…</option>
+        <option value="None">None / No SSD</option>
+
+        <!-- NVMe M.2 SSDs -->
+        <optgroup label="NVMe M.2 SSD">
+            <option value="128GB NVMe M.2 SSD">128GB NVMe M.2 SSD</option>
+            <option value="256GB NVMe M.2 SSD">256GB NVMe M.2 SSD</option>
+            <option value="512GB NVMe M.2 SSD">512GB NVMe M.2 SSD</option>
+            <option value="1TB NVMe M.2 SSD">1TB NVMe M.2 SSD</option>
+            <option value="2TB NVMe M.2 SSD">2TB NVMe M.2 SSD</option>
+            <option value="4TB NVMe M.2 SSD">4TB NVMe M.2 SSD</option>
+        </optgroup>
+
+        <!-- 2.5" / M.2 SATA SSDs -->
+        <optgroup label="SATA SSD">
+            <option value="128GB SATA SSD">128GB SATA SSD</option>
+            <option value="256GB SATA SSD">256GB SATA SSD</option>
+            <option value="512GB SATA SSD">512GB SATA SSD</option>
+            <option value="1TB SATA SSD">1TB SATA SSD</option>
+            <option value="2TB SATA SSD">2TB SATA SSD</option>
+        </optgroup>
+    </select>
+</div>
+<div class="sm:col-span-6">
+    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Secondary HDD</label>
+    <select id="hdd" name="hdd"
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+        <option value="">Select HDD…</option>
+        <option value="None">None / No HDD</option>
+
+        <!-- Standard HDD Capacities -->
+        <optgroup label="Standard Capacities">
+            <option value="320GB HDD">320GB HDD</option>
+            <option value="500GB HDD">500GB HDD</option>
+            <option value="1TB HDD">1TB HDD</option>
+            <option value="2TB HDD">2TB HDD</option>
+            <option value="4TB HDD">4TB HDD</option>
+            <option value="6TB HDD">6TB HDD</option>
+            <option value="8TB HDD">8TB HDD</option>
+            <option value="10TB+ HDD">10TB+ High-Capacity HDD</option>
+        </optgroup>
+    </select>
+</div>
+<div class="sm:col-span-12 pt-4 mt-1 border-t border-slate-100">
+    <label for="cabinet" class="block text-[13px] font-bold text-slate-700 mb-1.5">Chassis / Cabinet</label>
+    <input type="text" id="cabinet" name="cabinet" placeholder="Enter chassis / cabinet details"
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+</div>  
+                    </div>
+                </section>
+            </div>
+
+            <!-- ══ RIGHT COLUMN ══════════════════════════════════ -->
+            <div class="lg:col-span-4">
+                <div class="lg:sticky lg:top-5 flex flex-col gap-5 lg:h-full">
+
+                    <!-- Display Output -->
+                    <section class="bg-white border border-slate-200 rounded-2xl p-5">
+                        <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                            <div class="w-8 h-8 rounded-lg icon-chip-teal flex items-center justify-center shrink-0">
+                                <i data-lucide="monitor" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold tracking-wide text-slate-500">Display Output</span>
+                        </div>
+
+                        <!-- Monitor 1 -->
+                        <div class="mb-4">
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Monitor 01</label>
+                            <select id="monitor1" name="monitor1"
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+
+                            <div id="container_monitor1_cables" class="hidden mt-2">
+                                <div class="reveal rounded-lg border border-blue-200 bg-blue-50 p-3 grid grid-cols-2 gap-2">
+
+                                    <div>
+                                      <select id="monitor1_vcable" name="monitor1_vcable" class="vcable-select w-full rounded-md border border-blue-200 bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                                        <option value="">-- Select Cable Type --</option>
+                                        <option value="hdmi">HDMI</option>
+                                        <option value="displayport">DisplayPort</option>
+                                        <option value="usb-c">USB-C / Thunderbolt</option>
+                                        <option value="dvi">DVI</option>
+                                        <option value="vga">VGA</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monitor 2 -->
+                        <div>
+                            <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Monitor 02</label>
+                            <select id="monitor2" name="monitor2"
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+
+                            <div id="container_monitor2_cables" class="hidden mt-2">
+                                <div class="reveal rounded-lg border border-blue-200 bg-blue-50 p-3 grid grid-cols-2 gap-2">
+                                    <div>
+                                      <select id="monitor2_vcable" name="monitor2_vcable" class="vcable-select w-full rounded-md border border-blue-200 bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                                        <option value="">-- Select Cable Type --</option>
+                                        <option value="hdmi">HDMI</option>
+                                        <option value="displayport">DisplayPort</option>
+                                        <option value="usb-c">USB-C / Thunderbolt</option>
+                                        <option value="dvi">DVI</option>
+                                        <option value="vga">VGA</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Audio & Specialty -->
+                    <section class="bg-white border border-slate-200 rounded-2xl p-5">
+                        <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                            <div class="w-8 h-8 rounded-lg icon-chip-amber flex items-center justify-center shrink-0">
+                                <i data-lucide="headphones" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold tracking-wide text-slate-500">Audio & Specialty</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Headphones</label>
+                                <select id="headphones" name="headphones"
+                                    class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Signal Emitter</label>
+                                <select id="emitter" name="emitter"
+                                    class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                            </div>
+                        </div>
+
+                        <div id="container_emitter_charger" class="hidden mt-2 space-y-2">
+
+                            <div class="reveal rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                <div class="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 mb-1.5">
+                                    <i data-lucide="battery-charging" class="w-3 h-3"></i> Goggle
+                                </div>
+                                <select id="goggle" name="goggle" class="accessory-select w-full rounded-md border border-blue-200 bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                            </div>
+                        </div>
+
+                        <!-- Peripherals -->
+                        <div class="pt-4 mt-4 border-t border-slate-100">
+                            <div class="text-[11px] font-bold tracking-wide text-slate-400 mb-2">Peripherals</div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Mouse</label>
+                                    <select id="mouse" name="mouse"
+                                        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Keyboard</label>
+                                    <select id="keyboard" name="keyboard"
+                                        class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accessories & Power -->
+                        <div class="pt-4 mt-4 border-t border-slate-100">
+                            <div class="text-[11px] font-bold tracking-wide text-slate-400 mb-2">Accessories & Power</div>
+                            <div class="grid grid-cols-2 gap-3">
+                              <div>
+    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Adapter 1</label>
+    <select id="ad1" name="ad1" class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+        <option value="">Select Adapter…</option>
+        <option value="None">None / No Adapter</option>
+
+        <!-- DisplayPort (DP) Adapters -->
+        <optgroup label="DisplayPort (DP)">
+            <option value="DP to HDMI">DP to HDMI</option>
+            <option value="DP to VGA">DP to VGA</option>
+            <option value="DP to DVI">DP to DVI</option>
+            <option value="Mini DP to DP">Mini DP to DP</option>
+            <option value="Mini DP to HDMI">Mini DP to HDMI</option>
+            <option value="Mini DP to VGA">Mini DP to VGA</option>
+            <option value="Mini DP to DVI">Mini DP to DVI</option>
+        </optgroup>
+
+        <!-- USB Type-C / Thunderbolt -->
+        <optgroup label="USB-C / Thunderbolt">
+            <option value="USB-C to HDMI">USB-C to HDMI</option>
+            <option value="USB-C to DisplayPort">USB-C to DisplayPort</option>
+            <option value="USB-C to VGA">USB-C to VGA</option>
+            <option value="USB-C to DVI">USB-C to DVI</option>
+            <option value="USB-C Multiport Hub">USB-C Multiport Hub (HDMI + VGA)</option>
+        </optgroup>
+
+        <!-- HDMI Converters -->
+        <optgroup label="HDMI">
+            <option value="HDMI to VGA">HDMI to VGA</option>
+            <option value="HDMI to DVI">HDMI to DVI</option>
+            <option value="HDMI to DisplayPort">HDMI to DisplayPort</option>
+            <option value="Mini HDMI to HDMI">Mini HDMI to HDMI</option>
+            <option value="Micro HDMI to HDMI">Micro HDMI to HDMI</option>
+            <option value="HDMI Coupler (F-F)">HDMI Coupler (Female to Female)</option>
+        </optgroup>
+
+        <!-- DVI & VGA Legacy -->
+        <optgroup label="DVI & VGA">
+            <option value="DVI to HDMI">DVI to HDMI</option>
+            <option value="DVI to VGA">DVI to VGA</option>
+            <option value="VGA to HDMI">VGA to HDMI</option>
+            <option value="VGA Gender Changer">VGA Gender Changer</option>
+        </optgroup>
+
+        <!-- Other Accessories -->
+        <option value="Other">Other Adapter</option>
+    </select>
+</div>
+<div>
+    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Adapter 2</label>
+    <select id="ad2" name="ad2" class="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+        <option value="">Select Adapter…</option>
+        <option value="None">None / No Adapter</option>
+
+        <!-- DisplayPort (DP) Adapters -->
+        <optgroup label="DisplayPort (DP)">
+            <option value="DP to HDMI">DP to HDMI</option>
+            <option value="DP to VGA">DP to VGA</option>
+            <option value="DP to DVI">DP to DVI</option>
+            <option value="Mini DP to DP">Mini DP to DP</option>
+            <option value="Mini DP to HDMI">Mini DP to HDMI</option>
+            <option value="Mini DP to VGA">Mini DP to VGA</option>
+            <option value="Mini DP to DVI">Mini DP to DVI</option>
+        </optgroup>
+
+        <!-- USB Type-C / Thunderbolt -->
+        <optgroup label="USB-C / Thunderbolt">
+            <option value="USB-C to HDMI">USB-C to HDMI</option>
+            <option value="USB-C to DisplayPort">USB-C to DisplayPort</option>
+            <option value="USB-C to VGA">USB-C to VGA</option>
+            <option value="USB-C to DVI">USB-C to DVI</option>
+            <option value="USB-C Multiport Hub">USB-C Multiport Hub (HDMI + VGA)</option>
+        </optgroup>
+
+        <!-- HDMI Converters -->
+        <optgroup label="HDMI">
+            <option value="HDMI to VGA">HDMI to VGA</option>
+            <option value="HDMI to DVI">HDMI to DVI</option>
+            <option value="HDMI to DisplayPort">HDMI to DisplayPort</option>
+            <option value="Mini HDMI to HDMI">Mini HDMI to HDMI</option>
+            <option value="Micro HDMI to HDMI">Micro HDMI to HDMI</option>
+            <option value="HDMI Coupler (F-F)">HDMI Coupler (Female to Female)</option>
+        </optgroup>
+
+        <!-- DVI & VGA Legacy -->
+        <optgroup label="DVI & VGA">
+            <option value="DVI to HDMI">DVI to HDMI</option>
+            <option value="DVI to VGA">DVI to VGA</option>
+            <option value="VGA to HDMI">VGA to HDMI</option>
+            <option value="VGA Gender Changer">VGA Gender Changer</option>
+        </optgroup>
+
+        <!-- Other Accessories -->
+        <option value="Other">Other Adapter</option>
+    </select>
+</div>
+                                <div class="col-span-2">
+                                    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">UPS</label>
+                                    <select id="ups" name="ups" class="accessory-select w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-2.5 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Submit -->
+                    <div class="bg-blue-600 rounded-2xl p-4 lg:mt-auto">
+                        <button type="submit"
+                            class="w-full flex items-center justify-center gap-2 bg-white text-blue-600 font-bold text-[13px] tracking-wide rounded-xl py-3 transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                            <i data-lucide="database" class="w-4 h-4"></i>
+                            <span id="submit-text">FINALIZE REGISTRATION</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div><!-- /right col -->
+
+        </div>
+    </form>
+</div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function () {
+    lucide.createIcons();
+
+    let allPowerCables  = [];
+    let allAccessories  = [];   // ← single shared pool for ups & emitter_charger (ad1/ad2 are static; goggle loads independently)
+
+    /* ─────────────────────────────────────────────────
+       Generic asset loader
+    ───────────────────────────────────────────────── */
+    function loadAssets(id, action, dependencyValue = null) {
+        console.log({id, action, dependencyValue});
+        const $select = id ? $('#' + id) : null;
+        const payload = { asset: action || id };
+        payload.newVal = 0;
+        if (dependencyValue) {
+            if (action === 'Monitor2') payload.newVal = dependencyValue;
+            else if (action === 'hdd') payload.newVal = dependencyValue;
+        }
+        if ($select) $select.html('<option value="">Loading…</option>');
+
+        $.ajax({
+            url:      '/it/getCategoryAssets',
+            type:     'GET',
+            data:     payload,
+            dataType: 'json',
+            success: function (data) {
+                if (action === 'powercable') {
+                    allPowerCables = data;
+
+                /* ── Single accessories pool: feeds ups &
+                       emitter_charger from one AJAX call ── */
+                } else if (action === 'accessories') {
+                    allAccessories = data;
+                    updateAccessoryDropdowns();
+
+                } else if ($select) {
+                    $select.html('<option value="">Choose…</option>');
+                    if (Array.isArray(data)) {
+                        data.forEach(function (item) {
+                            $select.append(
+                                $('<option></option>')
+                                    .val(item.assetId)
+                                    .text(item.assetName + ' [' + (item.serialNo || 'N/A') + ']')
+                            );
+                        });
+                    }
+                }
+            },
+            error:(err)=>{
+                console.log(err);
+            }
+        });
+    }
+
+    /* ─────────────────────────────────────────────────
+       Accessory dropdowns — mutual exclusion
+       (ups / emitter_charger), sourced from the single
+       `allAccessories` pool fetched in one request.
+       Note: ad1, ad2 and the monitor video-cable-type
+       selects are static option lists in the markup and
+       are intentionally NOT wired into this pool.
+    ───────────────────────────────────────────────── */
+    function updateAccessoryDropdowns() {
+        const selects = ['ups'];
+        selects.forEach(function (currentId) {
+            const $sel = $('#' + currentId);
+            if ($sel.length === 0) return;
+
+            const current = $sel.val();
+            const others  = selects
+                .filter(function (id) { return id !== currentId; })
+                .map(function (id) { return $('#' + id).val(); })
+                .filter(Boolean);
+
+            $sel.empty().append('<option value="">Choose…</option>');
+            if (Array.isArray(allAccessories)) {
+                allAccessories.forEach(function (item) {
+                    if (!others.includes(String(item.assetId)) || String(item.assetId) === current) {
+                        const $opt = $('<option></option>')
+                            .val(item.assetId)
+                            .text(item.assetName + ' [' + (item.serialNo || 'N/A') + ']');
+                        if (String(item.assetId) === current) $opt.prop('selected', true);
+                        $sel.append($opt);
+                    }
+                });
+            }
+        });
+    }
+
+    /* ─────────────────────────────────────────────────
+       Toggle cable / charger sub-sections
+    ───────────────────────────────────────────────── */
+    function toggleSection(parentId, containerId) {
+        const $c = $('#' + containerId);
+        if ($('#' + parentId).val() !== '') {
+            $c.removeClass('hidden');
+        } else {
+            $c.addClass('hidden').find('select').val('');
+            updateAccessoryDropdowns();
+        }
+    }
+
+    /* ─────────────────────────────────────────────────
+       Event wiring
+    ───────────────────────────────────────────────── */
+    $('#cabinet').on('change', function () {
+        if ($(this).val() !== '' && allPowerCables.length === 0) loadAssets(null, 'powercable');
+    });
+
+    $('#monitor1').on('change', function () {
+        toggleSection('monitor1', 'container_monitor1_cables');
+        if ($(this).val() !== '') {
+            loadAssets('monitor2', 'Monitor2', this.value);
+            if (allPowerCables.length === 0) loadAssets(null, 'powercable');
+        }
+    });
+
+    $('#monitor2').on('change', function () { toggleSection('monitor2', 'container_monitor2_cables'); });
+
+    /* Emitter now just reveals/hides the pre-populated
+       emitter_charger + goggle selects — no extra fetch. */
+    $('#emitter').on('change', function () {
+        toggleSection('emitter', 'container_emitter_charger');
+    });
+
+
+
+    $(document).on('change', '.accessory-select', function () { updateAccessoryDropdowns(); });
+
+    /* ─────────────────────────────────────────────────
+       Initial data load
+       NOTE: 'accessories' is now the single source for
+       ups and emitter_charger. ad1/ad2 and the video
+       cable-type selects are static and need no fetch.
+    ───────────────────────────────────────────────── */
+    const initialLoad = [
+        ['monitor1',   'Monitor1'],
+        ['mouse',      'mouse'],
+        ['keyboard',   'keyboard'],
+        ['headphones', 'headphones'],
+        ['emitter',    'emitter'],
+        ['goggle',    'goggle'],
+    ];
+    initialLoad.forEach(function (a) { loadAssets(a[0], a[1]); });
+
+    loadAssets(null, 'accessories');   // ← single call feeding ups & emitter_charger
+
+    /* ─────────────────────────────────────────────────
+       Form submit
+    ───────────────────────────────────────────────── */
+    $('#hostform').on('submit', function (e) {
+        e.preventDefault();
+        const $btn = $(this).find('button[type="submit"]');
+        $btn.prop('disabled', true);
+        $('#submit-text').text('UPLOADING…');
+
+        const token  = $("meta[name='_csrf']").attr('content');
+        const header = $("meta[name='_csrf_header']").attr('content') || 'X-CSRF-TOKEN';
+        const formData = $(this).serializeArray();
+        console.log(formData);
+        $.ajax({
+            url:      '/it/addHosts',
+            type:     'POST',
+            headers:  { 'X-CSRF-TOKEN': token },
+            data:     formData,
+            dataType: 'json',
+            success: function (response) {
+                lucide.createIcons();
+                if (response.status === 'success') {
+                    Swal.fire({
+                        title: 'Host Created!',
+                        text:  'Host was successfully registered.',
+                        icon:  'success',
+                        draggable: true
+                    }).then(function () { location.reload(); });
+                } else {
+                    $btn.prop('disabled', false);
+                    $('#submit-text').text('FINALIZE REGISTRATION');
+                    Swal.fire({
+                        icon:  'error',
+                        title: 'Registration Error',
+                        text:  response.message || 'An unknown error occurred.'
+                    });
+                }
+            },
+            error: function (err) {
+                lucide.createIcons();
+                $btn.prop('disabled', false);
+                $('#submit-text').text('FINALIZE REGISTRATION');
+                console.error('AJAX Error:', err);
+                Swal.fire({
+                    icon:  'error',
+                    title: 'Connection Error',
+                    text:  'Could not reach the API. Please try again.'
+                });
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

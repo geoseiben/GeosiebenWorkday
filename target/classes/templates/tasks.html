@@ -3,211 +3,719 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Tracker</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>Project Tracker & Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        :root { 
-            --bg: #f8fafc; 
-            --accent: #0ea5e9; 
-            --border: #e2e8f0;
-        }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg); 
-            color: #1e293b; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* Modern Neumorphic Paper */
-        .paper { 
-            background: #ffffff; 
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        .active-paper { 
-            border-color: var(--accent); 
-            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.1); 
-        }
-        
-        /* Smooth Animations */
-        @keyframes pulse-soft {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-        }
-        .pulse { animation: pulse-soft 2s ease-in-out infinite; }
-
-        .modal-overlay { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(15, 23, 42, 0.3); z-index: 100; 
-            align-items: center; justify-content: center; backdrop-filter: blur(8px); 
+        :root {
+            --bg-main: #f4f7fb;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --border-color-soft: #eef2f6;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent-blue: #2563eb;
+            --accent-blue-soft: #eff6ff;
+            --accent-green: #16a34a;
+            --accent-purple: #7c3aed;
+            --accent-amber: #d97706;
+            --accent-rose: #e11d48;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
         }
 
-        .reason-btn { 
-            border: 1px solid var(--border); 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            background: #f8fafc; 
-        }
-        .reason-btn:hover { border-color: var(--accent); background: white; transform: translateY(-1px); }
-        .reason-btn.selected { border-color: var(--accent); background: #f0f9ff; color: var(--accent); border-width: 2px; }
+        * { box-sizing: border-box; }
 
-        * { border-radius: 8px !important; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.06) 0px, transparent 48%),
+                radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 45%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { scrollbar-width: none; }
+
+        /* Accessible focus ring */
+        button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 2px;
+            border-radius: 8px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow:
+                0 1px 2px rgba(15, 23, 42, 0.03),
+                0 10px 30px -12px rgba(15, 23, 42, 0.09);
+        }
+
+        .badge {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+            padding: 4px 12px; border-radius: 999px;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .badge-prod { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8); }
+        .badge-qc { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8); }
+        .badge-pilot { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8); }
+        .badge-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2.5px;
+            background: transparent;
+            transition: background .2s ease;
+        }
+        .stat-card:nth-child(1)::before { background: #94a3b8; }
+        .stat-card:nth-child(2)::before { background: #f59e0b; }
+        .stat-card:nth-child(3)::before { background: #10b981; }
+        .stat-card:nth-child(4)::before { background: #f43f5e; }
+        .stat-card:hover {
+            transform: translateY(-1px);
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.08);
+        }
+
+        .btn {
+            transition: transform .15s cubic-bezier(0.4, 0, 0.2, 1), background .18s ease, box-shadow .18s ease, border-color .18s ease, color .18s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active:not(:disabled) { transform: scale(.98); }
+        .btn:disabled { cursor: not-allowed; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #fff;
+            border: 1px solid #1e40af;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-dark {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #1e293b;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+        .btn-dark:hover:not(:disabled) { background: #1e293b; }
+
+        .btn-success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: #fff;
+            border: 1px solid #166534;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            box-shadow: 0 6px 18px rgba(22, 163, 74, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-ghost {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .btn-ghost:hover:not(:disabled) { border-color: #94a3b8; color: #0f172a; background: #f8fafc; }
+        .btn-ghost:disabled { color: #94a3b8; background: #f8fafc; border-color: #e2e8f0; box-shadow: none; }
+
+        .progress-track {
+            background: #e2e8f0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+        }
+        .progress-fill { transition: width .5s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.5); z-index: 100;
+            align-items: center; justify-content: center; backdrop-filter: blur(8px);
+            animation: fade-in .16s ease;
+        }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255,255,255,0.6) inset;
+            animation: modal-rise .2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modal-rise { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .reason-btn {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            transition: all .16s ease;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+        }
+        .reason-btn:hover { border-color: #93c5fd; color: #1d4ed8; background: #f8fafc; transform: translateY(-1px); }
+        .reason-btn.selected {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            border-color: #1d4ed8;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
+        }
+        .reason-btn.selected i { opacity: 1; }
+
+        .empty-state-wrap { color: var(--text-muted); }
+        .empty-state { color: var(--text-muted); }
+
+        input[type=range] {
+            accent-color: #2563eb;
+            height: 6px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        /* Type-tinted left rail on queue cards */
+        .card-glow-prod { border-left: 4px solid #2563eb; }
+        .card-glow-qc { border-left: 4px solid #7c3aed; }
+        .card-glow-pilot { border-left: 4px solid #d97706; }
+
+        @keyframes spin-gear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scan-shield { 0%, 100% { transform: scale(1); opacity: 0.88; } 50% { transform: scale(1.12); opacity: 1; } }
+        @keyframes float-flask { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-3px) rotate(4deg); } }
+
+        .anim-gear { animation: spin-gear 5s linear infinite; }
+        .anim-qc { animation: scan-shield 2s ease-in-out infinite; }
+        .anim-pilot { animation: float-flask 3s ease-in-out infinite; }
+
+        @keyframes border-glow-prod {
+            0%, 100% { border-color: #2563eb; box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.22), 0 0 0 3px rgba(37, 99, 235, 0.08); }
+            50% { border-color: #60a5fa; box-shadow: 0 14px 36px -10px rgba(37, 99, 235, 0.32), 0 0 0 4px rgba(37, 99, 235, 0.14); }
+        }
+        @keyframes border-glow-qc {
+            0%, 100% { border-color: #7c3aed; box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.22), 0 0 0 3px rgba(124, 58, 237, 0.08); }
+            50% { border-color: #a78bfa; box-shadow: 0 14px 36px -10px rgba(124, 58, 237, 0.32), 0 0 0 4px rgba(124, 58, 237, 0.14); }
+        }
+        @keyframes border-glow-pilot {
+            0%, 100% { border-color: #d97706; box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.22), 0 0 0 3px rgba(217, 119, 6, 0.08); }
+            50% { border-color: #fbbf24; box-shadow: 0 14px 36px -10px rgba(217, 119, 6, 0.32), 0 0 0 4px rgba(217, 119, 6, 0.14); }
+        }
+
+        .active-running-card.type-prod { border: 2px solid #2563eb !important; animation: border-glow-prod 3s ease-in-out infinite; background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%); }
+        .active-running-card.type-qc { border: 2px solid #7c3aed !important; animation: border-glow-qc 3s ease-in-out infinite; background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%); }
+        .active-running-card.type-pilot { border: 2px solid #d97706 !important; animation: border-glow-pilot 3s ease-in-out infinite; background: linear-gradient(180deg, #ffffff 0%, #fffdf5 100%); }
+
+        @keyframes shimmer-light {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .running-shimmer { position: relative; overflow: hidden; }
+        .running-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+            animation: shimmer-light 1.8s infinite;
+        }
+
+        .equalizer-bar {
+            width: 3px;
+            border-radius: 2px;
+            animation: bounce 0.8s ease-in-out infinite alternate;
+        }
+        .equalizer-bar:nth-child(2) { animation-delay: 0.2s; }
+        .equalizer-bar:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0% { height: 4px; }
+            100% { height: 14px; }
+        }
+
+        .type-icon-wrap {
+            width: 58px; height: 58px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0; transition: all .3s ease;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+        .type-icon-prod { background: linear-gradient(145deg, #eff6ff, #dbeafe); color: #2563eb; border: 1px solid #bfdbfe; }
+        .type-icon-qc { background: linear-gradient(145deg, #f5f3ff, #ede9fe); color: #7c3aed; border: 1px solid #ddd6fe; }
+        .type-icon-pilot { background: linear-gradient(145deg, #fffbeb, #fef3c7); color: #d97706; border: 1px solid #fde68a; }
+
+        .progress-fill-prod { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+        .progress-fill-qc { background: linear-gradient(90deg, #7c3aed, #8b5cf6); }
+        .progress-fill-pilot { background: linear-gradient(90deg, #d97706, #f59e0b); }
+
+        .remaining-prod { color: #2563eb; }
+        .remaining-qc { color: #7c3aed; }
+        .remaining-pilot { color: #d97706; }
+
+        .equalizer-chip-prod { background: #eff6ff; border-color: #bfdbfe; }
+        .equalizer-chip-qc { background: #f5f3ff; border-color: #ddd6fe; }
+        .equalizer-chip-pilot { background: #fffbeb; border-color: #fde68a; }
+        .equalizer-bar-prod { background-color: #2563eb; }
+        .equalizer-bar-qc { background-color: #7c3aed; }
+        .equalizer-bar-pilot { background-color: #d97706; }
+
+        .btn-dark-prod { background: #1d4ed8; border-color: #1e40af; }
+        .btn-dark-prod:hover:not(:disabled) { background: #2563eb; }
+        .btn-dark-qc { background: #6d28d9; border-color: #5b21b6; }
+        .btn-dark-qc:hover:not(:disabled) { background: #7c3aed; }
+        .btn-dark-pilot { background: #b45309; border-color: #92400e; }
+        .btn-dark-pilot:hover:not(:disabled) { background: #d97706; }
+
+        .status-live-prod { color: #2563eb; }
+        .status-live-qc { color: #7c3aed; }
+        .status-live-pilot { color: #d97706; }
+        .status-dot-prod { color: #3b82f6; }
+        .status-dot-qc { color: #a78bfa; }
+        .status-dot-pilot { color: #fbbf24; }
+
+        /* Queue card hover lift */
+        .queue-card { transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease; }
+        .queue-card:hover { transform: translateY(-2px); background: #ffffff; }
+
+        /* Reject QC + richer interaction layer */
+        .btn-danger {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            color: #fff;
+            border: 1px solid #9f1239;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            box-shadow: 0 6px 18px rgba(225, 29, 72, 0.34);
+        }
+        .btn-danger-outline {
+            background: #fff1f2;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+        }
+        .btn-danger-outline:hover:not(:disabled) { background: #ffe4e6; border-color: #fda4af; }
+
+        .btn .ripple {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            background: rgba(255, 255, 255, 0.55);
+            transform: scale(0); opacity: 0.7;
+            animation: ripple-expand .55s ease-out forwards;
+        }
+        @keyframes ripple-expand { to { transform: scale(2.6); opacity: 0; } }
+
+        @keyframes shake-alert {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+        .shake { animation: shake-alert .5s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes icon-pop {
+            0% { transform: scale(.6); opacity: 0; }
+            60% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .icon-pop { animation: icon-pop .35s cubic-bezier(.34,1.56,.64,1) both; }
+
+        /* Drag-and-drop evidence upload zone */
+        .dropzone {
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 14px;
+            transition: border-color .18s ease, background .18s ease, transform .12s ease;
+            cursor: pointer;
+        }
+        .dropzone:hover { border-color: #60a5fa; background: #eff6ff; }
+        .dropzone.drag-over { border-color: #2563eb; background: #eff6ff; transform: scale(1.01); }
+        .dropzone.has-file { border-style: solid; border-color: #4ade80; background: #f0fdf4; }
+
+        @keyframes file-chip-in {
+            from { opacity: 0; transform: translateY(4px) scale(.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .file-chip { animation: file-chip-in .22s cubic-bezier(.16,1,.3,1) both; }
+
+        @keyframes upload-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .dropzone.drag-over .dropzone-icon { animation: upload-bounce .6s ease-in-out infinite; }
+
+        @keyframes log-slide-in {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .log-enter { animation: log-slide-in .25s ease-out both; }
+
+        @keyframes stat-pop {
+            0% { transform: scale(1); }
+            35% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .stat-pop { animation: stat-pop .32s ease-out both; }
+
+        @keyframes rise-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card { animation: rise-in .32s ease-out both; }
+        .stat-card:nth-child(1) { animation-delay: .02s; }
+        .stat-card:nth-child(2) { animation-delay: .08s; }
+        .stat-card:nth-child(3) { animation-delay: .14s; }
+        .stat-card:nth-child(4) { animation-delay: .2s; }
+
+        @keyframes rose-glow {
+            0%, 100% { border-color: #e11d48; box-shadow: 0 0 22px rgba(225, 29, 72, 0.14); }
+            50% { border-color: #fb7185; box-shadow: 0 0 30px rgba(225, 29, 72, 0.24); }
+        }
+        .reject-armed { animation: rose-glow 2.4s ease-in-out infinite; }
+
+        /* Subtle grid texture for workspace backdrop */
+        .workspace-backdrop {
+            background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
+            background-size: 20px 20px;
+        }
+
+        /* ---------- Dedicated Running Task Type Animations ---------- */
+        @keyframes spin-gear-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        .anim-gear-reverse { animation: spin-gear-reverse 3.5s linear infinite; }
+
+        @keyframes laser-sweep {
+            0%, 100% { top: 10%; opacity: 0.35; }
+            50% { top: 82%; opacity: 1; }
+        }
+        .qc-laser-line {
+            position: absolute;
+            left: 14%;
+            right: 14%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #7c3aed, #c084fc, #7c3aed, transparent);
+            box-shadow: 0 0 8px #7c3aed;
+            border-radius: 999px;
+            animation: laser-sweep 1.8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes bubble-rise-1 {
+            0% { transform: translateY(4px) scale(0.6); opacity: 0; }
+            45% { opacity: 0.95; }
+            100% { transform: translateY(-16px) scale(1.1); opacity: 0; }
+        }
+        @keyframes bubble-rise-2 {
+            0% { transform: translateY(4px) scale(0.5); opacity: 0; }
+            45% { opacity: 0.85; }
+            100% { transform: translateY(-19px) scale(1.15); opacity: 0; }
+        }
+        .pilot-bubble-1 { animation: bubble-rise-1 1.6s ease-in infinite; }
+        .pilot-bubble-2 { animation: bubble-rise-2 2.1s ease-in 0.7s infinite; }
+
+        @keyframes conveyor-move {
+            0% { background-position: 0 0; }
+            100% { background-position: 24px 0; }
+        }
+        .prod-conveyor-strip {
+            background-image: repeating-linear-gradient(
+                -45deg,
+                rgba(37, 99, 235, 0.14),
+                rgba(37, 99, 235, 0.14) 6px,
+                transparent 6px,
+                transparent 12px
+            );
+            background-size: 24px 24px;
+            animation: conveyor-move 0.8s linear infinite;
+        }
+
+        @keyframes radar-pulse {
+            0% { transform: scale(0.85); opacity: 0.75; }
+            100% { transform: scale(1.45); opacity: 0; }
+        }
+        .qc-radar-ring {
+            animation: radar-pulse 1.8s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+        }
+
+        /* ---------- Enhanced Multi-Layer SVG Stage Animations ---------- */
+        @keyframes piston-pump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes spark-flash {
+            0%, 100% { opacity: 0; transform: scale(0.4); }
+            50% { opacity: 1; transform: scale(1.25); }
+        }
+        @keyframes data-flow-dash {
+            to { stroke-dashoffset: -24; }
+        }
+        @keyframes atom-orbit-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes liquid-wave {
+            0%, 100% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+        }
+        @keyframes qc-sweep-beam {
+            0%, 100% { transform: translateY(-16px); opacity: 0.35; }
+            50% { transform: translateY(16px); opacity: 1; }
+        }
+        @keyframes check-pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 0px rgba(124, 58, 237, 0)); }
+            50% { filter: drop-shadow(0 0 6px rgba(124, 58, 237, 0.55)); }
+        }
+        @keyframes pulse-wave-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .svg-gear-cw { transform-origin: 21px 23px; animation: spin-gear 4.2s linear infinite; }
+        .svg-gear-ccw { transform-origin: 39px 37px; animation: spin-gear-reverse 3.1s linear infinite; }
+        .svg-piston { animation: piston-pump 1.1s ease-in-out infinite; }
+        .svg-spark-1 { animation: spark-flash 1.4s ease-in-out infinite; }
+        .svg-spark-2 { animation: spark-flash 1.4s ease-in-out 0.7s infinite; }
+        .svg-conveyor-line { stroke-dasharray: 6 6; animation: data-flow-dash 0.7s linear infinite; }
+
+        .svg-qc-shield { animation: check-pulse-glow 2s ease-in-out infinite; }
+        .svg-qc-beam { animation: qc-sweep-beam 2s ease-in-out infinite; }
+        .svg-qc-ring { transform-origin: 29px 29px; animation: radar-pulse 2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite; }
+
+        .svg-pilot-flask { transform-origin: 29px 32px; animation: float-flask 2.8s ease-in-out infinite; }
+        .svg-pilot-liquid { animation: liquid-wave 1.8s ease-in-out infinite; }
+        .svg-pilot-orbit { transform-origin: 29px 29px; animation: atom-orbit-spin 5s linear infinite; }
+
+        .banner-wave-track {
+            width: 200%;
+            animation: pulse-wave-scroll 2.4s linear infinite;
+        }
     </style>
 </head>
-<body >
 <head th:replace="includes/header :: header"></head>
+<body class="flex flex-col h-screen">
 
-    <header class="flex justify-between items-center px-8 h-16 paper bg-white/80 backdrop-blur-md">
-        <div class="flex items-center gap-4">
-            <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
-            <h1 class="text-sm font-800 tracking-tight text-slate-800">
-               Project Tracker V 2.O
-            </h1>
+    <header class="flex justify-between items-center px-6 py-3.5 border-b border-slate-200/90 shrink-0 bg-white/95 backdrop-blur-md z-10 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-600/20">
+                <i class="fa-solid fa-layer-group text-sm"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-[15px] font-extrabold tracking-tight text-slate-900">Project Dashboard</h1>
+                    <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200/80">WORKSPACE</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 font-medium">Real-time task control &amp; allocation</p>
+            </div>
         </div>
-        <div class="flex gap-10 items-center">
-            
-            <div class="text-right">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Clock</p>
-                <span class="mono text-sm font-600 text-slate-700" id="live-clock">00:00:00</span>
+
+        <div class="flex gap-2.5 items-center">
+            <div class="stat-card rounded-xl px-4 py-2 text-center min-w-[70px]">
+                <p class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider leading-none">Total</p>
+                <p id="stat-total" class="mono text-[15px] font-bold mt-1.5 text-slate-800">00</p>
             </div>
-            <div class="text-right">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total</p>
-                <span id="stat-total" class="mono text-sm font-600 text-sky-600">00</span>
+            <div class="stat-card rounded-xl px-4 py-2 text-center min-w-[70px]">
+                <p class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider leading-none">Active</p>
+                <p id="stat-active" class="mono text-[15px] font-bold mt-1.5 text-amber-600">00</p>
             </div>
-                     <div class="text-right">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Active</p>
-                <span id="stat-total" class="mono text-sm font-600 text-yellow-600">00</span>
+            <div class="stat-card rounded-xl px-4 py-2 text-center min-w-[70px]">
+                <p class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider leading-none">Finished</p>
+                <p id="stat-finished" class="mono text-[15px] font-bold mt-1.5 text-emerald-600">00</p>
             </div>
-                     <div class="text-right">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Finshed</p>
-                <span id="stat-total" class="mono text-sm font-600 text-green-600">00</span>
+            <div class="stat-card rounded-xl px-4 py-2 text-center min-w-[70px]">
+                <p class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider leading-none">Overdue</p>
+                <p id="stat-overdue" class="mono text-[15px] font-bold mt-1.5 text-rose-600">00</p>
             </div>
-                     <div class="text-right">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Overdue</p>
-                <span id="stat-total" class="mono text-sm font-600 text-red-600">00</span>
+            <div class="flex items-center gap-2.5 pl-4 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 ml-1">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span id="live-clock" class="mono text-xs font-bold text-slate-700 tracking-tight">00:00:00</span>
             </div>
         </div>
     </header>
 
-    <div class="flex-1 flex gap-6 overflow-hidden">
-        <main class="flex-[1.5] flex flex-col gap-6">
-            <section id="main-card" class="flex-1 paper p-10 flex flex-col justify-between relative transition-all duration-500">
-                <div class="absolute top-6 right-6">
-                    <span id="global-status" class="px-3 py-1 bg-slate-100 text-[10px] font-bold tracking-widest uppercase text-slate-500 border border-slate-200">STANDBY</span>
-                </div>
+    <main class="flex flex-1 overflow-hidden">
 
-                <div class="space-y-8">
-                    <div>
-                        <span id="type-badge" class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-bold uppercase tracking-wider rounded">INIT_SEQ</span>
-                        <h2 id="feederCode" class="text-6xl font-800 text-slate-900 tracking-tighter uppercase mt-4 break-all">---</h2>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                         <div class="bg-slate-50 p-5 border border-slate-100">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Deadline</p>
-                            <p id="deadline-val" class="text-lg mono font-bold text-slate-700">--/--/--</p>
-                        </div>
-                        <div class="bg-slate-50 p-5 border border-slate-100">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">File Path</p>
-                            <p id="file-path" class="text-xs mono text-slate-500 truncate mt-1">/VOL/PROD_ACTIVE</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-4">
-                        <div>
-                            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Elapsed Time</p>
-                            <p id="spent" class="text-5xl mono font-bold tracking-tighter text-slate-800">00:00:00</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Safety Buffer</p>
-                            <p id="remaining" class="text-5xl mono font-bold tracking-tighter text-sky-500">00:00:00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-end text-[10px] font-bold uppercase tracking-widest">
-                        <span class="text-slate-400 italic">Progress</span>
-                        <span id="progress-text" class="text-slate-900 font-800">0%</span>
-                    </div>
-                    <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div id="progress-bar" class="h-full bg-sky-500 transition-all duration-1000 ease-out" style="width: 0%"></div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="flex gap-4 h-20">
-                <button id="mainBtn" onclick="handlePrimaryAction()" class="flex-[2] bg-slate-900 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all">Start Task...</button>
-                <button id="submitBtn" onclick="openModal('finalModal')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase tracking-[0.2em] text-xs hidden shadow-lg active:scale-95 transition-all">Commit Task</button>
+        <section class="w-1/2 border-r border-slate-200/90 flex flex-col bg-white">
+            <div class="px-6 py-3.5 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between shrink-0">
+                <h2 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <i class="fa-solid fa-bolt text-[10px]"></i>
+                    </span>
+                    Active Workplace Focus
+                </h2>
+                <span class="text-[11px] text-slate-400 font-semibold">Primary allotment console</span>
             </div>
-        </main>
 
-        <aside class="flex-1 flex flex-col gap-6 overflow-hidden">
-            <div class="paper flex-1 flex flex-col overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <span class="font-bold text-[11px] tracking-widest uppercase text-slate-500">Upcoming Operations</span>
-        
-                </div>
-                <div id="taskList" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar"></div>
+            <div id="taskList" class="flex-1 overflow-y-auto p-6 lg:p-8 no-scrollbar flex flex-col justify-center workspace-backdrop"></div>
+
+            <div class="px-6 py-3 border-t border-slate-200/80 bg-slate-50/90 flex items-center gap-2.5 shrink-0">
+                <span class="w-5 h-5 rounded bg-slate-200/70 text-slate-500 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-terminal text-[10px]"></i>
+                </span>
+                <span id="activity-log" class="mono text-xs empty-state truncate font-medium">No activity recorded</span>
             </div>
-            <div class="h-20 paper px-6 flex items-center gap-4 bg-white border-dashed border-2">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Log:</p>
-                <p class="text-[11px] mono text-slate-500 italic">Awaiting operator input...</p>
+        </section>
+
+        <section class="w-1/2 flex flex-col bg-slate-50/70">
+            <div class="px-6 py-3.5 border-b border-slate-200/90 bg-white flex items-center justify-between shrink-0">
+                <h2 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <i class="fa-solid fa-cubes text-[10px]"></i>
+                    </span>
+                    Upcoming Queue
+                </h2>
+                <span id="queue-count-badge" class="badge badge-default">0 Queued</span>
             </div>
-        </aside>
-    </div>
+
+            <div id="upcomingCardsList" class="flex-1 overflow-y-auto p-6 space-y-3.5 no-scrollbar"></div>
+        </section>
+
+    </main>
 
     <div id="switchModal" class="modal-overlay">
-        <div class="bg-white w-full max-w-md p-10 border-t-8 border-sky-500 shadow-2xl">
-            <h3 class="text-2xl font-800 uppercase mb-2 tracking-tighter">Process Conflict</h3>
-            <p class="text-sm text-slate-500 mb-8">System is busy with <span id="active-node-name" class="text-sky-600 font-bold">---</span>.</p>
-            <div class="flex gap-4">
-                <button onclick="closeModal('switchModal')" class="flex-1 py-4 border border-slate-200 text-xs font-bold uppercase">Abort</button>
-                <button id="confirmSwitchBtn" class="flex-[2] py-4 bg-sky-600 text-white text-xs font-bold uppercase">Pause & Switch</button>
+        <div class="modal-box w-full max-w-md p-6 rounded-2xl">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4 text-blue-600 shadow-sm">
+                <i class="fa-solid fa-arrow-right-arrow-left text-base"></i>
+            </div>
+            <h3 class="text-base font-extrabold text-slate-900 mb-1.5">Task in progress</h3>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">You're currently working on <span id="active-node-name" class="font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">---</span>. Pause it before switching to another task.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal('switchModal')" class="btn btn-ghost flex-1 py-2.5 text-xs font-bold rounded-xl">Cancel</button>
+                <button id="confirmSwitchBtn" class="btn btn-primary flex-[2] py-2.5 text-xs font-bold rounded-xl">Pause &amp; switch</button>
             </div>
         </div>
     </div>
 
     <div id="pauseModal" class="modal-overlay">
-        <div class="bg-white w-full max-w-xl p-10 shadow-2xl border-t-8 border-slate-900">
-            <h3 class="text-3xl font-800 uppercase mb-2 tracking-tighter">Halt Sequence</h3>
-            <p class="text-[10px] text-slate-400 mb-10 uppercase tracking-[0.4em]">Select Stop Code</p>
-            <div class="grid grid-cols-2 gap-4 mb-10">
-                <button onclick="selectReason('Break', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">01_BREAK</button>
-                <button onclick="selectReason('Lunch', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">02_LUNCH</button>
-                <button onclick="selectReason('Switching', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest">03_SWITCH</button>
-                <button onclick="selectReason('EOD', this)" class="reason-btn py-5 font-bold text-[11px] uppercase tracking-widest text-rose-500">04_EOD</button>
-            </div>
-            <div id="eod-section" class="hidden mb-10 p-8 bg-slate-50 border border-slate-200">
-                <div class="flex justify-between items-end mb-6">
-                    <label class="text-[11px] font-bold uppercase text-sky-600">Verified Progress</label>
-                    <span id="pct-val" class="text-3xl font-800 mono text-sky-600">50%</span>
+        <div class="modal-box w-full max-w-lg p-6 rounded-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                    <i class="fa-solid fa-pause text-sm"></i>
                 </div>
-                <input type="range" id="eod-pct" min="0" max="100" value="50" oninput="document.getElementById('pct-val').innerText = this.value + '%'" class="w-full h-2 bg-slate-200 appearance-none cursor-pointer rounded-full">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Pause task execution</h3>
+                    <p class="text-xs text-slate-500">Select a reason for pausing your workflow:</p>
+                </div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="closeModal('pauseModal')" class="flex-1 py-5 font-bold uppercase text-xs text-slate-400">Cancel</button>
-                <button id="confirmPauseBtn" onclick="executePauseAndContinuity()" class="flex-[2] py-5 bg-sky-600 text-white font-bold uppercase text-xs tracking-widest opacity-50 cursor-not-allowed" disabled>Apply Halt</button>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button onclick="selectReason('Break', this)" class="reason-btn py-3.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-mug-hot opacity-70"></i>Break</button>
+                <button onclick="selectReason('Lunch', this)" class="reason-btn py-3.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-utensils opacity-70"></i>Lunch</button>
+                <button onclick="selectReason('Switching', this)" class="reason-btn py-3.5 font-semibold text-xs rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-shuffle opacity-70"></i>Switching task</button>
+                <button onclick="selectReason('EOD', this)" class="reason-btn py-3.5 font-semibold text-xs rounded-xl text-rose-600 flex items-center justify-center gap-2"><i class="fa-solid fa-moon opacity-70"></i>End of day</button>
+            </div>
+
+            <div id="eod-section" class="hidden mb-6 p-4 bg-slate-50 border border-slate-200/90 rounded-xl">
+                <div class="flex justify-between items-end mb-3">
+                    <label class="text-xs font-bold text-slate-700">Recorded completion</label>
+                    <span id="pct-val" class="text-sm font-extrabold mono text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100">1%</span>
+                </div>
+                <input type="range" id="eod-pct" min="0" max="100" value="1"
+                       oninput="document.getElementById('pct-val').innerText = this.value + '%'; validateEodPct();"
+                       class="w-full">
+                <p id="eod-pct-warning" class="hidden text-[11px] font-medium text-rose-600 mt-3 flex items-center gap-1.5 bg-rose-50 px-3 py-2 rounded-lg border border-rose-100">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Cannot exceed the recorded completion of <span id="eod-cap-label" class="font-bold">0</span>%.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('pauseModal')" class="btn btn-ghost flex-1 py-2.5 font-bold text-xs rounded-xl">Cancel</button>
+                <button id="confirmPauseBtn" onclick="executePauseAndContinuity()" class="btn btn-primary flex-[2] py-2.5 font-bold text-xs rounded-xl opacity-50 cursor-not-allowed" disabled>Confirm pause</button>
             </div>
         </div>
     </div>
 
     <div id="finalModal" class="modal-overlay">
-        <div class="bg-white w-full max-w-xl p-10 border-t-8 border-emerald-500 shadow-2xl">
-            <h3 class="text-3xl font-800 uppercase mb-4 tracking-tighter">Task Commit</h3>
-            <textarea id="feedbackText" rows="4" class="w-full bg-slate-50 border border-slate-200 p-6 mono text-sm mb-10 focus:ring-2 ring-emerald-500 outline-none" placeholder="LOG_COMMENTS..."></textarea>
-            <div class="flex gap-4">
-                <button onclick="closeModal('finalModal')" class="flex-1 py-5 font-bold uppercase text-xs text-slate-400">Abort</button>
-                <button onclick="submitTaskFinal()" class="flex-[2] py-5 bg-emerald-600 text-white font-bold uppercase text-xs tracking-widest">Execute Commit</button>
+        <div class="modal-box w-full max-w-lg p-6 rounded-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                    <i class="fa-solid fa-check text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Submit task work</h3>
+                    <p class="text-xs text-slate-500">Add final notes or summary remarks before closing this allotment.</p>
+                </div>
+            </div>
+            <textarea id="feedbackText" rows="4" class="w-full bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 focus:bg-white mb-6 placeholder:text-slate-400 transition-all" placeholder="Add optional completion comments..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="closeModal('finalModal')" class="btn btn-ghost flex-1 py-2.5 font-bold text-xs rounded-xl">Cancel</button>
+                <button onclick="submitTaskFinal()" class="btn btn-success flex-[2] py-2.5 font-bold text-xs rounded-xl">Submit task</button>
             </div>
         </div>
     </div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <div id="rejectQcModal" class="modal-overlay">
+        <div class="modal-box w-full max-w-lg p-6 rounded-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 icon-pop shrink-0">
+                    <i class="fa-solid fa-file-circle-xmark text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Reject QC task</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">Attach evidence &amp; explain why <span id="reject-node-name" class="font-bold text-slate-800">this task</span> is being sent back.</p>
+                </div>
+            </div>
+
+            <label class="text-xs font-bold text-slate-700 mb-2 block">Supporting file</label>
+            <div id="rejectDropzone" class="dropzone p-5 mb-3 flex flex-col items-center justify-center text-center"
+                 onclick="document.getElementById('rejectFileInput').click()">
+                <i id="dropzoneIcon" class="dropzone-icon fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-2"></i>
+                <p class="text-xs font-bold text-slate-600">Drop a file here or click to browse</p>
+                <p class="text-[10.5px] text-slate-400 mt-1">Screenshots, logs, or reference docs — up to 10MB</p>
+            </div>
+            <input type="file" id="rejectFileInput" class="hidden" onchange="handleRejectFileSelect(this.files)">
+
+            <div id="rejectFileChip" class="hidden file-chip flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 mb-5 shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                    <i class="fa-solid fa-paperclip text-xs"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p id="rejectFileName" class="text-xs font-bold text-slate-700 truncate">---</p>
+                    <p id="rejectFileSize" class="text-[10px] text-slate-400 font-medium">--</p>
+                </div>
+                <button type="button" onclick="clearRejectFile(event)" class="text-slate-400 hover:text-rose-500 transition-colors shrink-0 p-1">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <label class="text-xs font-bold text-slate-700 mb-2 block">Rejection remarks</label>
+            <textarea id="rejectRemarks" rows="4" oninput="validateRejectForm()"
+                      class="w-full bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-800 rounded-xl outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/15 focus:bg-white mb-1.5 placeholder:text-slate-400 transition-all"
+                      placeholder="Explain what needs to be corrected before this can pass QC..."></textarea>
+            <p id="rejectRemarksHint" class="text-[10.5px] font-medium text-slate-400 mb-5">Minimum 10 characters.</p>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('rejectQcModal')" class="btn btn-ghost flex-1 py-2.5 font-bold text-xs rounded-xl">Cancel</button>
+                <button id="confirmRejectBtn" onclick="submitRejectQc()" disabled
+                        class="btn btn-ghost opacity-50 cursor-not-allowed flex-[2] py-2.5 font-bold text-xs rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-ban mr-2"></i>Reject task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
         let tasks = [], activeTask = null, timer, pendingSwitchId = null, currentReason = '';
 
@@ -216,6 +724,7 @@
             document.getElementById('live-clock').innerText = now.toTimeString().split(' ')[0];
         }
         setInterval(updateClock, 1000);
+        updateClock();
 
         function formatDate(dateStr) {
             if (!dateStr) return "--/--/--";
@@ -224,97 +733,638 @@
             return `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
         }
 
-        async function init() {
-            try {
-                const res = await fetch(`/myAllotments`);
-                tasks = await res.json();
-                console.log(tasks);
-                if (!tasks.length) return;
-                const savedId = localStorage.getItem('last_allotment_id');
-                activeTask = tasks.find(t => t.isRunning) || tasks.find(t => t.allotmentid == savedId) || tasks[0];
-                updateUI(); renderQueue(); updateStats();
-            } catch (e) { console.error("OFFLINE_MODE"); }
-        }
-
-        function renderQueue() {
-            const list = document.getElementById('taskList');
-            const upcoming = tasks.filter(t => t.allotmentid !== activeTask?.allotmentid);
-            list.innerHTML = upcoming.map(t => `
-                <div onclick="requestSwitch(${t.allotmentid})" class="paper p-5 cursor-pointer hover:bg-sky-50 transition-all border-l-4 border-transparent hover:border-sky-500 group">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[9px] font-bold text-sky-600 uppercase tracking-widest bg-sky-50 px-2 py-0.5">${t.type}</span>
-                        <span class="text-[10px] mono text-slate-400 font-bold">${formatDate(t.deadline || t.qcDeadline)}</span>
-                    </div>
-                    <h4 class="font-700 text-sm uppercase text-slate-700 group-hover:text-slate-900">${t.feederAlloted}</h4>
-                </div>`).join('');
-        }
-
-        function updateUI() {
-            clearInterval(timer);
-            const mainCard = document.getElementById('main-card');
-            const statusDot = document.getElementById('status-dot');
-            const globalStatus = document.getElementById('global-status');
-
-            document.getElementById('feederCode').innerText = activeTask.feederAlloted;
-            document.getElementById('deadline-val').innerText = formatDate(activeTask.deadline || activeTask.qcDeadline);
-            document.getElementById('type-badge').innerText = activeTask.type || 'NODE';
-            
-            const btn = document.getElementById('mainBtn');
-            const submitBtn = document.getElementById('submitBtn');
-
-            if (activeTask.isRunning) {
-                btn.innerText = "Pause Sequence";
-                btn.className = "flex-[2] bg-slate-900 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all";
-                mainCard.classList.add('active-paper');
-                statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse";
-                globalStatus.innerText = "ACTIVELY_TRACKING";
-                globalStatus.className = "px-3 py-1 bg-emerald-50 text-[10px] font-bold tracking-widest uppercase text-emerald-600 border border-emerald-100";
-                submitBtn.classList.add('hidden');
-                timer = setInterval(calculateTime, 1000);
-            } else {
-                btn.innerText = activeTask.elapsedTime > 0 ? "Resume Node" : "Boot Sequence";
-                btn.className = "flex-[2] bg-sky-600 text-white font-bold uppercase tracking-[0.2em] text-xs shadow-lg active:scale-95 transition-all";
-                mainCard.classList.remove('active-paper');
-                statusDot.className = "w-2.5 h-2.5 rounded-full bg-slate-300";
-                globalStatus.innerText = "STANDBY";
-                globalStatus.className = "px-3 py-1 bg-slate-100 text-[10px] font-bold tracking-widest uppercase text-slate-500 border border-slate-200";
-                submitBtn.classList.toggle('hidden', activeTask.elapsedTime === 0);
-                calculateTime();
-            }
-        }
-
-        function calculateTime() {
-            const now = Date.now();
-            const totalMs = (activeTask.elapsedTime || 0) + (activeTask.isRunning ? (now - new Date(activeTask.startTime).getTime()) : 0);
-            const quotaHrs = activeTask.type === 'Prod' ? activeTask.hrsAssigned : activeTask.qcHrs;
-            const quotaMs = (quotaHrs || 0) * 3600000;
-            const progress = quotaMs > 0 ? Math.min(100, (totalMs / quotaMs) * 100) : 0;
-            
-            document.getElementById('spent').innerText = formatMs(totalMs);
-            document.getElementById('remaining').innerText = formatMs(Math.max(0, quotaMs - totalMs));
-            document.getElementById('progress-bar').style.width = progress + '%';
-            document.getElementById('progress-text').innerText = Math.round(progress) + '%';
-        }
-
         function formatMs(ms) {
             const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
 
-        async function performAction(action, percentage = null) {
+        function badgeClass(type) {
+            if (type === 'Prod') return 'badge badge-prod';
+            if (type === 'QC') return 'badge badge-qc';
+            if (type === 'Pilot') return 'badge badge-pilot';
+            return 'badge badge-default';
+        }
+
+        /* Maps a task type to its icon, running-animation class, color styling,
+           and the active-card glow variant, so the main workspace card can
+           mirror the correct animation for whichever task type is running. */
+        function typeIconMeta(type) {
+            if (type === 'QC') {
+                return {
+                    icon: 'fa-shield-halved', anim: 'anim-qc',
+                    iconClass: 'type-icon-qc', cardType: 'type-qc',
+                    progressClass: 'progress-fill-qc', remainingClass: 'remaining-qc',
+                    equalizerChipClass: 'equalizer-chip-qc', equalizerBarClass: 'equalizer-bar-qc',
+                    darkBtnClass: 'btn-dark-qc', statusLiveClass: 'status-live-qc', statusDotClass: 'status-dot-qc',
+                    label: 'QC review & verification scan active'
+                };
+            }
+            if (type === 'Pilot') {
+                return {
+                    icon: 'fa-flask', anim: 'anim-pilot',
+                    iconClass: 'type-icon-pilot', cardType: 'type-pilot',
+                    progressClass: 'progress-fill-pilot', remainingClass: 'remaining-pilot',
+                    equalizerChipClass: 'equalizer-chip-pilot', equalizerBarClass: 'equalizer-bar-pilot',
+                    darkBtnClass: 'btn-dark-pilot', statusLiveClass: 'status-live-pilot', statusDotClass: 'status-dot-pilot',
+                    label: 'Experimental pilot synthesis running'
+                };
+            }
+            // Default / Prod
+            return {
+                icon: 'fa-gear', anim: 'anim-gear',
+                iconClass: 'type-icon-prod', cardType: 'type-prod',
+                progressClass: 'progress-fill-prod', remainingClass: 'remaining-prod',
+                equalizerChipClass: 'equalizer-chip-prod', equalizerBarClass: 'equalizer-bar-prod',
+                darkBtnClass: 'btn-dark-prod', statusLiveClass: 'status-live-prod', statusDotClass: 'status-dot-prod',
+                label: 'Production line assembly active'
+            };
+        }
+
+        /* Builds the bespoke animated visual stage for Prod, QC, or Pilot when running */
+        function renderTypeStageHtml(type, isRunning) {
+            if (type === 'QC') {
+                return `
+                    <svg viewBox="0 0 58 58" class="w-full h-full overflow-visible">
+                        <defs>
+                            <linearGradient id="qcGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#8b5cf6"/>
+                                <stop offset="100%" stop-color="#6d28d9"/>
+                            </linearGradient>
+                            <linearGradient id="qcBeamGrad" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#7c3aed" stop-opacity="0"/>
+                                <stop offset="50%" stop-color="#a78bfa" stop-opacity="1"/>
+                                <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        ${isRunning ? `<circle cx="29" cy="29" r="20" fill="none" stroke="#a78bfa" stroke-width="1.5" class="svg-qc-ring"/>` : ''}
+                        <g class="${isRunning ? 'svg-qc-shield' : ''}">
+                            <path d="M29 12 L42 17.5 V28.5 C42 36.8 36.4 43.6 29 46.5 C21.6 43.6 16 36.8 16 28.5 V17.5 L29 12 Z"
+                                  fill="url(#qcGrad)" fill-opacity="0.16" stroke="#7c3aed" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M23.5 29.5 L27.2 33.2 L35 25" fill="none" stroke="#6d28d9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                        ${isRunning ? `
+                            <g class="svg-qc-beam">
+                                <rect x="11" y="28" width="36" height="2.5" rx="1.25" fill="url(#qcBeamGrad)"/>
+                                <circle cx="15" cy="29.2" r="1.5" fill="#7c3aed"/>
+                                <circle cx="43" cy="29.2" r="1.5" fill="#7c3aed"/>
+                            </g>
+                        ` : ''}
+                    </svg>
+                `;
+            }
+            if (type === 'Pilot') {
+                return `
+                    <svg viewBox="0 0 58 58" class="w-full h-full overflow-visible">
+                        <defs>
+                            <linearGradient id="pilotLiquid" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
+                                <stop offset="100%" stop-color="#d97706" stop-opacity="0.8"/>
+                            </linearGradient>
+                        </defs>
+                        ${isRunning ? `
+                            <g class="svg-pilot-orbit">
+                                <ellipse cx="29" cy="29" rx="22" ry="8.5" fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.65"/>
+                                <circle cx="51" cy="29" r="2.2" fill="#d97706"/>
+                                <circle cx="7" cy="29" r="1.8" fill="#f59e0b"/>
+                            </g>
+                        ` : ''}
+                        <g class="${isRunning ? 'svg-pilot-flask' : ''}">
+                            <path d="M25 14 H33 M26.5 14 V22.5 L18.5 38.5 C17.5 40.5 19 43 21.2 43 H36.8 C39 43 40.5 40.5 39.5 38.5 L31.5 22.5 V14"
+                                  fill="#ffffff" fill-opacity="0.65" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21.2 34.5 Q25 33 29 34.5 T36.8 34.5 L38.6 38.5 C39.2 39.8 38.2 41.5 36.8 41.5 H21.2 C19.8 41.5 18.8 39.8 19.4 38.5 Z"
+                                  fill="url(#pilotLiquid)" class="${isRunning ? 'svg-pilot-liquid' : ''}"/>
+                        </g>
+                        ${isRunning ? `
+                            <circle cx="26" cy="31" r="1.8" fill="#d97706" class="pilot-bubble-1"/>
+                            <circle cx="32" cy="29" r="2.1" fill="#f59e0b" class="pilot-bubble-2"/>
+                        ` : ''}
+                    </svg>
+                `;
+            }
+            // Default / Prod: Precision interlocking gears + vertical actuator + live conveyor belt
+            return `
+                <svg viewBox="0 0 58 58" class="w-full h-full overflow-visible">
+                    <!-- Main Drive Gear -->
+                    <g class="${isRunning ? 'svg-gear-cw' : ''}" stroke="#2563eb" stroke-width="1.8" fill="#dbeafe">
+                        <circle cx="21" cy="23" r="7.5"/>
+                        <circle cx="21" cy="23" r="2.8" fill="#2563eb"/>
+                        <path d="M21 12.5 V15 M21 31 V33.5 M10.5 23 H13 M29 23 H31.5 M13.6 15.6 L15.4 17.4 M26.6 28.6 L28.4 30.4 M28.4 15.6 L26.6 17.4 M15.4 28.6 L13.6 30.4" stroke-linecap="round"/>
+                    </g>
+                    <!-- Secondary Driven Gear -->
+                    <g class="${isRunning ? 'svg-gear-ccw' : ''}" stroke="#1d4ed8" stroke-width="1.6" fill="#eff6ff">
+                        <circle cx="39" cy="37" r="5.5"/>
+                        <circle cx="39" cy="37" r="2" fill="#1d4ed8"/>
+                        <path d="M39 29 V31 M39 43 V45 M31 37 H33 M45 37 H47 M33.3 31.3 L34.8 32.8 M43.2 41.2 L44.7 42.7 M44.7 31.3 L43.2 32.8 M34.8 41.2 L33.3 42.7" stroke-linecap="round"/>
+                    </g>
+                    <!-- Vertical Press Actuator & Sparks -->
+                    <g class="${isRunning ? 'svg-piston' : ''}">
+                        <rect x="36.5" y="11" width="5" height="9" rx="1.5" fill="#2563eb"/>
+                        <line x1="39" y1="20" x2="39" y2="24" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+                    ${isRunning ? `
+                        <circle cx="31" cy="29" r="1.6" fill="#3b82f6" class="svg-spark-1"/>
+                        <circle cx="34" cy="26" r="1.3" fill="#60a5fa" class="svg-spark-2"/>
+                    ` : ''}
+                    <!-- Bottom Conveyor Line -->
+                    <line x1="10" y1="49" x2="48" y2="49" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="10" y1="49" x2="48" y2="49" stroke="#2563eb" stroke-width="2" stroke-linecap="round" class="${isRunning ? 'svg-conveyor-line' : ''}"/>
+                </svg>
+            `;
+        }
+
+        /* Builds the live status banner shown inside the active card only while running */
+        function renderLiveVisualBanner(type, isRunning) {
+            if (!isRunning) return '';
+            if (type === 'QC') {
+                return `
+                    <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-purple-50/90 border border-purple-200/80 flex items-center justify-between gap-3 overflow-hidden relative">
+                        <div class="flex items-center gap-2.5 relative z-10">
+                            <span class="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center text-xs shadow-xs">
+                                <i class="fa-solid fa-magnifying-glass-chart animate-pulse"></i>
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-extrabold text-purple-900 leading-tight">QC Inspection Telemetry</p>
+                                <p class="text-[10px] font-medium text-purple-600">Scanning tolerances &amp; compliance checkpoints</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 relative z-10">
+                            <div class="w-14 h-5 overflow-hidden hidden sm:block">
+                                <svg viewBox="0 0 120 24" class="banner-wave-track h-full">
+                                    <polyline fill="none" stroke="#7c3aed" stroke-width="2" points="0,12 10,12 15,4 20,20 25,12 40,12 45,6 50,18 55,12 70,12 75,4 80,20 85,12 100,12 105,6 110,18 115,12 120,12"/>
+                                </svg>
+                            </div>
+                            <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700 border border-purple-200">SCANNING</span>
+                        </div>
+                    </div>
+                `;
+            }
+            if (type === 'Pilot') {
+                return `
+                    <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-amber-50/90 border border-amber-200/80 flex items-center justify-between gap-3 overflow-hidden relative">
+                        <div class="flex items-center gap-2.5 relative z-10">
+                            <span class="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                                <i class="fa-solid fa-atom fa-spin" style="--fa-animation-duration: 4s;"></i>
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-extrabold text-amber-950 leading-tight">Experimental Sandbox Active</p>
+                                <p class="text-[10px] font-medium text-amber-700">Observing prototype behavior &amp; trial metrics</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 relative z-10">
+                            <div class="w-14 h-5 overflow-hidden hidden sm:block">
+                                <svg viewBox="0 0 120 24" class="banner-wave-track h-full">
+                                    <path fill="none" stroke="#d97706" stroke-width="2" d="M0,12 Q15,2 30,12 T60,12 T90,12 T120,12"/>
+                                </svg>
+                            </div>
+                            <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">R&amp;D TRIAL</span>
+                        </div>
+                    </div>
+                `;
+            }
+            // Prod
+            return `
+                <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-blue-50/90 border border-blue-200/80 flex items-center justify-between gap-3 overflow-hidden relative">
+                    <div class="flex items-center gap-2.5 relative z-10">
+                        <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs">
+                            <i class="fa-solid fa-industry"></i>
+                        </span>
+                        <div>
+                            <p class="text-[11px] font-extrabold text-blue-950 leading-tight">Production Pipeline Live</p>
+                            <p class="text-[10px] font-medium text-blue-600">Executing active build &amp; output throughput</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 relative z-10">
+                        <div class="flex items-center gap-1 hidden sm:flex">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                        </div>
+                        <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">RUNNING</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* Builds the live status banner shown inside the active card only while running */
+        function renderLiveVisualBanner(type, isRunning) {
+            if (!isRunning) return '';
+            if (type === 'QC') {
+                return `
+                    <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-purple-50/90 border border-purple-200/80 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-6 h-6 rounded-lg bg-purple-600 text-white flex items-center justify-center text-[11px] shadow-xs">
+                                <i class="fa-solid fa-magnifying-glass-chart animate-pulse"></i>
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-extrabold text-purple-900 leading-tight">QC Inspection Telemetry</p>
+                                <p class="text-[10px] font-medium text-purple-600">Scanning tolerances &amp; compliance checkpoints</p>
+                            </div>
+                        </div>
+                        <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700 border border-purple-200">SCANNING</span>
+                    </div>
+                `;
+            }
+            if (type === 'Pilot') {
+                return `
+                    <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-amber-50/90 border border-amber-200/80 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs">
+                                <i class="fa-solid fa-atom fa-spin" style="--fa-animation-duration: 4s;"></i>
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-extrabold text-amber-950 leading-tight">Experimental Sandbox Active</p>
+                                <p class="text-[10px] font-medium text-amber-700">Observing prototype behavior &amp; trial metrics</p>
+                            </div>
+                        </div>
+                        <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">R&amp;D TRIAL</span>
+                    </div>
+                `;
+            }
+            // Prod
+            return `
+                <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-blue-50/90 border border-blue-200/80 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[11px] shadow-xs">
+                            <i class="fa-solid fa-industry"></i>
+                        </span>
+                        <div>
+                            <p class="text-[11px] font-extrabold text-blue-950 leading-tight">Production Pipeline Live</p>
+                            <p class="text-[10px] font-medium text-blue-600">Executing active build &amp; output throughput</p>
+                        </div>
+                    </div>
+                    <span class="mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">RUNNING</span>
+                </div>
+            `;
+        }
+
+        function logActivity(message) {
+            const el = document.getElementById('activity-log');
+            el.innerText = message;
+            el.classList.remove('empty-state');
+            el.classList.remove('log-enter');
+            void el.offsetWidth; // restart animation
+            el.classList.add('log-enter');
+        }
+
+        async function init() {
             try {
-               
-                const res = await fetch(`/${activeTask.allotmentid}/${action}/${percentage??0}`);
-                console.log(res);
-                const updated = await res.json();
-                const idx = tasks.findIndex(t => t.allotmentid === updated.allotmentid);
-                tasks[idx] = updated; 
-                activeTask = updated;
-                updateUI(); renderQueue(); updateStats();
-            } catch (e) { console.error("COMMS_FAILURE"); }
+                const res = await fetch(`/myAllotments`);
+                tasks = await res.json();
+                if (!tasks.length) {
+                    document.getElementById('taskList').innerHTML = `<div class="flex flex-col items-center justify-center h-full text-center px-6">
+                        <div class="w-16 h-16 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-center mb-4">
+                            <i class="fa-regular fa-folder-open text-2xl text-slate-300"></i>
+                        </div>
+                        <p class="font-bold text-sm text-slate-600">No tasks currently assigned</p>
+                        <p class="text-xs text-slate-400 mt-1 max-w-xs">New allotments will appear here as soon as they're assigned to you.</p>
+                    </div>`;
+                    document.getElementById('upcomingCardsList').innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-box-open text-2xl text-slate-300"></i>
+                        </div>
+                        <p class="font-bold text-sm text-slate-600">No upcoming tasks</p>
+                    </div>`;
+                    return;
+                }
+                const savedId = localStorage.getItem('last_allotment_id');
+                activeTask = tasks.find(t => t.isRunning) || tasks.find(t => t.allotmentid == savedId) || tasks[0];
+                renderList();
+                renderUpcomingCards();
+                updateStats();
+            } catch (e) {
+                console.error(e);
+                logActivity('Unable to load tasks. Working offline.');
+            }
+        }
+
+        function renderList() {
+            clearInterval(timer);
+            const list = document.getElementById('taskList');
+            list.innerHTML = activeRowHtml(activeTask);
+
+            if (activeTask.isRunning) timer = setInterval(calculateTime, 1000);
+            calculateTime();
+        }
+
+        /* Determines whether the Submit Task action can currently be used. */
+        function submitEligibility(t) {
+            if (t.isRunning) return { canSubmit: false, reason: 'Pause the task before submitting' };
+            if (!(t.elapsedTime > 0)) return { canSubmit: false, reason: 'Start the task before submitting' };
+            return { canSubmit: true, reason: '' };
+        }
+
+        /* Dynamically Structured Workspace Card in Light Theme */
+        function activeRowHtml(t) {
+            const isRunning = t.isRunning;
+            const meta = typeIconMeta(t.type);
+            const containerClass = isRunning
+                ? `glass-card p-7 rounded-2xl active-running-card ${meta.cardType} transition-all max-w-2xl w-full mx-auto`
+                : "glass-card p-7 rounded-2xl transition-all max-w-2xl w-full mx-auto";
+
+            const { canSubmit, reason } = submitEligibility(t);
+            const submitClasses = canSubmit ? 'btn-success' : 'btn-ghost opacity-50 cursor-not-allowed';
+            const isQc = t.type === 'QC';
+            const { canReject, reason: rejectReason } = isQc ? qcRejectEligibility(t) : { canReject: false, reason: '' };
+            const rejectClasses = canReject ? 'btn-danger-outline' : 'btn-ghost opacity-50 cursor-not-allowed';
+
+            return `
+                <div id="main-card" class="${containerClass}">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span id="type-badge" class="${badgeClass(t.type)} shrink-0">${t.type || 'Task'}</span>
+
+                        <div id="running-equalizer" class="${isRunning ? 'flex' : 'hidden'} ${meta.equalizerChipClass} items-end gap-1 h-4 px-2.5 rounded-full border">
+                            <span class="equalizer-bar ${meta.equalizerBarClass}"></span>
+                            <span class="equalizer-bar ${meta.equalizerBarClass}"></span>
+                            <span class="equalizer-bar ${meta.equalizerBarClass}"></span>
+                        </div>
+
+                        <span id="global-status" class="text-xs font-bold ${isRunning ? meta.statusLiveClass : 'text-slate-400'} ml-auto flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-200/70">
+                            <i class="fa-solid fa-circle text-[8px] ${isRunning ? meta.statusDotClass + ' animate-pulse' : 'text-slate-300'}"></i>
+                            ${isRunning ? 'In progress' : 'Paused / idle'}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-5">
+                        <div id="type-anim-icon-wrap" class="type-icon-wrap ${meta.iconClass}">
+                            ${renderTypeStageHtml(t.type, isRunning)}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-extrabold text-xl text-slate-900 truncate tracking-tight" title="${t.feederAlloted}">${t.feederAlloted}</h3>
+                            <p id="type-anim-label" class="text-xs font-semibold mt-1 ${isRunning ? meta.statusLiveClass : 'text-slate-400'}">
+                                ${isRunning ? meta.label : 'Awaiting start'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="live-type-banner">${renderLiveVisualBanner(t.type, isRunning)}</div>
+
+                    <div class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-lg mb-6">
+                        <i class="fa-regular fa-calendar text-slate-400"></i>
+                        <span>Target deadline: <strong class="font-bold text-slate-800 mono">${formatDate(t.deadline || t.qcDeadline)}</strong></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6 bg-slate-50/90 p-4 rounded-xl border border-slate-200/80">
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-2xs">
+                            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <i class="fa-regular fa-clock text-slate-400"></i> Time spent
+                            </p>
+                            <p id="spent" class="mono font-extrabold text-2xl text-slate-800 tracking-tight">00:00:00</p>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-2xs">
+                            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hourglass-half text-slate-400"></i> Remaining
+                            </p>
+                            <p id="remaining" class="mono font-extrabold text-2xl ${meta.remainingClass} tracking-tight">00:00:00</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-7">
+                        <div class="flex justify-between items-center text-xs mb-2">
+                            <span class="text-slate-600 font-semibold">Time quota utilization</span>
+                            <span id="progress-text" class="mono font-extrabold ${meta.remainingClass} bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/80">0%</span>
+                        </div>
+                        <div class="progress-track h-2.5 rounded-full">
+                            <div id="progress-bar" class="progress-fill h-full rounded-full ${meta.progressClass} ${isRunning ? 'running-shimmer' : ''}" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button id="mainBtn" onclick="handlePrimaryAction()" class="btn ${isRunning ? 'btn-dark ' + meta.darkBtnClass : 'btn-primary'} flex-1 py-3.5 font-bold text-xs rounded-xl flex items-center justify-center">
+                            <i class="fa-solid ${isRunning ? 'fa-pause' : 'fa-play'} mr-2"></i>
+                            ${isRunning ? 'Pause task' : (t.elapsedTime > 0 ? 'Resume task' : 'Start task')}
+                        </button>
+                        <button id="submitBtn" onclick="openModal('finalModal')" ${canSubmit ? '' : 'disabled'} title="${reason}"
+                                class="btn ${submitClasses} flex-1 py-3.5 font-bold text-xs rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-check mr-2"></i>Submit task
+                        </button>
+                    </div>
+                    ${isQc ? `
+                    <button id="rejectQcBtn" onclick="openRejectQcModal()" ${canReject ? '' : 'disabled'} title="${rejectReason}"
+                            class="btn ${rejectClasses} w-full mt-3 py-3 font-bold text-xs rounded-xl flex items-center justify-center">
+                        <i class="fa-solid fa-file-circle-xmark mr-2"></i>Reject QC
+                    </button>` : ``}
+                </div>`;
+        }
+
+        function qcRejectEligibility(t) {
+            if (t.isRunning) return { canReject: false, reason: 'Pause the task before rejecting' };
+            if (!(t.elapsedTime > 0)) return { canReject: false, reason: 'Start the task before rejecting' };
+            return { canReject: true, reason: '' };
+        }
+
+        /* Render Task Cards on Queue Panel */
+        function renderUpcomingCards() {
+            const container = document.getElementById('upcomingCardsList');
+            const upcoming = tasks.filter(t => t.allotmentid !== activeTask.allotmentid);
+
+            document.getElementById('queue-count-badge').innerText = `${upcoming.length} Queued`;
+
+            if (!upcoming.length) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-64 text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mb-4 shadow-sm">
+                        <i class="fa-solid fa-check-double text-2xl text-emerald-400"></i>
+                    </div>
+                    <p class="font-bold text-sm text-slate-600">No other tasks in queue</p>
+                    <p class="text-xs text-slate-400 mt-1">You're all caught up.</p>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = upcoming.map(t => {
+                let animBlock = `
+                    <div class="w-13 h-13 w-14 h-14 shrink-0 bg-gradient-to-br from-blue-50 to-blue-100/70 text-blue-600 rounded-xl flex items-center justify-center text-xl border border-blue-200/70">
+                        <i class="fa-solid fa-gear anim-gear"></i>
+                    </div>`;
+                let glowClass = "card-glow-prod";
+
+                if (t.type === 'QC') {
+                    glowClass = "card-glow-qc";
+                    animBlock = `
+                    <div class="w-14 h-14 shrink-0 bg-gradient-to-br from-purple-50 to-purple-100/70 text-purple-600 rounded-xl flex items-center justify-center text-xl border border-purple-200/70">
+                        <i class="fa-solid fa-shield-halved anim-qc"></i>
+                    </div>`;
+                } else if (t.type === 'Pilot') {
+                    glowClass = "card-glow-pilot";
+                    animBlock = `
+                    <div class="w-14 h-14 shrink-0 bg-gradient-to-br from-amber-50 to-amber-100/70 text-amber-600 rounded-xl flex items-center justify-center text-xl border border-amber-200/70">
+                        <i class="fa-solid fa-flask anim-pilot"></i>
+                    </div>`;
+                }
+
+                return `
+                <div onclick="requestSwitch(${t.allotmentid})" class="queue-card glass-card rounded-xl p-4 border border-slate-200/90 hover:border-blue-300 hover:shadow-md cursor-pointer relative overflow-hidden flex items-center gap-4 group ${glowClass}">
+                    ${animBlock}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="${badgeClass(t.type)}">${t.type || 'Standard'}</span>
+                            <span class="mono text-[10.5px] font-medium text-slate-500 flex items-center gap-1.5 ml-auto bg-slate-100/80 px-2 py-0.5 rounded-md">
+                                <i class="fa-regular fa-calendar text-[10px] text-slate-400"></i>${formatDate(t.deadline || t.qcDeadline)}
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-800 truncate group-hover:text-blue-600 transition-colors">${t.feederAlloted}</h4>
+                        <p class="text-[11px] font-medium text-slate-400 mt-0.5 flex items-center gap-1 group-hover:text-slate-500 transition-colors">
+                            <span>Click to activate into workplace</span>
+                        </p>
+                    </div>
+
+                    <div class="w-8 h-8 rounded-lg bg-slate-50 group-hover:bg-blue-50 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function refreshActiveRowState() {
+            const card = document.getElementById('main-card');
+            const globalStatus = document.getElementById('global-status');
+            const btn = document.getElementById('mainBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const remaining = document.getElementById('remaining');
+            const equalizer = document.getElementById('running-equalizer');
+            const animIcon = document.getElementById('type-anim-icon');
+            const animIconWrap = document.getElementById('type-anim-icon-wrap');
+            const animLabel = document.getElementById('type-anim-label');
+            const liveBanner = document.getElementById('live-type-banner');
+
+            if (!card) return;
+
+            const meta = typeIconMeta(activeTask.type);
+
+            // Sync bespoke type stage & live telemetry banner whenever running state changes
+            if (animIconWrap && animIconWrap.dataset.running !== String(!!activeTask.isRunning)) {
+                animIconWrap.dataset.running = String(!!activeTask.isRunning);
+                animIconWrap.innerHTML = renderTypeStageHtml(activeTask.type, activeTask.isRunning);
+            }
+            if (liveBanner && liveBanner.dataset.running !== String(!!activeTask.isRunning)) {
+                liveBanner.dataset.running = String(!!activeTask.isRunning);
+                liveBanner.innerHTML = renderLiveVisualBanner(activeTask.type, activeTask.isRunning);
+            }
+
+            progressBar.className = `progress-fill h-full rounded-full ${meta.progressClass}${activeTask.isRunning ? ' running-shimmer' : ''}`;
+            if (remaining) remaining.className = `mono font-extrabold text-2xl ${meta.remainingClass} tracking-tight`;
+            if (progressText) progressText.className = `mono font-extrabold ${meta.remainingClass} bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/80`;
+
+            if (activeTask.isRunning) {
+                card.className = `glass-card p-7 rounded-2xl active-running-card ${meta.cardType} transition-all max-w-2xl w-full mx-auto`;
+                btn.innerHTML = '<i class="fa-solid fa-pause mr-2"></i>Pause task';
+                btn.className = `btn btn-dark ${meta.darkBtnClass} flex-1 py-3.5 font-bold text-xs rounded-xl flex items-center justify-center`;
+
+                globalStatus.innerHTML = `<i class="fa-solid fa-circle text-[8px] ${meta.statusDotClass} animate-pulse"></i> In progress`;
+                globalStatus.className = `text-xs font-bold ${meta.statusLiveClass} ml-auto flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-200/70`;
+
+                if (equalizer) {
+                    equalizer.classList.replace('hidden', 'flex');
+                    equalizer.className = `flex ${meta.equalizerChipClass} items-end gap-1 h-4 px-2.5 rounded-full border`;
+                    equalizer.querySelectorAll('.equalizer-bar').forEach(bar => {
+                        bar.className = `equalizer-bar ${meta.equalizerBarClass}`;
+                    });
+                }
+
+                if (animIcon) animIcon.classList.add(meta.anim);
+                if (animLabel) {
+                    animLabel.innerText = meta.label;
+                    animLabel.className = `text-xs font-semibold mt-1 ${meta.statusLiveClass}`;
+                }
+            } else {
+                card.className = "glass-card p-7 rounded-2xl transition-all max-w-2xl w-full mx-auto";
+                const label = activeTask.elapsedTime > 0 ? "Resume task" : "Start task";
+                btn.innerHTML = `<i class="fa-solid fa-play mr-2"></i>${label}`;
+                btn.className = "btn btn-primary flex-1 py-3.5 font-bold text-xs rounded-xl flex items-center justify-center";
+
+                globalStatus.innerHTML = `<i class="fa-solid fa-circle text-[8px] text-slate-300"></i> Paused / idle`;
+                globalStatus.className = "text-xs font-bold text-slate-400 ml-auto flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-200/70";
+
+                if (equalizer) equalizer.classList.replace('flex', 'hidden');
+
+                if (animIcon) animIcon.classList.remove(meta.anim);
+                if (animLabel) {
+                    animLabel.innerText = "Awaiting start";
+                    animLabel.className = "text-xs font-semibold mt-1 text-slate-400";
+                }
+            }
+
+            if (submitBtn) {
+                const { canSubmit, reason } = submitEligibility(activeTask);
+                submitBtn.disabled = !canSubmit;
+                submitBtn.title = reason;
+                submitBtn.classList.toggle('btn-success', canSubmit);
+                submitBtn.classList.toggle('btn-ghost', !canSubmit);
+                submitBtn.classList.toggle('opacity-50', !canSubmit);
+                submitBtn.classList.toggle('cursor-not-allowed', !canSubmit);
+            }
+
+            const rejectBtn = document.getElementById('rejectQcBtn');
+            if (rejectBtn && activeTask.type === 'QC') {
+                const { canReject, reason: rejectReason } = qcRejectEligibility(activeTask);
+                rejectBtn.disabled = !canReject;
+                rejectBtn.title = rejectReason;
+                rejectBtn.classList.toggle('btn-danger-outline', canReject);
+                rejectBtn.classList.toggle('btn-ghost', !canReject);
+                rejectBtn.classList.toggle('opacity-50', !canReject);
+                rejectBtn.classList.toggle('cursor-not-allowed', !canReject);
+            }
+        }
+
+        function calculateTime() {
+            refreshActiveRowState();
+            const now = Date.now();
+            const totalMs = (activeTask.elapsedTime || 0) + (activeTask.isRunning ? (now - new Date(activeTask.startTime).getTime()) : 0);
+            const quotaHrs = activeTask.type === 'Prod' ? activeTask.hrsAssigned : activeTask.qcHrs;
+            const quotaMs = (quotaHrs || 0) * 3600000;
+            const progress = quotaMs > 0 ? Math.min(100, (totalMs / quotaMs) * 100) : 0;
+
+            const spentEl = document.getElementById('spent');
+            if (spentEl) {
+                spentEl.innerText = formatMs(totalMs);
+                document.getElementById('remaining').innerText = formatMs(Math.max(0, quotaMs - totalMs));
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-text').innerText = Math.round(progress) + '%';
+            }
+        }
+
+        function performAction(action, percentage = null) {
+            return new Promise((resolve, reject) => {
+                const token = $("meta[name='_csrf']").attr("content");
+                $.ajax({
+                    url: '/updateTask',
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': token },
+                    data: { allotmentid: activeTask.allotmentid, action: action, percentage: percentage ?? 0 },
+                    dataType: 'JSON',
+                    success: function (res) {
+                        location.reload();
+                        const idx = tasks.findIndex(t => t.allotmentid === res.allotmentid);
+                        if (idx > -1) tasks[idx] = res; else tasks.push(res);
+                        activeTask = res;
+                        renderList();
+                        renderUpcomingCards();
+                        updateStats();
+                        logActivity(actionLabel(action) + ' · ' + new Date().toLocaleTimeString());
+                        resolve(res);
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        logActivity('Something went wrong. Please try again.');
+                        reject(err);
+                    }
+                });
+            });
+        }
+
+        function actionLabel(action) {
+            switch (action) {
+                case 'start': return 'Task started';
+                case 'resume': return 'Task resumed';
+                case 'pause': return 'Task paused';
+                case 'submit': return 'Task submitted';
+                default: return 'Task updated';
+            }
         }
 
         function requestSwitch(newId) {
+            if (newId === activeTask.allotmentid) return;
             if (activeTask.isRunning) {
                 pendingSwitchId = newId;
                 document.getElementById('active-node-name').innerText = activeTask.feederAlloted;
@@ -328,27 +1378,65 @@
             }
         }
 
+        function eodCap() {
+            const raw = activeTask.completionPercentage;
+            return (raw === null || raw === undefined) ? 1 : raw;
+        }
+
         function selectReason(reason, btn) {
             currentReason = reason;
             document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             document.getElementById('eod-section').classList.toggle('hidden', reason !== 'EOD');
+
+            if (reason === 'EOD') {
+                const cap = eodCap();
+                const slider = document.getElementById('eod-pct');
+                slider.value = cap;
+                document.getElementById('pct-val').innerText = cap + '%';
+                document.getElementById('eod-cap-label').innerText = cap;
+                validateEodPct();
+            } else {
+                const confirmBtn = document.getElementById('confirmPauseBtn');
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function validateEodPct() {
+            const slider = document.getElementById('eod-pct');
             const confirmBtn = document.getElementById('confirmPauseBtn');
-            confirmBtn.disabled = false;
-            confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            const warningEl = document.getElementById('eod-pct-warning');
+            const cap = eodCap();
+            const value = parseInt(slider.value, 10);
+
+            document.getElementById('eod-cap-label').innerText = cap;
+
+            if (value < cap) {
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                if (warningEl) warningEl.classList.remove('hidden');
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (warningEl) warningEl.classList.add('hidden');
+            }
         }
 
         async function executePauseAndContinuity() {
             const pct = currentReason === 'EOD' ? document.getElementById('eod-pct').value : null;
-            await performAction('pause', pct);
-            closeModal('pauseModal');
-            if (pendingSwitchId) { executeSwitch(pendingSwitchId); pendingSwitchId = null; }
+            try {
+                await performAction('pause', pct);
+                closeModal('pauseModal');
+                if (pendingSwitchId) { executeSwitch(pendingSwitchId); pendingSwitchId = null; }
+            } catch (e) { }
         }
 
         function executeSwitch(id) {
             activeTask = tasks.find(t => t.allotmentid === id);
             localStorage.setItem('last_allotment_id', id);
-            updateUI(); renderQueue();
+            renderList();
+            renderUpcomingCards();
         }
 
         function handlePrimaryAction() {
@@ -357,22 +1445,210 @@
         }
 
         async function submitTaskFinal() {
-            await performAction('submit');
-            closeModal('finalModal');
+            try {
+                await performAction('submit');
+                closeModal('finalModal');
+            } catch (e) { }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            if(id === 'pauseModal') {
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+            if (id === 'pauseModal') {
                 currentReason = '';
                 document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('selected'));
                 document.getElementById('confirmPauseBtn').disabled = true;
+                document.getElementById('confirmPauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('eod-pct-warning').classList.add('hidden');
+            }
+            if (id === 'rejectQcModal') resetRejectModal();
+        }
+
+        /* ---------- Reject QC flow ---------- */
+
+        let rejectFile = null;
+
+        function openRejectQcModal() {
+            const btn = document.getElementById('rejectQcBtn');
+            if (btn && btn.disabled) return;
+            document.getElementById('reject-node-name').innerText = activeTask.feederAlloted;
+            openModal('rejectQcModal');
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 KB';
+            const kb = bytes / 1024;
+            return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`;
+        }
+
+        function handleRejectFileSelect(fileList) {
+            if (!fileList || !fileList.length) return;
+            const file = fileList[0];
+            const MAX_BYTES = 10 * 1024 * 1024;
+            const dropzone = document.getElementById('rejectDropzone');
+
+            if (file.size > MAX_BYTES) {
+                dropzone.classList.add('shake');
+                setTimeout(() => dropzone.classList.remove('shake'), 500);
+                logActivity('File too large — please attach something under 10MB');
+                return;
+            }
+
+            rejectFile = file;
+            document.getElementById('rejectFileName').innerText = file.name;
+            document.getElementById('rejectFileSize').innerText = formatBytes(file.size);
+            document.getElementById('rejectFileChip').classList.remove('hidden');
+            document.getElementById('rejectFileChip').classList.add('file-chip');
+            dropzone.classList.add('has-file');
+            document.getElementById('dropzoneIcon').className = 'dropzone-icon fa-solid fa-circle-check text-2xl text-emerald-500 mb-2 icon-pop';
+            validateRejectForm();
+        }
+
+        function clearRejectFile(evt) {
+            if (evt) evt.stopPropagation();
+            rejectFile = null;
+            document.getElementById('rejectFileInput').value = '';
+            document.getElementById('rejectFileChip').classList.add('hidden');
+            document.getElementById('rejectDropzone').classList.remove('has-file');
+            document.getElementById('dropzoneIcon').className = 'dropzone-icon fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-2';
+            validateRejectForm();
+        }
+
+        function validateRejectForm() {
+            const remarks = document.getElementById('rejectRemarks').value.trim();
+            const hint = document.getElementById('rejectRemarksHint');
+            const confirmBtn = document.getElementById('confirmRejectBtn');
+            const ok = remarks.length >= 10;
+
+            hint.innerText = ok ? 'Looks good.' : `Minimum 10 characters (${remarks.length}/10).`;
+            hint.classList.toggle('text-slate-400', ok);
+            hint.classList.toggle('text-rose-500', !ok && remarks.length > 0);
+
+            confirmBtn.disabled = !ok;
+            confirmBtn.classList.toggle('btn-danger', ok);
+            confirmBtn.classList.toggle('opacity-50', !ok);
+            confirmBtn.classList.toggle('cursor-not-allowed', !ok);
+        }
+
+        function resetRejectModal() {
+            rejectFile = null;
+            document.getElementById('rejectFileInput').value = '';
+            document.getElementById('rejectFileChip').classList.add('hidden');
+            document.getElementById('rejectDropzone').classList.remove('has-file', 'drag-over');
+            document.getElementById('dropzoneIcon').className = 'dropzone-icon fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-2';
+            document.getElementById('rejectRemarks').value = '';
+            document.getElementById('rejectRemarksHint').innerText = 'Minimum 10 characters.';
+            document.getElementById('rejectRemarksHint').classList.remove('text-rose-500');
+            const confirmBtn = document.getElementById('confirmRejectBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.classList.remove('btn-danger');
+            confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function setupRejectDropzone() {
+            const dropzone = document.getElementById('rejectDropzone');
+            if (!dropzone) return;
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropzone.addEventListener(evt, e => {
+                    e.preventDefault(); e.stopPropagation();
+                    dropzone.classList.add('drag-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                dropzone.addEventListener(evt, e => {
+                    e.preventDefault(); e.stopPropagation();
+                    dropzone.classList.remove('drag-over');
+                });
+            });
+            dropzone.addEventListener('drop', e => {
+                if (e.dataTransfer && e.dataTransfer.files.length) {
+                    handleRejectFileSelect(e.dataTransfer.files);
+                }
+            });
+        }
+
+        async function submitRejectQc() {
+            const confirmBtn = document.getElementById('confirmRejectBtn');
+            if (confirmBtn.disabled) return;
+            const remarks = document.getElementById('rejectRemarks').value.trim();
+
+            const originalHtml = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Rejecting...';
+
+            const token = $("meta[name='_csrf']").attr("content");
+            const formData = new FormData();
+            formData.append('allotmentid', activeTask.allotmentid);
+            formData.append('action', 'reject');
+            formData.append('remarks', remarks);
+            if (rejectFile) formData.append('file', rejectFile);
+
+            try {
+                const res = await $.ajax({
+                    url: '/updateTask',
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': token },
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'JSON'
+                });
+                location.reload();
+                const idx = tasks.findIndex(t => t.allotmentid === res.allotmentid);
+                if (idx > -1) tasks[idx] = res; else tasks.push(res);
+                activeTask = res;
+                renderList();
+                renderUpcomingCards();
+                updateStats();
+                logActivity('QC task rejected · ' + new Date().toLocaleTimeString());
+                closeModal('rejectQcModal');
+            } catch (err) {
+                console.error(err);
+                logActivity('Could not reject task. Please try again.');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalHtml;
             }
         }
 
-        function updateStats() { document.getElementById('stat-total').innerText = tasks.length.toString().padStart(2, '0'); }
+        function setStat(id, value) {
+            const el = document.getElementById(id);
+            const formatted = value.toString().padStart(2, '0');
+            if (el.innerText !== formatted) {
+                el.innerText = formatted;
+                el.classList.remove('stat-pop');
+                void el.offsetWidth;
+                el.classList.add('stat-pop');
+            }
+        }
 
+        function updateStats() {
+            setStat('stat-total', tasks.length);
+            const active = tasks.filter(t => t.isRunning).length;
+            const finished = tasks.filter(t => t.status === 'Finished' || t.status === 'Submitted').length;
+            const overdue = tasks.filter(t => {
+                const d = t.deadline || t.qcDeadline;
+                return d && new Date(d) < new Date() && !(t.status === 'Finished' || t.status === 'Submitted');
+            }).length;
+            setStat('stat-active', active);
+            setStat('stat-finished', finished);
+            setStat('stat-overdue', overdue);
+        }
+
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn');
+            if (!btn || btn.disabled) return;
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height) * 1.4;
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            btn.appendChild(ripple);
+            ripple.addEventListener('animationend', () => ripple.remove());
+        });
+
+        setupRejectDropzone();
         init();
     </script>
 </body>

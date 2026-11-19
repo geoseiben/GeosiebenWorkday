@@ -1,277 +1,1960 @@
-
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Active Employees</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Admin - Employee List</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Spring Security CSRF -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link rel="icon" th:href="@{/assets/images/favicon-32x32.png}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        :root {
-            --primary-blue: #0d6efd;
-            --table-header-bg: #e9ecef;
-            --table-border: #dee2e6;
-            --text-main: #334155;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: { DEFAULT: '#4f46e5', dark: '#4338ca' } }
+                }
+            }
         }
-
-        body {
-            background-color: #f1f4f9;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--text-main);
-        }
-
-        .main-content { padding: 1.5rem; }
-
-        .report-card {
-            background: white;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .section-label {
-            padding: 1rem 1.25rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #fff;
-        }
-
-        #leaveTable { width: 100% !important; border-collapse: collapse; }
-
-        #leaveTable thead th {
-            background-color: var(--table-header-bg);
-            color: #475569;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            padding: 10px 15px;
-            border-bottom: 1px solid var(--table-border);
-            border-top: 1px solid var(--table-border);
-        }
-
-        #leaveTable tbody td {
-            padding: 12px 15px;
-            font-size: 13px;
-            border-bottom: 1px solid #edf2f7;
-            vertical-align: middle;
-        }
-
-        .emp-link {
-            color: #2563eb;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .emp-link:hover { text-decoration: underline; }
-
-        .dt-buttons { margin-bottom: 15px; }
-        .btn-excel {
-            background-color: #198754 !important;
-            border-color: #198754 !important;
-            color: white !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-        }
-        .group:hover .group-hover\:visible {
-            visibility: visible !important;
-            opacity: 1 !important;
-            z-index: 9999 !important;
-            display: block !important;
-        }
-
-        /* Fix for potential Tailwind Preflight conflict */
-        .invisible {
-            display: none;
-        }
-        .group:hover .invisible {
-            display: block;
-        }
-    </style>
+    </script>
 </head>
-<body>    <head th:replace="includes/header :: header"></head>
+<body>
+</head><head th:replace="includes/header :: header"></head>
+<div class="w-full px-4 mt-4">
+    <div class="bg-white border border-slate-200 rounded-md shadow-sm mb-4">
 
-<div class="main-content">
-    <div class="report-card">
-        <div class="section-label">
-            <i class="fa-solid fa-table-list"></i> Active Employees Report As On <p th:text="${#dates.format(#dates.createNow(), 'DD-MMM-YYYY')}"></p>
-
+        <!-- Card header -->
+        <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex justify-between items-center rounded-t-md">
+            <div>
+                <h6 class="m-0 font-bold text-primary text-[13px]">Employee Directory</h6>
+                <p class="text-xs text-slate-500 mb-0">Manage and view all employee records &middot; <strong class="text-slate-700" id="total-employees">0</strong> employees</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" id="refresh-btn" class="inline-flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors">
+                    <i class="fas fa-rotate mr-1.5"></i> Refresh
+                </button>
+                <button type="button" class="inline-flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded border border-emerald-500 text-emerald-700 hover:bg-emerald-50 transition-colors" id="export-csv-btn">
+                    <i class="fas fa-file-csv mr-1.5"></i> Export CSV
+                </button>
+                <button type="button" class="inline-flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded bg-emerald-500 hover:bg-emerald-600 text-white transition-colors" id="export-excel-btn">
+                    <i class="fas fa-file-excel mr-1.5"></i> Export Excel
+                </button>
+            </div>
         </div>
 
-        <div class="p-4 pt-0">
-            <table id="leaveTable" class="table">
-                <thead>
-                <tr>
-                    <th width="40">Sl No</th>
-                    <th>Employee Name</th>
-                    <th>Employee Id</th>
-                    <th>Date Of Birth</th>
-                    <th>Email </th>
-                    <th>Phone</th>
-                    <th>Designation</th>
-                    <th>Joined On</th>
-                    <th class="text-center">Office Mail</th>
-                    <th>Degree</th>
-                    <th>Field Of Study</th>
-                    <th>Status</th>
+        <!-- Summary panels (filled by script from fetched data) -->
+        <div class="bg-white border-b border-slate-200 px-4 pt-3.5 pb-1">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
+                <!-- Gender -->
+                <div class="lg:col-span-4">
+                    <div class="border border-slate-200 rounded-lg bg-white h-full flex flex-col">
+                        <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200">
+                            <span class="w-7 h-7 rounded-[7px] flex items-center justify-center bg-indigo-50 text-primary text-xs shrink-0"><i class="fas fa-venus-mars"></i></span>
+                            <div>
+                                <div class="text-[12.5px] font-bold text-slate-900 leading-tight">Gender</div>
+                                <div class="text-[10.5px] text-slate-500">Headcount split</div>
+                            </div>
+                            <span class="ml-auto text-xl font-bold text-slate-900 leading-none" id="gender-total">0</span>
+                        </div>
+                        <div class="flex h-2.5 mt-[0.7rem] mx-3.5 mb-[0.2rem] rounded-full overflow-hidden bg-slate-200" id="gender-stack" aria-hidden="true"></div>
+                        <div class="p-2 max-h-[214px] overflow-y-auto flex-1" id="gender-rows"></div>
+                    </div>
+                </div>
 
-                </tr>
-                </thead>
-                <tbody id="dataRoot">
-                <tr>
-                    <td colspan="13" class="text-center py-10 text-slate-400">
-                        <div class="spinner-border spinner-border-sm me-2"></div> Fetching data...
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                <!-- Age groups -->
+                <div class="lg:col-span-8">
+                    <div class="border border-slate-200 rounded-lg bg-white h-full flex flex-col">
+                        <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200">
+                            <span class="w-7 h-7 rounded-[7px] flex items-center justify-center bg-indigo-50 text-primary text-xs shrink-0"><i class="fas fa-cake-candles"></i></span>
+                            <div>
+                                <div class="text-[12.5px] font-bold text-slate-900 leading-tight">Age groups</div>
+                                <div class="text-[10.5px] text-slate-500" id="age-sub">Average age not available, split by gender</div>
+                            </div>
+                            <span class="ml-auto text-xl font-bold text-slate-900 leading-none" id="age-total">0</span>
+                        </div>
+                        <div id="age-legend"></div>
+                        <div class="p-2 max-h-[214px] overflow-y-auto flex-1" id="age-rows"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
+                <!-- Departments -->
+                <div class="lg:col-span-6">
+                    <div class="border border-slate-200 rounded-lg bg-white h-full flex flex-col">
+                        <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200">
+                            <span class="w-7 h-7 rounded-[7px] flex items-center justify-center bg-indigo-50 text-primary text-xs shrink-0"><i class="fas fa-building"></i></span>
+                            <div>
+                                <div class="text-[12.5px] font-bold text-slate-900 leading-tight">Departments</div>
+                                <div class="text-[10.5px] text-slate-500">Employees per department, split by gender</div>
+                            </div>
+                            <span class="ml-auto text-xl font-bold text-slate-900 leading-none" id="department-total">0</span>
+                        </div>
+                        <div id="department-legend"></div>
+                        <div class="p-2 max-h-[214px] overflow-y-auto flex-1" id="department-rows"></div>
+                    </div>
+                </div>
+
+                <!-- Designations -->
+                <div class="lg:col-span-6">
+                    <div class="border border-slate-200 rounded-lg bg-white h-full flex flex-col">
+                        <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200">
+                            <span class="w-7 h-7 rounded-[7px] flex items-center justify-center bg-indigo-50 text-primary text-xs shrink-0"><i class="fas fa-id-badge"></i></span>
+                            <div>
+                                <div class="text-[12.5px] font-bold text-slate-900 leading-tight">Designations</div>
+                                <div class="text-[10.5px] text-slate-500">Employees per designation, split by gender</div>
+                            </div>
+                            <span class="ml-auto text-xl font-bold text-slate-900 leading-none" id="designation-total">0</span>
+                        </div>
+                        <div id="designation-legend"></div>
+                        <div class="p-2 max-h-[214px] overflow-y-auto flex-1" id="designation-rows"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-[10.5px] text-slate-400 px-4 pb-2.5 bg-white">Select a row to filter the table. Select a gender count on a row to filter by that group and gender. Select again to clear.</div>
+
+        <!-- Filter bar -->
+        <div class="bg-white border-y border-slate-200 px-4 py-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                <div>
+                    <label class="block text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5">Department</label>
+                    <select class="w-full text-[11px] border border-slate-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="filter-department">
+                        <option value="">All Departments</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5">Status</label>
+                    <select class="w-full text-[11px] border border-slate-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="filter-status">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5">ID Card</label>
+                    <select class="w-full text-[11px] border border-slate-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="filter-idcard">
+                        <option value="">All</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Issued">Issued</option>
+                    </select>
+                </div>
+                <div class="lg:text-right">
+                    <button type="button" class="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded border border-slate-400 text-slate-600 hover:bg-slate-100 transition-colors" id="clear-filters">
+                        <i class="fas fa-undo mr-1"></i>Clear all filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active filter tags -->
+        <div class="hidden items-center flex-wrap gap-1.5 px-4 py-2 bg-slate-50 border-b border-slate-200" id="active-filters"></div>
+
+        <!-- Table toolbar (page size + search) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-slate-200">
+            <label class="flex items-center gap-1.5 text-[11px] text-slate-600">
+                Show
+                <select id="page-length" class="text-[11px] border border-slate-300 rounded px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100" selected>100</option>
+                </select>
+                entries
+            </label>
+            <label class="flex items-center gap-1.5 text-[11px] text-slate-600">
+                Search:
+                <input type="search" id="table-search" class="text-[11px] border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Type to search...">
+            </label>
+        </div>
+
+        <div class="p-0">
+            <div class="overflow-x-auto px-2 pb-2 rounded-b-md">
+                <table class="w-full border-separate border-spacing-0" id="dataTable">
+                    <thead>
+                    <tr>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Sl No<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Employee<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">DOB<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Gender<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Email<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Designation<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Dept<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Manager<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Joined<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Exp<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th data-sortable class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap cursor-pointer select-none hover:text-slate-900">Status<span data-ind class="ml-1 text-slate-400"></span></th>
+                        <th class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-left whitespace-nowrap">ID Card</th>
+                        <th class="bg-slate-50 font-semibold uppercase text-[9px] tracking-wide text-slate-600 px-2.5 py-2 border-b border-slate-200 text-right whitespace-nowrap">Action</th>
+                    </tr>
+                    </thead>
+                    <!-- Rows are rendered by script from the AJAX response -->
+                    <tbody id="employee-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Table footer: info + pagination -->
+            <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t border-slate-200">
+                <div class="text-[11px] text-slate-500" id="table-info"></div>
+                <div class="flex items-center gap-1" id="table-pages"></div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- ============================ MODALS ============================ -->
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-hidden="true">
+    <div data-backdrop data-modal-close class="fixed inset-0 bg-slate-900/60 opacity-0 transition-opacity duration-300"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div data-panel class="pointer-events-auto w-full max-w-3xl bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 -translate-y-2 transition duration-300">
+            <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
+                <h5 class="text-base font-bold text-slate-900 flex items-center gap-2.5 m-0"><i class="fas fa-user-check text-primary"></i> Confirm Employee Status</h5>
+                <button class="text-slate-400 hover:text-slate-600 text-2xl leading-none" type="button" data-modal-close><span>&times;</span></button>
+            </div>
+            <div class="p-6">
+                <form id="confirmation-form">
+                    <input type="hidden" name="oldEid" id="confirm-old-eid-hidden">
+
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+                        <p class="mb-2 text-xs text-slate-500">Confirming <strong id="confirm-emp-name" class="text-slate-900"></strong></p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">Current Employee ID</label>
+                                <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white font-bold" id="confirm-old-eid" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">New Employee ID <span class="text-slate-400 font-normal">(Optional)</span></label>
+                                <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-new-eid" name="newEid" placeholder="Assign new ID...">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Confirmation Date *</label>
+                                <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirmation-date" name="confirmationDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-[10px] font-extrabold uppercase tracking-wide text-primary mt-5 mb-3 pb-1 border-b-2 border-slate-100 flex items-center gap-1.5"><i class="fas fa-briefcase"></i> Designation &amp; Position</h6>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Effective Designation *</label>
+                            <select class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-designation" name="designation">
+                                <option value="" disabled selected>Select Designation</option>
+                                <option value="Associate">Associate</option>
+                                <option value="Analyst">Analyst</option>
+                                <option value="Finance Head">Finance Head</option>
+                                <option value="GIS Analyst">GIS Analyst</option>
+                                <option value="GIS Associate">GIS Associate</option>
+                                <option value="GIS Trainee">GIS Trainee</option>
+                                <option value="Group Lead">Group Lead</option>
+                                <option value="HR Admin">HR Admin</option>
+                                <option value="HR Recruiter">HR Recruiter</option>
+                                <option value="IT">IT</option>
+                                <option value="Junior Associate">Junior Associate</option>
+                                <option value="Managing Director">Managing Director</option>
+                                <option value="Marketing Executive">Marketing Executive</option>
+                                <option value="Office boy/Housekeeping">Office boy/Housekeeping</option>
+                                <option value="Project Manager">Project Manager</option>
+                                <option value="Project Co-Ordinator">Project Co-Ordinator</option>
+                                <option value="Senior Associate">Senior Associate</option>
+                                <option value="Team Lead">Team Lead</option>
+                                <option value="Trainee">Trainee</option>
+                                <option value="Web Developer">Web Developer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6 class="text-[10px] font-extrabold uppercase tracking-wide text-primary mt-5 mb-3 pb-1 border-b-2 border-slate-100 flex items-center gap-1.5"><i class="fas fa-university"></i> Bank Account Information</h6>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Bank Name</label>
+                            <select class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-bank-name" name="bankName">
+                                <option disabled selected value="">Select Bank</option>
+                                <option>ICICI Bank</option>
+                                <option>Kotak Mahindra Bank</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Branch</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-branch" name="branch" placeholder="Branch Name">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">IFSC Code</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-ifsc" name="ifsc" placeholder="ABCD0123456">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Account Number</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-acno" name="acno" placeholder="Numbers only">
+                        </div>
+                    </div>
+
+                    <h6 class="text-[10px] font-extrabold uppercase tracking-wide text-primary mt-5 mb-3 pb-1 border-b-2 border-slate-100 flex items-center gap-1.5"><i class="fas fa-file-invoice"></i> Statutory &amp; Compliance</h6>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">PF Number</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-pfno" name="pfno">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">UAN Number</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-uan" name="uan">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">PF Start Date</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-pf-start-date" name="pfStartDate">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">ESI Number</label>
+                            <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="confirm-esino" name="esino">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end gap-2 bg-slate-50 border-t border-slate-200 px-6 py-3">
+                <button class="px-4 py-1.5 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" type="button" data-modal-close>Cancel</button>
+                <button class="px-4 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed" id="submit-confirmation">Confirm Employee Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Warning Action Modal -->
+<div id="warningActionModal" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-hidden="true">
+    <div data-backdrop data-modal-close class="fixed inset-0 bg-slate-900/60 opacity-0 transition-opacity duration-300"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div data-panel class="pointer-events-auto w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 -translate-y-2 transition duration-300">
+            <div class="flex items-center justify-between px-6 pt-5 pb-0">
+                <h5 class="text-base font-bold text-slate-900 flex items-center gap-2.5 m-0"><i class="fas fa-exclamation-circle text-amber-500"></i> Employee Warning System</h5>
+                <button class="text-slate-400 hover:text-slate-600 text-2xl leading-none" type="button" data-modal-close><span>&times;</span></button>
+            </div>
+            <div class="p-6" id="warning-modal-body">
+
+                <!-- Selection menu -->
+                <div id="warning-menu-view">
+                    <div class="text-center mb-4">
+                        <p class="text-slate-500 text-xs">Select the category of violation for <br><strong id="warning-target-name" class="text-slate-900 text-base"></strong></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="showBreakTimeForm()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-primary">
+                            <i class="fas fa-coffee text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">In-Complete Hours</span>
+                        </button>
+                        <button type="button" onclick="confirmMobileUsage()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-slate-500">
+                            <i class="fas fa-mobile-alt text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Mobile Usage</span>
+                        </button>
+                        <button type="button" onclick="confirmPerformance()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-sky-500">
+                            <i class="fas fa-chart-line text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Performance</span>
+                        </button>
+                        <button type="button" onclick="confirmExcessLeave()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-red-500">
+                            <i class="fas fa-calendar-times text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Excess Leave</span>
+                        </button>
+                        <button type="button" onclick="showLateComingForm()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-amber-500">
+                            <i class="fas fa-user-clock text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Late Coming</span>
+                        </button>
+                        <button type="button" onclick="showEarlyLogoutForm()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-slate-500">
+                            <i class="fas fa-door-open text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Early Logout</span>
+                        </button>
+                        <button type="button" onclick="confirmQualityIssue()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-red-500">
+                            <i class="fas fa-bug text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Quality Issue</span>
+                        </button>
+                        <button type="button" onclick="showLossOfPayForm()" class="group flex flex-col items-center justify-center w-full h-full border-2 border-slate-200 bg-white hover:border-primary hover:bg-indigo-50 hover:-translate-y-0.5 hover:shadow-lg rounded-2xl py-7 transition-all text-red-500">
+                            <i class="fas fa-money-bill-wave text-2xl mb-3 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-bold">Loss Of Pay</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- In-Complete Hours -->
+                <div id="break-time-form-view" class="hidden">
+                    <div class="flex items-center mb-4 bg-slate-100 p-2 rounded-lg">
+                        <button type="button" class="flex items-center justify-center w-8 h-8 bg-white shadow-sm rounded-full mr-3" onclick="showWarningMenu()"><i class="fas fa-arrow-left text-slate-500"></i></button>
+                        <h6 class="m-0 font-bold text-slate-900">In-Complete Hours Details</h6>
+                    </div>
+                    <form id="break-time-form">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Warning Date</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="date" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Login Time</label>
+                                <input type="time" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="login" id="bt-login" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Logout Time</label>
+                                <input type="time" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="logout" id="bt-logout" required>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Break Time (HH:MM)</label>
+                                <input type="time" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="break" id="bt-break" value="00:00">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Total Working Hours (auto)</label>
+                                <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-slate-100 font-bold" name="workinghours" id="bt-working" placeholder="--:--" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Remarks *</label>
+                            <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="remarks" rows="2" placeholder="Enter remarks..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full mt-2 py-2.5 text-xs font-bold rounded-md bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">Record Warning</button>
+                    </form>
+                </div>
+
+                <!-- Late Coming -->
+                <div id="late-coming-form-view" class="hidden">
+                    <div class="flex items-center mb-4 bg-slate-100 p-2 rounded-lg">
+                        <button type="button" class="flex items-center justify-center w-8 h-8 bg-white shadow-sm rounded-full mr-3" onclick="showWarningMenu()"><i class="fas fa-arrow-left text-slate-500"></i></button>
+                        <h6 class="m-0 font-bold text-slate-900">Late Coming Details</h6>
+                    </div>
+                    <form id="late-coming-form">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Violation Date</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Login Time</label>
+                            <input type="time" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="login" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Remarks *</label>
+                            <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="remarks" rows="2" placeholder="Enter remarks..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full mt-2 py-2.5 text-xs font-bold rounded-md bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">Record Warning</button>
+                    </form>
+                </div>
+
+                <!-- Early Logout -->
+                <div id="early-logout-form-view" class="hidden">
+                    <div class="flex items-center mb-4 bg-slate-100 p-2 rounded-lg">
+                        <button type="button" class="flex items-center justify-center w-8 h-8 bg-white shadow-sm rounded-full mr-3" onclick="showWarningMenu()"><i class="fas fa-arrow-left text-slate-500"></i></button>
+                        <h6 class="m-0 font-bold text-slate-900">Early Logout Details</h6>
+                    </div>
+                    <form id="early-logout-form">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Violation Date</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Logout Time</label>
+                            <input type="time" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="logout" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Remarks *</label>
+                            <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="remarks" rows="2" placeholder="Enter remarks..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full mt-2 py-2.5 text-xs font-bold rounded-md bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">Record Warning</button>
+                    </form>
+                </div>
+
+                <!-- Loss Of Pay -->
+                <div id="loss-of-pay-form-view" class="hidden">
+                    <div class="flex items-center mb-4 bg-slate-100 p-2 rounded-lg">
+                        <button type="button" class="flex items-center justify-center w-8 h-8 bg-white shadow-sm rounded-full mr-3" onclick="showWarningMenu()"><i class="fas fa-arrow-left text-slate-500"></i></button>
+                        <h6 class="m-0 font-bold text-slate-900">Loss Of Pay Details</h6>
+                    </div>
+                    <form id="loss-of-pay-form">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Loss Of Pay Date *</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Remarks *</label>
+                            <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" name="remarks" rows="2" placeholder="Enter remarks..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full mt-2 py-2.5 text-xs font-bold rounded-md bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">Record Warning</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Separation Modal -->
+<div id="separationModal" data-modal class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-hidden="true">
+    <div data-backdrop data-modal-close class="fixed inset-0 bg-slate-900/60 opacity-0 transition-opacity duration-300"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div data-panel class="pointer-events-auto w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 -translate-y-2 transition duration-300">
+            <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
+                <h5 class="text-base font-bold text-slate-900 flex items-center gap-2.5 m-0"><i class="fas fa-user-slash text-red-500"></i> Employee Separation</h5>
+                <button class="text-slate-400 hover:text-slate-600 text-2xl leading-none" type="button" data-modal-close><span>&times;</span></button>
+            </div>
+            <div class="p-6">
+                <form id="separation-form">
+                    <input type="hidden" id="separation-eid" name="Manualseparation">
+                    <div class="bg-slate-100 p-3 rounded mb-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Separating Employee</label>
+                        <input type="text" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white font-bold" id="separation-name" readonly>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Separation Type *</label>
+                            <select class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="separation-type" name="separationType" required>
+                                <option value="" disabled selected>Select Type</option>
+                                <option value="Resignation">Resignation</option>
+                                <option value="Termination">Termination</option>
+                                <option value="Absconded">Absconded</option>
+                                <option value="Retirement">Retirement</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Last Working Day *</label>
+                            <input type="date" class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="separation-date" name="lastDay" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Primary Reason</label>
+                        <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="separation-reason" name="reason" rows="2" placeholder="Brief explanation..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">HR Confidential Remarks</label>
+                        <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="separation-hr-remarks" name="hrRemarks" rows="2" placeholder="Internal notes..."></textarea>
+                    </div>
+
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="checkbox" class="w-4 h-4 rounded border-slate-300 accent-primary" id="rehire-eligible" name="rehireEligible" checked>
+                        <label class="text-xs font-bold text-slate-700" for="rehire-eligible">Eligible for Rehire in future</label>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end gap-2 bg-slate-50 border-t border-slate-200 px-6 py-3">
+                <button class="px-4 py-1.5 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" type="button" data-modal-close>Cancel</button>
+                <button class="px-4 py-1.5 text-xs font-bold rounded bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed" id="submit-separation">Process Separation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div id="messageModal" data-modal class="hidden fixed inset-0 z-[70] overflow-y-auto" role="dialog" aria-hidden="true">
+    <div data-backdrop data-modal-close class="fixed inset-0 bg-slate-900/60 opacity-0 transition-opacity duration-300"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div data-panel class="pointer-events-auto w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 -translate-y-2 transition duration-300">
+            <div class="text-center p-6">
+                <div id="messageModal-icon" class="w-14 h-14 rounded-full flex items-center justify-center text-[1.4rem] mx-auto mb-4 bg-sky-100 text-sky-700"><i class="fas fa-info"></i></div>
+                <div class="font-bold text-slate-900 text-[1.05rem] mb-2" id="messageModal-title"></div>
+                <p class="text-slate-500 text-[12.5px] mb-0 break-words" id="messageModal-text"></p>
+            </div>
+            <div class="flex justify-center bg-slate-50 border-t border-slate-200 px-6 py-3">
+                <button type="button" class="px-6 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white transition-colors" data-modal-close>OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Modal (static: cannot be dismissed by backdrop / Esc) -->
+<div id="actionConfirmModal" data-modal data-static class="hidden fixed inset-0 z-[70] overflow-y-auto" role="dialog" aria-hidden="true">
+    <div data-backdrop class="fixed inset-0 bg-slate-900/60 opacity-0 transition-opacity duration-300"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div data-panel class="pointer-events-auto w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 -translate-y-2 transition duration-300">
+            <div class="text-center p-6">
+                <div id="actionConfirm-icon" class="w-14 h-14 rounded-full flex items-center justify-center text-[1.4rem] mx-auto mb-4 bg-indigo-100 text-indigo-700"><i class="fas fa-question"></i></div>
+                <div class="font-bold text-slate-900 text-[1.05rem] mb-2" id="actionConfirm-title"></div>
+                <p class="text-slate-500 text-[12.5px] mb-0 break-words" id="actionConfirm-text"></p>
+
+                <div class="hidden text-left mt-3" id="actionConfirm-remarks-group">
+                    <label class="block text-xs font-bold text-slate-700 mb-1" for="actionConfirm-remarks">Remarks *</label>
+                    <textarea class="w-full text-xs border border-slate-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" id="actionConfirm-remarks" rows="3" placeholder="Enter remarks..."></textarea>
+                    <p class="hidden text-[11px] text-red-600 mt-1" id="actionConfirm-remarks-error">Remarks are required.</p>
+                </div>
+
+                <div class="hidden text-left mt-3 text-xs bg-red-100 border border-red-200 text-red-700 rounded-md px-3 py-2" id="actionConfirm-error"></div>
+            </div>
+            <div class="flex justify-center gap-2 bg-slate-50 border-t border-slate-200 px-6 py-3">
+                <button type="button" class="px-4 py-1.5 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed" id="actionConfirm-cancel">Cancel</button>
+                <button type="button" class="px-6 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed" id="actionConfirm-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
 
-<script>
-    $(document).ready(function () {
-        const today = new Date();
-        const options = { day: '2-digit', month: 'short', year: 'numeric' };
-        const formattedDate = today.toLocaleDateString('en-GB', options);
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-        // 1. Fetch Data
-        $.get("/admin/getemployees", function (res) {
-            console.log(res);
-            let rows = res.data ? res.data : res;
-            let html = "";
+<script th:inline="javascript">
+$(document).ready(function () {
+    let activeWarningEid = '';
+    let activeWarningName = '';
 
-            if(rows.length > 0) {
-                rows.forEach((r, index) => {
-                    html += `
-                    <tr>
-                        <td class="text-slate-400">${index + 1}</td>
-                        <td><a href="#" class="emp-link">${r.name}</a></td>
-                        <td class="text-slate-600">${r.eid}</td>
-                        <td class="text-slate-600">${r.dob}</td>
-                        <td class="text-slate-600">${r.email}</td>
-                        <td class="text-slate-500">${r.phone}</td>
-                        <td class="text-slate-500">${r.designation}</td>
-                        <td class="text-center fw-bold text-dark">${r.joiningDate}</td>
-                        <td class="text-slate-500">${r.workmail}</td>
-                        <td class="text-slate-600 font-medium">N/A</td>
-                        <td class="text-slate-600 font-medium">${r.fieldOfStudy}</td>
-                        <td class="text-slate-600 font-medium">${r.status}</td>
+    // Spring Security CSRF
+    const CSRF_TOKEN  = $('meta[name="_csrf"]').attr('content');
+    const CSRF_HEADER = $('meta[name="_csrf_header"]').attr('content');
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (settings.type && settings.type.toUpperCase() !== 'GET' && !settings.crossDomain) {
+                xhr.setRequestHeader(CSRF_HEADER, CSRF_TOKEN);
+            }
+        }
+    });
 
-                    </tr>`;
+    // Endpoints resolved through Thymeleaf (respect context path)
+    const CTX            = /*[[@{/}]]*/ '/';
+    const EMPLOYEES_URL  = /*[[@{/admin/reports/employeeReport}]]*/ '/admin/reports/employeeReport';
+    const EMPLOYEE_API   = /*[[@{/api/employeeApi}]]*/ '/admin/issueWarning';
+    const CONFIRM_API    = /*[[@{/api/confirmEmployee}]]*/ '/api/confirmEmployee';
+    const SEPARATION_API = /*[[@{/api/separation}]]*/ '/api/separation';
+
+    const SPIN = '<span class="inline-block w-3 h-3 border-2 border-current border-r-transparent rounded-full animate-spin align-[-0.125em]"></span>';
+    const SPIN_MR = '<span class="inline-block w-3 h-3 mr-2 border-2 border-current border-r-transparent rounded-full animate-spin align-[-0.125em]"></span>';
+
+    // ==================================================================
+    // HELPERS
+    // ==================================================================
+    function esc(v) {
+        return String(v === null || v === undefined ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function trimStr(v) { return (v === null || v === undefined) ? '' : String(v).trim(); }
+    function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // Accepts "yyyy-MM-dd", [y,m,d] (Jackson array form), or epoch millis. Returns local Date or null.
+    function parseDate(v) {
+        if (v === null || v === undefined || v === '') return null;
+        if (Array.isArray(v) && v.length >= 3) return new Date(v[0], v[1] - 1, v[2]);
+        if (typeof v === 'number') { var t = new Date(v); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v));
+        if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+        // "dd-MMM-yyyy" (what the SQL date_format returns), e.g. 05-Mar-2021
+        var m2 = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(String(v).trim());
+        if (m2) {
+            var mi = MONTHS.map(function (x) { return x.toLowerCase(); }).indexOf(m2[2].toLowerCase());
+            if (mi >= 0) return new Date(+m2[3], mi, +m2[1]);
+        }
+        var d = new Date(v);
+        return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    function isoDate(d) { return d ? d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) : ''; }
+    function fmtDate(d) { return d ? pad2(d.getDate()) + '-' + MONTHS[d.getMonth()] + '-' + d.getFullYear() : ''; }
+
+    // Equivalent of java.time.Period.between(from, to)
+    function period(from, to) {
+        var y = to.getFullYear() - from.getFullYear();
+        var m = to.getMonth() - from.getMonth();
+        var d = to.getDate() - from.getDate();
+        if (d < 0) {
+            m--;
+            d += new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+        }
+        if (m < 0) { y--; m += 12; }
+        return { years: y, months: m, days: d };
+    }
+    function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
+
+    // ==================================================================
+    // TAILWIND MODAL ENGINE
+    // ==================================================================
+    var onShow = {};
+
+    function isOpen(id) { return !$('#' + id).hasClass('hidden'); }
+
+    function openModal(id, trigger) {
+        var $m = $('#' + id);
+        if (!$m.hasClass('hidden')) return;
+        if (onShow[id]) onShow[id]($(trigger || []));
+
+        $m.removeClass('hidden').attr('aria-hidden', 'false');
+        $('body').addClass('overflow-hidden');
+        setTimeout(function () {
+            $m.find('[data-backdrop]').removeClass('opacity-0').addClass('opacity-100');
+            $m.find('[data-panel]').removeClass('opacity-0 -translate-y-2').addClass('opacity-100 translate-y-0');
+            $m.trigger('modal:shown');
+        }, 20);
+    }
+
+    function closeModal(id, cb) {
+        var $m = $('#' + id);
+        if ($m.hasClass('hidden')) { if (cb) cb(); return; }
+
+        $m.find('[data-backdrop]').removeClass('opacity-100').addClass('opacity-0');
+        $m.find('[data-panel]').removeClass('opacity-100 translate-y-0').addClass('opacity-0 -translate-y-2');
+        setTimeout(function () {
+            $m.addClass('hidden').attr('aria-hidden', 'true');
+            if (!$('[data-modal]:not(.hidden)').length) $('body').removeClass('overflow-hidden');
+            var after = $m.data('afterClose');
+            $m.removeData('afterClose');
+            if (typeof after === 'function') after();
+            if (typeof cb === 'function') cb();
+        }, 300);
+    }
+
+    $(document).on('click', '[data-modal-open]', function () {
+        openModal($(this).attr('data-modal-open'), this);
+    });
+    $(document).on('click', '[data-modal-close]', function () {
+        closeModal($(this).closest('[data-modal]').attr('id'));
+    });
+    $(document).on('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var order = ['actionConfirmModal', 'messageModal', 'warningActionModal', 'confirmModal', 'separationModal'];
+        for (var i = 0; i < order.length; i++) {
+            if (isOpen(order[i])) {
+                if (order[i] !== 'actionConfirmModal') closeModal(order[i]);
+                return;
+            }
+        }
+    });
+
+    // ==================================================================
+    // MESSAGE MODAL  —  showAlert({type, title, text, onClose})
+    // ==================================================================
+    const ICONS = {
+        success:  { icon: 'fa-check',       tone: 'bg-green-100 text-green-700' },
+        error:    { icon: 'fa-times',       tone: 'bg-red-100 text-red-700' },
+        warning:  { icon: 'fa-exclamation', tone: 'bg-amber-100 text-amber-700' },
+        question: { icon: 'fa-question',    tone: 'bg-indigo-100 text-indigo-700' },
+        info:     { icon: 'fa-info',        tone: 'bg-sky-100 text-sky-700' }
+    };
+
+    function setIcon($el, type) {
+        var t = ICONS[type] || ICONS.info;
+        $el.attr('class', 'w-14 h-14 rounded-full flex items-center justify-center text-[1.4rem] mx-auto mb-4 ' + t.tone);
+        $el.find('i').attr('class', 'fas ' + t.icon);
+    }
+
+    function showAlert(opts) {
+        var $m = $('#messageModal');
+        setIcon($('#messageModal-icon'), opts.type || 'info');
+        $('#messageModal-title').text(opts.title || '');
+        $('#messageModal-text').text(opts.text || '');
+        $m.removeData('afterClose');
+        if (typeof opts.onClose === 'function') $m.data('afterClose', opts.onClose);
+        openModal('messageModal');
+    }
+    window.showAlert = showAlert;
+
+    function closeWarningModalThen(fn) {
+        if (isOpen('warningActionModal')) closeModal('warningActionModal', fn);
+        else fn();
+    }
+
+    // ==================================================================
+    // CONFIRM MODAL  —  showConfirm({...})
+    // ==================================================================
+    const CONFIRM_BTN = {
+        primary: 'bg-primary hover:bg-primary-dark',
+        warning: 'bg-amber-500 hover:bg-amber-600',
+        danger:  'bg-red-500 hover:bg-red-600'
+    };
+    let confirmCfg = null;
+    let confirmBusy = false;
+    const $confirmOk = $('#actionConfirm-ok');
+    const $confirmCancel = $('#actionConfirm-cancel');
+    const $confirmRemarks = $('#actionConfirm-remarks');
+    const $confirmError = $('#actionConfirm-error');
+
+    function showConfirm(cfg) {
+        confirmCfg = cfg;
+        confirmBusy = false;
+
+        setIcon($('#actionConfirm-icon'), cfg.type || 'question');
+        $('#actionConfirm-title').text(cfg.title || 'Are you sure?');
+        $('#actionConfirm-text').text(cfg.text || '');
+
+        $('#actionConfirm-remarks-group').toggleClass('hidden', !cfg.requireRemarks);
+        $confirmRemarks.val('').removeClass('border-red-500');
+        $('#actionConfirm-remarks-error').addClass('hidden');
+        $confirmError.addClass('hidden').text('');
+
+        $confirmOk
+            .attr('class', 'px-6 py-1.5 text-xs font-bold rounded text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed ' + (CONFIRM_BTN[cfg.confirmClass] || CONFIRM_BTN.primary))
+            .prop('disabled', false)
+            .text(cfg.confirmText || 'Confirm');
+        $confirmCancel.prop('disabled', false);
+
+        openModal('actionConfirmModal');
+    }
+
+    $('#actionConfirmModal').on('modal:shown', function () {
+        if (confirmCfg && confirmCfg.requireRemarks) $confirmRemarks.trigger('focus');
+    });
+
+    $confirmCancel.on('click', function () { closeModal('actionConfirmModal'); });
+
+    $confirmRemarks.on('input', function () {
+        $(this).removeClass('border-red-500');
+        $('#actionConfirm-remarks-error').addClass('hidden');
+    });
+
+    function confirmFailed(message) {
+        confirmBusy = false;
+        $confirmOk.prop('disabled', false).text((confirmCfg && confirmCfg.confirmText) || 'Confirm');
+        $confirmCancel.prop('disabled', false);
+        $confirmError.text(message).removeClass('hidden');
+    }
+
+    $confirmOk.on('click', function () {
+        if (!confirmCfg || confirmBusy) return;
+
+        var cfg = confirmCfg;
+        var remarks = $confirmRemarks.val().trim();
+
+        if (cfg.requireRemarks && !remarks) {
+            $confirmRemarks.addClass('border-red-500').trigger('focus');
+            $('#actionConfirm-remarks-error').removeClass('hidden');
+            return;
+        }
+
+        confirmBusy = true;
+        $confirmError.addClass('hidden');
+        $confirmOk.prop('disabled', true).html(SPIN);
+        $confirmCancel.prop('disabled', true);
+
+        cfg.action(remarks)
+            .done(function (response) {
+                if (response && response.status === 'success') {
+                    closeModal('actionConfirmModal', function () {
+                        if (typeof cfg.onSuccess === 'function') cfg.onSuccess(response, remarks);
+                    });
+                } else {
+                    confirmFailed((response && response.message) || 'The request could not be completed.');
+                }
+            })
+            .fail(function () {
+                confirmFailed('Server communication failure.');
+            });
+    });
+
+    // ==================================================================
+    // DATA LAYER: fetch (AJAX GET) -> normalise -> derive
+    // ==================================================================
+    var $tbody = $('#employee-tbody');
+    var FILTER_KEYS = ['department', 'status', 'designation', 'gender', 'age', 'idcard'];
+    var AGE_ORDER = ['Under 25', '25–29', '30–34', '35–39', '40–49', '50 and above', 'Unknown'];
+
+    var rowData = [];     // normalised rows (one per employee)
+    var loadedOnce = false;
+
+    function ageGroupOf(age) {
+        if (age < 0) return 'Unknown';
+        if (age < 25) return 'Under 25';
+        if (age < 30) return '25–29';
+        if (age < 35) return '30–34';
+        if (age < 40) return '35–39';
+        if (age < 50) return '40–49';
+        return '50 and above';
+    }
+
+    // Turns one API employee into a row with all derived/display values pre-computed
+    function normalise(src, idx, today) {
+        // Work on a copy with display aliases; `src` stays the untouched API row (used by export)
+        var e = Object.assign({}, src);
+        if (e.eid === undefined) e.eid = e.employeeId;
+        if (e.departmentShortName === undefined) e.departmentShortName = e.departmentName;
+        if (e.personalEmail === undefined) e.personalEmail = (e.workmail !== undefined ? e.workmail : e.personalEmail);
+
+        var dob  = parseDate(e.dob !== undefined ? e.dob : e.dateOfBirth);
+        var join = parseDate(e.dateOfJoining);
+        var issuedDate = parseDate(e.issuedDate);
+
+        var rawAge = dob ? period(dob, today).years : -1;
+        var age = (rawAge >= 14 && rawAge <= 90) ? rawAge : -1;
+
+        var gender = trimStr(e.gender);
+        gender = gender ? capitalize(gender.toLowerCase()) : 'Not Specified';
+        var designation = trimStr(e.designation) || 'Not Assigned';
+        var department  = trimStr(e.departmentShortName) || 'Not Assigned';
+        var status = trimStr(e.status);
+        var idIssued = e.idIssued !== null && e.idIssued !== undefined && (e.idIssued === 1 || e.idIssued === true || e.idIssued === '1');
+
+        var exp = join ? period(join, today) : { years: 0, months: 0, days: 0 };
+        var expDays = join ? daysBetween(join, today) : 0;
+        var fullName = trimStr(e.firstName) + ' ' + trimStr(e.lastName);
+
+        var r = {
+            raw: e, src: src, idx: idx,
+            eid: e.eid, name: fullName.trim(),
+            dob: dob, join: join, issuedDate: issuedDate,
+            gender: gender, designation: designation, department: department,
+            status: status, idIssued: idIssued,
+            age: age, ageGroup: ageGroupOf(age),
+            exp: exp, expDays: expDays,
+            // filter values
+            f: {
+                department: department, status: status, designation: designation,
+                gender: gender, age: ageGroupOf(age), idcard: idIssued ? 'Issued' : 'Pending'
+            }
+        };
+
+        // searchable text (what is visible in the row)
+        r.text = [
+            idx + 1, fullName, e.eid, fmtDate(dob), gender, e.personalEmail, e.designation, e.departmentShortName,
+            e.manager || '—', fmtDate(join), exp.years + ' Years ' + exp.months + ' Months ' + exp.days + ' Days',
+            status, idIssued ? 'Issued' : 'Pending', idIssued ? fmtDate(issuedDate) : ''
+        ].join(' ').toLowerCase().replace(/\s+/g, ' ');
+
+        // sort keys per column index (cols 0..10 are sortable)
+        r.keys = [
+            idx + 1, fullName.toLowerCase(), isoDate(dob), gender.toLowerCase(),
+            trimStr(e.personalEmail).toLowerCase(), trimStr(e.designation).toLowerCase(),
+            trimStr(e.departmentShortName).toLowerCase(), trimStr(e.manager).toLowerCase(),
+            isoDate(join), expDays, status.toLowerCase()
+        ];
+        return r;
+    }
+
+    function extractList(res) {
+        if (Array.isArray(res)) return res;
+        if (res && Array.isArray(res.data)) return res.data;
+        if (res && Array.isArray(res.employees)) return res.employees;
+        return [];
+    }
+
+    // ==================================================================
+    // ROW RENDERING
+    // ==================================================================
+    var TD = 'px-2.5 py-1 border-t border-slate-200 text-[11.5px] text-slate-800 align-middle';
+    var EXP_BOX = 'font-bold text-slate-700 bg-slate-100 border border-slate-300 rounded px-2 py-0.5 mr-0.5';
+    var EXP_LBL = 'text-[0.9em] text-slate-500 mr-2.5 font-normal';
+
+    function statusClass(s) {
+        if (s === 'Permanent')  return 'bg-emerald-100 text-emerald-700';
+        if (s === 'Probation')  return 'bg-amber-100 text-amber-700';
+        if (s === 'Terminated') return 'bg-red-100 text-red-700';
+        return 'bg-slate-100 text-slate-600';
+    }
+
+    function rowHtml(r, n) {
+        var e = r.raw;
+        var eid = esc(r.eid), nm = esc(r.name);
+        var dataAttrs = 'data-eid="' + eid + '" data-name="' + nm + '"';
+        var img = e.image ? '<img src="' + esc('../' + e.image) + '" alt="" class="w-5 h-5 rounded-[3px] object-cover bg-slate-300">'
+                          : '<span class="w-5 h-5 rounded-[3px] bg-slate-300 inline-block"></span>';
+
+        var idCell;
+        if (r.idIssued) {
+            idCell =
+                '<span class="inline-flex items-center px-1.5 py-0.5 rounded-[3px] text-[9px] font-semibold uppercase bg-green-100 text-green-700"><i class="fas fa-check-circle mr-1"></i>Issued</span>' +
+                (r.issuedDate ? '<span class="text-[8px]">(' + esc(fmtDate(r.issuedDate)) + ')</span>' : '') +
+                '<button type="button" class="inline-flex items-center ml-1 px-2 py-1 text-[10px] font-medium rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors remove-id-btn" ' + dataAttrs + '><i class="fas fa-times-circle mr-1"></i>Remove ID</button>';
+        } else {
+            idCell =
+                '<span class="inline-flex items-center px-1.5 py-0.5 rounded-[3px] text-[9px] font-semibold uppercase bg-red-100 text-red-700 mr-1"><i class="fas fa-clock mr-1"></i>Pending</span>' +
+                '<button type="button" class="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded border border-primary text-primary hover:bg-indigo-50 transition-colors issue-id-btn" ' + dataAttrs + '><i class="fas fa-id-card mr-1"></i>Issue ID</button>';
+        }
+
+        var confirmBtn = (r.status === 'Probation' || r.status === 'Contract')
+            ? '<button class="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded bg-primary hover:bg-primary-dark text-white transition-colors" data-modal-open="confirmModal" ' + dataAttrs + '>Confirm</button>'
+            : '';
+
+        return '<tr class="hover:bg-slate-50">' +
+            '<td class="' + TD + '">' + n + '</td>' +
+            '<td class="' + TD + '">' +
+                '<a href="' + esc(CTX + 'viewEmployee?eid=' + encodeURIComponent(r.eid)) + '" class="no-underline">' +
+                    '<div class="flex items-center gap-2">' + img +
+                        '<div><span class="font-semibold text-primary block leading-[1.1]">' + nm + '</span>' +
+                        '<span class="text-[9px] text-slate-500">' + eid + '</span></div>' +
+                    '</div></a></td>' +
+            '<td class="' + TD + ' whitespace-nowrap">' + esc(fmtDate(r.dob)) + '</td>' +
+            '<td class="' + TD + '">' + esc(r.gender) + '</td>' +
+            '<td class="' + TD + '"><span class="text-slate-500">' + esc(e.personalEmail) + '</span></td>' +
+            '<td class="' + TD + '">' + esc(e.designation) + '</td>' +
+            '<td class="' + TD + '">' + esc(e.departmentShortName) + '</td>' +
+            '<td class="' + TD + '">' + esc(e.manager || '—') + '</td>' +
+            '<td class="' + TD + ' whitespace-nowrap">' + esc(fmtDate(r.join)) + '</td>' +
+            '<td class="' + TD + ' font-bold whitespace-nowrap"><span class="inline-block p-[5px]">' +
+                '<span class="' + EXP_BOX + '">' + r.exp.years + '</span><span class="' + EXP_LBL + '"> Years</span>' +
+                '<span class="' + EXP_BOX + '">' + r.exp.months + '</span><span class="' + EXP_LBL + '"> Months</span>' +
+                '<span class="' + EXP_BOX + '">' + r.exp.days + '</span><span class="' + EXP_LBL + '"> Days</span>' +
+            '</span></td>' +
+            '<td class="' + TD + '"><span class="inline-flex items-center px-1.5 py-0.5 rounded-[3px] text-[9px] font-semibold uppercase ' + statusClass(r.status) + '">' + esc(r.status) + '</span></td>' +
+            '<td class="' + TD + ' whitespace-nowrap">' + idCell + '</td>' +
+            '<td class="' + TD + ' text-right"><div class="inline-flex gap-1">' +
+                '<button class="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded bg-amber-500 hover:bg-amber-600 text-white transition-colors" data-modal-open="warningActionModal" ' + dataAttrs + '><i class="fas fa-exclamation-triangle"></i></button>' +
+                confirmBtn +
+                '<button class="inline-flex items-center px-2 py-1 text-[10px] font-medium rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors" data-modal-open="separationModal" ' + dataAttrs + '>Separation</button>' +
+            '</div></td>' +
+        '</tr>';
+    }
+
+    function messageRow(html) {
+        return '<tr><td colspan="13" class="px-2.5 py-8 text-center text-slate-400 text-[11.5px]">' + html + '</td></tr>';
+    }
+
+    // ==================================================================
+    // SUMMARY PANELS (derived from fetched rows)
+    // ==================================================================
+    var TONES = {
+        indigo: { bg: 'bg-indigo-600', ring: 'data-[active=true]:ring-indigo-600', chip: 'hover:border-indigo-600 data-[active=true]:bg-indigo-600 data-[active=true]:border-indigo-600' },
+        pink:   { bg: 'bg-pink-600',   ring: 'data-[active=true]:ring-pink-600',   chip: 'hover:border-pink-600 data-[active=true]:bg-pink-600 data-[active=true]:border-pink-600' },
+        slate:  { bg: 'bg-slate-400',  ring: 'data-[active=true]:ring-slate-400',  chip: 'hover:border-slate-400 data-[active=true]:bg-slate-400 data-[active=true]:border-slate-400' }
+    };
+    function toneOf(g) {
+        if (g === 'Male') return TONES.indigo;
+        if (g === 'Female') return TONES.pink;
+        return TONES.slate;
+    }
+
+    function bump(obj, key) { obj[key] = (obj[key] || 0) + 1; }
+    function bump2(obj, a, b) { obj[a] = obj[a] || {}; obj[a][b] = (obj[a][b] || 0) + 1; }
+
+    function sortedEntries(counts, natural) {
+        if (natural) {
+            return AGE_ORDER.filter(function (k) { return counts[k] !== undefined; })
+                            .map(function (k) { return [k, counts[k]]; });
+        }
+        return Object.keys(counts).map(function (k) { return [k, counts[k]]; })
+                    .sort(function (a, b) { return b[1] - a[1]; });
+    }
+
+    var ROW_BASE = 'group relative isolate flex items-center gap-2 px-2 py-[5px] mb-[3px] rounded-[5px] cursor-pointer text-[11.5px] hover:bg-slate-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary data-[active=true]:ring-[1.5px] data-[active=true]:ring-inset';
+    var CHIP_BASE = 'group/chip inline-flex items-center gap-1 px-1.5 text-[10px] font-semibold leading-[17px] text-slate-700 bg-white border border-slate-200 rounded-full cursor-pointer tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary data-[active=true]:text-white';
+
+    var genderList = [];
+    var totalEmployees = 0;
+
+    function renderGenderLegend($target) {
+        var $w = $('<div class="flex flex-wrap gap-x-3 gap-y-1 px-3.5 pt-[0.45rem] text-[10.5px] text-slate-500"></div>');
+        genderList.forEach(function (g) {
+            $w.append(
+                $('<span></span>')
+                    .append($('<i class="inline-block w-[7px] h-[7px] mr-[5px] rounded-full"></i>').addClass(toneOf(g).bg))
+                    .append(document.createTextNode(g))
+            );
+        });
+        $target.empty().append($w);
+    }
+
+    function renderCountRows($target, entries, filter, toneFn, matrix, withDot) {
+        $target.empty();
+        if (!entries.length) {
+            $target.append('<div class="p-4 text-center text-slate-400">No data yet</div>');
+            return;
+        }
+        var max = Math.max.apply(null, entries.map(function (e) { return e[1]; }));
+        var split = !!matrix;
+
+        entries.forEach(function (e) {
+            var label = e[0], count = e[1];
+            var barPct = max > 0 ? Math.round((count / max) * 100) : 0;
+            var pct = totalEmployees > 0 ? Math.round((count / totalEmployees) * 100) : 0;
+            var tone = toneFn ? toneFn(label) : TONES.indigo;
+
+            var $row = $('<div role="button" tabindex="0" data-row data-active="false"></div>')
+                .addClass(ROW_BASE + ' ' + tone.ring)
+                .attr('data-filter', filter)
+                .attr('data-value', label);
+
+            if (split) {
+                var $bar = $('<span class="absolute inset-y-0 left-0 -z-10 flex overflow-hidden rounded-[5px] opacity-[.16] group-hover:opacity-30 group-data-[active=true]:opacity-30 transition-opacity"></span>')
+                    .css('width', barPct + '%');
+                genderList.forEach(function (g) {
+                    var c = (matrix[label] && matrix[label][g]) || 0;
+                    if (c > 0) $bar.append($('<i class="block h-full"></i>').addClass(toneOf(g).bg).css('flex', c));
                 });
+                $row.append($bar);
             } else {
-                html = '<tr><td colspan="13" class="text-center py-10">No approved records found.</td></tr>';
+                $row.append(
+                    $('<span class="absolute inset-y-0 left-0 -z-10 rounded-[5px] opacity-[.11] group-hover:opacity-20 group-data-[active=true]:opacity-25 transition-opacity"></span>')
+                        .addClass(tone.bg).css('width', barPct + '%')
+                );
             }
 
-            $("#dataRoot").html(html);
+            var $label = $('<span class="flex-1 font-medium text-slate-800 truncate group-data-[active=true]:font-bold"></span>');
+            if (withDot) $label.append($('<i class="inline-block w-2 h-2 mr-2 rounded-full"></i>').addClass(tone.bg));
+            $label.append(document.createTextNode(label));
+            $row.append($label);
 
-            // 2. Initialize DataTable
-            $('#leaveTable').DataTable({
-                pageLength: 20,
-                layout: {
-                    topStart: {
-                        buttons: [
-                            {
-                                extend: 'excelHtml5',
-                                text: '<i class="fa-solid fa-file-excel me-1"></i> Export Excel',
-                                className: 'btn-excel',
-                                title: `Active Employees Report  As On ${formattedDate}`,
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] }
-                            }
-                        ]
+            if (split) {
+                var $chips = $('<span class="inline-flex gap-1"></span>');
+                genderList.forEach(function (g) {
+                    var c = (matrix[label] && matrix[label][g]) || 0;
+                    if (c > 0) {
+                        var gt = toneOf(g);
+                        $chips.append(
+                            $('<span role="button" tabindex="0" data-chip data-active="false"></span>')
+                                .addClass(CHIP_BASE + ' ' + gt.chip)
+                                .attr('data-gender', g)
+                                .attr('title', g + ': ' + c)
+                                .append($('<i class="block w-1.5 h-1.5 rounded-full group-data-[active=true]/chip:bg-white"></i>').addClass(gt.bg))
+                                .append(document.createTextNode(String(c)))
+                        );
                     }
-                }
-            });
-        }, "json").fail(function() {
-            $("#dataRoot").html('<tr><td colspan="13" class="text-center py-10 text-danger">Failed to load data.</td></tr>');
+                });
+                $row.append($chips);
+            }
+
+            $row.append($('<span class="text-[10px] text-slate-500"></span>').text(pct + '%'));
+            $row.append($('<span class="min-w-[26px] text-right font-bold text-slate-900 tabular-nums"></span>').text(count));
+            $target.append($row);
+        });
+    }
+
+    function buildSummary() {
+        var designationCounts = {}, departmentCounts = {}, genderCounts = {}, ageCounts = {};
+        var deptGender = {}, desigGender = {}, ageGender = {};
+        var ageSum = 0, ageN = 0;
+
+        rowData.forEach(function (r) {
+            bump(designationCounts, r.designation);
+            bump(departmentCounts, r.department);
+            bump(genderCounts, r.gender);
+            bump(ageCounts, r.ageGroup);
+            bump2(deptGender, r.department, r.gender);
+            bump2(desigGender, r.designation, r.gender);
+            bump2(ageGender, r.ageGroup, r.gender);
+            if (r.age >= 0) { ageSum += r.age; ageN++; }
         });
 
-        // 3. Handle Cancel Click (Event Delegation)
-        $(document).on('click', '.btn-cancel-leave', function() {
-            const leaveId = $(this).data('id');
-            const empName = $(this).data('name');
-            const $btn = $(this);
+        totalEmployees = rowData.length;
+        var avgAge = ageN > 0 ? Math.round((ageSum / ageN) * 10) / 10 : 0;
+        genderList = sortedEntries(genderCounts).map(function (e) { return e[0]; });
 
+        $('#total-employees').text(totalEmployees);
 
-            const swalWithBootstrapButtons = Swal.mixin({
-                customClass: {
-                    confirmButton: "btn btn-success",
-                    cancelButton: "btn btn-danger mr-4"
-                },
-                buttonsStyling: false
+        // Gender panel
+        $('#gender-total').text(totalEmployees);
+        var $stack = $('#gender-stack').empty();
+        sortedEntries(genderCounts).forEach(function (e) {
+            var w = totalEmployees > 0 ? Math.round((e[1] / totalEmployees) * 10000) / 100 : 0;
+            $stack.append(
+                $('<span class="block h-full border-r-2 border-white last:border-r-0"></span>')
+                    .addClass(toneOf(e[0]).bg).css('width', w + '%').attr('title', e[0] + ': ' + e[1])
+            );
+        });
+        renderCountRows($('#gender-rows'), sortedEntries(genderCounts), 'gender', toneOf, null, true);
+
+        // Age panel
+        var ageEntries = sortedEntries(ageCounts, true);
+        $('#age-total').text(ageEntries.length);
+        $('#age-sub').text('Average age ' + (avgAge > 0 ? avgAge + ' years' : 'not available') + ', split by gender');
+        renderGenderLegend($('#age-legend'));
+        renderCountRows($('#age-rows'), ageEntries, 'age', null, ageGender, false);
+
+        // Department panel
+        var deptEntries = sortedEntries(departmentCounts);
+        $('#department-total').text(deptEntries.length);
+        renderGenderLegend($('#department-legend'));
+        renderCountRows($('#department-rows'), deptEntries, 'department', null, deptGender, false);
+
+        // Designation panel
+        var desigEntries = sortedEntries(designationCounts);
+        $('#designation-total').text(desigEntries.length);
+        renderGenderLegend($('#designation-legend'));
+        renderCountRows($('#designation-rows'), desigEntries, 'designation', null, desigGender, false);
+    }
+
+    // ==================================================================
+    // TABLE ENGINE (search, sort, page size, pagination)
+    // ==================================================================
+    var tbl = { page: 1, len: 100, search: '', sortCol: -1, sortDir: 'asc' };
+
+    var selectFilters = {
+        department: '#filter-department',
+        status:     '#filter-status',
+        idcard:     '#filter-idcard'
+    };
+    var chipFilters = { designation: '', gender: '', age: '' };
+    var filterLabels = {
+        department: 'Department', status: 'Status', idcard: 'ID Card',
+        designation: 'Designation', gender: 'Gender', age: 'Age group'
+    };
+
+    function getFilter(key) {
+        return selectFilters[key] ? ($(selectFilters[key]).val() || '') : chipFilters[key];
+    }
+    function setFilter(key, value) {
+        if (selectFilters[key]) { $(selectFilters[key]).val(value); }
+        else { chipFilters[key] = value; }
+    }
+
+    // Rebuild a <select>'s options from the data, keeping the current selection if still valid
+    function populateFilter(selector, key, allLabel) {
+        var $select = $(selector);
+        var current = $select.val() || '';
+        var values = [];
+        rowData.forEach(function (r) {
+            var v = r.f[key];
+            if (v && values.indexOf(v) === -1) values.push(v);
+        });
+        values.sort();
+        $select.empty().append($('<option>', { value: '', text: allLabel }));
+        values.forEach(function (v) { $select.append($('<option>', { value: v, text: v })); });
+        $select.val(values.indexOf(current) !== -1 ? current : '');
+    }
+
+    function getFiltered() {
+        var want = {};
+        FILTER_KEYS.forEach(function (k) { want[k] = getFilter(k); });
+        var q = tbl.search;
+        return rowData.filter(function (r) {
+            for (var i = 0; i < FILTER_KEYS.length; i++) {
+                var k = FILTER_KEYS[i];
+                if (want[k] && r.f[k] !== want[k]) return false;
+            }
+            return !q || r.text.indexOf(q) !== -1;
+        });
+    }
+
+    function cmp(a, b) {
+        var x = a.keys[tbl.sortCol], y = b.keys[tbl.sortCol];
+        var r;
+        if (typeof x === 'number' && typeof y === 'number') r = x - y;
+        else r = String(x).localeCompare(String(y), undefined, { numeric: true });
+        return tbl.sortDir === 'asc' ? r : -r;
+    }
+
+    var PG_BTN = 'px-2.5 py-1 text-[11px] rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors';
+    var PG_ACTIVE = 'px-2.5 py-1 text-[11px] rounded border border-primary bg-primary text-white';
+    var PG_OFF = 'px-2.5 py-1 text-[11px] rounded border border-slate-200 bg-white text-slate-300 pointer-events-none';
+
+    function pageList(page, pages) {
+        if (pages <= 7) {
+            var all = [];
+            for (var i = 1; i <= pages; i++) all.push(i);
+            return all;
+        }
+        var out = [1];
+        var s = Math.max(2, page - 1), e = Math.min(pages - 1, page + 1);
+        if (s > 2) out.push(0);
+        for (var j = s; j <= e; j++) out.push(j);
+        if (e < pages - 1) out.push(0);
+        out.push(pages);
+        return out;
+    }
+
+    function drawTable() {
+        var filtered = getFiltered();
+        if (tbl.sortCol >= 0) filtered = filtered.slice().sort(cmp);
+
+        var total = filtered.length;
+        var pages = Math.max(1, Math.ceil(total / tbl.len));
+        if (tbl.page > pages) tbl.page = pages;
+        var start = (tbl.page - 1) * tbl.len;
+        var slice = filtered.slice(start, start + tbl.len);
+
+        // Only the visible page is turned into DOM
+        if (!slice.length) {
+            $tbody.html(messageRow(rowData.length ? 'No matching records found' : 'No employees found'));
+        } else {
+            $tbody.html(slice.map(function (r) { return rowHtml(r, r.idx + 1); }).join(''));
+        }
+
+        var info = total === 0
+            ? 'Showing 0 entries'
+            : 'Showing ' + (start + 1) + ' to ' + (start + slice.length) + ' of ' + total + ' entries';
+        if (total !== rowData.length) info += ' (filtered from ' + rowData.length + ' total entries)';
+        $('#table-info').text(info);
+
+        var $p = $('#table-pages').empty();
+        $p.append($('<button type="button"></button>').addClass(tbl.page > 1 ? PG_BTN : PG_OFF).attr('data-page', tbl.page - 1).text('Previous'));
+        pageList(tbl.page, pages).forEach(function (n) {
+            if (n === 0) {
+                $p.append('<span class="px-1 text-slate-400">…</span>');
+            } else {
+                $p.append($('<button type="button"></button>').addClass(n === tbl.page ? PG_ACTIVE : PG_BTN).attr('data-page', n).text(n));
+            }
+        });
+        $p.append($('<button type="button"></button>').addClass(tbl.page < pages ? PG_BTN : PG_OFF).attr('data-page', tbl.page + 1).text('Next'));
+    }
+
+    $(document).on('click', '[data-page]', function () {
+        tbl.page = parseInt($(this).attr('data-page'), 10);
+        drawTable();
+    });
+    $('#page-length').on('change', function () {
+        tbl.len = parseInt($(this).val(), 10);
+        tbl.page = 1;
+        drawTable();
+    });
+    $('#table-search').on('input', function () {
+        tbl.search = $(this).val().toLowerCase().trim();
+        tbl.page = 1;
+        drawTable();
+    });
+
+    // Header sorting
+    $('#dataTable thead th[data-sortable]').on('click', function () {
+        var idx = $(this).index();
+        if (tbl.sortCol === idx) tbl.sortDir = tbl.sortDir === 'asc' ? 'desc' : 'asc';
+        else { tbl.sortCol = idx; tbl.sortDir = 'asc'; }
+        $('#dataTable thead [data-ind]').text('');
+        $(this).find('[data-ind]').text(tbl.sortDir === 'asc' ? '▲' : '▼');
+        tbl.page = 1;
+        drawTable();
+    });
+
+    // Highlight the summary rows that match the current filters
+    function syncChips() {
+        $('[data-row]').each(function () {
+            var f = $(this).attr('data-filter');
+            var v = $(this).attr('data-value');
+            var on = getFilter(f) === v;
+            $(this).attr('data-active', on ? 'true' : 'false');
+            $(this).find('[data-chip]').each(function () {
+                var chipOn = on && getFilter('gender') === $(this).attr('data-gender');
+                $(this).attr('data-active', chipOn ? 'true' : 'false');
             });
-            swalWithBootstrapButtons.fire({
-                title: "Warning!",
-                text: `Are You Sure To Cancel ${empName}'s Leave Application`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $btn.prop('disabled', true).text('Processing...');
+        });
+    }
 
-                    $.post("api/cancelLeave.php", {cancel : leaveId,csrf:"<?php echo htmlspecialchars($_SESSION['csrf']); ?>"}, function(response) {
-                        console.log(response);
-                        if (response.status === 'success') {
-                            Swal.fire({
-                                title: "Cancelled",
-                                text: `${empName}'s Leave Application Cancelled`,
-                                icon: "success"
-                            }).then(()=>{
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: "Fialed",
-                                text: `Failed To Cancel ${empName}'s Leave Application`,
-                                icon: "error"
-                            }).then(()=>{
-                                location.reload();
-                            });
-                        }
-                    }, "json").fail(function() {
-                        alert("Network error. Please try again.");
-                        $btn.prop('disabled', false).text('Cancel Leave');
-                    });
+    function renderTags() {
+        var $wrap = $('#active-filters').empty();
+        var any = false;
 
-                } else if (
-                    result.dismiss === Swal.DismissReason.cancel
-                ) {
-                    swalWithBootstrapButtons.fire({
-                        title: "Cancelled",
-                        text: "Leave Cancel Withdrawn",
-                        icon: "error"
+        Object.keys(filterLabels).forEach(function (key) {
+            var val = getFilter(key);
+            if (!val) return;
+            any = true;
+            var $tag = $('<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-0.5 text-[11px] text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-full"></span>');
+            $tag.append($('<span class="text-indigo-500 font-medium"></span>').text(filterLabels[key] + ':'));
+            $tag.append($('<span class="font-semibold"></span>').text(val));
+            $tag.append(
+                $('<button type="button" aria-label="Remove filter" class="w-4 h-4 p-0 rounded-full text-indigo-700 leading-none hover:bg-indigo-200 transition-colors"></button>')
+                    .html('&times;')
+                    .attr('data-clear', key)
+            );
+            $wrap.append($tag);
+        });
+
+        if (any) {
+            var shown = getFiltered().length;
+            $wrap.prepend($('<span class="text-[11px] text-slate-500 mr-1.5"></span>').text('Showing ' + shown + ' of ' + rowData.length + ' employees'));
+            $wrap.removeClass('hidden').addClass('flex');
+        } else {
+            $wrap.removeClass('flex').addClass('hidden');
+        }
+    }
+
+    function refreshFilters() {
+        tbl.page = 1;
+        drawTable();
+        syncChips();
+        renderTags();
+    }
+
+    $('#filter-department, #filter-status, #filter-idcard').on('change', refreshFilters);
+
+    function applyRow($row) {
+        var f = $row.attr('data-filter');
+        var v = $row.attr('data-value');
+        setFilter(f, getFilter(f) === v ? '' : v);
+        refreshFilters();
+    }
+    $(document).on('click', '[data-row]', function (e) {
+        if ($(e.target).closest('[data-chip]').length) return;
+        applyRow($(this));
+    });
+    $(document).on('keydown', '[data-row]', function (e) {
+        if ($(e.target).closest('[data-chip]').length) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            applyRow($(this));
+        }
+    });
+
+    function applyChip($chip) {
+        var $r = $chip.closest('[data-row]');
+        var f = $r.attr('data-filter');
+        var v = $r.attr('data-value');
+        var g = $chip.attr('data-gender');
+        if (getFilter(f) === v && getFilter('gender') === g) {
+            setFilter(f, '');
+            setFilter('gender', '');
+        } else {
+            setFilter(f, v);
+            setFilter('gender', g);
+        }
+        refreshFilters();
+    }
+    $(document).on('click', '[data-chip]', function () { applyChip($(this)); });
+    $(document).on('keydown', '[data-chip]', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            applyChip($(this));
+        }
+    });
+
+    $(document).on('click', '[data-clear]', function () {
+        setFilter($(this).attr('data-clear'), '');
+        refreshFilters();
+    });
+
+    $('#clear-filters').on('click', function () {
+        Object.keys(filterLabels).forEach(function (key) { setFilter(key, ''); });
+        refreshFilters();
+    });
+
+    // ==================================================================
+    // LOAD EMPLOYEES (AJAX GET) AND RENDER
+    // ==================================================================
+    var loadSeq = 0;
+
+    function loadEmployees() {
+        var seq = ++loadSeq;
+        var $refresh = $('#refresh-btn i').addClass('animate-spin');
+
+        // Initial load shows a placeholder; later reloads keep the old rows on screen until new data arrives
+        if (!loadedOnce) {
+            $tbody.html(messageRow(SPIN_MR + 'Loading employees...'));
+            $('#table-info').text('Loading...');
+            $('#table-pages').empty();
+        }
+
+        return $.ajax({
+            url: EMPLOYEES_URL,
+            type: 'GET',
+            dataType: 'json',
+            cache: false
+        }).done(function (res) {
+            if (seq !== loadSeq) return; // a newer request superseded this one
+            var today = new Date();
+            today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+            rowData = extractList(res).map(function (e, i) { return normalise(e, i, today); });
+            loadedOnce = true;
+
+            populateFilter('#filter-department', 'department', 'All Departments');
+            populateFilter('#filter-status', 'status', 'All Statuses');
+            buildSummary();
+            drawTable();
+            syncChips();
+            renderTags();
+        }).fail(function (xhr) {
+            if (seq !== loadSeq) return;
+            if (!loadedOnce) {
+                $tbody.html(messageRow(
+                    '<div class="text-red-600 font-semibold mb-1"><i class="fas fa-triangle-exclamation mr-1"></i>Could not load employees' +
+                    (xhr && xhr.status ? ' (HTTP ' + esc(xhr.status) + ')' : '') + '</div>' +
+                    '<button type="button" class="mt-1 px-3 py-1 text-[11px] font-semibold rounded border border-primary text-primary hover:bg-indigo-50 transition-colors" id="retry-load">Retry</button>'
+                ));
+                $('#table-info').text('');
+                $('#table-pages').empty();
+            } else {
+                showAlert({ type: 'error', title: 'Refresh failed', text: 'Could not reload the employee list. Showing the previous data.' });
+            }
+        }).always(function () {
+            if (seq === loadSeq) $refresh.removeClass('animate-spin');
+        });
+    }
+
+    $(document).on('click', '#retry-load', loadEmployees);
+    $('#refresh-btn').on('click', loadEmployees);
+
+    loadEmployees();
+
+    // ==================================================================
+    // WARNING MODAL
+    // ==================================================================
+    onShow.warningActionModal = function ($btn) {
+        activeWarningEid = $btn.attr('data-eid');
+        activeWarningName = $btn.attr('data-name');
+        $('#warning-target-name').text(activeWarningName + ' (' + activeWarningEid + ')');
+
+        document.getElementById('break-time-form').reset();
+        document.getElementById('late-coming-form').reset();
+        document.getElementById('early-logout-form').reset();
+        document.getElementById('loss-of-pay-form').reset();
+
+        $('#break-time-form-view, #late-coming-form-view, #early-logout-form-view, #loss-of-pay-form-view').hide();
+        $('#warning-menu-view').show();
+    };
+
+    window.showBreakTimeForm = function() {
+        $('#warning-menu-view').fadeOut(200, function() { $('#break-time-form-view').fadeIn(200); });
+    };
+    window.showLateComingForm = function() {
+        $('#warning-menu-view').fadeOut(200, function() { $('#late-coming-form-view').fadeIn(200); });
+    };
+    window.showEarlyLogoutForm = function() {
+        $('#warning-menu-view').fadeOut(200, function() { $('#early-logout-form-view').fadeIn(200); });
+    };
+    window.showLossOfPayForm = function() {
+        $('#warning-menu-view').fadeOut(200, function() { $('#loss-of-pay-form-view').fadeIn(200); });
+    };
+    window.showWarningMenu = function() {
+        $('#break-time-form-view, #late-coming-form-view, #early-logout-form-view, #loss-of-pay-form-view').fadeOut(200, function() {
+            $('#warning-menu-view').fadeIn(200);
+        });
+    };
+
+    // One-click warnings with REQUIRED remarks
+    const triggerConfirmation = (title, text, type) => {
+        console.log(title,text,type);
+        showConfirm({
+            type: 'warning',
+            title: title,
+            text: `You are about to issue a ${text} warning to ${activeWarningName}. Please enter remarks.`,
+            confirmText: 'Yes, Issue Warning',
+            confirmClass: 'warning',
+            requireRemarks: true,
+            action: function (remarks) {
+                return $.ajax({
+                    url: EMPLOYEE_API,
+                    type: 'POST',
+                    data: {
+                        action: 'issue_warning',
+                        warning_type: type,
+                        eid: activeWarningEid,
+                        remarks: remarks,
+                        csrf: CSRF_TOKEN
+                    },
+                    dataType: 'json'
+                });
+            },
+            onSuccess: function () {
+                closeWarningModalThen(function () {
+                    showAlert({
+                        type: 'success',
+                        title: 'Issued!',
+                        text: `${title} warning has been recorded for ${activeWarningName}.`
                     });
+                });
+            }
+        });
+    };
+
+    window.confirmMobileUsage = () => triggerConfirmation('Mobile Usage', 'mobile usage violation', 'mobile');
+    window.confirmPerformance = () => triggerConfirmation('Performance', 'poor performance', 'performance');
+    window.confirmExcessLeave = () => triggerConfirmation('Excess Leave', 'excessive leaves', 'leave');
+    window.confirmQualityIssue = () => triggerConfirmation('Quality Issue', 'quality issue', 'quality');
+
+    // In-Complete Hours: auto-calculate working hours
+    function hmToMinutes(v) {
+        if (!v) return null;
+        var p = v.split(':');
+        return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    }
+    function minutesToHM(m) {
+        var h = Math.floor(m / 60), mm = m % 60;
+        return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+    }
+    function calcWorkingMinutes() {
+        var login  = hmToMinutes($('#bt-login').val());
+        var logout = hmToMinutes($('#bt-logout').val());
+        var brk    = hmToMinutes($('#bt-break').val()) || 0;
+        if (login === null || logout === null) return null;
+
+        var total = logout - login;
+        if (total < 0) total += 24 * 60;
+        return Math.max(total - brk, 0);
+    }
+    function updateWorkingHours() {
+        var mins = calcWorkingMinutes();
+        $('#bt-working').val(mins === null ? '' : minutesToHM(mins));
+    }
+    $('#bt-login, #bt-logout, #bt-break').on('input change', updateWorkingHours);
+    $('#break-time-form').on('reset', function () {
+        setTimeout(updateWorkingHours, 0);
+    });
+
+    // Generic submit helper for the 4 form-based warnings
+    function submitWarningForm($form, payload, formEl, successText) {
+        const $submitBtn = $form.find('button[type="submit"]');
+        $submitBtn.prop('disabled', true).html(SPIN_MR + 'Recording...');
+
+        $.ajax({
+            url: EMPLOYEE_API,
+            type: 'POST',
+            data: payload,
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    document.getElementById(formEl).reset();
+                    closeWarningModalThen(function () {
+                        showAlert({ type: 'success', title: 'Success', text: successText });
+                    });
+                } else {
+                    showAlert({ type: 'error', title: 'Error', text: response.message || 'Could not save record.' });
                 }
-            });
+            },
+            error: function () {
+                showAlert({ type: 'error', title: 'Error', text: 'Server communication failure.' });
+            },
+            complete: function() {
+                $submitBtn.prop('disabled', false).text('Record Warning');
+            }
+        });
+    }
 
+    // Break Time
+    $('#break-time-form').on('submit', function(e) {
+        e.preventDefault();
+        const remarks = $(this).find('[name="remarks"]').val().trim();
+        if (!remarks) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Remarks are required.' });
+            return;
+        }
+        const workMins = calcWorkingMinutes();
+        if (workMins === null) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Login and logout times are required.' });
+            return;
+        }
+        const breakMins = hmToMinutes($('#bt-break').val()) || 0;
+
+        submitWarningForm($(this), {
+            action: 'break_time_violation',
+            eid: activeWarningEid,
+            csrf: CSRF_TOKEN,
+            date: $(this).find('[name="date"]').val(),
+            login: $(this).find('[name="login"]').val(),
+            logout: $(this).find('[name="logout"]').val(),
+            break: (breakMins / 60).toFixed(2),
+            workinghours: (workMins / 60).toFixed(2),
+            break_hm: minutesToHM(breakMins),
+            workinghours_hm: minutesToHM(workMins),
+            remarks: remarks
+        }, 'break-time-form', 'Break time violation recorded for ' + activeWarningName);
+    });
+
+    // Late Coming
+    $('#late-coming-form').on('submit', function(e) {
+        e.preventDefault();
+        const remarks = $(this).find('[name="remarks"]').val().trim();
+        if (!remarks) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Remarks are required.' });
+            return;
+        }
+        submitWarningForm($(this), {
+            action: 'late_coming_violation',
+            eid: activeWarningEid,
+            csrf: CSRF_TOKEN,
+            date: $(this).find('[name="date"]').val(),
+            login: $(this).find('[name="login"]').val(),
+            remarks: remarks
+        }, 'late-coming-form', 'Late coming violation recorded for ' + activeWarningName);
+    });
+
+    // Early Logout
+    $('#early-logout-form').on('submit', function(e) {
+        e.preventDefault();
+        const remarks = $(this).find('[name="remarks"]').val().trim();
+        if (!remarks) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Remarks are required.' });
+            return;
+        }
+        submitWarningForm($(this), {
+            action: 'early_logout_violation',
+            eid: activeWarningEid,
+            csrf: CSRF_TOKEN,
+            date: $(this).find('[name="date"]').val(),
+            logout: $(this).find('[name="logout"]').val(),
+            remarks: remarks
+        }, 'early-logout-form', 'Early logout violation recorded for ' + activeWarningName);
+    });
+
+    // Loss Of Pay
+    $('#loss-of-pay-form').on('submit', function(e) {
+        e.preventDefault();
+        const date = $(this).find('[name="date"]').val();
+        const remarks = $(this).find('[name="remarks"]').val().trim();
+        if (!date) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Loss Of Pay date is required.' });
+            return;
+        }
+        if (!remarks) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Remarks are required.' });
+            return;
+        }
+        submitWarningForm($(this), {
+            action: 'loss_of_pay_violation',
+            eid: activeWarningEid,
+            csrf: CSRF_TOKEN,
+            date: date,
+            remarks: remarks
+        }, 'loss-of-pay-form', 'Loss of pay recorded for ' + activeWarningName);
+    });
+
+    // ==================================================================
+    // CONFIRM EMPLOYEE MODAL
+    // ==================================================================
+    onShow.confirmModal = function ($btn) {
+        var eid = $btn.attr('data-eid');
+        var name = $btn.attr('data-name');
+
+        document.getElementById('confirmation-form').reset();
+
+        $('#confirm-old-eid').val(eid);
+        $('#confirm-old-eid-hidden').val(eid);
+        $('#confirm-emp-name').text(name ? (name + ' (' + eid + ')') : eid);
+
+        var t = new Date();
+        $('#confirmation-date').val(t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate()));
+    };
+
+    $('#submit-confirmation').on('click', function () {
+        var $btn = $(this);
+        var formData = {
+            action: 'confirm_employee',
+            oldEid: $('#confirm-old-eid-hidden').val(),
+            newEid: $('#confirm-new-eid').val().trim(),
+            confirmationDate: $('#confirmation-date').val(),
+            designation: $('#confirm-designation').val(),
+            bankName: $('#confirm-bank-name').val(),
+            branch: $('#confirm-branch').val().trim(),
+            ifsc: $('#confirm-ifsc').val().trim(),
+            acno: $('#confirm-acno').val().trim(),
+            pfno: $('#confirm-pfno').val().trim(),
+            uan: $('#confirm-uan').val().trim(),
+            pfStartDate: $('#confirm-pf-start-date').val(),
+            esino: $('#confirm-esino').val().trim(),
+            csrf: CSRF_TOKEN
+        };
+
+        if (!formData.designation || !formData.confirmationDate) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Effective Designation and Confirmation Date are required.' });
+            return;
+        }
+
+        $btn.prop('disabled', true).html(SPIN);
+
+        $.ajax({
+            url: CONFIRM_API,
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function (response) {
+                if (response.status === 'success') {
+                    closeModal('confirmModal', function () {
+                        showAlert({
+                            type: 'success',
+                            title: 'Confirmed!',
+                            text: 'Employee has been confirmed successfully.',
+                            onClose: loadEmployees
+                        });
+                    });
+                } else {
+                    showAlert({ type: 'error', title: 'Error', text: response.message || 'Could not confirm employee.' });
+                }
+            },
+            error: function () {
+                showAlert({ type: 'error', title: 'Error', text: 'Server communication failure.' });
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text('Confirm Employee Now');
+            }
         });
     });
+
+    // ==================================================================
+    // ID CARD: ISSUE / REMOVE
+    // ==================================================================
+    $(document).on('click', '.issue-id-btn', function () {
+        var eid = $(this).attr('data-eid');
+        var name = $(this).attr('data-name');
+
+        showConfirm({
+            type: 'question',
+            title: 'Issue ID Card?',
+            text: `Confirm issuing the ID card for ${name} (${eid}).`,
+            confirmText: 'Yes, Issue ID',
+            confirmClass: 'primary',
+            action: function () {
+                return $.ajax({
+                    url: EMPLOYEE_API,
+                    type: 'POST',
+                    data: { action: 'issueId', eid: eid, csrf: CSRF_TOKEN },
+                    dataType: 'json'
+                });
+            },
+            onSuccess: function () {
+                showAlert({
+                    type: 'success',
+                    title: 'Issued!',
+                    text: `ID card has been marked as issued for ${name}.`,
+                    onClose: loadEmployees
+                });
+            }
+        });
+    });
+
+    $(document).on('click', '.remove-id-btn', function () {
+        var eid = $(this).attr('data-eid');
+        var name = $(this).attr('data-name');
+
+        showConfirm({
+            type: 'warning',
+            title: 'Remove ID Card?',
+            text: `This will mark the ID card for ${name} (${eid}) as not issued. Continue?`,
+            confirmText: 'Yes, Remove ID',
+            confirmClass: 'danger',
+            action: function () {
+                return $.ajax({
+                    url: EMPLOYEE_API,
+                    type: 'POST',
+                    data: { action: 'removeId', eid: eid, csrf: CSRF_TOKEN },
+                    dataType: 'json'
+                });
+            },
+            onSuccess: function () {
+                showAlert({
+                    type: 'success',
+                    title: 'Removed!',
+                    text: `ID card has been marked as not issued for ${name}.`,
+                    onClose: loadEmployees
+                });
+            }
+        });
+    });
+
+    // ==================================================================
+    // SEPARATION MODAL
+    // ==================================================================
+    onShow.separationModal = function ($btn) {
+        $('#separation-eid').val($btn.attr('data-eid'));
+        $('#separation-name').val($btn.attr('data-name'));
+    };
+
+    $('#submit-separation').on('click', function () {
+        var $btn = $(this);
+        var formData = {
+            Manualseparation: $('#separation-eid').val(),
+            name: $('#separation-name').val(),
+            separationType: $('#separation-type').val(),
+            lastDay: $('#separation-date').val(),
+            csrf: CSRF_TOKEN,
+            reason: $('#separation-reason').val(),
+            hrRemarks: $('#separation-hr-remarks').val(),
+            rehireEligible: $('#rehire-eligible').is(':checked') ? 1 : 0
+        };
+
+        if (!formData.separationType || !formData.lastDay) {
+            showAlert({ type: 'warning', title: 'Incomplete!', text: 'Type and Last Working Day are required.' });
+            return;
+        }
+
+        $btn.prop('disabled', true).html(SPIN);
+        $.ajax({
+            url: SEPARATION_API,
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function () {
+                closeModal('separationModal', function () {
+                    showAlert({
+                        type: 'success',
+                        title: 'Success!!',
+                        text: `Separation Process for ${formData.name} Completed`,
+                        onClose: loadEmployees
+                    });
+                });
+            },
+            error: function () {
+                showAlert({ type: 'error', title: 'Error', text: 'Server communication failure.' });
+            },
+            complete: function() { $btn.prop('disabled', false).html('Process Separation'); }
+        });
+    });
+
+    // ==================================================================
+    // EXPORT (client-side, uses the same filtered + sorted data as the table)
+    // ==================================================================
+    // Friendly headers for the API fields; anything not listed is prettified from camelCase
+    var EXPORT_LABELS = {
+        employeeId: 'Employee ID', firstName: 'First Name', lastName: 'Last Name', dob: 'DOB',
+        maritalStatus: 'Marital Status', employmentStatus: 'Employment Status', bloodGroup: 'Blood Group',
+        personalEmail: 'Personal Email', workmail: 'Work Email', dateOfJoining: 'Date Of Joining',
+        confirmationDate: 'Confirmation Date', departmentName: 'Department', aadhar: 'Aadhar', pan: 'PAN',
+        uan: 'UAN', pfNo: 'PF No', pfStartDate: 'PF Start Date', esiNo: 'ESI No',
+        emergencyContactName: 'Emergency Contact Name', emergencyContactNum: 'Emergency Contact Number',
+        emergencyRelation: 'Emergency Relation', bankName: 'Bank Name', branchName: 'Branch Name',
+        accountNumber: 'Account Number', fieldOfStudy: 'Field Of Study', yearOfPassing: 'Year Of Passing', gpa: 'GPA'
+    };
+    // Identifier-like fields are always exported as text so long numbers / leading zeros survive
+    var EXPORT_TEXT = { employeeId: 1, phone: 1, aadhar: 1, pan: 1, uan: 1, pfNo: 1, esiNo: 1, accountNumber: 1, emergencyContactNum: 1 };
+
+    function prettify(k) {
+        if (EXPORT_LABELS[k]) return EXPORT_LABELS[k];
+        return k.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, function (c) { return c.toUpperCase(); });
+    }
+
+    // Header + rows for every column the API returned (in API order), for the filtered + sorted rows
+    function buildExport() {
+        var list = getFiltered();
+        if (tbl.sortCol >= 0) list = list.slice().sort(cmp);
+
+        var keys = [], seen = {};
+        list.forEach(function (r) {
+            Object.keys(r.src).forEach(function (k) { if (!seen[k]) { seen[k] = true; keys.push(k); } });
+        });
+
+        var header = ['Sl No'].concat(keys.map(prettify), ['Experience']);
+        var rows = list.map(function (r) {
+            var vals = keys.map(function (k) {
+                var v = r.src[k];
+                if (v === null || v === undefined) return '';
+                if (typeof v === 'object') return JSON.stringify(v);
+                return EXPORT_TEXT[k] ? String(v) : v;
+            });
+            return [r.idx + 1].concat(vals, [r.exp.years + 'y ' + r.exp.months + 'm ' + r.exp.days + 'd']);
+        });
+        return { header: header, rows: rows };
+    }
+
+    function exportFileName(ext) {
+        var t = new Date();
+        return 'employees_' + t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate()) + '.' + ext;
+    }
+
+    function guardExport() {
+        if (!rowData.length || !getFiltered().length) {
+            showAlert({ type: 'info', title: 'Nothing to export', text: 'There are no employee records matching the current filters.' });
+            return false;
+        }
+        return true;
+    }
+
+    $('#export-excel-btn').on('click', function () {
+        if (!guardExport()) return;
+        if (typeof XLSX === 'undefined') {
+            showAlert({ type: 'error', title: 'Export unavailable', text: 'The Excel library could not be loaded. Try CSV export instead.' });
+            return;
+        }
+        var ex = buildExport();
+        var ws = XLSX.utils.aoa_to_sheet([ex.header].concat(ex.rows));
+        ws['!cols'] = ex.header.map(function (h, i) {
+            var w = h.length;
+            ex.rows.slice(0, 200).forEach(function (r) { w = Math.max(w, String(r[i]).length); });
+            return { wch: Math.min(w + 2, 40) };
+        });
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+        XLSX.writeFile(wb, exportFileName('xlsx'));
+    });
+
+    $('#export-csv-btn').on('click', function () {
+        if (!guardExport()) return;
+        function cell(v) {
+            var s = String(v === null || v === undefined ? '' : v);
+            // neutralise spreadsheet formula injection
+            if (/^[=+\-@]/.test(s) && isNaN(Number(s))) s = "'" + s;
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+        var ex = buildExport();
+        var lines = [ex.header].concat(ex.rows).map(function (row) { return row.map(cell).join(','); });
+        var blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = exportFileName('csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+});
 </script>
 </body>
 </html>

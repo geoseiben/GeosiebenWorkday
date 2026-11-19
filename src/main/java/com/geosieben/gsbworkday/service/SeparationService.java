@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +21,21 @@ import jakarta.servlet.http.HttpSession;
 @Service
 public class SeparationService implements SeparationInterface {
 
-    @Autowired
     private HttpSession httpSession;
-    @Autowired
     private BasicInfoRepository basicInfoRepository;
-    @Autowired
     private SeparationRepository separationRepository;
-        @Autowired
     private SeperationDocsRepository seperationDocsRepository;
-    @Autowired
     private AdminActivitiesRepository adminActivitiesRepository;
+
+    public SeparationService(HttpSession httpSession, BasicInfoRepository basicInfoRepository,
+            SeparationRepository separationRepository, SeperationDocsRepository seperationDocsRepository,
+            AdminActivitiesRepository adminActivitiesRepository) {
+        this.httpSession = httpSession;
+        this.basicInfoRepository = basicInfoRepository;
+        this.separationRepository = separationRepository;
+        this.seperationDocsRepository = seperationDocsRepository;
+        this.adminActivitiesRepository = adminActivitiesRepository;
+    }
 
     @Override
     @Transactional

@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Master</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ExcelJS (Excel export with cell colors) -->
+    <script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <!-- Fonts: Manrope for UI/headings, JetBrains Mono for record/data cells -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        base: {
+                            paper: '#F3F5F3',
+                            surface: '#FFFFFF',
+                            line: '#E3E6E3',
+                            linesoft: '#ECEFEC',
+                            ink: '#14181A',
+                            muted: '#6B726F',
+                        },
+                        signal: {
+                            50: '#E9F5F3',
+                            100: '#CCE8E3',
+                            500: '#0C7A6E',
+                            600: '#0A6259',
+                            700: '#084E47',
+                        },
+                        amber: {
+                            50: '#FBEEE1',
+                            100: '#F3D8B8',
+                            500: '#B4650A',
+                            600: '#95530A',
+                        },
+                        plum: {
+                            50: '#ECEDF4',
+                            100: '#D3D6E6',
+                            500: '#45507A',
+                            600: '#363F61',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['"Manrope"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        card: '0 1px 2px rgba(20, 24, 26, 0.04), 0 1px 1px rgba(20, 24, 26, 0.03)',
+                        pop: '0 4px 14px rgba(20, 24, 26, 0.08)',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+        }
+        .fade-in { animation: fadeIn 0.35s ease-out both; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::selection { background: #CCE8E3; color: #084E47; }
+
+        :focus-visible { outline: 2px solid #0C7A6E; outline-offset: 1px; }
+
+        .console-scroll::-webkit-scrollbar { height: 7px; width: 7px; }
+        .console-scroll::-webkit-scrollbar-track { background: transparent; }
+        .console-scroll::-webkit-scrollbar-thumb { background: #D6D9D5; border-radius: 4px; }
+        .console-scroll::-webkit-scrollbar-thumb:hover { background: #C2C6C1; }
+
+        /* Matrix grid: sticky employee column + sticky header, compact cells */
+        #matrixTable th, #matrixTable td { white-space: nowrap; }
+        #matrixTable thead th {
+            position: sticky; top: 0; z-index: 2;
+            background: #F8F9F8;
+            border-bottom: 1px solid #E3E6E3;
+        }
+        #matrixTable .col-sl, #matrixTable .col-eid, #matrixTable .col-emp {
+            position: sticky; z-index: 3;
+            background: #FFFFFF;
+        }
+        #matrixTable .col-sl  { left: 0;     min-width: 56px;  width: 56px;  text-align: center; }
+        #matrixTable .col-eid { left: 56px;  min-width: 96px;  width: 96px; }
+        #matrixTable .col-emp { left: 152px; min-width: 190px; box-shadow: 1px 0 0 0 #E3E6E3; }
+        #matrixTable thead .col-sl, #matrixTable thead .col-eid, #matrixTable thead .col-emp { z-index: 4; background: #D6DCE4; }
+        #matrixTable .col-sum { min-width: 46px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        #matrixTable .col-day { min-width: 34px; text-align: center; }
+        #matrixTable .col-day.is-weekend { background: #FBEDED; }
+        #matrixTable thead .col-day.is-weekend { background: #C00000; }
+        #matrixTable tbody tr { transition: background-color 0.12s ease; }
+        #matrixTable tbody tr:hover td:not(.col-sl):not(.col-eid):not(.col-emp):not(.col-sum) { background-color: #F0F2F0; }
+        #matrixTable tbody tr:hover td.is-weekend { background-color: #F6DCDC; }
+        #matrixTable tbody tr:hover td.col-sl, #matrixTable tbody tr:hover td.col-eid, #matrixTable tbody tr:hover td.col-emp { background-color: #F8F9F8; }
+
+        .status-dot {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9999px;
+            font-size: 0.6rem; font-weight: 700; line-height: 1;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="bg-base-paper text-base-ink antialiased min-h-screen font-sans text-[13px]">
+    <div class="max-w-full mx-auto p-3 md:p-5 space-y-3">
+
+        <!-- Compact console bar: title + filters + stats in one strip -->
+        <div class="fade-in bg-base-surface border border-base-line rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-3 shadow-card">
+
+            <div class="flex items-center gap-2 pr-4 border-r border-base-line">
+                <div class="w-7 h-7 rounded-md bg-signal-500 flex items-center justify-center shrink-0">
+                    <i data-lucide="calendar-check-2" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="leading-tight">
+                    <h1 class="text-sm font-bold tracking-tight">Attendance Master</h1>
+                    <p class="text-[11px] text-base-muted">Records · leaves · weekoffs</p>
+                </div>
+            </div>
+
+            <!-- Month Filter & Export Form -->
+            <form id="attendanceFilterForm" class="flex items-center gap-2">
+                <label for="monthYearSelect" class="sr-only">Select month</label>
+                <select id="monthYearSelect" name="month" class="bg-base-paper border border-base-line text-base-ink text-xs font-medium rounded-md focus:ring-2 focus:ring-signal-500/25 focus:border-signal-500 outline-none px-2.5 py-1.5 transition cursor-pointer hover:border-base-ink/20">
+                    <option value="">Loading months…</option>
+                </select>
+
+                <button type="button" id="exportBtn" onclick="exportTableToExcel()" class="inline-flex items-center gap-1.5 bg-base-paper hover:bg-base-line/60 active:bg-base-line text-base-ink font-semibold text-xs px-3 py-1.5 rounded-md transition-colors border border-base-line">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    Excel
+                </button>
+            </form>
+
+            <!-- Inline stat chips -->
+            <div class="flex items-center gap-2 ml-auto text-xs">
+                <div class="flex items-center gap-1.5 bg-base-paper border border-base-line rounded-md px-2.5 py-1.5 hidden" >
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-base-muted"></i>
+                    <span id="statTotalRows" class="font-mono font-semibold">0</span>
+                    <span class="text-base-muted">records</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-signal-50 border border-signal-100 rounded-md px-2.5 py-1.5 hidden">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-signal-600"></i>
+                    <span id="statPresent" class="font-mono font-semibold text-signal-700">0</span>
+                    <span class="text-signal-600">present</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-md px-2.5 py-1.5">
+                    <i data-lucide="user-x" class="w-3.5 h-3.5 text-red-600"></i>
+                    <span id="statAbsent" class="font-mono font-semibold text-red-600">0</span>
+                    <span class="text-red-600">LOP</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-plum-50 border border-plum-100 rounded-md px-2.5 py-1.5 hidden">
+                    <i data-lucide="coffee" class="w-3.5 h-3.5 text-plum-600"></i>
+                    <span id="statWeekoffs" class="font-mono font-semibold text-plum-600">0</span>
+                    <span class="text-plum-600">weekoff</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Data Table Container -->
+        <div class="fade-in bg-base-surface rounded-xl border border-base-line overflow-hidden shadow-card">
+            <!-- Table Action Toolbar -->
+            <div class="px-4 py-2.5 border-b border-base-line flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-base-surface">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xs font-bold text-base-ink">Attendance details</h2>
+                    <span id="recordBadge" class="hidden text-[11px] bg-base-paper text-base-muted px-2 py-0.5 rounded-full font-medium border border-base-line">0 items</span>
+                    <div id="loadingSpinner" class="hidden text-[11px] text-signal-600 font-semibold flex items-center gap-1.5">
+                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Fetching…
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- Status legend (same codes as the Excel export) -->
+                    <div class="hidden lg:flex items-center gap-3 text-[11px] text-base-muted flex-wrap">
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#00B050;color:#fff">P</span>Present</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#FF0000;color:#fff">LOP</span>Absent</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#C00000;color:#fff">SUN</span>Sunday off</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#C00000;color:#fff">SAT</span>2nd/last Sat off</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#FBEEE1;color:#95530A">UM</span>Unmarked</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#BFBFBF;color:#14181A">CL</span>Casual</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#BFBFBF;color:#14181A">SL</span>Sick</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#BFBFBF;color:#14181A">AL</span>Earned</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#D9D9D9;color:#14181A">FL</span>Restricted</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#FFC000;color:#14181A">H</span>Half day</span>
+                        <span class="flex items-center gap-1.5"><span class="status-dot" style="background:#E2EFDA;color:#14181A">HCL</span>/<span class="status-dot" style="background:#E2EFDA;color:#14181A">HSL</span>/<span class="status-dot" style="background:#E2EFDA;color:#14181A">HAL</span>/<span class="status-dot" style="background:#E2EFDA;color:#14181A">HFL</span>Half leave</span>
+                        <span class="flex items-center gap-1.5"><span class="text-base-muted">–</span>No record</span>
+                    </div>
+                    <!-- Live Search Filter -->
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search employee or EID…" class="w-52 pl-8 pr-2.5 py-1.5 bg-base-paper border border-base-line rounded-md text-xs text-base-ink focus:outline-none focus:ring-2 focus:ring-signal-500/25 focus:border-signal-500 transition">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-base-muted absolute left-2.5 top-2"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-auto console-scroll" style="max-height: 82vh;">
+                <table class="w-full text-xs text-left border-collapse" id="matrixTable">
+                    <thead id="matrixHead"></thead>
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center gap-2.5">
+                                    <div class="p-2.5 bg-base-paper rounded-full border border-base-line">
+                                        <i data-lucide="calendar-check" class="w-5 h-5 text-base-muted"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-base-ink">No report loaded yet</p>
+                                        <p class="text-[11px] text-base-muted mt-0.5">Pick a month above to load records.</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script th:inline="javascript">
+    const CURRENT_PHP_MONTH = /*[[${month}]]*/ '';
+</script>
+    <script th:inline="none">
+        let rawAttendanceRecords = [];
+        // Whatever renderTable() last drew — i.e. exactly what the user currently sees
+        // (respects the search box). The export reads from this, not rawAttendanceRecords.
+        let currentViewRecords = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            // Await month population first to prevent race conditions on initial page load
+            await fetchMonths();
+
+            // Client-side instant filter search
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                const filtered = rawAttendanceRecords.filter(row => {
+                    const eid = String(row.EID || row.eid || '').toLowerCase();
+                    const name = String(row.employeeName || '').toLowerCase();
+                    return eid.includes(term) || name.includes(term);
+                });
+                renderTable(filtered);
+            });
+        });
+
+        document.getElementById('monthYearSelect').addEventListener('change', function (e) {
+            e.preventDefault();
+            fetchMaster();
+        });
+
+        /**
+         * Fetch options for month/year dynamic selection dropdown
+         */
+        function fetchMonths() {
+            return $.ajax({
+                url: '/admin/getMonths',
+                type: 'GET',
+                dataType: 'JSON',
+                success: (res) => {
+                    console.log(res);
+                    populateSelect('monthYearSelect', res, 'month', 'month');   
+                    fetchMaster ();
+                },
+                error: (err) => {
+                    console.error('Failed to load month list:', err);
+                }
+            });
+        }
+         function fetchMaster() {
+            const selectedMonth = document.getElementById('monthYearSelect').value;
+            const tableBody = document.getElementById('attendanceTableBody');
+            const spinner = document.getElementById('loadingSpinner');
+
+            if (!selectedMonth) {
+                alert('Please select a valid month period.');
+                return;
+            }
+
+            spinner.classList.remove('hidden');
+
+            const formData = new FormData();
+             $.ajax({
+                url: '/admin/getMasterReport',
+                type: 'GET',
+                data:{month:selectedMonth},
+                dataType: 'JSON',
+                success: (res) => {
+                    console.log(res);
+  rawAttendanceRecords = res;
+                renderTable(res);
+                updateStats(res);
+                },
+                error: (error) => {
+                    console.error('Failed to load month list:', error);
+                                    console.error('AJAX Request Error:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center">
+                            <div class="flex flex-col items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                                <p class="text-xs font-semibold text-amber-600">Could not retrieve attendance data</p>
+                                <p class="text-[11px] text-base-muted">Check your connection or the endpoint <span class="font-mono">api/attendenceApi.php</span>.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                updateStats([]);
+                },
+                complete:()=>{
+
+                }
+            });
+        }
+        function populateSelect(selectId, items, valueKey, textKey) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            select.innerHTML = '<option value="">-- Select Month --</option>';
+
+            if (!Array.isArray(items)) return;
+
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item[valueKey];
+                opt.textContent = item[textKey];
+
+                if (CURRENT_PHP_MONTH === item[valueKey]) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+        }
+
+        /**
+         * Post Request to api/attendenceApi.php
+         */
+
+        const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+        /**
+         * Parse the selected "Mon-YYYY" period into {year, monthIndex, daysInMonth}
+         */
+        function getSelectedPeriod() {
+            const val = document.getElementById('monthYearSelect').value || CURRENT_PHP_MONTH;
+            const parts = String(val).split('-');
+            const monthIdx = MONTH_NAMES.indexOf((parts[0] || '').toLowerCase().slice(0, 3));
+            const year = parseInt(parts[1], 10);
+            if (monthIdx === -1 || isNaN(year)) {
+                const now = new Date();
+                return { year: now.getFullYear(), monthIndex: now.getMonth(), daysInMonth: new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() };
+            }
+            return { year, monthIndex: monthIdx, daysInMonth: new Date(year, monthIdx + 1, 0).getDate() };
+        }
+
+        /**
+         * Parse a record's date field. Primary format is the API's DD-Mon-YY
+         * (e.g. "01-Sep-26", from DATE_FORMAT(..., '%d-%b-%y')), with a couple
+         * of fallbacks for safety.
+         */
+        function parseRecordDate(dateStr) {
+            if (!dateStr) return null;
+
+            // DD-Mon-YY or DD-Mon-YYYY, e.g. "01-Sep-26" / "01-Sep-2026"
+            const m = String(dateStr).match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+            if (m) {
+                const day = parseInt(m[1], 10);
+                const monthIdx = MONTH_NAMES.indexOf(m[2].toLowerCase());
+                let year = parseInt(m[3], 10);
+                if (m[3].length === 2) year += 2000; // 2-digit year from %y
+                if (monthIdx !== -1) {
+                    const d = new Date(year, monthIdx, day);
+                    if (!isNaN(d)) return d;
+                }
+            }
+
+            // DD-MM-YYYY or DD/MM/YYYY
+            const m2 = String(dateStr).match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (m2) {
+                const d = new Date(parseInt(m2[3], 10), parseInt(m2[2], 10) - 1, parseInt(m2[1], 10));
+                if (!isNaN(d)) return d;
+            }
+
+            // Last resort: let the browser try (covers ISO YYYY-MM-DD reliably)
+            const d = new Date(dateStr);
+            return isNaN(d) ? null : d;
+        }
+
+        const WEEKDAY_LABELS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+        /**
+         * Build the array of day descriptors for a given period.
+         * Shared by the on-screen matrix and the Excel export so both
+         * always stay in
+         * Off days follow the same rule as the SQL query: every Sunday,
+         * plus the 2nd Saturday (day 8-14) and the last Saturday (last 7 days).
+         */
+        function buildDaysArray(period) {
+            const days = [];
+            for (let day = 1; day <= period.daysInMonth; day++) {
+                const weekday = new Date(period.year, period.monthIndex, day).getDay();
+                const isOffSat = weekday === 6 && ((day >= 8 && day <= 14) || day >= period.daysInMonth - 6);
+                days.push({ day, weekday, isWeekend: weekday === 0 || isOffSat });
+            }
+            return days;
+        }
+
+        /**
+         * Build the sticky header row: employee info, then one column per day
+         */
+        function renderMatrixHead(days) {
+            const thead = document.getElementById('matrixHead');
+            const dayCells = days.map(d => `
+                <th scope="col" class="col-day px-1 py-2 font-semibold${d.isWeekend ? ' is-weekend' : ''}">
+                    <div class="text-[0.58rem] ${d.isWeekend ? 'text-white' : 'text-base-muted'} tracking-wide">${WEEKDAY_LABELS[d.weekday]}</div>
+                    <div class="text-[0.68rem] ${d.isWeekend ? 'text-white' : 'text-base-ink'} font-mono font-semibold">${String(d.day).padStart(2, '0')}</div>
+                </th>
+            `).join('');
+
+            // The Excel sheet always has 31 day columns (E..AI); unused ones stay blank
+            const blankDayCells = Array.from({ length: XL_DAY_SLOTS - days.length }, () => `
+                <th scope="col" class="col-day px-1 py-2 font-semibold">
+                    <div class="text-[0.58rem]">&nbsp;</div>
+                    <div class="text-[0.68rem]">&nbsp;</div>
+                </th>
+            `).join('');
+
+            const leftStyle = 'color:#14181A';
+            const sumCells = XL_SUMMARY_COLS.map((c, i) => `
+                <th scope="col" class="col-sum px-2 py-2 text-[11px] tracking-wide" style="background:${xlHex(c.fill)};color:${c.font ? xlHex(c.font) : '#14181A'}" title="${escapeHtml(XL_SUMMARY_TITLES[i])}">${escapeHtml(c.h)}</th>
+            `).join('');
+
+            thead.innerHTML = `
+                <tr>
+                    <th scope="col" class="col-sl px-2 py-2 font-bold text-[11px] tracking-wide" style="${leftStyle}">SL.NO</th>
+                    <th scope="col" class="col-eid px-3 py-2 font-bold text-[11px] tracking-wide" style="${leftStyle}">EMP.ID</th>
+                    <th scope="col" class="col-emp px-4 py-2 font-bold text-[11px] tracking-wide" style="${leftStyle}">EMP NAME</th>
+                    ${dayCells}${blankDayCells}
+                    ${sumCells}
+                </tr>
+            `;
+        }
+
+        /**
+         * Group the flat record list into one entry per employee, keyed by day-of-month
+         */
+        function pivotByEmployee(data, period) {
+            const employees = new Map();
+
+            data.forEach(row => {
+                const eid = row.EID || row.eid || '-';
+                if (!employees.has(eid)) {
+                    const name = row.employeeName || '-';
+                    employees.set(eid, {
+                        eid,
+                        name,
+                        image: row.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E9F5F3&color=084E47`,
+                        byDay: {}
+                    });
+                }
+                const emp = employees.get(eid);
+                const dt = parseRecordDate(row.attendanceDate || row.attemdenceDate);
+                if (dt && dt.getFullYear() === period.year && dt.getMonth() === period.monthIndex) {
+                    emp.byDay[dt.getDate()] = row;
+                }
+            });
+
+            return Array.from(employees.values());
+        }
+
+        /**
+         * Render the employee x day matrix using secure DOM nodes (no raw string interpolation of data)
+         */
+        function renderTable(data) {
+            currentViewRecords = data;
+
+            const tbody = document.getElementById('attendanceTableBody');
+            const recordBadge = document.getElementById('recordBadge');
+            const period = getSelectedPeriod();
+
+            const days = buildDaysArray(period);
+            renderMatrixHead(days);
+
+            const colCount = 3 + XL_DAY_SLOTS + XL_SUMMARY_COLS.length;
+            tbody.innerHTML = '';
+
+            const employees = pivotByEmployee(data, period);
+            recordBadge.textContent = `${employees.length} employees`;
+            recordBadge.classList.remove('hidden');
+
+            if (!employees.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${colCount}" class="px-6 py-10 text-center">
+                            <div class="flex flex-col items-center gap-2">
+                                <i data-lucide="search-x" class="w-4 h-4 text-base-muted"></i>
+                                <p class="text-xs text-base-muted">No records found for the selected view.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            employees.forEach((emp, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-base-line';
+
+                const slCell = document.createElement('td');
+                slCell.className = 'col-sl px-2 py-1.5 font-mono text-[11px] text-base-muted';
+                slCell.textContent = idx + 1;
+                tr.appendChild(slCell);
+
+                const eidCell = document.createElement('td');
+                eidCell.className = 'col-eid px-3 py-1.5 font-mono text-[11px] text-base-muted';
+                eidCell.textContent = emp.eid;
+                tr.appendChild(eidCell);
+
+                const empCell = document.createElement('td');
+                empCell.className = 'col-emp px-4 py-1.5 font-semibold text-base-ink text-[12px]';
+                empCell.textContent = String(emp.name || '').trim();
+                tr.appendChild(empCell);
+
+                days.forEach(d => {
+                    const td = document.createElement('td');
+                    td.className = `col-day px-1 py-1.5 text-xs${d.isWeekend ? ' is-weekend' : ''}`;
+                    td.innerHTML = getDayCellContent(emp.byDay[d.day]);
+                    tr.appendChild(td);
+                });
+
+                // Blank slots up to 31 days, exactly like the Excel sheet
+                for (let i = days.length; i < XL_DAY_SLOTS; i++) {
+                    const td = document.createElement('td');
+                    td.className = 'col-day px-1 py-1.5 text-xs';
+                    tr.appendChild(td);
+                }
+
+                // Summary columns (PRESENT DAYS ... TOTAL) — same numbers as the Excel export
+                const totals = buildSummaryCells(0, buildEmployeeCodes(emp, days)).map(x => x.result);
+                XL_SUMMARY_COLS.forEach((meta, i) => {
+                    const td = document.createElement('td');
+                    td.className = 'col-sum px-2 py-1.5 text-xs';
+                    if (meta.data) td.style.background = xlHex(meta.data);
+                    td.textContent = totals[i];
+                    tr.appendChild(td);
+                });
+
+                fragment.appendChild(tr);
+            });
+
+            tbody.appendChild(fragment);
+            lucide.createIcons();
+        }
+
+        /**
+         * Classify a day's record into Sunday / Saturday off / Unmarked / Present / Absent / Leave / no record.
+         * Single source of truth used by BOTH the on-screen matrix and the
+         * Excel export, so the two always agree.
+         */
+        function classifyDay(rec) {
+            if (!rec) return { kind: 'none', label: '–' };
+
+            const status = (rec.status || '').trim().toLowerCase();
+
+            // Computed by the query when there is no attendance row
+            if (status === 'sun' || status === 'weekoff' || status === 'w') return { kind: 'sun', label: 'SUN' };
+            if (status === 'sat') return { kind: 'sat', label: 'SAT' };
+            if (status === 'um')  return { kind: 'um',  label: 'UM' };
+
+            if (status === 'present' || status === 'p' || status === '1') {
+                return { kind: 'present', label: 'Present' };
+            }
+            if (status === 'absent' || status === 'a' || status === 'on' || status === '0') {
+                return { kind: 'absent', label: 'LOP' };
+            }
+
+            if (status === 'half day' && rec.leaveDays == '0.5' && rec.workingDay == '0.0' && rec.lt != null) {
+                if (rec.lt === 'Session 1') return { kind: 'leave', leaveType: rec.leaveType, label: `${rec.leaveType}/UM` };
+                if (rec.lt === 'Session 2') return { kind: 'leave', leaveType: rec.leaveType, label: `UM/${rec.leaveType}` };
+            }
+
+            if ((status === 'leave/absent' || status === 'absent/leave') && rec.leaveDays == '0.5' && rec.workingDay == '0.0' && rec.lt != null) {
+                if (rec.lt === 'Session 1') return { kind: 'leave', leaveType: rec.leaveType, label: `${rec.leaveType}/LOP` };
+                if (rec.lt === 'Session 2') return { kind: 'leave', leaveType: rec.leaveType, label: `LOP/${rec.leaveType}` };
+            }
+
+            if ((status === 'leave/present' || status === 'present/leave') && rec.leaveDays == '0.5' && rec.workingDay == '0.5' && rec.lt != null) {
+                if (rec.lt === 'Session 1') return { kind: 'leave', leaveType: rec.leaveType, label: `${rec.leaveType}/Present` };
+                if (rec.lt === 'Session 2') return { kind: 'leave', leaveType: rec.leaveType, label: `Present/${rec.leaveType}` };
+            }
+
+            if (status === 'leave' && rec.leaveDays == '1.0' && rec.workingDay == '0.0') {
+                return { kind: 'leave', leaveType: rec.leaveType, label: rec.leaveType || 'Leave' };
+            }
+
+            return { kind: 'none', label: '–' };
+        }
+
+        /**
+         * Colours for each Excel-register code [background, text] — same palette as the export.
+         * Any code not listed (e.g. CO) falls back to amber.
+         */
+        const CODE_STYLE = {
+            P:   ['#00B050', '#FFFFFF'],
+            LOP: ['#FF0000', '#FFFFFF'],
+            SUN: ['#C00000', '#FFFFFF'],
+            SAT: ['#C00000', '#FFFFFF'],
+            UM:  ['#FBEEE1', '#95530A'],
+            CL:  ['#BFBFBF', '#14181A'],
+            SL:  ['#BFBFBF', '#14181A'],
+            AL:  ['#BFBFBF', '#14181A'],
+            FL:  ['#D9D9D9', '#14181A'],
+            H:   ['#FFC000', '#14181A'],
+            HCL: ['#E2EFDA', '#14181A'],
+            HSL: ['#E2EFDA', '#14181A'],
+            HAL: ['#E2EFDA', '#14181A'],
+            HFL: ['#E2EFDA', '#14181A'],
+        };
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        }
+
+        /**
+         * Render a day as the SAME code the Excel export writes
+         * (P / LOP / SUN / SAT / UM / CL / SL / AL / FL / H / HCL / HSL / HAL / HFL).
+         */
+        function getDayCellContent(rec) {
+            const code = excelCodeForRecord(rec);
+            if (!code) return '<span class="text-base-muted">–</span>';
+            const st = CODE_STYLE[code] || ['#FBEEE1', '#95530A'];
+            return `<span class="status-dot" style="background:${st[0]};color:${st[1]}">${escapeHtml(code)}</span>`;
+        }
+
+        /**
+         * Stats are derived from the same codes the grid shows.
+         */
+        function updateStats(data) {
+            document.getElementById('statTotalRows').textContent = data.length;
+
+            let present = 0, absent = 0, weekoffs = 0;
+
+            data.forEach(r => {
+                const code = excelCodeForRecord(r);
+                if (code === 'P') present++;
+                else if (code === 'LOP') absent++;
+                else if (code === 'SUN' || code === 'SAT') weekoffs++;
+            });
+
+            document.getElementById('statPresent').textContent = present;
+            document.getElementById('statAbsent').textContent = absent;
+            document.getElementById('statWeekoffs').textContent = weekoffs;
+        }
+
+        /* =====================================================================
+         * EXCEL EXPORT – replica of the "Attendance_<Month>_<Year>.xlsx" register
+         *
+         * CODE MAPPING (screen  ->  Excel register)
+         *   Present             -> P
+         *   Absent              -> LOP
+         *   Sunday              -> SUN
+         *   2nd / last Saturday -> SAT
+         *   Unmarked            -> UM
+         *   CL / SL             -> CL / SL
+         *   EL (earned)         -> AL
+         *   RH (restricted)     -> FL
+         *   Half day (no leave) -> H
+         *   Half-day leave      -> HCL / HSL / HAL (half EL) / HFL (half RH)
+         *   No record           -> (blank)
+         * ===================================================================== */
+
+        const MONTH_FULL = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+                            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+        const WEEKDAY_TITLE = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        // App leave-type  ->  code used in the Excel register
+        const EXCEL_LEAVE_CODE = { CL: 'CL', SL: 'SL', EL: 'AL', RH: 'FL' };
+
+        // Sheet geometry (identical to the reference workbook)
+        const XL_FIRST_DAY_COL = 5;    // E
+        const XL_DAY_SLOTS     = 31;   // E..AI
+        const XL_LAST_DAY_COL  = XL_FIRST_DAY_COL + XL_DAY_SLOTS - 1; // 35 = AI
+        const XL_FIRST_SUM_COL = XL_LAST_DAY_COL + 1;                 // 36 = AJ
+        const XL_FIRST_DATA_ROW = 7;
+
+        const XL_TITLE_BLUE   = 'FFBDD7EE'; // day header (accent1, lighter 60%)
+        const XL_HEAD_GREY    = 'FFD6DCE4'; // left/summary header (text2, lighter 80%)
+        const XL_HEAD_ORANGE  = 'FFF4B084'; // right summary header (accent2, lighter 40%)
+        const XL_GREEN_TXT    = 'FF70AD47'; // accent6
+        const XL_SUNDAY_RED   = 'FFC00000';
+
+        /**
+         * Summary columns AJ..BF, in order. `fill` = header fill, `data` = data-cell fill,
+         * `font` = header font colour, `w` = column width.
+         */
+        const XL_SUMMARY_COLS = [
+            { h: 'PRESENT DAYS', w: 17.11, fill: XL_HEAD_GREY },                                        // AJ
+            { h: 'PRESENT DAYS', w: 17.11, fill: XL_HEAD_GREY },                                        // AK
+            { h: 'LOP',          w: 5.33,  fill: XL_HEAD_GREY },                                        // AL
+            { h: 'HALF DAY',     w: 11.66, fill: XL_HEAD_GREY },                                        // AM
+            { h: 'T.LOP',        w: 7.33,  fill: XL_HEAD_ORANGE, data: 'FFFCE4D6' },                   // AN
+            { h: 'WORK DAY',     w: 13.33, fill: XL_HEAD_ORANGE, data: 'FFE2EFDA' },                   // AO
+            { h: 'HSL',          w: 5,     fill: XL_HEAD_ORANGE, font: XL_GREEN_TXT },                 // AP
+            { h: 'HCL',          w: 5.33,  fill: XL_HEAD_ORANGE, font: XL_GREEN_TXT },                 // AQ
+            { h: 'HAL',          w: 5.44,  fill: XL_HEAD_ORANGE, font: XL_GREEN_TXT },                 // AR
+            { h: 'HFL',          w: 5,     fill: XL_HEAD_ORANGE, font: XL_GREEN_TXT },                 // AS
+            { h: 'TH',           w: 4,     fill: XL_HEAD_ORANGE, font: XL_GREEN_TXT },                 // AT
+            { h: 'SL',           w: 3.33,  fill: XL_HEAD_ORANGE, font: 'FFFF0000' },                   // AU
+            { h: 'CL',           w: 3.55,  fill: XL_HEAD_ORANGE, font: 'FFFF0000' },                   // AV
+            { h: 'AL',           w: 3.66,  fill: XL_HEAD_ORANGE, font: 'FFFF0000' },                   // AW
+            { h: 'FL',           w: 3.33,  fill: XL_HEAD_ORANGE, font: 'FFFF0000' },                   // AX
+            { h: 'SL',           w: 3.33,  fill: XL_HEAD_ORANGE },                                      // AY
+            { h: 'CL',           w: 3.55,  fill: XL_HEAD_ORANGE },                                      // AZ
+            { h: 'AL',           w: 3.66,  fill: XL_HEAD_ORANGE },                                      // BA
+            { h: 'FL',           w: 3.33,  fill: XL_HEAD_ORANGE },                                      // BB
+            { h: 'T.LEAVES',     w: 11,    fill: XL_HEAD_ORANGE, data: 'FFD6DCE4' },                   // BC
+            { h: 'ADD LEAVES',   w: 15.66, fill: XL_HEAD_ORANGE, data: 'FFF8CBAD' },                   // BD
+            { h: 'WEEKOFF',      w: 10.78, fill: XL_HEAD_ORANGE },                                      // BE
+            { h: 'TOTAL',        w: 10.78, fill: XL_HEAD_ORANGE, data: 'FFA9D08E', lastCol: true },   // BF
+        ];
+
+        /** 'FFRRGGBB' -> '#RRGGBB' */
+        function xlHex(argb) { return '#' + String(argb).slice(2); }
+
+        /** Tooltips for the summary column headers (several headers repeat in the sheet) */
+        const XL_SUMMARY_TITLES = [
+            'Present days (P)', 'Present days incl. present half of half-leaves (P + TH)', 'LOP days', 'Half days (H)',
+            'Total LOP (LOP + H/2)', 'Work days (present + H/2)',
+            'Half sick leave (HSL)', 'Half casual leave (HCL)', 'Half earned leave (HAL)', 'Half restricted leave (HFL)',
+            'Total half-leave days (TH)',
+            'Sick leave – full days', 'Casual leave – full days', 'Earned leave (AL) – full days', 'Restricted leave (FL) – full days',
+            'Sick leave incl. halves', 'Casual leave incl. halves', 'Earned leave (AL) incl. halves', 'Restricted leave (FL) incl. halves',
+            'Total leaves', 'Add leaves (work days + total leaves)',
+            'Weekoffs (Sundays + 2nd & last Saturdays)', 'Total (add leaves + weekoffs)'
+        ];
+
+        /** The 31 day-slot codes for one employee ('' = blank) — shared by screen and export */
+        function buildEmployeeCodes(emp, days) {
+            const codes = [];
+            for (let i = 0; i < XL_DAY_SLOTS; i++) {
+                codes.push(i < days.length ? excelCodeForRecord(emp.byDay[i + 1]) : '');
+            }
+            return codes;
+        }
+
+        /** 1 -> A, 27 -> AA, 58 -> BF */
+        function xlCol(n) {
+            let s = '';
+            while (n > 0) {
+                const m = (n - 1) % 26;
+                s = String.fromCharCode(65 + m) + s;
+                n = Math.floor((n - 1) / 26);
+            }
+            return s;
+        }
+
+        /** Excel date serial for a calendar date */
+        function xlSerial(year, monthIndex, day) {
+            return Math.round((Date.UTC(year, monthIndex, day) - Date.UTC(1899, 11, 30)) / 86400000);
+        }
+
+        /**
+         * Map one day's record to the code used in the Excel register.
+         * Builds on classifyDay() so the screen and the export agree on what a record *is*.
+         */
+        function excelCodeForRecord(rec) {
+            if (!rec) return '';
+
+            const info = classifyDay(rec);
+
+            if (info.kind === 'sun')     return 'SUN';
+            if (info.kind === 'sat')     return 'SAT';
+            if (info.kind === 'um')      return 'UM';
+            if (info.kind === 'present') return 'P';
+            if (info.kind === 'absent')  return 'LOP';
+
+            if (info.kind === 'leave') {
+                const key  = String(info.leaveType || '').toUpperCase().trim();
+                const base = EXCEL_LEAVE_CODE[key] || key || 'L';       // EL->AL, RH->FL, others unchanged
+                const isHalf = parseFloat(rec.leaveDays) === 0.5;
+                return isHalf ? 'H' + base : base;                      // HCL / HSL / HAL / HFL
+            }
+
+            // A half day with no leave attached
+            if (String(rec.status || '').toLowerCase().indexOf('half') !== -1) return 'H';
+
+            return '';
+        }
+
+        /**
+         * The 23 summary cells (AJ..BF) for one employee row, as {formula, result}.
+         * Formulas are exactly the ones in the reference sheet (BE now also counts SAT);
+         * `result` is the cached value so the numbers show even in viewers that don't recalculate.
+         */
+        function buildSummaryCells(row, codes) {
+            const rng = `E${row}:AI${row}`;
+            const cnt = k => codes.filter(c => String(c).toUpperCase() === k).length;
+
+            const P = cnt('P'), LOP = cnt('LOP'), H = cnt('H');
+            const HSL = cnt('HSL'), HCL = cnt('HCL'), HAL = cnt('HAL'), HFL = cnt('HFL');
+            const SL = cnt('SL'), CL = cnt('CL'), AL = cnt('AL'), FL = cnt('FL');
+            const SUN = cnt('SUN') + cnt('SAT');   // weekoffs: Sundays + 2nd/last Saturdays
+
+            const TH   = (HSL + HCL + HAL + HFL) / 2;
+            const PD   = P + TH;                 // AK
+            const TLOP = LOP + H / 2;            // AN
+            const WD   = PD + H / 2;             // AO
+            const tSL = SL + HSL / 2, tCL = CL + HCL / 2, tAL = AL + HAL / 2, tFL = FL + HFL / 2;
+            const TL   = tSL + tCL + tAL + tFL;  // BC
+            const ADD  = WD + TL;                // BD
+            const TOT  = ADD + SUN;              // BF
+
+            return [
+                { formula: `COUNTIF(${rng},"P")`,   result: P },                    // AJ
+                { formula: `AJ${row}+AT${row}`,     result: PD },                   // AK
+                { formula: `COUNTIF(${rng},"LOP")`, result: LOP },                  // AL
+                { formula: `COUNTIF(${rng},"H")`,   result: H },                    // AM
+                { formula: `AL${row}+AM${row}/2`,   result: TLOP },                 // AN
+                { formula: `AK${row}+AM${row}/2`,   result: WD },                   // AO
+                { formula: `COUNTIF(${rng},"HSL")`, result: HSL },                  // AP
+                { formula: `COUNTIF(${rng},"HCL")`, result: HCL },                  // AQ
+                { formula: `COUNTIF(${rng},"HAL")`, result: HAL },                  // AR
+                { formula: `COUNTIF(${rng},"HFL")`, result: HFL },                  // AS
+                { formula: `(AP${row}+AQ${row}+AR${row}+AS${row})/2`, result: TH }, // AT
+                { formula: `COUNTIF(${rng},"SL")`,  result: SL },                   // AU
+                { formula: `COUNTIF(${rng},"CL")`,  result: CL },                   // AV
+                { formula: `COUNTIF(${rng},"AL")`,  result: AL },                   // AW
+                { formula: `COUNTIF(${rng},"FL")`,  result: FL },                   // AX
+                { formula: `AU${row}+AP${row}/2`,   result: tSL },                  // AY
+                { formula: `AV${row}+AQ${row}/2`,   result: tCL },                  // AZ
+                { formula: `AW${row}+AR${row}/2`,   result: tAL },                  // BA
+                { formula: `AX${row}+AS${row}/2`,   result: tFL },                  // BB
+                { formula: `AY${row}+AZ${row}+BA${row}+BB${row}`, result: TL },     // BC
+                { formula: `AO${row}+BC${row}`,     result: ADD },                  // BD
+                { formula: `COUNTIF(${rng},"SUN")+COUNTIF(${rng},"SAT")`, result: SUN }, // BE
+                { formula: `BD${row}+BE${row}`,     result: TOT },                  // BF
+            ];
+        }
+
+        /**
+         * Export the currently displayed view (respects the search box) as an .xlsx that
+         * reproduces the attendance register layout: title band, Start/End date, frozen
+         * headers, day grid with P / LOP / SUN / SAT / UM / SL / CL / AL / FL / H / HSL / HCL / HAL / HFL,
+         * live COUNTIF summary columns and the same colour rules.
+         */
+        async function exportTableToExcel() {
+            const sourceData = currentViewRecords.length ? currentViewRecords : rawAttendanceRecords;
+
+            if (!sourceData.length) {
+                alert('No data available to export.');
+                return;
+            }
+
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = true;
+            exportBtn.classList.add('opacity-60', 'cursor-wait');
+
+            try {
+                const period    = getSelectedPeriod();
+                const days      = buildDaysArray(period);
+                const employees = pivotByEmployee(sourceData, period);
+
+                const monthName  = MONTH_FULL[period.monthIndex];                          // APRIL
+                const monthTitle = monthName.charAt(0) + monthName.slice(1).toLowerCase(); // April
+                const startSerial = xlSerial(period.year, period.monthIndex, 1);
+                const endSerial   = xlSerial(period.year, period.monthIndex, period.daysInMonth);
+
+                const thin = { style: 'thin',   color: { argb: 'FF000000' } };
+                const med  = { style: 'medium', color: { argb: 'FF000000' } };
+                const solid = argb => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+
+                const wb = new ExcelJS.Workbook();
+                wb.calcProperties = { fullCalcOnLoad: true };
+                wb.views = [{ x: 0, y: 0, width: 10000, height: 20000, firstSheet: 0, activeTab: 1, visibility: 'visible' }];
+
+                /* ---------- hidden Helper sheet (month / year lists for the drop-downs) ---------- */
+                const yearFrom = Math.min(2020, period.year);
+                const yearTo   = Math.max(2030, period.year);
+                const helper = wb.addWorksheet('Helper', { state: 'hidden' });
+                helper.getCell('A1').value = 'MONTH';
+                MONTH_FULL.forEach((m, i) => { helper.getCell(`A${i + 2}`).value = m; });
+                helper.getCell('D1').value = 'HOLIDAY';
+                helper.getCell('F1').value = 'YEAR';
+                for (let y = yearFrom; y <= yearTo; y++) helper.getCell(`F${y - yearFrom + 2}`).value = y;
+
+                /* ---------- main sheet ---------- */
+                const ws = wb.addWorksheet(monthTitle, {
+                    views: [{ state: 'frozen', xSplit: 4, ySplit: 6, topLeftCell: 'E7', zoomScale: 120 }],
+                    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+                });
+
+                // Column widths
+                ws.getColumn(1).width = 5.66;
+                ws.getColumn(2).width = 8.11;
+                ws.getColumn(3).width = 9.66;
+                ws.getColumn(4).width = 25.11;
+                for (let c = XL_FIRST_DAY_COL; c <= XL_LAST_DAY_COL; c++) {
+                    ws.getColumn(c).width = c === 7 ? 5.11 : (c >= 34 ? 5.55 : 5.33);
+                }
+                XL_SUMMARY_COLS.forEach((col, i) => { ws.getColumn(XL_FIRST_SUM_COL + i).width = col.w; });
+
+                /* ----- Row 1: title band ----- */
+                ws.getRow(1).height = 33.6;
+                const titleFont = { name: 'Algerian', size: 24 };
+
+                const b1 = ws.getCell('B1');
+                b1.value = 'ATTENDANCE FOR THE MONTH OF';
+                b1.font = titleFont;
+                b1.alignment = { horizontal: 'center', vertical: 'middle' };
+                b1.border = { top: med, bottom: med, left: med, right: med };
+                ws.mergeCells('B1:M1');
+
+                for (let c = 14; c <= 18; c++) { // N..R  (month name spills across these)
+                    ws.getCell(1, c).border = {
+                        top: med, bottom: med,
+                        left: c === 14 ? med : undefined,
+                        right: c === 18 ? med : undefined
+                    };
+                }
+                const n1 = ws.getCell('N1');
+                n1.value = monthName;
+                n1.font = titleFont;
+                n1.alignment = { vertical: 'middle' };
+                n1.dataValidation = { type: 'list', allowBlank: true, formulae: ['Helper!$A$2:$A$13'] };
+
+                const s1 = ws.getCell('S1');
+                s1.value = period.year;
+                s1.font = titleFont;
+                s1.alignment = { horizontal: 'center', vertical: 'middle' };
+                s1.border = { top: med, bottom: med, left: med, right: med };
+                s1.dataValidation = { type: 'list', allowBlank: true, formulae: [`Helper!$F$2:$F$${yearTo - yearFrom + 2}`] };
+                ws.mergeCells('S1:U1');
+
+                /* ----- Row 2: start / end date (drive the day headers) ----- */
+                ws.getCell('D2').value = 'Start Date';
+                ws.getCell('I2').value = 'End Date';
+
+                const e2 = ws.getCell('E2');
+                e2.value = { formula: 'DATE(S1,MATCH(N1,Helper!$A$2:$A$13,0),1)', result: startSerial };
+                e2.numFmt = 'mm-dd-yy';
+                e2.alignment = { horizontal: 'center' };
+                e2.border = { top: med };
+                ws.mergeCells('E2:G2');
+
+                const j2 = ws.getCell('J2');
+                j2.value = { formula: 'EOMONTH(E2,0)', result: endSerial };
+                j2.numFmt = 'mm-dd-yy';
+                j2.alignment = { horizontal: 'center' };
+                j2.border = { top: med };
+                ws.mergeCells('J2:L2');
+
+                ws.getRow(4).height = 15;
+                ws.getRow(5).height = 18;
+                ws.getRow(6).height = 18;
+
+                /* ----- Rows 5-6: table header ----- */
+                const headFont = (argb) => ({ name: 'Calibri', size: 14, bold: true, color: argb ? { argb } : undefined });
+                const centre = { horizontal: 'center', vertical: 'middle' };
+
+                [ ['B', 'SL.NO'], ['C', 'EMP.ID'], ['D', 'EMP NAME'] ].forEach(([col, text]) => {
+                    const cell = ws.getCell(`${col}5`);
+                    cell.value = text;
+                    cell.font = headFont();
+                    cell.fill = solid(XL_HEAD_GREY);
+                    cell.alignment = centre;
+                    cell.border = { top: med, bottom: thin, left: col === 'B' ? med : thin, right: thin };
+                    ws.mergeCells(`${col}5:${col}6`);
+                });
+
+                for (let i = 0; i < XL_DAY_SLOTS; i++) {
+                    const c    = XL_FIRST_DAY_COL + i;
+                    const L    = xlCol(c);
+                    const prev = xlCol(c - 1);
+                    const inMonth = i < days.length;
+                    const serial  = xlSerial(period.year, period.monthIndex, i + 1);
+                    const wkday   = inMonth ? WEEKDAY_TITLE[days[i].weekday] : '';
+
+                    const top = ws.getCell(5, c);
+                    top.value = { formula: `TEXT(${L}6,"ddd")`, result: wkday };
+                    top.font = headFont();
+                    top.fill = solid(XL_TITLE_BLUE);
+                    top.alignment = centre;
+                    top.border = { top: med, bottom: thin, left: thin, right: thin };
+
+                    const bottom = ws.getCell(6, c);
+                    bottom.value = i === 0
+                        ? { formula: 'E2', result: startSerial }
+                        : { formula: `IF(${prev}6<$J$2,${prev}6+1,"")`, result: inMonth ? serial : '' };
+                    bottom.numFmt = 'dd';
+                    bottom.font = headFont();
+                    bottom.fill = solid(XL_TITLE_BLUE);
+                    bottom.alignment = centre;
+                    bottom.border = { top: thin, bottom: thin, left: thin, right: thin };
+                }
+
+                XL_SUMMARY_COLS.forEach((col, i) => {
+                    const c = XL_FIRST_SUM_COL + i;
+                    const cell = ws.getCell(5, c);
+                    cell.value = col.h;
+                    cell.font = headFont(col.font);
+                    cell.fill = solid(col.fill);
+                    cell.alignment = centre;
+                    cell.border = { top: med, bottom: thin, left: thin, right: col.lastCol ? med : thin };
+                    ws.mergeCells(5, c, 6, c);
+                });
+
+                /* ----- Employee rows ----- */
+                employees.forEach((emp, idx) => {
+                    const r = XL_FIRST_DATA_ROW + idx;
+
+                    // Codes for the 31 day slots ('' beyond the end of the month / no record)
+                    const codes = buildEmployeeCodes(emp, days);
+
+                    const b = ws.getCell(r, 2);
+                    b.value = idx + 1;
+                    b.font = { name: 'Calibri', size: 11 };
+                    b.alignment = { horizontal: 'center' };
+                    b.border = { top: thin, bottom: thin, left: med, right: thin };
+
+                    const c3 = ws.getCell(r, 3);
+                    c3.value = emp.eid;
+                    c3.font = { name: 'Calibri', size: 12 };
+                    c3.alignment = { horizontal: 'center' };
+                    c3.border = { top: thin, bottom: thin, left: thin, right: thin };
+
+                    const d4 = ws.getCell(r, 4);
+                    d4.value = String(emp.name || '').trim();
+                    d4.font = { name: 'Calibri', size: 12 };
+                    d4.alignment = centre;
+                    d4.border = { top: thin, bottom: thin, left: thin, right: thin };
+
+                    codes.forEach((code, i) => {
+                        const cell = ws.getCell(r, XL_FIRST_DAY_COL + i);
+                        cell.value = code === '' ? null : code;
+                        cell.font = { name: 'Calibri', size: 11 };
+                        cell.alignment = centre;
+                        cell.border = { top: thin, bottom: thin, left: thin, right: thin };
+                    });
+
+                    buildSummaryCells(r, codes).forEach((v, i) => {
+                        const meta = XL_SUMMARY_COLS[i];
+                        const cell = ws.getCell(r, XL_FIRST_SUM_COL + i);
+                        cell.value = v;
+                        cell.font = { name: 'Calibri', size: 11 };
+                        cell.alignment = centre;
+                        if (meta.data) cell.fill = solid(meta.data);
+                        cell.border = { top: thin, bottom: thin, left: thin, right: meta.lastCol ? med : thin };
+                    });
+                });
+
+                /* ----- Conditional formatting (same colours / priority as the reference sheet) ----- */
+                const lastRow = XL_FIRST_DATA_ROW + Math.max(employees.length, 1) - 1;
+                const cfFill = argb => ({ fill: { type: 'pattern', pattern: 'solid', fgColor: { argb }, bgColor: { argb } } });
+                const is = (code) => `E${XL_FIRST_DATA_ROW}="${code}"`;
+
+                ws.addConditionalFormatting({
+                    ref: `E${XL_FIRST_DATA_ROW}:AI${lastRow}`,
+                    rules: [
+                        { type: 'expression', priority: 1,  formulae: [is('FL')],  style: cfFill('FFD9D9D9') },
+                        { type: 'expression', priority: 2,  formulae: [is('HFL')], style: cfFill('FFE2EFDA') },
+                        { type: 'expression', priority: 3,  formulae: [is('LOP')], style: cfFill('FFFF0000') },
+                        { type: 'expression', priority: 4,  formulae: [is('HAL')], style: cfFill('FFE2EFDA') },
+                        { type: 'expression', priority: 5,  formulae: [is('HCL')], style: cfFill('FFE2EFDA') },
+                        { type: 'expression', priority: 6,  formulae: [is('HSL')], style: cfFill('FFE2EFDA') },
+                        { type: 'expression', priority: 7,  formulae: [is('H')],   style: cfFill('FFFFC000') },
+                        { type: 'expression', priority: 8,  formulae: [is('AL')],  style: cfFill('FFBFBFBF') },
+                        { type: 'expression', priority: 9,  formulae: [is('CL')],  style: cfFill('FFBFBFBF') },
+                        { type: 'expression', priority: 10, formulae: [is('SL')],  style: cfFill('FFBFBFBF') },
+                        { type: 'expression', priority: 11, formulae: [is('P')],   style: cfFill('FF00B050') },
+                        { type: 'expression', priority: 12, formulae: [is('SUN')], style: cfFill(XL_SUNDAY_RED) },
+                        { type: 'expression', priority: 13, formulae: [is('SAT')], style: cfFill(XL_SUNDAY_RED) },
+                        { type: 'expression', priority: 14, formulae: [is('UM')],  style: cfFill('FFFBEEE1') },
+                    ]
+                });
+
+                // Header: Sundays and the 2nd / last Saturdays turn dark red (bold).
+                // Last-Saturday test: date is within the final 7 days (> end date - 7).
+                ws.addConditionalFormatting({
+                    ref: 'E5:AI6',
+                    rules: [{
+                        type: 'expression', priority: 15,
+                        formulae: ['OR(E$5="Sun",AND(E$5="Sat",OR(AND(DAY(E$6)>=8,DAY(E$6)<=14),E$6>$J$2-7)))'],
+                        style: { font: { bold: true }, ...cfFill(XL_SUNDAY_RED) }
+                    }]
+                });
+
+                /* ----- Download ----- */
+                const buffer = await wb.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Attendance_${monthTitle}_${period.year}.xlsx`;   // e.g. Attendance_April_2026.xlsx
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Excel export failed:', err);
+                alert('Could not generate the Excel file. Check the console for details.');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.classList.remove('opacity-60', 'cursor-wait');
+            }
+        }
+    </script>
+</body>
+</html>

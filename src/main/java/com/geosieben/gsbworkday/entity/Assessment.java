@@ -1,6 +1,8 @@
 package com.geosieben.gsbworkday.entity;
 
 import java.time.LocalDateTime;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +18,7 @@ public class Assessment {
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private int  assesmentid;
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="candidateid")
 private Candidate candidate;
 private LocalDateTime  aptitudeScheduledOn;

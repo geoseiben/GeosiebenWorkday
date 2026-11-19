@@ -1,17 +1,11 @@
 package com.geosieben.gsbworkday.dto;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class EmployeeRequestDto {
 
     // --- Personal Information ---
@@ -29,9 +23,9 @@ public class EmployeeRequestDto {
 
     // --- Professional / Employment Details ---
     private String workEmail;
-    private String department;
+    private Integer department;
     private String designation;
-    private String managerName;
+    private String manager;
     private LocalDate doj; // Date of Joining
     private String employmentStatus;
     private Integer probationMonths;
@@ -62,8 +56,57 @@ public class EmployeeRequestDto {
     private String emergencyName;
     private String emergencyPhone;
     private String emergencyRelation;
+    private String accessLevel;
+    public EmployeeRequestDto(String employeeId, String firstName, String lastName, String fatherName, LocalDate dob,
+            String gender, String maritalStatus, String bloodGroup, String personalEmail, String phone, String address,
+            String workEmail, Integer department, String designation, String manager, LocalDate doj,
+            String employmentStatus, Integer probationMonths, LocalDate confirmationDate, String college, String degree,
+            String fieldOfStudy, String yearOfPassing, Double gpa, String aadhar, String pan, String uan, String pfNo,
+            LocalDate pfStart, String esiNo, String bankName, String bankBranch, String bankIfsc, String accountNo,
+            String paymentMode, String onsurity, String emergencyName, String emergencyPhone, String emergencyRelation,
+            String accessLevel) {
+        this.employeeId = employeeId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.fatherName = fatherName;
+        this.dob = dob;
+        this.gender = gender;
+        this.maritalStatus = maritalStatus;
+        this.bloodGroup = bloodGroup;
+        this.personalEmail = personalEmail;
+        this.phone = phone;
+        this.address = address;
+        this.workEmail = workEmail;
+        this.department = department;
+        this.designation = designation;
+        this.manager = manager;
+        this.doj = doj;
+        this.employmentStatus = employmentStatus;
+        this.probationMonths = probationMonths;
+        this.confirmationDate = confirmationDate;
+        this.college = college;
+        this.degree = degree;
+        this.fieldOfStudy = fieldOfStudy;
+        this.yearOfPassing = yearOfPassing;
+        this.gpa = gpa;
+        this.aadhar = aadhar;
+        this.pan = pan;
+        this.uan = uan;
+        this.pfNo = pfNo;
+        this.pfStart = pfStart;
+        this.esiNo = esiNo;
+        this.bankName = bankName;
+        this.bankBranch = bankBranch;
+        this.bankIfsc = bankIfsc;
+        this.accountNo = accountNo;
+        this.paymentMode = paymentMode;
+        this.onsurity = onsurity;
+        this.emergencyName = emergencyName;
+        this.emergencyPhone = emergencyPhone;
+        this.emergencyRelation = emergencyRelation;
+        this.accessLevel = accessLevel;
+    }
 
-   
 
    }
 

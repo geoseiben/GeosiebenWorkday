@@ -200,8 +200,9 @@
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 </head>
-<body>
+<head th:replace="includes/header :: header"></head>
 
+<body>
 <div class="dashboard-container">
     <!-- Top Navigation -->
     <header class="top-nav">
@@ -331,6 +332,7 @@
         </div>
     </div>
 </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

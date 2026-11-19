@@ -27,8 +27,8 @@
         .chart-bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
+<head th:replace="includes/header :: header"></head>
 <body class="bg-[#ebeef2] text-slate-800 antialiased overflow-hidden h-screen flex flex-col">
-    <div th:replace="includes/header :: header"></div>
 
     <div id="remarks-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 modal-overlay">
         <div class="bg-white border-2 border-slate-900 shadow-[8px_8px_0_0_#000] w-full max-w-md p-6">
@@ -60,17 +60,11 @@
 
     <main class="flex-1 overflow-auto p-6 flex flex-col gap-6">
         
-        <div class="bg-white border border-slate-300 rounded-lg shadow-sm shrink-0">
-            <div class="bg-[#f1f3f7] px-4 py-2 border-b border-slate-300 flex items-center justify-between">
-                <span class="text-[11px] font-black text-slate-600 uppercase tracking-widest">System_Telemetry: Ticket_Volume_24H</span>
-            </div>
-            <div class="p-6 h-32 flex items-end justify-between gap-1 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px]" id="chart-container">
-            </div>
-        </div>
+
 
         <div class="bg-white border border-slate-300 rounded-lg shadow-sm flex flex-col overflow-hidden mb-8">
             <div class="bg-[#f1f3f7] px-4 py-2 border-b border-slate-300 flex items-center justify-between">
-                <span class="text-[11px] font-black text-slate-600 uppercase tracking-widest">Process_Task: Task_Queue</span>
+                <span class="text-[11px] font-black text-slate-600 uppercase tracking-widest">Active Tickets</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[1000px]">
@@ -192,7 +186,7 @@
                     <td class="px-6 py-4"><div class="text-slate-900 uppercase font-extrabold">${t.desc}</div><div class="text-[9px] text-slate-400 font-black mt-1 uppercase">CAT: ${t.cat}</div></td>
                     <td class="px-6 py-4"><div class="text-[9px] text-slate-500 font-black uppercase">HOST: ${t.host}</div><div class="text-[9px] text-indigo-500 font-mono">ANYDESK: ${t.anydesk}</div></td>
                     <td class="px-6 py-4 font-mono text-slate-600">${t.user}</td>
-                    <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 border-2 ${stateStyles[t.state]} text-[9px] font-black rounded uppercase">${t.state === 'OPEN' ? 'WAIT_QUE' : t.state}</span></td>
+                    <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 border-2 ${stateStyles[t.state]} text-[9px] font-black rounded uppercase">${t.state === 'OPEN' ? 'OPEN' : t.state}</span></td>
                     <td class="px-6 py-4 text-right"><div class="flex justify-end gap-2">${getActionButtons(t)}</div></td>
                 `;
                 body.appendChild(tr);
@@ -255,7 +249,6 @@
         $(document).ready(() => {
             updateClock();
             setInterval(updateClock, 1000);
-            initChart();
             fetchActiveTickets();
             
             // Randomize chart for effect

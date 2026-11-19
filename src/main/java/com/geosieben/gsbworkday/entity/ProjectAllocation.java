@@ -1,28 +1,32 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@Data
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-
 @Table(name = "projectallocation")
-
+@NoArgsConstructor
 public class ProjectAllocation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer allotmentid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "pid", referencedColumnName = "pid")
     private Project project;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "allottedto", referencedColumnName = "EID")
     private EmployeeBasicInfo allottedTo;
 
@@ -33,141 +37,101 @@ public class ProjectAllocation {
     private BigDecimal hrsAssigned;
 
     @Column(precision = 8, scale = 2)
+    @ColumnDefault("0.00")
     private BigDecimal qcHrs = BigDecimal.valueOf(0.00);
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
     private Long elapsedTime = 0L;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
     private Long timeSpent = 0L;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
     private Long hoursRemaining = 0L;
 
-    @Column(columnDefinition = "TINYINT(1)")
+    @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
     private Boolean isRunning = false;
 
     private Long startTime;
+
+    @ColumnDefault("0")
     private Long pausedTime = 0L;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "allottedBy", referencedColumnName = "EID")
     private EmployeeBasicInfo allottedBy;
 
     private LocalDateTime allotmentOn;
     private LocalDate deadline;
-    private LocalDate completionDate=null;
+    private LocalDate completionDate = null;
 
+    @ColumnDefault("0")
     private Integer status = 0;
+
     private LocalDateTime updatedon;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
     private Integer qcAllotted = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "qcAssinee", referencedColumnName = "EID")   
-    private EmployeeBasicInfo qcAssinee=null;
+    private EmployeeBasicInfo qcAssinee = null;
 
-    private LocalDate qcDeadline=null;
+    private LocalDate qcDeadline = null;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
     private Integer isDelivered = 0;
-    private LocalDate qcCompletionDate=null;
 
-    @Column(precision = 8, scale = 2)
-    private BigDecimal deliveryHours=null;
+    private LocalDate qcCompletionDate = null;
 
-    private LocalDate deliveryDeadline=null;
-    private LocalDateTime pausedOn=null;
+    @Column(precision = 8, scale = 2, nullable = false)
+    @ColumnDefault("0.00")
+    private BigDecimal deliveryHours = BigDecimal.valueOf(0);
+
+    private LocalDate deliveryDeadline = null;
+    private LocalDateTime pausedOn = null;
 
     @Column(length = 10)
+    @ColumnDefault("'Prod'")
     private String type = "Prod";
 
-
-    public ProjectAllocation() {
-    }
-
-
-    public ProjectAllocation(Project project, EmployeeBasicInfo allottedTo, BigDecimal hrsAssigned, LocalDate deadline) {
+    public ProjectAllocation(Project project, EmployeeBasicInfo allottedTo, String feederAlloted,
+            BigDecimal hrsAssigned, BigDecimal qcHrs, Long elapsedTime, Long timeSpent, Long hoursRemaining,
+            Boolean isRunning, Long startTime, Long pausedTime, EmployeeBasicInfo allottedBy, LocalDateTime allotmentOn,
+            LocalDate deadline, LocalDate completionDate, Integer status, LocalDateTime updatedon, Integer qcAllotted,
+            EmployeeBasicInfo qcAssinee, LocalDate qcDeadline, Integer isDelivered, LocalDate qcCompletionDate,
+            BigDecimal deliveryHours, LocalDate deliveryDeadline, LocalDateTime pausedOn, String type) {
         this.project = project;
         this.allottedTo = allottedTo;
+        this.feederAlloted = feederAlloted;
         this.hrsAssigned = hrsAssigned;
+        this.qcHrs = qcHrs;
+        this.elapsedTime = elapsedTime;
+        this.timeSpent = timeSpent;
+        this.hoursRemaining = hoursRemaining;
+        this.isRunning = isRunning;
+        this.startTime = startTime;
+        this.pausedTime = pausedTime;
+        this.allottedBy = allottedBy;
+        this.allotmentOn = allotmentOn;
         this.deadline = deadline;
-        this.allotmentOn = LocalDateTime.now();
+        this.completionDate = completionDate;
+        this.status = status;
+        this.updatedon = updatedon;
+        this.qcAllotted = qcAllotted;
+        this.qcAssinee = qcAssinee;
+        this.qcDeadline = qcDeadline;
+        this.isDelivered = isDelivered;
+        this.qcCompletionDate = qcCompletionDate;
+        this.deliveryHours = deliveryHours;
+        this.deliveryDeadline = deliveryDeadline;
+        this.pausedOn = pausedOn;
+        this.type = type;
     }
-
-    // --- Getters and Setters ---
-
-    public Integer getAllotmentid() { return allotmentid; }
-    public void setAllotmentid(Integer allotmentid) { this.allotmentid = allotmentid; }
-
-    public Project getProject() { return project; }
-    public void setProject(Project project) { this.project = project; }
-
-    public EmployeeBasicInfo getAllottedTo() { return allottedTo; }
-    public void setAllottedTo(EmployeeBasicInfo allottedTo) { this.allottedTo = allottedTo; }
-
-    public String getFeederAlloted() { return feederAlloted; }
-    public void setFeederAlloted(String feederAlloted) { this.feederAlloted = feederAlloted; }
-
-    public BigDecimal getHrsAssigned() { return hrsAssigned; }
-    public void setHrsAssigned(BigDecimal hrsAssigned) { this.hrsAssigned = hrsAssigned; }
-
-    public BigDecimal getQcHrs() { return qcHrs; }
-    public void setQcHrs(BigDecimal qcHrs) { this.qcHrs = qcHrs; }
-
-    public Long getElapsedTime() { return elapsedTime; }
-    public void setElapsedTime(Long elapsedTime) { this.elapsedTime = elapsedTime; }
-
-    public Long getTimeSpent() { return timeSpent; }
-    public void setTimeSpent(Long timeSpent) { this.timeSpent = timeSpent; }
-
-    public Long getHoursRemaining() { return hoursRemaining; }
-    public void setHoursRemaining(Long hoursRemaining) { this.hoursRemaining = hoursRemaining; }
-
-    public Boolean getIsRunning() { return isRunning; }
-    public void setIsRunning(Boolean isRunning) { this.isRunning = isRunning; }
-
-    public Long getStartTime() { return startTime; }
-    public void setStartTime(Long startTime) { this.startTime = startTime; }
-
-    public Long getPausedTime() { return pausedTime; }
-    public void setPausedTime(Long pausedTime) { this.pausedTime = pausedTime; }
-
-    public EmployeeBasicInfo getAllottedBy() { return allottedBy; }
-    public void setAllottedBy(EmployeeBasicInfo allottedBy) { this.allottedBy = allottedBy; }
-
-    public LocalDateTime getAllotmentOn() { return allotmentOn; }
-    public void setAllotmentOn(LocalDateTime allotmentOn) { this.allotmentOn = allotmentOn; }
-
-    public LocalDate getDeadline() { return deadline; }
-    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
-
-    public LocalDate getCompletionDate() { return completionDate; }
-    public void setCompletionDate(LocalDate completionDate) { this.completionDate = completionDate; }
-
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
-
-    public LocalDateTime getUpdatedon() { return updatedon; }
-    public void setUpdatedon(LocalDateTime updatedon) { this.updatedon = updatedon; }
-
-    public Integer getQcAllotted() { return qcAllotted; }
-    public void setQcAllotted(Integer qcAllotted) { this.qcAllotted = qcAllotted; }
-
-    public EmployeeBasicInfo getQcAssinee() { return qcAssinee; }
-    public void setQcAssinee(EmployeeBasicInfo qcAssinee) { this.qcAssinee = qcAssinee; }
-
-    public LocalDate getQcDeadline() { return qcDeadline; }
-    public void setQcDeadline(LocalDate qcDeadline) { this.qcDeadline = qcDeadline; }
-
-    public Integer getIsDelivered() { return isDelivered; }
-    public void setIsDelivered(Integer isDelivered) { this.isDelivered = isDelivered; }
-
-    public LocalDate getQcCompletionDate() { return qcCompletionDate; }
-    public void setQcCompletionDate(LocalDate qcCompletionDate) { this.qcCompletionDate = qcCompletionDate; }
-
-    public BigDecimal getDeliveryHours() { return deliveryHours; }
-    public void setDeliveryHours(BigDecimal deliveryHours) { this.deliveryHours = deliveryHours; }
-
-    public LocalDate getDeliveryDeadline() { return deliveryDeadline; }
-    public void setDeliveryDeadline(LocalDate deliveryDeadline) { this.deliveryDeadline = deliveryDeadline; }
-
-    public LocalDateTime getPausedOn() { return pausedOn; }
-    public void setPausedOn(LocalDateTime pausedOn) { this.pausedOn = pausedOn; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    
 }

@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus; 
 import org.springframework.http.ResponseEntity;
@@ -28,11 +26,14 @@ public class CandidateService {
     @Value("${file.upload-dir-resumes}")
     private String uploadDir;
 
-    @Autowired
     private CandidiateRepository repository;
-        @Autowired
     private AssesmentRepository assesmentRepository;
 
+    public CandidateService( CandidiateRepository repository,
+                AssesmentRepository assesmentRepository) {
+            this.repository = repository;
+            this.assesmentRepository = assesmentRepository;
+        }
     public ResponseEntity<Map<String,String>> saveCandidate(Candidate candidate, MultipartFile resume) throws IOException {
         // 1. Create directory if it doesn't exist
         Path uploadPath = Paths.get(uploadDir);
@@ -63,7 +64,7 @@ public ResponseEntity<Map<String, String>> updateHiring(@RequestBody Map<String,
     Integer id = (Integer) data.get("id");
     String task = (String) data.get("task");
     String type = (String) data.get("type");
-
+    @SuppressWarnings("null")
     Candidate candidate = repository.findById(cid).orElse(null);
     if (candidate == null) {
         response.put("status", "error");
@@ -72,6 +73,7 @@ public ResponseEntity<Map<String, String>> updateHiring(@RequestBody Map<String,
     }
 
     // Attempt to find existing assessment or create a new one if it's the first step
+    @SuppressWarnings("null")
     Assessment assessment = assesmentRepository.findById(id).orElse(null);
     
     if (assessment.getCandidate() == null) {

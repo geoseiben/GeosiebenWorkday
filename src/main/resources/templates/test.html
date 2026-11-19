@@ -1,0 +1,1226 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+                <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT | Add Host</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --brand-primary:   #2563eb;
+            --brand-dark:      #1e40af;
+            --brand-surface:   #eff6ff;
+            --slate-50:        #f8fafc;
+            --slate-100:       #f1f5f9;
+            --slate-200:       #e2e8f0;
+            --slate-300:       #cbd5e1;
+            --slate-600:       #475569;
+            --slate-700:       #334155;
+            --slate-900:       #0f172a;
+            --success:         #059669;
+            --success-bg:      #ecfdf5;
+            --danger:          #dc2626;
+            --danger-bg:       #fef2f2;
+            --border-ui:       #e2e8f0;
+            --radius-sm:       6px;
+            --radius-md:       8px;
+            --radius-lg:       12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--slate-700);
+            margin: 0;
+            font-size: 0.8125rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header Bar ── */
+        .app-topbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-ui);
+            padding: 0.65rem 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+        .topbar-brand {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+            color: var(--slate-900);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .brand-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: #1e293b;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .system-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Page Title Bar ── */
+        .console-header {
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-ui);
+            padding-bottom: 1rem;
+        }
+        .console-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .console-header p {
+            font-size: 0.775rem;
+            color: var(--slate-600);
+            margin: 2px 0 0;
+        }
+
+        /* ── IT Asset Specification Cards ── */
+        .spec-card {
+            background: #ffffff;
+            border: 1px solid var(--border-ui);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .spec-card-header {
+            padding: 0.75rem 1.15rem;
+            background: #fafafa;
+            border-bottom: 1px solid var(--border-ui);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .spec-card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-700);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        .spec-card-title i { color: var(--brand-primary); width: 15px; height: 15px; }
+        .spec-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--slate-200);
+        }
+        .spec-card-body { padding: 1.15rem; }
+
+        /* ── Form Controls ── */
+        .form-label-compact {
+            font-size: 0.725rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .form-control, .form-select {
+            font-size: 0.8125rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--slate-300);
+            background-color: #ffffff;
+            color: var(--slate-900);
+            padding: 0.42rem 0.65rem;
+            font-weight: 400;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.15);
+            outline: none;
+        }
+        .field-group { position: relative; }
+        .field-status-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            pointer-events: none;
+            display: none;
+        }
+        .field-group.is-valid .form-control { border-color: #10b981; }
+        .field-group.is-valid .field-status-icon.status-valid { display: block; color: var(--success); }
+        .field-group.is-invalid .form-control { border-color: var(--danger); background-color: #fffaf0; }
+        .field-group.is-invalid .field-status-icon.status-invalid { display: block; color: var(--danger); }
+        .field-feedback {
+            font-size: 0.6875rem;
+            font-weight: 500;
+            color: var(--danger);
+            display: none;
+            margin-top: 3px;
+        }
+        .field-group.is-invalid .field-feedback { display: block; }
+
+        /* ── Node Type Radio Matrix ── */
+        .node-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .node-matrix input { display: none; }
+        .node-matrix label {
+            border: 1px solid var(--slate-300);
+            background: #ffffff;
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            transition: all .15s ease;
+        }
+        .node-matrix label i { width: 14px; height: 14px; }
+        .node-matrix label:hover {
+            border-color: var(--slate-600);
+            background: var(--slate-50);
+        }
+        .node-matrix input:checked + label {
+            border-color: var(--brand-primary);
+            background: var(--brand-surface);
+            color: var(--brand-primary);
+            box-shadow: 0 0 0 1px var(--brand-primary);
+        }
+
+        /* ── Contextual Reveal Subsections ── */
+        .sub-config-tray {
+            background: #f8fafc;
+            border: 1px dashed var(--slate-300);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            margin-top: 6px;
+        }
+        .sub-config-tray label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        /* ── Telemetry / Inspection Column ── */
+        .side-panel {
+            position: sticky;
+            top: 4.8rem;
+        }
+        .telemetry-card {
+            background: #1e293b;
+            color: #f8fafc;
+            border-radius: var(--radius-md);
+            border: 1px solid #334155;
+            padding: 1.15rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .telemetry-meter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid #334155;
+        }
+        .meter-ring {
+            width: 48px;
+            height: 48px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .meter-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .meter-ring circle {
+            fill: none;
+            stroke-width: 5;
+        }
+        .meter-bg { stroke: #334155; }
+        .meter-fill {
+            stroke: #38bdf8;
+            stroke-dasharray: 125.66;
+            stroke-dashoffset: 125.66;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.4s ease;
+        }
+        .meter-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.725rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .meter-text h6 {
+            margin: 0;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .meter-text p {
+            margin: 2px 0 0;
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .checklist-panel {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+            display: grid;
+            gap: 5px;
+        }
+        .checklist-panel li {
+            font-size: 0.725rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checklist-panel li i {
+            width: 13px;
+            height: 13px;
+            color: #475569;
+        }
+        .checklist-panel li.valid {
+            color: #f1f5f9;
+        }
+        .checklist-panel li.valid i {
+            color: #34d399;
+        }
+
+        .telemetry-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 1rem;
+            min-height: 24px;
+        }
+        .node-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-telemetry-submit {
+            width: 100%;
+            background: var(--brand-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.65rem;
+            font-weight: 600;
+            font-size: 0.785rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+        .btn-telemetry-submit:hover { background: var(--brand-dark); }
+        .btn-telemetry-reset {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            border-radius: var(--radius-sm);
+            padding: 0.45rem;
+            font-size: 0.725rem;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+        .btn-telemetry-reset:hover { background: #334155; color: #ffffff; }
+
+        /* ── Modal & Stacks ── */
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .audit-table th {
+            text-align: left;
+            padding: 6px 10px;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-ui);
+            width: 32%;
+        }
+        .audit-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-ui);
+            color: var(--slate-900);
+            font-weight: 500;
+        }
+        .mono-val { font-family: 'JetBrains Mono', monospace; }
+
+        .toast-container-sys {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sys-toast {
+            background: #1e293b;
+            border-left: 3px solid var(--brand-primary);
+            color: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .sys-toast.err { border-left-color: var(--danger); }
+        .sys-toast.ok { border-left-color: var(--success); }
+    </style>
+</head>
+</head><head th:replace="includes/header :: header"></head>
+
+<body>
+
+
+
+<main class="container-fluid px-4 py-3">
+    <div class="console-header">
+        <div>
+            <h1>New Host Creation..</h1>
+        </div>
+    </div>
+
+    <form id="hostform" novalidate autocomplete="off">
+        <div class="row g-3">
+
+            <!-- ══ LEFT COLUMN: CONFIGURATION SPECIFICATIONS ══ -->
+            <div class="col-xl-9 col-lg-8">
+
+                <!-- 1. Network & System Identity -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-title"><i data-lucide="network"></i> System  & Network Info</div>
+                        <span class="spec-badge" data-counter="net">0/6 Filled</span>
+                    </div>
+                    <div class="spec-card-body">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Host Name <span class="text-danger">*</span></label>
+                                <div class="field-group">
+                                    <input type="text" class="form-control" name="hostName" placeholder="e.g. WS-PROD-014" required data-label="Host Name">
+                                    <i data-lucide="check" class="field-status-icon status-valid"></i>
+                                    <i data-lucide="alert-circle" class="field-status-icon status-invalid"></i>
+                                    <div class="field-feedback">Hostname is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label-compact">Host Type<span class="text-danger">*</span></label>
+                                <div class="node-matrix" id="hostTypeSeg">
+                                    <input type="radio" name="hostType" id="ht_desktop" value="Desktop" required>
+                                    <label for="ht_desktop"><i data-lucide="monitor"></i> Desktop</label>
+                                    <input type="radio" name="hostType" id="ht_laptop" value="Laptop">
+                                    <label for="ht_laptop"><i data-lucide="laptop"></i> Laptop</label>
+                                    <input type="radio" name="hostType" id="ht_server" value="Server Node">
+                                    <label for="ht_server"><i data-lucide="server"></i> Server</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-compact">Operating System <span class="text-danger">*</span></label>
+                                <select class="form-select" name="os" required data-label="Operating System">
+                                    <option value="">Choose OS…</option>
+                                    <option>Windows 11 Enterprise</option>
+                                    <option>Windows 11 Pro</option>
+                                    <option>Windows 10 Pro</option>
+                                    <option>Ubuntu LTS 24.04</option>
+                                    <option>Red Hat Enterprise Linux 9</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Static IP <span class="text-danger">*</span></label>
+                                <div class="field-group">
+                                    <input type="text" class="form-control mono-val" name="ipAddress" placeholder="192.168.1.XX" required data-label="IP Address">
+                                    <i data-lucide="check" class="field-status-icon status-valid"></i>
+                                    <i data-lucide="alert-circle" class="field-status-icon status-invalid"></i>
+                                    <div class="field-feedback">Valid IPv4 format required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">LAN Port No. <span class="text-danger">*</span></label>
+                                <div class="field-group">
+                                    <input type="text" class="form-control mono-val" name="lanno" placeholder="e.g. RJ45-FL2-04" required data-label="LAN Port">
+                                    <i data-lucide="check" class="field-status-icon status-valid"></i>
+                                    <i data-lucide="alert-circle" class="field-status-icon status-invalid"></i>
+                                    <div class="field-feedback">Port  required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Cabinet</label>
+                                <select id="cabinet" name="cabinet" class="form-select"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Processing & Storage Architecture -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-title"><i data-lucide="cpu"></i> Compute Core, Memory & Storage Info</div>
+                        <span class="spec-badge" data-counter="hw">0/7 Filled</span>
+                    </div>
+                    <div class="spec-card-body">
+                        <div class="row g-2">
+                            <!-- Processor & Memory -->
+                            <div class="col-md-6">
+                                <label class="form-label-compact">CPU / Processor <span class="text-danger">*</span></label>
+                                <div class="field-group">
+                                    <input type="text" class="form-control" name="processor" placeholder="e.g. Intel Core i7-13700 / AMD Ryzen 9 7900" required data-label="Processor">
+                                    <i data-lucide="check" class="field-status-icon status-valid"></i>
+                                    <i data-lucide="alert-circle" class="field-status-icon status-invalid"></i>
+                                    <div class="field-feedback">Processor required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-compact">System RAM </label>
+                                <select id="ram" name="ram" class="form-select">
+                                    <option selected disabled>-- Select RAM --</option>
+                                        <optgroup label="DDR4 Desktop / Laptop Memory">
+                                            <option value="DDR4 - 4GB">DDR4 - 4GB</option>
+                                            <option value="DDR4 - 8GB">DDR4 - 8GB</option>
+                                            <option value="DDR4 - 16GB" >DDR4 - 16GB</option>
+                                            <option value="DDR4 - 24GB" >DDR4 - 24GB</option>
+                                            <option value="DDR4 - 32GB">DDR4 - 32GB</option>
+                                            <option value="DDR4 - 64GB">DDR4 - 64GB</option>
+                                        </optgroup>
+                                        
+                                        <optgroup label="DDR5 Next-Gen Memory">
+                                            <option value="DDR5 - 8GB">DDR5 - 8GB</option>
+                                            <option value="DDR5 - 16GB">DDR5 - 16GB</option>
+                                            <option value="DDR5 - 24GB">DDR5 - 24GB</option>
+                                            <option value="DDR5 - 32GB">DDR5 - 32GB</option>
+                                            <option value="DDR5 - 48GB">DDR5 - 48GB</option>
+                                            <option value="DDR5 - 64GB">DDR5 - 64GB</option>
+                                            <option value="DDR5 - 96GB">DDR5 - 96GB</option>
+                                            <option value="DDR5 - 128GB">DDR5 - 128GB</option>
+                                        </optgroup>
+                                </select>
+                            </div>
+
+                            <!-- Graphics & Dedicated VRAM -->
+                            <div class="col-md-8">
+                                <label class="form-label-compact">Dedicated GPU / Graphics Card <span class="text-danger">*</span></label>
+                                <div class="field-group">
+                                    <input type="text" class="form-control" name="graphics" placeholder="e.g. NVIDIA RTX A4000 / AMD Radeon Pro" required data-label="Graphics Adapter">
+                                    <i data-lucide="check" class="field-status-icon status-valid"></i>
+                                    <i data-lucide="alert-circle" class="field-status-icon status-invalid"></i>
+                                    <div class="field-feedback">Graphics Card required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">GPU Memory (VRAM)</label>
+                                <select id="vram" name="vram" class="form-select">
+                                    <option value="" selected>-- Select VRAM --</option>
+                                    <optgroup label="Mainstream & Budget GPU Memory">
+                                        <option value="4GB GDDR6">4GB GDDR6</option>
+                                        <option value="6GB GDDR6">6GB GDDR6</option>
+                                        <option value="8GB GDDR6" >8GB GDDR6</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="High-Performance Gaming & Content Creation">
+                                        <option value="12GB GDDR6">12GB GDDR6</option>
+                                        <option value="16GB GDDR6">16GB GDDR6</option>
+                                        <option value="24GB GDDR6X">24GB GDDR6X</option>
+                                    </optgroup>
+
+                                    <optgroup label="Enthusiast & AI Workstation">
+                                        <option value="32GB HBM3">32GB HBM3</option>
+                                        <option value="48GB GDDR6">48GB GDDR6</option>
+                                        <option value="96GB HBM3e">96GB HBM3e</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <!-- Storage Tiers: SSD, Primary HDD, Secondary/Additional HDD -->
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Primary Storage (SSD)</label>
+                                <select id="ssd" name="ssd" class="form-select">
+                                    <optgroup label="NVMe M.2 (Fast)">
+                                        <option value="NVMe M.2 - 240GB">NVMe M.2 - 240GB</option>
+                                        <option value="NVMe M.2 - 250GB">NVMe M.2 - 250GB</option>
+                                        <option value="NVMe M.2 - 256GB">NVMe M.2 - 256GB</option>
+                                        <option value="NVMe M.2 - 500GB">NVMe M.2 - 500GB</option>
+                                        <option value="NVMe M.2 - 512GB">NVMe M.2 - 512GB</option>
+                                        <option value="NVMe M.2 - 1TB">NVMe M.2 - 1TB</option>
+                                        <option value="NVMe M.2 - 2TB">NVMe M.2 - 2TB</option>
+                                        <option value="NVMe M.2 - 4TB">NVMe M.2 - 4TB</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="SATA 2.5\" (Standard)">
+                                        <option value="SATA 2.5 - 240GB">SATA 2.5 - 240GB</option>
+                                        <option value="SATA 2.5 - 250GB">SATA 2.5 - 250GB</option>
+                                        <option value="SATA 2.5 - 256GB">SATA 2.5 - 256GB</option>
+                                        <option value="SATA 2.5 - 500GB">SATA 2.5 - 500GB</option>
+                                        <option value="SATA 2.5 - 512GB">SATA 2.5 - 512GB</option>
+                                        <option value="SATA 2.5 - 1TB">SATA 2.5 - 1TB</option>
+                                        <option value="SATA 2.5 - 2TB">SATA 2.5 - 2TB</option>
+                                        <option value="SATA 2.5 - 4TB">SATA 2.5 - 4TB</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Secondary Storage (HDD 1)</label>
+                                <select id="hdd" name="hdd" class="form-select">
+                                    <option value="">-- Select HDD Storage --</option>
+                                    <optgroup label="Standard Desktop & Laptop HDDs">
+                                        <option value="500GB SATA HDD">500GB SATA HDD</option>
+                                        <option value="1TB SATA HDD">1TB SATA HDD</option>
+                                        <option value="2TB SATA HDD" selected>2TB SATA HDD</option>
+                                        <option value="4TB SATA HDD">4TB SATA HDD</option>
+                                        <option value="6TB SATA HDD">6TB SATA HDD</option>
+                                        <option value="8TB SATA HDD">8TB SATA HDD</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="High-Capacity & NAS Storage">
+                                        <option value="12TB SATA HDD">12TB SATA HDD</option>
+                                        <option value="16TB SATA HDD">16TB SATA HDD</option>
+                                        <option value="20TB SATA HDD">20TB SATA HDD</option>
+                                        <option value="24TB SATA HDD">24TB SATA HDD</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Additional Storage (HDD 2)</label>
+                                <select id="hdd2" name="hdd2" class="form-select">
+                                    <option value="" selected>-- Select HDD Storage 2 --</option>
+                                        <optgroup label="Standard Desktop & Laptop HDDs">
+                                            <option value="500GB SATA HDD">500GB SATA HDD</option>
+                                            <option value="1TB SATA HDD">1TB SATA HDD</option>
+                                            <option value="2TB SATA HDD" selected>2TB SATA HDD</option>
+                                            <option value="4TB SATA HDD">4TB SATA HDD</option>
+                                            <option value="6TB SATA HDD">6TB SATA HDD</option>
+                                            <option value="8TB SATA HDD">8TB SATA HDD</option>
+                                        </optgroup>
+                                        
+                                        <optgroup label="High-Capacity & NAS Storage">
+                                            <option value="12TB SATA HDD">12TB SATA HDD</option>
+                                            <option value="16TB SATA HDD">16TB SATA HDD</option>
+                                            <option value="20TB SATA HDD">20TB SATA HDD</option>
+                                            <option value="24TB SATA HDD">24TB SATA HDD</option>
+                                        </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Workstation Displays -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-title"><i data-lucide="tv"></i> Display Output Hardware</div>
+                        <span class="spec-badge" data-counter="disp">0/2 ASSIGNED</span>
+                    </div>
+                    <div class="spec-card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label-compact">Monitor 1 Video Cable</label>
+                                <select id="monitor1" name="monitor1" class="form-select"></select>
+                                <div id="container_monitor1_cables" class="sub-config-tray d-none">
+                                    <label class="d-block mb-1">Monitor 1 Video Cable</label>
+                                        <select id="monitor1_vcable" name="monitor1_vcable" class="form-select form-select-sm">
+                                            <option value="">Choose Video Cable…</option>
+                                            <option>DP</option>
+                                            <option>HDMI</option>
+                                            <option>Thunderbolt</option>
+                                            <option>DVI</option>
+                                            <option>VGA</option>
+                                        </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-compact">Monitor 2 Video Cable</label>
+                                <select id="monitor2" name="monitor2" class="form-select"></select>
+                                <div id="container_monitor2_cables" class="sub-config-tray d-none">
+                                    <label class="d-block mb-1">Monitor 2 Video Cable</label>
+                                    <select id="monitor2_vcable" name="monitor2_vcable" class="form-select form-select-sm">
+                                        <option value="">Choose Video Cable…</option>
+                                        <option>DP</option>
+                                        <option>HDMI</option>
+                                        <option>Thunderbolt</option>
+                                        <option>DVI</option>
+                                        <option>VGA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Station Peripherals, Audio, Adapters & Auxiliary Power -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-title"><i data-lucide="plug-2"></i> Peripherals, Signal Emitters & Auxiliary Power</div>
+                        <span class="spec-badge" data-counter="per">0/7 Filled</span>
+                    </div>
+                    <div class="spec-card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label-compact">Headphone</label>
+                                <select id="headphones" name="headphones" class="form-select"></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-compact">3D Emitter</label>
+                                <select id="emitter" name="emitter" class="form-select"></select>
+                                <div id="container_goggle" class="sub-config-tray d-none">
+                                    <label class="d-block mb-1">Paired 3D Vision Goggles</label>
+                                    <select id="goggle" name="goggle" class="form-select form-select-sm"></select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-compact">Mouse</label>
+                                <select id="mouse" name="mouse" class="form-select"></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-compact">Keyboard</label>
+                                <select id="keyboard" name="keyboard" class="form-select"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Adapter 1</label>
+                                <select id="ad1" name="ad1" class="form-select">
+                                    <option value="">Select Adapter 1…</option>
+                                    <option>DP to HDMI</option>
+                                    <option>DP to VGA</option>
+                                    <option>DP to Thunderbolt</option>
+                                    <option>USB-C to DP</option>
+                                    <option>USB-C to HDMI</option>
+                                    <option>HDMI to VGA</option>
+                                    <option>DVI to HDMI</option>
+                                    <option>VGA to DVI</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">Adapter 2</label>
+                                <select id="ad2" name="ad2" class="form-select">
+                                    <option value="">Select Adapter 2…</option>
+                                <option>DP to HDMI</option>
+                                    <option>DP to VGA</option>
+                                    <option>DP to Thunderbolt</option>
+                                    <option>USB-C to DP</option>
+                                    <option>USB-C to HDMI</option>
+                                    <option>HDMI to VGA</option>
+                                    <option>DVI to HDMI</option>
+                                    <option>VGA to DVI</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-compact">UPS/Accessories</label>
+                                <select id="ups" name="ups" class="form-select"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ══ RIGHT COLUMN: AUDIT TELEMETRY & SUBMIT ══ -->
+            <div class="col-xl-3 col-lg-4">
+                <div class="side-panel">
+                    <div class="telemetry-card">
+                        <div class="telemetry-meter">
+                            <div class="meter-ring">
+                                <svg viewBox="0 0 48 48">
+                                    <circle class="meter-bg" cx="24" cy="24" r="20"/>
+                                    <circle class="meter-fill" id="meterFill" cx="24" cy="24" r="20"/>
+                                </svg>
+                                <div class="meter-label" id="meterPct">0%</div>
+                            </div>
+                            <div class="meter-text">
+                                <h6 id="meterHeadline">Madatory Components Check</h6>
+                                <p id="meterDetail">0 of 7 mandatory Components</p>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px;">
+                            Mandatory Prerequisites
+                        </div>
+                        <ul class="checklist-panel" id="checklistPanel">
+                            <li data-check="hostName"><i data-lucide="circle-dot"></i> Host Name</li>
+                            <li data-check="hostType"><i data-lucide="circle-dot"></i> Host Type</li>
+                            <li data-check="ipAddress"><i data-lucide="circle-dot"></i>Static IP</li>
+                            <li data-check="lanno"><i data-lucide="circle-dot"></i> Lan Port</li>
+                            <li data-check="os"><i data-lucide="circle-dot"></i> Operating System</li>
+                            <li data-check="processor"><i data-lucide="circle-dot"></i> Processor </li>
+                            <li data-check="graphics"><i data-lucide="circle-dot"></i> Graphics Card</li>
+                        </ul>
+
+                        <div style="font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px;">
+                            Active Spec Telemetry
+                        </div>
+                        <div class="telemetry-pills" id="telemetryPills">
+                            <span style="font-size: 0.7rem; color: #64748b; font-style: italic;">No configuration specified</span>
+                        </div>
+
+                        <button type="submit" class="btn-telemetry-submit" id="btn-submit">
+                            <i data-lucide="clipboard-check" style="width: 15px; height: 15px;"></i>
+                            <span>PREVIEW &amp; SAVE</span>
+                        </button>
+                        <button type="button" class="btn-telemetry-reset" id="btn-reset">
+                            <i data-lucide="rotate-ccw" style="width: 12px; height: 12px; margin-right: 4px;"></i> Clear  Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</main>
+
+<!-- Verification / Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 8px; border: none; overflow: hidden;">
+            <div class="modal-header" style="background:#0f172a; color:#fff; border-bottom:1px solid #334155; padding: 12px 20px;">
+                <h6 class="modal-title d-flex align-items-center gap-2" style="font-size:0.875rem; font-weight:700;">
+                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color:#38bdf8;"></i> Host Configuration Preview &amp; Save HOST
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="previewModalContent" style="background: #ffffff; max-height: 65vh; overflow-y:auto;">
+                <!-- Table loaded dynamically -->
+            </div>
+            <div class="modal-footer" style="background:#f8fafc; border-top:1px solid var(--border-ui); padding: 10px 20px;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Return to Edit</button>
+                <button type="button" class="btn btn-primary btn-sm d-flex align-items-center gap-2" id="btn-confirm">  
+                    <i data-lucide="database" style="width: 14px; height: 14px;"></i>
+                    <span id="confirmBtnText">Confirm Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container-sys" id="toastStack"></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+$(document).ready(function () {
+    lucide.createIcons();
+
+    const form = document.getElementById('hostform');
+    const IPV4_PATTERN = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
+    const MANDATORY_KEYS = ['hostName', 'hostType', 'ipAddress', 'lanno', 'os', 'processor', 'graphics'];
+    const CIRCUMFERENCE = 125.66; // 2 * PI * r (r=20)
+    let lastPercentage = -1;
+
+    const sanitize = str => String(str).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+
+    function pushToast(message, variant = 'info') {
+        const iconType = variant === 'err' ? 'alert-octagon' : variant === 'ok' ? 'check-circle' : 'info';
+        const $toast = $(`<div class="sys-toast ${variant}"><i data-lucide="${iconType}" style="width:14px;height:14px;"></i><span>${sanitize(message)}</span></div>`);
+        $('#toastStack').append($toast);
+        lucide.createIcons();
+        setTimeout(() => {
+            $toast.fadeOut(300, function () { $(this).remove(); });
+        }, 3400);
+    }
+
+    function readFieldVal(name) {
+        const field = form.elements[name];
+        if (!field) return '';
+        if (field instanceof RadioNodeList) return field.value || '';
+        return (field.value || '').trim();
+    }
+
+    function readFieldLabel(name) {
+        const field = form.elements[name];
+        if (!field) return '';
+        if (field instanceof RadioNodeList) return field.value || '';
+        if (field.tagName === 'SELECT') {
+            return field.value && field.selectedOptions.length ? field.selectedOptions[0].text : '';
+        }
+        return (field.value || '').trim();
+    }
+
+    function validateField(name) {
+        const val = readFieldVal(name);
+        if (!val) return 'Required parameter';
+        if (name === 'ipAddress' && !IPV4_PATTERN.test(val)) return 'Invalid IPv4 structure';
+        return '';
+    }
+
+    function renderValidationState(name, triggerErrorVisuals) {
+        const field = form.elements[name];
+        if (!field) return true;
+        const target = field instanceof RadioNodeList ? field[0] : field;
+        const $group = $(target).closest('.field-group');
+        const error = validateField(name);
+        const hasContent = !!readFieldVal(name);
+
+        if ($group.length) {
+            $group.toggleClass('is-valid', !error && hasContent);
+            $group.toggleClass('is-invalid', !!error && (triggerErrorVisuals || hasContent));
+            $group.find('.field-feedback').text(error || '');
+        }
+        return !error;
+    }
+
+    function recalculateTelemetry() {
+        let satisfied = 0;
+        MANDATORY_KEYS.forEach(key => {
+            const isValid = !validateField(key);
+            if (isValid) satisfied++;
+            $(`#checklistPanel li[data-check="${key}"]`).toggleClass('valid', isValid);
+        });
+
+        const percentage = Math.round((satisfied / MANDATORY_KEYS.length) * 100);
+        const offset = CIRCUMFERENCE - ((percentage / 100) * CIRCUMFERENCE);
+        document.getElementById('meterFill').style.strokeDashoffset = offset;
+        $('#meterPct').text(percentage + '%');
+
+        $('#meterDetail').text(`${satisfied} of ${MANDATORY_KEYS.length} mandatory componenst`);
+        $('#meterHeadline').text(percentage === 100 ? 'Verification Complete' : percentage >= 50 ? 'In Progress…' : 'Initial Phase');
+
+        // Section badge counters
+        const sectionMap = {
+            net: ['hostName', 'hostType', 'ipAddress', 'lanno', 'os', 'cabinet'],
+            hw:  ['processor', 'ram', 'graphics', 'vram', 'ssd', 'hdd', 'hdd2'],
+            disp:['monitor1', 'monitor2'],
+            per: ['headphones', 'emitter', 'mouse', 'keyboard', 'ad1', 'ad2', 'ups']
+        };
+
+        Object.keys(sectionMap).forEach(secKey => {
+            const count = sectionMap[secKey].filter(k => !!readFieldVal(k)).length;
+            $(`[data-counter="${secKey}"]`).text(`${count}/${sectionMap[secKey].length} ASSIGNED`);
+        });
+
+        // Pill telemetry updates
+        const telemetryTokens = [];
+        if (readFieldVal('hostName')) telemetryTokens.push(['tag', readFieldVal('hostName')]);
+        if (readFieldVal('hostType')) telemetryTokens.push(['hard-drive', readFieldVal('hostType')]);
+        if (readFieldVal('ipAddress') && IPV4_PATTERN.test(readFieldVal('ipAddress'))) telemetryTokens.push(['globe', readFieldVal('ipAddress')]);
+        if (readFieldVal('processor')) telemetryTokens.push(['cpu', readFieldVal('processor')]);
+        if (readFieldVal('vram')) telemetryTokens.push(['activity', readFieldVal('vram')]);
+
+        if (telemetryTokens.length > 0) {
+            $('#telemetryPills').html(telemetryTokens.map(token => 
+                `<span class="node-tag"><i data-lucide="${token[0]}" style="width:11px;height:11px;"></i>${sanitize(token[1])}</span>`
+            ).join(''));
+        } else {
+            $('#telemetryPills').html('<span style="font-size: 0.7rem; color: #64748b; font-style: italic;">No configuration specified</span>');
+        }
+        lucide.createIcons();
+    }
+
+    $(form).on('input change', 'input, select', function () {
+        if (MANDATORY_KEYS.includes(this.name)) renderValidationState(this.name, false);
+        recalculateTelemetry();
+    });
+
+    $(form).on('blur', 'input[required], select[required]', function () {
+        renderValidationState(this.name, true);
+    });
+
+    /* ── IT Inventory Asynchronous API Loader ── */
+    function loadHardwareAssets(elementId, actionName, dependentParam = null) {
+        const $dropdown = $('#' + elementId);
+        const payload = { action: actionName || elementId };
+        if (dependentParam && actionName === 'Monitor2') payload.monid = dependentParam;
+
+        $dropdown.html('<option value="">Syncing inventory data…</option>').prop('disabled', true);
+        $.ajax({
+            url: 'api/itApi.php',
+            type: 'POST',
+            data: payload,
+            dataType: 'json',
+            success: function (records) {
+                $dropdown.prop('disabled', false).html('<option value="">Choose item…</option>');
+                if (Array.isArray(records)) {
+                    records.forEach(function (rec) {
+                        $dropdown.append($('<option></option>')
+                            .val(rec.assetid)
+                            .text(rec.assetName + (rec.serialNo ? ` [S/N: ${rec.serialNo}]` : '')));
+                    });
+                }
+                recalculateTelemetry();
+            },
+            error: function () {
+                $dropdown.prop('disabled', false).html('<option value="">Data unavailable</option>');
+                pushToast(`Failed to pull ledger records for ${elementId}`, 'err');
+            }
+        });
+    }
+
+    // Dynamic triggers for auxiliary hardware components
+    $('#monitor1').on('change', function () {
+        const hasSelection = $(this).val() !== '';
+        $('#container_monitor1_cables').toggleClass('d-none', !hasSelection);
+        if (hasSelection) {
+            loadHardwareAssets('monitor2', 'Monitor2', this.value);
+        } else {
+            $('#container_monitor1_cables').find('select').val('');
+            $('#monitor2').html('<option value="">Choose item…</option>');
+            $('#container_monitor2_cables').addClass('d-none').find('select').val('');
+        }
+    });
+
+    $('#monitor2').on('change', function () {
+        $('#container_monitor2_cables').toggleClass('d-none', $(this).val() === '');
+    });
+
+    $('#emitter').on('change', function () {
+        const active = $(this).val() !== '';
+        $('#container_goggle').toggleClass('d-none', !active);
+        if (active) loadHardwareAssets('goggle', 'goggle');
+        else $('#container_goggle').find('select').val('');
+    });
+
+    // Populate drop-downs on initialize
+    [
+        ['monitor1', 'Monitor1'],
+        ['mouse', 'mouse'],
+        ['keyboard', 'keyboard'],
+        ['cabinet', 'cabinet'],
+        ['headphones', 'headphones'],
+        ['emitter', 'emitter'],
+        ['ups', 'ups']
+    ].forEach(item => loadHardwareAssets(item[0], item[1]));
+
+    /* ── Clear / Reset Handler ── */
+    $('#btn-reset').on('click', function () {
+        form.reset();
+        $('.field-group').removeClass('is-valid is-invalid');
+        $('.field-feedback').text('');
+        $('#container_monitor1_cables, #container_monitor2_cables, #container_goggle').addClass('d-none');
+        $('#monitor2').html('<option value="">Choose item…</option>');
+        recalculateTelemetry();
+        pushToast('Configuration ledger reset', 'info');
+    });
+
+    /* ── Inspection / Review Modal Generator ── */
+    const AUDIT_SPEC = [
+        {
+            group: 'Network & System Identity',
+            entries: [
+                ['Host Identifier', 'hostName'],
+                ['Host Chassis Architecture', 'hostType'],
+                ['Operating System Platform', 'os'],
+                ['Assigned Static IP', 'ipAddress', true],
+                ['LAN Port Jack No.', 'lanno', true],
+                ['Enclosure Allocation', 'cabinet']
+            ]
+        },
+        {
+            group: 'Compute & Memory Architecture',
+            entries: [
+                ['Processor Unit (CPU)', 'processor'],
+                ['Installed Memory (RAM)', 'ram'],
+                ['Graphics Adapter', 'graphics'],
+                ['GPU Memory (VRAM)', 'vram']
+            ]
+        },
+        {
+            group: 'Storage Subsystems',
+            entries: [
+                ['Primary OS Drive (SSD)', 'ssd'],
+                ['Secondary Storage (HDD 1)', 'hdd'],
+                ['Additional Storage (HDD 2)', 'hdd2']
+            ]
+        },
+        {
+            group: 'Display Interfaces',
+            entries: [
+                ['Primary Monitor', 'monitor1', false, 'monitor1_vcable'],
+                ['Secondary Monitor', 'monitor2', false, 'monitor2_vcable']
+            ]
+        },
+        {
+            group: 'Input, Sound & Infrastructure',
+            entries: [
+                ['Headphones Device', 'headphones'],
+                ['Signal Emitter Hardware', 'emitter'],
+                ['Paired 3D Goggles', 'goggle'],
+                ['Pointing Mouse Device', 'mouse'],
+                ['Input Keyboard', 'keyboard'],
+                ['Display Adapter 1', 'ad1'],
+                ['Display Adapter 2', 'ad2'],
+                ['Dedicated UPS Protection', 'ups']
+            ]
+        }
+    ];
+
+    function compileAuditModal() {
+        let html = '<div class="p-3">';
+        AUDIT_SPEC.forEach(section => {
+            html += `<h6 class="text-uppercase fw-bold text-muted mt-2 mb-2" style="font-size: 0.6875rem; letter-spacing: 0.05em;">${sanitize(section.group)}</h6>`;
+            html += `<table class="audit-table mb-3"><tbody>`;
+            section.entries.forEach(entry => {
+                const label = sanitize(entry[0]);
+                const rawVal = readFieldLabel(entry[1]);
+                const isMono = entry[2];
+                const subFieldVal = entry[3] ? readFieldLabel(entry[3]) : '';
+
+                let displayVal = rawVal ? `<span class="${isMono ? 'mono-val' : ''}">${sanitize(rawVal)}</span>` : '<span class="text-muted" style="font-style:italic;">Unassigned / N/A</span>';
+                if (subFieldVal) {
+                    displayVal += ` <span class="badge bg-light text-dark border ms-1" style="font-size:0.65rem;">via ${sanitize(subFieldVal)}</span>`;
+                }
+                html += `<tr><th>${label}</th><td>${displayVal}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    const previewModalInstance = new bootstrap.Modal(document.getElementById('previewModal'));
+
+    function promptPreviewWorkflow() {
+        let firstFailingField = null;
+        MANDATORY_KEYS.forEach(key => {
+            const isValid = renderValidationState(key, true);
+            if (!isValid && !firstFailingField) firstFailingField = key;
+        });
+
+        recalculateTelemetry();
+
+        if (firstFailingField) {
+            const el = form.elements[firstFailingField];
+            const target = el instanceof RadioNodeList ? el[0] : el;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (target.type !== 'radio') target.focus();
+            pushToast('Fill all required specification parameters', 'err');
+            return;
+        }
+
+        $('#previewModalContent').html(compileAuditModal());
+        lucide.createIcons();
+        previewModalInstance.show();
+    }
+
+    $(form).on('submit', function (e) {
+        e.preventDefault();
+        promptPreviewWorkflow();
+    });
+
+    $(document).on('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !$('#previewModal').hasClass('show')) {
+            e.preventDefault();
+            promptPreviewWorkflow();
+        }
+    });
+
+    /* ── Commit & Post to ITAM API ── */
+    $('#btn-confirm').on('click', function () {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $('#confirmBtnText').text('Committing to Ledger…');
+
+        const serializedPayload = $(form).serializeArray();
+        serializedPayload.push({ name: 'action', value: 'addHost' });
+
+        $.ajax({
+            url: 'api/itApi.php',
+            type: 'POST',
+            data: serializedPayload,
+            dataType: 'json',
+            success: function (res) {
+                if (res.status === 'success') {
+                    $('#previewModalContent').html(`
+                        <div class="p-5 text-center">
+                            <i data-lucide="check-circle" style="width:48px;height:48px;color:#10b981;" class="mb-3"></i>
+                            <h5 class="fw-bold text-dark">Host Record Verified &amp; Saved</h5>
+                            <p class="text-muted" style="font-size:0.8125rem;">Node <b>${sanitize(readFieldVal('hostName'))}</b> is now mapped into the network inventory registry.</p>
+                        </div>
+                    `);
+                    lucide.createIcons();
+                    $('#btn-confirm').hide();
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    $btn.prop('disabled', false);
+                    $('#confirmBtnText').text('Confirm Allocation');
+                    pushToast(res.message || 'Ledger validation error.', 'err');
+                }
+            },
+            error: function (xhr) {
+                $btn.prop('disabled', false);
+                $('#confirmBtnText').text('Confirm Allocation');
+                pushToast('Network communication error with server ledger.', 'err');
+                console.error(xhr.responseText);
+            }
+        });
+    });
+
+    recalculateTelemetry();
+});
+</script>
+</body>
+</html>

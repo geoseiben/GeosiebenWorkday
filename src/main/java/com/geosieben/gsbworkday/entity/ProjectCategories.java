@@ -2,7 +2,6 @@ package com.geosieben.gsbworkday.entity;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
-import javax.annotation.processing.Generated;
 
 @Entity 
 @Table(name="projectcategories")
@@ -13,11 +12,11 @@ public class ProjectCategories {
     private String categoryName;
     private String catagoryShortname;
     private LocalDateTime createdOn=LocalDateTime.now();
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="createdBy")
     private EmployeeBasicInfo employeeBasicInfo;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="department")
     private Department department;
 

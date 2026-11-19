@@ -1,17 +1,23 @@
 package com.geosieben.gsbworkday.controller;
 
+import com.geosieben.gsbworkday.repository.ProjectRepository;
 import com.geosieben.gsbworkday.service.LeaveServices;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.geosieben.gsbworkday.dto.AllotmentsProjection;
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
+import com.geosieben.gsbworkday.dto.LeaveAvailedDto;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
+import com.geosieben.gsbworkday.dto.ResourceDto;
 import com.geosieben.gsbworkday.entity.BookedHours;
 import com.geosieben.gsbworkday.entity.Clients;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.ProjectAllocation;
 import com.geosieben.gsbworkday.repository.AllocationRepository;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
-import com.geosieben.gsbworkday.repository.BookerHoursRepository;
+import com.geosieben.gsbworkday.repository.BookedHoursRepository;
+import com.geosieben.gsbworkday.repository.CourseCompletionRepository;
+import com.geosieben.gsbworkday.repository.SkillsRepository;
 import com.geosieben.gsbworkday.service.CategoryService;
 import com.geosieben.gsbworkday.service.ClientService;
 import com.geosieben.gsbworkday.service.EmployeeService;
@@ -22,6 +28,7 @@ import com.geosieben.gsbworkday.service.TrackerService;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,28 +39,50 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
+
+
 
 
 @RestController
 public class RestCont {
+    private final ProjectRepository projectRepository;
     private final LeaveServices leaveServices;
-    @Autowired
     private ClientService clientService;
-    @Autowired
     private EmployeeService employeeService;
-    @Autowired
     private CategoryService categoryService;
-    @Autowired
     private SeparationService separationService;
-    @Autowired
     private ProjectService projectService;
-    @Autowired 
-    AllocationRepository allocationRepository;
-        @Autowired
+    private  AllocationRepository allocationRepository;
     private BasicInfoRepository basicInfoRepository;
-    @Autowired
     private HttpSession httpSession;
+    private SkillsRepository skillsRepository;
+    private CourseCompletionRepository courseCompletionRepository;
+    
+    public RestCont(LeaveServices leaveServices, ClientService clientService, EmployeeService employeeService,
+            CategoryService categoryService, SeparationService separationService, ProjectService projectService,
+            AllocationRepository allocationRepository, BasicInfoRepository basicInfoRepository, HttpSession httpSession,
+            TrackerService trackerService, BookedHoursRepository bookerHoursRepository,SkillsRepository skillsRepository,
+             ProjectRepository projectRepository,CourseCompletionRepository courseCompletionRepository) {
+        this.leaveServices = leaveServices;
+        this.clientService = clientService;
+        this.employeeService = employeeService;
+        this.categoryService = categoryService;
+        this.separationService = separationService;
+        this.projectService = projectService;
+        this.allocationRepository = allocationRepository;
+        this.basicInfoRepository = basicInfoRepository;
+        this.httpSession = httpSession;
+        this.trackerService = trackerService;
+        this.bookerHoursRepository = bookerHoursRepository;
+        this.skillsRepository=skillsRepository;
+        this.projectRepository = projectRepository;
+        this.courseCompletionRepository=courseCompletionRepository;
+    }
+    
+
+
+
+
     @PostMapping("/admin/saveClient")
     public ResponseEntity<Map<String,String>> saveClient(@RequestParam String clientId,@RequestParam String clientName) {
   return clientService.saveclientInfo(clientId, clientName);
@@ -72,6 +101,7 @@ public class RestCont {
         clientService.getClients()
        );
     }
+    
 
 @PostMapping("/admin/addproject")
 public ResponseEntity<Map<String,String>> addProject(@ModelAttribute ProjectRequest request) {
@@ -90,9 +120,9 @@ public ResponseEntity<?> processResignation(
     }
     
    @GetMapping("/myAllotments")
-   public List<ProjectAllocation> myAllotments() {
+   public List<AllotmentsProjection> myAllotments() {
     String eid=(String)httpSession.getAttribute("eid");
-       return allocationRepository.myAllotments(eid, eid);
+       return allocationRepository.getMyAllotments(eid);
    }
       @GetMapping("/getRunningAllotments")
    public Optional<ProjectAllocation> activeAllotments() {
@@ -104,17 +134,18 @@ public ResponseEntity<?> processResignation(
 
 @Autowired
     private TrackerService trackerService;
-@GetMapping("/{id}/{action}/{percentage}")
-    public ResponseEntity<?> handleTaskAction(
-            @PathVariable int id,
-            @PathVariable String action,
-             @PathVariable String percentage
-        ) {
-            
+
+
+
+@Autowired
+private BookedHoursRepository bookerHoursRepository ;
+
+@PostMapping("/updateTask")
+public ResponseEntity<?> updateTask(@RequestParam("allotmentid") int allotmentid,@RequestParam("action") String action,@RequestParam("percentage") String percentage)  {
                 String employeeId =(String) httpSession.getAttribute("eid");
         try {
             System.out.println("percentage is"+percentage);
-            ProjectAllocation updatedTask = trackerService.handleAction(id, action, employeeId,percentage);
+            ProjectAllocation updatedTask = trackerService.handleAction(allotmentid, action, employeeId,percentage);
             return ResponseEntity.ok(updatedTask);
         } catch (IllegalStateException e) {
             // Catches validation errors like "Task already completed"
@@ -122,16 +153,9 @@ public ResponseEntity<?> processResignation(
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("An error occurred: " + e.getMessage());
         }
-    }
-@Autowired
-private BookerHoursRepository bookerHoursRepository ;
-RestCont(LeaveServices leaveServices) {
-    this.leaveServices = leaveServices;
 }
-    @GetMapping("/{empid}/{allotmentid}")
-    public BookedHours getHours(@PathVariable("empid") String empid,@PathVariable("allotmentid") int allotmentid) {
-        return bookerHoursRepository.findbydateAndAllotmentforToday(empid, allotmentid);
-    }
+
+
 @GetMapping("/myProfileData")
 public EmployeeProfileProjection myProfile() {
     return basicInfoRepository.employeeProfile((String)httpSession.getAttribute("eid"));
@@ -141,5 +165,34 @@ public ResponseEntity<Map<String,String>> cancelLeaveds(@RequestParam("leaveId")
 return leaveServices.calcelLeave(id);
 }
 
+@GetMapping("/admin/resourceData")
+public List<ResourceDto> getResourceData() {
+    return employeeService.getResources();
+}
+
+@GetMapping("/getStats")
+public ResponseEntity<Map<String,String>> getstats() {
+    Map<String,String> response=new HashMap<>();
+response.put("status", "success");
+response.put("message", "response returned");
+    return ResponseEntity.ok(response);
+}
+
+@PostMapping("/admin/manualSeparation")
+public ResponseEntity<Map<String,String>> manualSeparation(
+    @RequestParam("Manualseparation")  String eid,
+    @RequestParam("separationType")  String separationType,
+    @RequestParam("lastDay")  LocalDate lastDay,
+    @RequestParam("reason")  String reason,
+    @RequestParam("employeeRemarks")  String employeeRemarks,
+    @RequestParam("hrRemarks")  String hrRemarks,
+    @RequestParam("rehireEligible")  int rehireEligible
+) {
+   return employeeService.processManualSeparation(eid, separationType, lastDay, reason, employeeRemarks, hrRemarks, rehireEligible);
+}   
+@GetMapping("/admin/getLeaveAvailedReport")
+public List<LeaveAvailedDto> getLeaveAvailedReport() {  
+    return employeeService.getLeaveAvailedDtos();
+}
 
 }

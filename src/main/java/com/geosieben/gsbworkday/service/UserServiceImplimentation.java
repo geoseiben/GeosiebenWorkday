@@ -2,15 +2,19 @@ package com.geosieben.gsbworkday.service;
 
 import com.geosieben.gsbworkday.entity.User;
 import com.geosieben.gsbworkday.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserServiceImplimentation implements UserServices {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    UserServiceImplimentation(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+    
     @Override
     public User addUser(User user) {
         PasswordEncoder passwordEncoder=new BCryptPasswordEncoder();
@@ -18,4 +22,9 @@ public class UserServiceImplimentation implements UserServices {
         user.setPassword(password);
         return userRepository.save(user);
     }
+
+//     @Scheduled(cron="")
+// public void executeEveryMinute() {
+//     System.out.println("Task executed every minute!");
+// }
 }

@@ -1,7 +1,6 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,6 +23,7 @@ public class Department {
     public Department() {
 
     }
+
 
     public String getDepartmentName() {
         return departmentName;
@@ -55,5 +55,13 @@ public class Department {
 
     public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }

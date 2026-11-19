@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+      <meta id="csrfToken" name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Target vs Booked Hours</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons & DataTables CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-size: 0.8125rem;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* High-Density DataTable Styling */
+        table.dataTable {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        table.dataTable thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+            padding: 0.6rem 0.75rem !important;
+            border-top: 1px solid #e2e8f0 !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+            white-space: nowrap;
+        }
+        table.dataTable tbody td {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.78rem;
+            border-bottom: 1px solid #f1f5f9 !important;
+            vertical-align: middle;
+        }
+        table.dataTable tbody tr {
+            transition: background-color 0.12s ease;
+        }
+        table.dataTable tbody tr:hover {
+            background-color: #eff6ff !important;
+        }
+        table.dataTable.no-footer {
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        /* Excel Export Button Styling */
+        .dt-buttons {
+            display: inline-flex;
+        }
+        button.dt-button.btn-excel-tw {
+            background: #ffffff !important;
+            color: #1d4ed8 !important;
+            border: 1px solid #bfdbfe !important;
+            border-radius: 0.5rem !important;
+            padding: 0.38rem 0.8rem !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            margin: 0 !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            transition: all 0.15s ease;
+        }
+        button.dt-button.btn-excel-tw:hover {
+            background: #eff6ff !important;
+            border-color: #3b82f6 !important;
+        }
+
+        /* DataTables Pagination & Info */
+        .dataTables_wrapper .dataTables_info {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 0.65rem 1rem;
+            font-size: 0.72rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.25rem 0.6rem !important;
+            margin: 0 2px !important;
+            border-radius: 0.4rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            color: #475569 !important;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #eff6ff !important;
+            border-color: #93c5fd !important;
+            color: #1d4ed8 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body id="page-top" class="antialiased selection:bg-blue-600 selection:text-white">
+</head><head th:replace="includes/header :: header"></head>
+
+    <div class="w-full max-w-full mx-auto px-3 sm:px-6 pt-4 pb-8">
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+            
+            <!-- Top Executive Blue Header -->
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3.5">
+                    <button onclick="history.back()" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition">
+                        <i class="fas fa-arrow-left text-[11px]"></i>
+                        <span>Back</span>
+                    </button>
+                    <div class="h-6 w-px bg-white/15 hidden sm:block"></div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-sm sm:text-base font-extrabold text-white tracking-tight leading-none">
+      Target vs Booked Hours
+                            </h1>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <button id="toggleCharts" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white border border-blue-400/30 shadow-sm transition">
+                        <i class="fas fa-chart-simple text-blue-100"></i>
+                        <span>Hide Charts</span>
+                    </button>
+                    <div id="buttonContainer"></div>
+                </div>
+            </div>
+
+            <!-- KPI Metrics Strip -->
+            <div id="statsRow" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-slate-50/80 border-b border-slate-200/80">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Employees</div>
+                        <div class="text-lg font-extrabold text-slate-900 font-mono tabular-nums mt-0.5" id="statEmployees">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-users text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Target Hrs</div>
+                        <div class="text-lg font-extrabold text-slate-800 font-mono tabular-nums mt-0.5" id="statAvgTarget">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <i class="fas fa-bullseye text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Booked Hrs</div>
+                        <div class="text-lg font-extrabold text-blue-600 font-mono tabular-nums mt-0.5" id="statAvgBooked">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-clock text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">In Lead</div>
+                        <div class="text-lg font-extrabold text-emerald-600 font-mono tabular-nums mt-0.5" id="statLeadCount">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i class="fas fa-arrow-trend-up text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">In Lag</div>
+                        <div class="text-lg font-extrabold text-rose-600 font-mono tabular-nums mt-0.5" id="statLagCount">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                        <i class="fas fa-arrow-trend-down text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Net Lead / Lag</div>
+                        <div class="text-lg font-extrabold text-slate-900 font-mono tabular-nums mt-0.5" id="statNet">--</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <i class="fas fa-scale-balanced text-xs"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collapsible Analytics Charts -->
+            <div id="chartsPanel" class="p-4 bg-white border-b border-slate-200">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div class="lg:col-span-8 bg-slate-50/60 border border-slate-200/80 rounded-xl p-3.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h6 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                Target vs Booked Hours (Top 12 by Booked Hrs)
+                            </h6>
+                        </div>
+                        <div class="relative h-48">
+                            <canvas id="targetBookedChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4 bg-slate-50/60 border border-slate-200/80 rounded-xl p-3.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h6 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Lead vs Lag Distribution
+                            </h6>
+                        </div>
+                        <div class="relative h-48">
+                            <canvas id="leadLagChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Filter & Search Toolbar -->
+            <div class="px-4 py-3 bg-white flex flex-wrap items-center gap-3">
+                <!-- Month Dropdown -->
+                <div class="flex items-center gap-2">
+                    <label for="monthFilter" class="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                        <i class="fas fa-calendar-alt text-blue-600"></i> Month:
+                    </label>
+                    <select id="monthFilter" 
+                            class="h-8 min-w-[135px] px-2.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition cursor-pointer">
+                        <option value="">All Months</option>
+                    </select>
+                </div>
+
+                <!-- Quick Status Filter Chips -->
+                <div class="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200/80" id="statusFilterGroup">
+                    <button type="button" data-status="all" class="status-chip px-2.5 py-1 rounded-md text-[11px] font-bold bg-white text-blue-700 shadow-2xs transition">
+                        All
+                    </button>
+                    <button type="button" data-status="lead" class="status-chip px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-600 hover:text-slate-900 transition">
+                        In Lead
+                    </button>
+                    <button type="button" data-status="lag" class="status-chip px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-600 hover:text-slate-900 transition">
+                        In Lag
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative flex items-center">
+                    <i class="fas fa-search absolute left-3 text-slate-400 text-xs pointer-events-none"></i>
+                    <input type="text" id="customSearch" placeholder="Search name, EID, designation..."
+                           class="h-8 w-52 sm:w-60 focus:w-72 pl-8 pr-7 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all">
+                    <button type="button" id="clearSearch" class="hidden absolute right-2.5 text-slate-400 hover:text-slate-600 text-xs">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Record Counter Pill -->
+                <span id="resultCount" class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/70 text-[11px] font-mono font-semibold"></span>
+
+                <!-- Report Date -->
+                <div class="ml-auto text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    <span>Report Date:</span>
+                    <span class="font-mono font-bold text-slate-800"><?php echo $currentDate; ?></span>
+                </div>
+            </div>
+
+            <!-- High-Density Data Table -->
+            <div class="overflow-x-auto">
+                <table id="dataTable" class="w-full text-left">
+                    <thead>
+                        <tr>
+                            <th class="w-10 text-center">#</th>
+                            <th class="w-24">EID</th>
+                            <th>Employee Name</th>
+                            <th class="w-32">Designation</th>
+                            <th class="w-24">Month</th>
+                            <th class="w-24 text-right">Target Hrs</th>
+                            <th class="w-28 text-right">Ext Target</th>
+                            <th class="w-24 text-right">Booked Hrs</th>
+                            <th class="w-36 text-center">Productivity</th>
+                            <th class="w-24 text-right">Extra Hrs</th>
+                            <th class="w-28 text-right">Lead / Lag</th>
+                            <th class="w-14 text-center">Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit Target Hours Modal -->
+    <div id="editModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div id="modalBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+                <form id="editForm">
+                    <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 px-5 py-3.5 flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-sliders text-blue-300"></i> Adjust Target Hours
+                        </h3>
+                        <button type="button" class="close-modal text-blue-200 hover:text-white transition">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <input type="hidden" id="edit_id" name="id">
+                        <input type="hidden" id="edit_eid" name="eid">
+                        <input type="hidden" id="month" name="month">
+                        <input type="hidden" id="existing" name="existing">
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Employee</label>
+                                <input type="text" id="display_name" name="display_name" readonly
+                                       class="w-full px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Billing Month</label>
+                                <input type="text" id="display_month" readonly
+                                       class="w-full px-3 py-2 text-xs font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="edit_targethours" class="block text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-1">
+                                New Target Hours <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="number" step="0.01" name="targethours" id="edit_targethours" required
+                                   class="w-full px-3 py-2 text-sm font-mono font-bold text-slate-900 bg-white border-2 border-blue-500 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/15">
+                        </div>
+                    </div>
+
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+                        <button type="button" class="close-modal px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <!-- Reliable CDN Scripts (Single jQuery instance loaded BEFORE DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        jQuery(function($) {
+            const currentMonth = getCurrentMonth();
+            let activeStatusFilter = 'all';
+
+            // Custom DataTables Filter for Lead / Lag Chips
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData) {
+                if (activeStatusFilter === 'all') return true;
+                let target = parseFloat(rowData.targethours) || 0;
+                let booked = parseFloat(rowData.hours) || 0;
+                let diff = booked - target;
+                if (activeStatusFilter === 'lead') return diff >= 0;
+                if (activeStatusFilter === 'lag') return diff < 0;
+                return true;
+            });
+
+            // Modal Controllers
+            function openModal() { $('#editModal').removeClass('hidden'); }
+            function closeModal() { $('#editModal').addClass('hidden'); }
+            $('.close-modal, #modalBackdrop').on('click', closeModal);
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') closeModal();
+            });
+
+            // Initialize DataTable
+            let table = $('#dataTable').DataTable({
+                dom: 'rt<"flex flex-wrap justify-between items-center bg-slate-50/70"ip>',
+                buttons: [{
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel mr-1.5 text-emerald-600"></i> Export Excel',
+                    className: 'btn-excel-tw',
+                    title: 'Employee Target vs Booked Hours Report as on <?php echo $currentDate; ?>',
+                    exportOptions: {
+                        columns: ':visible:not(:last-child)',
+                        format: {
+                            body: function (data, row, column) {
+                                if (column === 0) return (row + 1);
+                                if (typeof data === 'string' && data.includes('<')) {
+                                    return data.replace(/<[^>]*>?/gm, '').trim();
+                                }
+                                return data;
+                            }
+                        }
+                    }
+                }],
+                ajax: {
+                    url: '/admin/reports/getTargetHours',
+                    type: 'GET',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: null, defaultContent: '', orderable: false, className: 'text-center font-mono text-xs text-slate-400' },
+                    { data: 'eid', className: 'font-mono font-semibold text-blue-700' },
+                    { data: 'employeename', defaultContent: '--', className: 'font-bold text-slate-800' },
+                    { data: 'designation', defaultContent: '--', className: 'text-xs font-medium text-slate-500' },
+                    {
+                        data: 'month',
+                        defaultContent: '--',
+                        render: function(data) {
+                            return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-semibold">${data || '--'}</span>`;
+                        }
+                    },
+                    { data: 'targetHours', defaultContent: '0', className: 'text-right font-mono font-semibold text-slate-700 tabular-nums' },
+                    { data: 'extendedTarget', defaultContent: '0', className: 'text-right font-mono font-semibold text-slate-500 tabular-nums' },
+                    { data: 'hours', defaultContent: '0', className: 'text-right font-mono font-bold text-blue-700 tabular-nums' },
+                    {
+                        data: null,
+                        className: 'text-center',
+                        render: function(data, type, row) {
+                            let target = parseFloat(row.targetHours) || 0;
+                            let actual = parseFloat(row.hours) || 0;
+                            let percentage = target > 0 ? Math.round((actual / target) * 100) : 0;
+
+                            if (type === 'sort' || type === 'type') return percentage;
+
+                            let barColor = percentage < 75 ? 'bg-rose-500' : (percentage < 95 ? 'bg-amber-500' : 'bg-emerald-500');
+                            let textColor = percentage < 75 ? 'text-rose-700' : (percentage < 95 ? 'text-amber-700' : 'text-emerald-700');
+                            let widthPct = Math.min(percentage, 100);
+
+                            return `
+                                <div class="flex items-center gap-2 justify-center">
+                                    <div class="w-14 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full ${barColor} rounded-full" style="width: ${widthPct}%"></div>
+                                    </div>
+                                    <span class="font-mono text-[11px] font-bold tabular-nums w-9 text-right ${textColor}">${percentage}%</span>
+                                </div>`;
+                        }
+                    },
+                    { data: 'extraHours', defaultContent: '0', className: 'text-right font-mono font-semibold text-slate-600 tabular-nums' },
+                    {
+                        data: null,
+                        className: 'text-right',
+                        render: function(data, type, row) {
+                            let target = parseFloat(row.targetHours) || 0;
+                            let actual = parseFloat(row.hours) || 0;
+                            let diff = actual - target;
+
+                            if (type === 'sort' || type === 'type') return diff;
+
+                            let badgeStyle = diff >= 0
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                : 'bg-rose-50 text-rose-700 border-rose-200/80';
+
+                            return `<span class="inline-block px-2 py-0.5 rounded border font-mono text-[11px] font-bold tabular-nums ${badgeStyle}">${diff > 0 ? '+' : ''}${diff.toFixed(2)}</span>`;
+                        }
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        className: 'text-center',
+                        render: function(data, type, row) {
+                            return `<button type="button" class="edit-btn inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200/80 transition shadow-2xs"
+                                        title="Edit Target Hours"
+                                        data-id="${row.id}"
+                                        data-target="${row.targetHours}"
+                                        data-eid="${row.eid}"
+                                        data-employeename="${row.employeename}"
+                                        data-month="${row.month}">
+                                        <i class="fas fa-pen text-[10px]"></i>
+                                    </button>`;
+                        }
+                    }
+                ],
+                pageLength: 100,
+                language: {
+                    paginate: {
+                        previous: '<i class="fas fa-chevron-left"></i>',
+                        next: '<i class="fas fa-chevron-right"></i>'
+                    }
+                },
+                initComplete: function () {
+                    table.buttons().container().appendTo('#buttonContainer');
+                    let column = this.api().column(4);
+                    let select = $('#monthFilter');
+                    column.data().unique().sort().each(function (d) {
+                        if (d && d !== '--') {
+                            select.append('<option value="' + d + '" ' + (currentMonth === d ? 'selected' : '') + '>' + d + '</option>');
+                        }
+                    });
+
+                    if (currentMonth) {
+                        let val = $.fn.dataTable.util.escapeRegex(currentMonth);
+                        table.column(4).search(val ? '^' + val + '$' : '', true, false).draw();
+                    }
+                    updateResultCount();
+                    updateStatsAndCharts();
+                }
+            });
+
+            function updateResultCount() {
+                let info = table.page.info();
+                $('#resultCount').text(`${info.recordsDisplay} / ${info.recordsTotal} records`);
+            }
+
+            function getCurrentMonth() {
+                const date = new Date();
+                const month = date.toLocaleDateString('en-US', { month: 'short' });
+                const year = date.getFullYear();
+                return `${month}-${year}`;
+            }
+
+            /* ---------------- Charts & KPI Stats ---------------- */
+            const chartColors = {
+                target: '#93c5fd',
+                booked: '#1d4ed8',
+                lead: '#10b981',
+                lag: '#f43f5e'
+            };
+
+            const targetBookedCtx = document.getElementById('targetBookedChart').getContext('2d');
+            const targetBookedChart = new Chart(targetBookedCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Target Hrs', data: [], backgroundColor: chartColors.target, borderRadius: 4, maxBarThickness: 20 },
+                        { label: 'Booked Hrs', data: [], backgroundColor: chartColors.booked, borderRadius: 4, maxBarThickness: 20 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans', weight: '600' } } },
+                        tooltip: { titleFont: { size: 11 }, bodyFont: { size: 11 } }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 9 }, maxRotation: 30, minRotation: 10 }, grid: { display: false } },
+                        y: { ticks: { font: { size: 9 } }, grid: { color: '#e2e8f0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const leadLagCtx = document.getElementById('leadLagChart').getContext('2d');
+            const leadLagChart = new Chart(leadLagCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['In Lead', 'In Lag'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: [chartColors.lead, chartColors.lag],
+                        borderWidth: 2,
+                        borderColor: '#f8fafc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans', weight: '600' } } },
+                        tooltip: { titleFont: { size: 11 }, bodyFont: { size: 11 } }
+                    }
+                }
+            });
+
+            function updateStatsAndCharts() {
+                let rows = table.rows({ search: 'applied' }).data().toArray();
+
+                let empCount = rows.length;
+                let sumTarget = 0, sumBooked = 0, leadCount = 0, lagCount = 0, netDiff = 0;
+
+                rows.forEach(function(row) {
+                    let target = parseFloat(row.targetHours) || 0;
+                    let booked = parseFloat(row.hours) || 0;
+                    let diff = booked - target;
+                    sumTarget += target;
+                    sumBooked += booked;
+                    netDiff += diff;
+                    if (diff >= 0) leadCount++; else lagCount++;
+                });
+
+                let avgTarget = empCount ? (sumTarget / empCount) : 0;
+                let avgBooked = empCount ? (sumBooked / empCount) : 0;
+
+                $('#statEmployees').text(empCount);
+                $('#statAvgTarget').text(avgTarget.toFixed(1));
+                $('#statAvgBooked').text(avgBooked.toFixed(1));
+                $('#statLeadCount').text(leadCount);
+                $('#statLagCount').text(lagCount);
+                $('#statNet').text((netDiff > 0 ? '+' : '') + netDiff.toFixed(1))
+                    .removeClass('text-emerald-600 text-rose-600 text-slate-900')
+                    .addClass(netDiff >= 0 ? 'text-emerald-600' : 'text-rose-600');
+
+                let sorted = rows.slice().sort(function(a, b) {
+                    return (parseFloat(b.hours) || 0) - (parseFloat(a.hours) || 0);
+                }).slice(0, 12);
+
+                targetBookedChart.data.labels = sorted.map(r => r.employeename || r.eid || '--');
+                targetBookedChart.data.datasets[0].data = sorted.map(r => parseFloat(r.targetHours) || 0);
+                targetBookedChart.data.datasets[1].data = sorted.map(r => parseFloat(r.hours) || 0);
+                targetBookedChart.update();
+
+                leadLagChart.data.datasets[0].data = [leadCount, lagCount];
+                leadLagChart.update();
+            }
+
+            // Status Filter Chips Click
+            $('.status-chip').on('click', function() {
+                $('.status-chip').removeClass('bg-white text-blue-700 shadow-2xs font-bold').addClass('text-slate-600 font-semibold');
+                $(this).removeClass('text-slate-600 font-semibold').addClass('bg-white text-blue-700 shadow-2xs font-bold');
+                activeStatusFilter = $(this).data('status');
+                table.draw();
+            });
+
+            // Toggle Charts Panel
+            $('#toggleCharts').on('click', function() {
+                const $panel = $('#chartsPanel');
+                $panel.toggleClass('hidden');
+                const isHidden = $panel.hasClass('hidden');
+
+                $(this).html(isHidden
+                    ? '<i class="fas fa-chart-simple text-blue-100"></i><span>Show Charts</span>'
+                    : '<i class="fas fa-chart-simple text-blue-100"></i><span>Hide Charts</span>'
+                );
+
+                if (!isHidden) {
+                    targetBookedChart.resize();
+                    leadLagChart.resize();
+                }
+            });
+
+            // Debounced Search Box
+            let searchTimer;
+            $('#customSearch').on('keyup', function() {
+                clearTimeout(searchTimer);
+                const val = $(this).val();
+                $('#clearSearch').toggleClass('hidden', val.length === 0);
+                searchTimer = setTimeout(function() {
+                    table.search(val).draw();
+                }, 200);
+            });
+
+            $('#clearSearch').on('click', function() {
+                $('#customSearch').val('');
+                $(this).addClass('hidden');
+                table.search('').draw();
+            });
+
+            // Edit Button Click
+            $('#dataTable').on('click', '.edit-btn', function() {
+                $('#edit_id').val($(this).data('id'));
+                $('#edit_eid').val($(this).data('eid'));
+                $('#month').val($(this).data('month'));
+                $('#existing').val($(this).data('target'));
+                $('#display_name').val($(this).data('employeename'));
+                $('#display_month').val($(this).data('month'));
+                $('#edit_targethours').val($(this).data('target'));
+                openModal();
+            });
+
+            // Form Submission (Root-relative path /api/projectApi.php so nested routes don't 404)
+            $('#editForm').on('submit', function(e) {
+                  const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+                e.preventDefault();
+                $.ajax({
+                    url: '/admin/reports/updateTargetHours',
+                    type: 'PUT',
+                     headers: {
+                  'X-CSRF-TOKEN': csrfToken
+              },
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        closeModal();
+                        console.log(response);
+                      table.ajax.reload(null, false);
+                        Swal.fire({
+                            title: 'Updated!',
+                            text: 'Target hours have been updated.',
+                            icon: 'success',
+                            confirmButtonColor: '#2563eb'
+                        });
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred while updating target hours.',
+                            icon: 'error',
+                            confirmButtonColor: '#2563eb'
+                        });
+                    }
+                });
+            });
+
+            // Month Filter
+            $('#monthFilter').on('change', function() {
+                let val = $.fn.dataTable.util.escapeRegex($(this).val());
+                table.column(4).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+
+            // Serial Number & Dynamic Refresh on Draw
+            table.on('draw.dt', function () {
+                let info = table.page.info();
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1 + info.start;
+                });
+                updateResultCount();
+                updateStatsAndCharts();
+            });
+        });
+    </script>
+</body>
+</html>

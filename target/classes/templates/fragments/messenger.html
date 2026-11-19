@@ -1,156 +1,925 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <div th:fragment="chat-widget">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .chat-container { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: bottom right; }
-        .chat-hidden { opacity: 0; transform: translateY(30px) scale(0.9); pointer-events: none; }
-        .chat-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-        .user-bubble { background-color: #18181b; color: white; border-radius: 18px 18px 2px 18px; }
-        .ai-bubble { background-color: #f4f4f5; color: #27272a; border-radius: 18px 18px 18px 2px; }
-        
-        /* Utility for view transitions */
-        .view-hidden { display: none !important; }
+        #chatWidgetRoot .cw-studio-scroll::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        #chatWidgetRoot .cw-studio-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #chatWidgetRoot .cw-studio-scroll::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 9999px;
+        }
+        #chatWidgetRoot .cw-studio-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.55);
+        }
+        #chatWidgetRoot .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        #chatWidgetRoot .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes cwStudioOpen {
+            0% { opacity: 0; transform: translateY(14px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes cwMsgPop {
+            0% { opacity: 0; transform: translateY(4px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #chatWidgetRoot .cw-open-anim {
+            animation: cwStudioOpen 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        #chatWidgetRoot .cw-msg-pop {
+            animation: cwMsgPop 0.15s ease-out forwards;
+        }
     </style>
 
-    <button id="chatToggle" class="fixed bottom-6 right-6 w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 z-50 shadow-xl">
-        <i class="fa-solid fa-comment-dots text-2xl" id="toggleIcon"></i>
-        <div id="unreadBadge" th:if="${unreadCount > 0}" th:text="${unreadCount}"
-             class="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 border-4 border-white rounded-full flex items-center justify-center text-[10px] font-bold">1</div>
-    </button>
+    <!-- Isolation wrapper ensuring fixed overlap over any page element without blocking clicks -->
+    <div id="chatWidgetRoot" class="fixed inset-0 pointer-events-none z-[999999] font-sans antialiased">
+<button id="chatToggle" type="button" aria-label="Open messages"
+        class="pointer-events-auto group fixed bottom-6 right-6 flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-full bg-white hover:bg-slate-50 text-slate-800 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.16)] border border-slate-200/90 hover:border-blue-300 active:scale-95 transition-all duration-200 focus:outline-none">
+    <span id="attnRing" class="hidden absolute -inset-1 rounded-full border-2 border-blue-400/50 animate-ping pointer-events-none"></span>
+    <span class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105">
+        <svg id="chatOpenSvg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+            <path d="M8 12h.01"/>
+            <path d="M12 12h.01"/>
+            <path d="M16 12h.01"/>
+        </svg>
+        <i id="chatCloseIcon" style="display: none;" class="fa-solid fa-xmark text-sm"></i>
+    </span>
+    <span id="fabLabel" class="text-xs font-bold text-slate-800">Chat</span>
+    <span id="unreadBadge" class="hidden ml-0.5 min-w-[20px] h-[20px] px-1.5 bg-rose-500 text-white text-[10px] font-extrabold rounded-full items-center justify-center">0</span>
+</button>
+        <input type="hidden" id="csrf" name="_csrf" th:value="${_csrf.token}" />
 
-    <div id="chatOverlay" class="chat-hidden chat-container fixed bottom-24 right-6 w-[380px] h-[600px] bg-white rounded-[2rem] shadow-2xl flex flex-col border border-zinc-100 overflow-hidden z-50">
-        
-        <div id="listView" class="flex flex-col h-full bg-white">
-            <header class="px-8 pt-8 pb-4 flex justify-between items-center">
-                <div>
-                    <h2 class="font-bold text-2xl text-zinc-900">Inbox</h2>
-                    <p class="text-xs text-zinc-400 font-medium" th:text="${unreadCount + ' unread messages'}">0 unread</p>
-                </div>
-                <button onclick="showContacts()" class="w-10 h-10 bg-zinc-50 text-zinc-900 rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center">
-                    <i class="fa-solid fa-plus text-sm"></i>
-                </button>
-            </header>
-            
-            <div class="flex-1 overflow-y-auto custom-scrollbar px-4">
-                <div th:each="chat : ${globalChats}" 
-                     class="flex items-center p-4 hover:bg-zinc-50 rounded-2xl cursor-pointer transition-all" 
-                     th:onclick="openChat([[${chat.name}]], [[${chat.avatarUrl}]])">
-                    <div class="relative">
-                        <img th:src="${chat.avatarUrl}" class="w-12 h-12 rounded-xl object-cover">
-                        <div th:if="${chat.online}" class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
-                    </div>
-                    <div class="ml-4 flex-1">
-                        <div class="flex justify-between">
-                            <span class="font-bold text-sm" th:text="${chat.name}">Name</span>
-                            <span class="text-[10px] text-zinc-400" th:text="${chat.lastTime}">Time</span>
+        <!-- ================= LIGHT STUDIO MODAL WINDOW ================= -->
+        <div id="chatOverlay"
+             class="pointer-events-auto hidden fixed bottom-24 right-6 w-[calc(100vw-32px)] sm:w-[388px] h-[595px] max-h-[82vh] bg-white rounded-[26px] shadow-[0_24px_64px_-12px_rgba(15,23,42,0.18),0_0_1px_1px_rgba(15,23,42,0.06)] border border-slate-200/90 flex flex-col overflow-hidden origin-bottom-right">
+
+            <!-- ================= TOP HEADER (Inbox & Directory) ================= -->
+            <div id="mainShellHeader" class="bg-white px-4 pt-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+                        <div>
+                            <h2 class="text-sm font-extrabold tracking-tight text-slate-900 leading-none">Team Messeger</h2>
+                            <p id="unreadLabel" class="text-[11px] text-slate-500 font-medium mt-1 leading-none">All caught up</p>
                         </div>
-                        <p class="text-xs text-zinc-500 truncate w-40" th:text="${chat.lastMessage}">Message...</p>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="toggleDirectoryBtn" onclick="toggleDirectoryPane()" title="New chat"
+                                class="h-8 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-bold flex items-center gap-1.5 transition-colors">
+                            <i id="dirBtnIcon" class="fa-solid fa-user-plus text-[10px]"></i>
+                            <span id="dirBtnLabel">New</span>
+                        </button>
+                        <button type="button" id="minimizeWindowBtn" aria-label="Minimize chat"
+                                class="w-8 h-8 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="contactsView" class="view-hidden flex-col h-full bg-white">
-            <header class="p-6 border-b flex items-center">
-                <button onclick="backToInbox()" class="mr-4 text-zinc-400 hover:text-zinc-900 transition-colors">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <h3 class="font-bold text-lg text-zinc-900">New Message</h3>
-            </header>
-            
-            <div class="px-6 py-4">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs"></i>
-                    <input type="text" placeholder="Search contacts..." 
-                           class="w-full bg-zinc-100 rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-zinc-200 transition-all">
+                <!-- Compact Unified Filter Input -->
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 text-slate-400 text-[11px]"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Search conversations or people..."
+                           class="w-full pl-8 pr-3 py-1.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-xs rounded-xl border border-transparent focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15 focus:outline-none transition-all placeholder:text-slate-400 text-slate-700">
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scrollbar px-4">
-                <div th:each="user : ${availableUsers}" 
-                     class="flex items-center p-3 hover:bg-zinc-50 rounded-2xl cursor-pointer transition-all"
-                     th:onclick="openChat([[${user.name}]], [[${user.avatarUrl}]])">
-                    <img th:src="${user.avatarUrl}" class="w-10 h-10 rounded-lg object-cover">
-                    <div class="ml-3">
-                        <p class="text-sm font-bold text-zinc-900" th:text="${user.name}">Contact Name</p>
-                        <p class="text-[10px] text-zinc-400">Available to chat</p>
+            <div class="relative flex-1 w-full h-full overflow-hidden bg-slate-50/60">
+
+                <!-- 1. INBOX LIST VIEW -->
+                <div id="listView" class="absolute inset-0 flex flex-col">
+                    <!-- Quick Active Contacts Strip -->
+                    <div id="quickOnlineSection" class="hidden px-4 py-2.5 border-b border-slate-100 bg-white/80">
+                        <div id="quickAvatarsStrip" class="no-scrollbar flex items-center gap-3 overflow-x-auto">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div id="chatListContainer" class="cw-studio-scroll flex-1 overflow-y-auto p-2.5 space-y-1.5">
+                        <!-- Populated via renderChatList() -->
                     </div>
                 </div>
+
+                <!-- 2. CONTACTS / DIRECTORY VIEW -->
+                <div id="contactsView" class="hidden absolute inset-0 flex flex-col bg-white">
+                    <div class="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Available Colleagues</span>
+                        <button type="button" onclick="backToInbox()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
+                            Back to chats
+                        </button>
+                    </div>
+
+                    <div id="contactsListContainer" class="cw-studio-scroll flex-1 overflow-y-auto p-2.5 space-y-1">
+                        <!-- Populated via getAvailableUsers() -->
+                    </div>
+                </div>
+
+                <!-- 3. ACTIVE CHAT / CONVERSATION VIEW -->
+                <div id="conversationView" class="hidden absolute inset-0 flex flex-col bg-[#f8fafc]">
+                    <!-- Drag & Drop Overlay -->
+                    <div id="dropZoneOverlay" class="hidden absolute inset-0 z-30 bg-white/90 backdrop-blur-md border-2 border-dashed border-indigo-500 rounded-2xl m-2.5 flex-col items-center justify-center text-indigo-700 pointer-events-none transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center mb-2.5 text-indigo-600">
+                            <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-800">Drop files to attach</p>
+                        <span class="text-[11px] text-slate-500 mt-0.5">Screenshots, PDFs, or documents</span>
+                    </div>
+
+                    <!-- Convo Header -->
+                    <div class="flex items-center gap-2.5 px-3.5 py-3 bg-white border-b border-slate-200/75 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                        <button type="button" onclick="backToInbox()" aria-label="Back to inbox"
+                                class="w-8 h-8 rounded-xl bg-slate-100/80 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <div class="relative w-9 h-9 rounded-full flex-shrink-0">
+                            <img id="activeAvatar" src="" alt="Avatar" class="w-full h-full rounded-full object-cover bg-slate-100 ring-2 ring-indigo-50">
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 id="activeName" class="text-xs font-bold text-slate-900 truncate leading-snug">User</h4>
+                            <span id="activeStatus" class="text-[10px] text-emerald-600 font-semibold">
+                                Active now
+                            </span>
+                        </div>
+                        <button type="button" onclick="toggleWidgetState(false)" aria-label="Minimize"
+                                class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-minus text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Messages Feed -->
+                    <div id="messageDisplay" class="cw-studio-scroll flex-1 overflow-y-auto p-4 space-y-2.5 flex flex-col">
+                        <!-- Messages appended here -->
+                    </div>
+
+                    <!-- Attachment Staging Preview Tray -->
+                    <div id="attachmentPreviewTray" class="hidden px-3.5 pt-2.5 pb-1.5 bg-white border-t border-slate-200/70 flex items-center gap-2 overflow-x-auto">
+                        <!-- Staged file chips rendered here -->
+                    </div>
+
+                    <!-- Light Studio Composer -->
+                    <div class="p-3 bg-white border-t border-slate-200/80">
+                        <div class="flex items-center gap-1.5 bg-slate-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 rounded-2xl pl-2 pr-1.5 py-1.5 border border-slate-200/80 focus-within:border-indigo-500 transition-all">
+                            <input type="file" id="fileInput" class="hidden" multiple>
+                            <button type="button" id="attachBtn" title="Attach file"
+                                    class="w-7 h-7 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center text-xs transition-colors flex-shrink-0">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </button>
+
+                            <input type="text" id="messageInput" placeholder="Write a message or paste image..." autocomplete="off"
+                                   class="flex-1 min-w-0 bg-transparent text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none">
+
+                            <button id="sendBtn" type="button"
+                                    class="hidden w-7 h-7 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white items-center justify-center text-xs transition-all shadow-xs flex-shrink-0">
+                                <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <div id="conversationView" class="view-hidden flex-col h-full bg-[#fcfcfc]">
-            <header class="p-4 border-b flex items-center bg-white/80 backdrop-blur-md">
-                <button onclick="backToInbox()" class="mr-3 text-zinc-400 hover:text-zinc-900"><i class="fa-solid fa-chevron-left"></i></button>
-                <img id="activeAvatar" class="w-8 h-8 rounded-lg object-cover">
-                <div class="ml-3">
-                    <h3 id="activeName" class="font-bold text-sm text-zinc-900 leading-tight">Name</h3>
-                    <span class="text-[10px] text-emerald-500 font-medium">Online</span>
-                </div>
-            </header>
-            <div id="messageDisplay" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                </div>
-            <footer class="p-4 bg-white border-t">
-                <div class="flex items-center bg-zinc-50 rounded-xl px-4 py-2">
-                    <input type="text" id="messageInput" placeholder="Write a message..." class="flex-1 bg-transparent text-sm outline-none">
-                    <button id="sendBtn" class="hidden text-indigo-600 font-bold text-xs ml-2 uppercase">Send</button>
-                </div>
-            </footer>
-        </div>
+        <audio id="notifSound" src="../sounds/1.wav" preload="auto"></audio>
+        <audio id="readSound" src="../sounds/read.mp3" preload="auto"></audio>
     </div>
 
+    <input type="hidden" name="eid" id="eid" th:value="${session.eid}">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js" integrity="sha512-1QvjE7BtotQjkq8PxLeF6P46gEpBRXuskzIVgjFpekzFVF4yjRgrQvTG1MTOJ3yQgvTteKAcO7DSZI92+u/yZw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0/jquery.min.js" integrity="sha512-8LENNbXmzI/Gbj+OwXmqR6V4QaUAw0/porPzy1+dQoJqC0JPHedWoe0DDOTL2uHA5XXJyIsPtiMHH86pVlay6A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <script th:inline="javascript">
-        const chatToggle = document.getElementById('chatToggle');
-        const chatOverlay = document.getElementById('chatOverlay');
-        
-        const listView = document.getElementById('listView');
-        const contactsView = document.getElementById('contactsView');
-        const conversationView = document.getElementById('conversationView');
-        
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
+        (function () {
+            const widgetRoot = document.getElementById('chatWidgetRoot');
+            if (widgetRoot && widgetRoot.parentElement !== document.body) {
+                document.body.appendChild(widgetRoot);
+            }
 
-        // Toggle Chat Window
-        chatToggle.addEventListener('click', () => {
-            chatOverlay.classList.toggle('chat-visible');
-            chatOverlay.classList.toggle('chat-hidden');
-        });
+            const csrf = document.getElementById("csrf") ? document.getElementById("csrf").value : '';
+            const chatToggle = document.getElementById('chatToggle');
+            const minimizeWindowBtn = document.getElementById('minimizeWindowBtn');
+            const chatOverlay = document.getElementById('chatOverlay');
+            const chatOpenSvg = document.getElementById('chatOpenSvg');
+            const chatCloseIcon = document.getElementById('chatCloseIcon');
+            const attnRing = document.getElementById('attnRing');
 
-        // Navigation: Open Contact List
-        function showContacts() {
-            listView.classList.add('view-hidden');
-            contactsView.classList.remove('view-hidden');
-            conversationView.classList.add('view-hidden');
-        }
+            const mainShellHeader = document.getElementById('mainShellHeader');
+            const dirBtnIcon = document.getElementById('dirBtnIcon');
+            const dirBtnLabel = document.getElementById('dirBtnLabel');
+            const globalSearchInput = document.getElementById('globalSearchInput');
 
-        // Navigation: Go back to Inbox
-        function backToInbox() {
-            listView.classList.remove('view-hidden');
-            contactsView.classList.add('view-hidden');
-            conversationView.classList.add('view-hidden');
-        }
+            const listView = document.getElementById('listView');
+            const contactsView = document.getElementById('contactsView');
+            const conversationView = document.getElementById('conversationView');
+            const dropZoneOverlay = document.getElementById('dropZoneOverlay');
+            const attachmentPreviewTray = document.getElementById('attachmentPreviewTray');
+            const fileInput = document.getElementById('fileInput');
+            const attachBtn = document.getElementById('attachBtn');
+            const messageDisplay = document.getElementById('messageDisplay');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
 
-        // Navigation: Open a specific Chat (from Inbox or Contacts)
-        function openChat(name, avatar) {
-            document.getElementById('activeName').innerText = name;
-            document.getElementById('activeAvatar').src = avatar;
-            
-            listView.classList.add('view-hidden');
-            contactsView.classList.add('view-hidden');
-            conversationView.classList.remove('view-hidden');
-            
-            // Optional: Scroll to bottom of messages
-            const msgDisplay = document.getElementById('messageDisplay');
-            msgDisplay.scrollTop = msgDisplay.scrollHeight;
-        }
+            let activeContact = null;
+            let activeChatId = null;
+            let activePane = 'listView';
+            let widgetOpen = false;
+            let stompClient = null;
+            let pendingFiles = [];
+            let dragCounter = 0;
 
-        // Send Button Visibility
-        messageInput.addEventListener('input', (e) => {
-            sendBtn.classList.toggle('hidden', e.target.value.trim() === '');
-        });
+            function goTo(pane) {
+                activePane = pane;
+                listView.classList.add('hidden');
+                contactsView.classList.add('hidden');
+                conversationView.classList.add('hidden');
+
+                if (pane === 'conversationView') {
+                    mainShellHeader.classList.add('hidden');
+                    conversationView.classList.remove('hidden');
+                } else {
+                    mainShellHeader.classList.remove('hidden');
+                    if (pane === 'listView') {
+                        listView.classList.remove('hidden');
+                        if (dirBtnIcon) dirBtnIcon.className = 'fa-solid fa-user-plus text-[10px]';
+                        if (dirBtnLabel) dirBtnLabel.textContent = 'People';
+                    }
+                    if (pane === 'contactsView') {
+                        contactsView.classList.remove('hidden');
+                        if (dirBtnIcon) dirBtnIcon.className = 'fa-solid fa-comments text-[10px]';
+                        if (dirBtnLabel) dirBtnLabel.textContent = 'Chats';
+                    }
+                }
+            }
+
+            window.toggleDirectoryPane = function () {
+                if (activePane === 'contactsView') {
+                    backToInbox();
+                } else {
+                    showContacts();
+                }
+            };
+
+            function updateSendButtonState() {
+                const hasContent = messageInput.value.trim() !== '' || pendingFiles.length > 0;
+                sendBtn.classList.toggle('hidden', !hasContent);
+                sendBtn.classList.toggle('flex', hasContent);
+            }
+
+            // ================= URL & ATTACHMENT NORMALIZATION =================
+            function resolveAssetUrl(rawUrl) {
+                if (!rawUrl || typeof rawUrl !== 'string') return '';
+                const trimmed = rawUrl.trim();
+                if (!trimmed) return '';
+                if (/^(blob:|data:|https?:\/\/|\/|\.\.\/)/i.test(trimmed)) {
+                    return trimmed;
+                }
+                return '../' + trimmed;
+            }
+
+            function isLikelyFileUrl(val) {
+                if (!val || typeof val !== 'string') return false;
+                return /^(blob:|data:|https?:\/\/|\/|\.\.\/|uploads\/)/i.test(val.trim()) ||
+                       /\.(png|jpe?g|gif|webp|svg|pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar)$/i.test(val.trim());
+            }
+
+            function extractAttachment(obj) {
+                if (!obj) return null;
+
+                if (obj.attachment && obj.attachment.url) {
+                    return {
+                        url: resolveAssetUrl(obj.attachment.url),
+                        name: obj.attachment.name || obj.attachment.url.split('/').pop() || 'Attachment',
+                        type: obj.attachment.type || ''
+                    };
+                }
+
+                const candidateUrl =
+                    obj.fileUrl ||
+                    obj.filePath ||
+                    obj.attachmentUrl ||
+                    obj.url ||
+                    ((obj.isFile || obj.file) ? (obj.content || obj.message) : null) ||
+                    (isLikelyFileUrl(obj.content) ? obj.content : null) ||
+                    (isLikelyFileUrl(obj.message) ? obj.message : null);
+
+                if (!candidateUrl) return null;
+
+                const resolvedUrl = resolveAssetUrl(candidateUrl);
+                return {
+                    url: resolvedUrl,
+                    name: obj.fileName || obj.originalFileName || candidateUrl.split('/').pop() || 'Attachment',
+                    type: obj.fileType || obj.contentType || obj.mimeType || ''
+                };
+            }
+
+            function extractCleanText(obj, attachment) {
+                const rawText = (obj.content != null ? obj.content : obj.message) || '';
+                if (!rawText) return '';
+
+                if (attachment) {
+                    const trimmed = String(rawText).trim();
+                    const rawCandidate = obj.fileUrl || obj.filePath || obj.attachmentUrl || obj.url || '';
+                    if (
+                        trimmed === attachment.url ||
+                        trimmed === rawCandidate ||
+                        resolveAssetUrl(trimmed) === attachment.url ||
+                        isLikelyFileUrl(trimmed)
+                    ) {
+                        return obj.caption || '';
+                    }
+                }
+                return rawText;
+            }
+
+            // ================= FILE & CLIPBOARD STAGING LOGIC =================
+            function addFilesToStaging(fileList) {
+                if (!fileList || fileList.length === 0) return;
+
+                Array.from(fileList).forEach(file => {
+                    let finalFile = file;
+                    if (file.type.startsWith('image/') && (!file.name || file.name === 'image.png')) {
+                        const ext = file.type.split('/')[1] || 'png';
+                        finalFile = new File([file], `Screenshot_${Date.now()}.${ext}`, { type: file.type });
+                    }
+                    pendingFiles.push(finalFile);
+                });
+
+                renderAttachmentTray();
+                updateSendButtonState();
+            }
+
+            function removePendingFile(index) {
+                pendingFiles.splice(index, 1);
+                renderAttachmentTray();
+                updateSendButtonState();
+            }
+
+            function clearPendingFiles() {
+                pendingFiles = [];
+                fileInput.value = '';
+                renderAttachmentTray();
+                updateSendButtonState();
+            }
+
+            function renderAttachmentTray() {
+                if (pendingFiles.length === 0) {
+                    attachmentPreviewTray.classList.add('hidden');
+                    attachmentPreviewTray.innerHTML = '';
+                    return;
+                }
+
+                attachmentPreviewTray.classList.remove('hidden');
+                attachmentPreviewTray.innerHTML = '';
+
+                pendingFiles.forEach((file, idx) => {
+                    const chip = document.createElement('div');
+                    chip.className = 'relative group flex-shrink-0 border border-slate-200 bg-slate-50 rounded-xl overflow-hidden shadow-2xs';
+
+                    if (file.type.startsWith('image/')) {
+                        const url = URL.createObjectURL(file);
+                        chip.classList.add('w-16', 'h-16');
+                        chip.innerHTML = `
+                            <img src="${url}" alt="${escapeHtml(file.name)}" class="w-full h-full object-cover">
+                            <button type="button" data-idx="${idx}" class="remove-staged absolute top-1 right-1 w-4 h-4 rounded-full bg-slate-900/75 hover:bg-rose-600 text-white text-[9px] flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>`;
+                    } else {
+                        chip.classList.add('flex', 'items-center', 'gap-2', 'px-2.5', 'py-1.5', 'max-w-[165px]');
+                        chip.innerHTML = `
+                            <i class="fa-solid fa-file-lines text-indigo-600 text-sm flex-shrink-0"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] font-bold text-slate-700 truncate">${escapeHtml(file.name)}</p>
+                                <p class="text-[9px] text-slate-400">${(file.size / 1024).toFixed(1)} KB</p>
+                            </div>
+                            <button type="button" data-idx="${idx}" class="remove-staged w-4 h-4 rounded-full text-slate-400 hover:text-rose-600 flex items-center justify-center text-[10px]">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>`;
+                    }
+
+                    chip.querySelector('.remove-staged').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        removePendingFile(idx);
+                    });
+
+                    attachmentPreviewTray.appendChild(chip);
+                });
+            }
+
+            messageInput.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData)?.items;
+                if (!items) return;
+
+                const pastedFiles = [];
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].kind === 'file') {
+                        const blob = items[i].getAsFile();
+                        if (blob) pastedFiles.push(blob);
+                    }
+                }
+
+                if (pastedFiles.length > 0) {
+                    e.preventDefault();
+                    addFilesToStaging(pastedFiles);
+                }
+            });
+
+            conversationView.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter++;
+                if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+                    dropZoneOverlay.classList.remove('hidden');
+                    dropZoneOverlay.classList.add('flex');
+                }
+            });
+
+            conversationView.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            conversationView.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter--;
+                if (dragCounter <= 0) {
+                    dragCounter = 0;
+                    dropZoneOverlay.classList.add('hidden');
+                    dropZoneOverlay.classList.remove('flex');
+                }
+            });
+
+            conversationView.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter = 0;
+                dropZoneOverlay.classList.add('hidden');
+                dropZoneOverlay.classList.remove('flex');
+
+                if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+                    addFilesToStaging(e.dataTransfer.files);
+                    messageInput.focus();
+                }
+            });
+
+            attachBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                addFilesToStaging(e.target.files);
+                messageInput.focus();
+            });
+
+            // ================= WEBSOCKET & MESSAGING =================
+            function connect() {
+                const socket = new SockJS('/ws-chat');
+                stompClient = Stomp.over(socket);
+                stompClient.debug = null;
+                stompClient.connect({}, function () {
+                    stompClient.subscribe('/user/queue/private', function (messageOutput) {
+                        onPrivateMessageReceived(JSON.parse(messageOutput.body));
+                    });
+                });
+            }
+
+            function onPrivateMessageReceived(message) {
+                const audio = document.getElementById("notifSound");
+                const fromEid = message.sender || message.senderEid;
+                const attachment = extractAttachment(message);
+                const text = extractCleanText(message, attachment);
+
+                if (activeContact && fromEid === activeContact && widgetOpen) {
+                    appendMessage('them', text, attachment);
+                    markRead(activeContact);
+                } else {
+                    getChatList();
+                    if (audio) {
+                        audio.currentTime = 0;
+                        audio.play().catch(() => {});
+                    }
+                }
+            }
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str == null ? '' : String(str);
+                return div.innerHTML;
+            }
+
+            function updateUnreadCounter(total) {
+                const count = Number(total) || 0;
+                const label = document.getElementById('unreadLabel');
+                const badge = document.getElementById('unreadBadge');
+
+                if (label) {
+                    label.textContent = count > 0
+                        ? `${count} unread message${count > 1 ? 's' : ''}`
+                        : 'All caught up';
+                }
+
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count > 99 ? '99+' : String(count);
+                        badge.classList.remove('hidden');
+                        badge.classList.add('inline-flex');
+                        if (attnRing && !widgetOpen) {
+                            attnRing.classList.remove('hidden');
+                        }
+                    } else {
+                        badge.textContent = '0';
+                        badge.classList.add('hidden');
+                        badge.classList.remove('inline-flex');
+                        if (attnRing) {
+                            attnRing.classList.add('hidden');
+                        }
+                    }
+                }
+            }
+
+            function renderChatList(data) {
+                const container = document.getElementById('chatListContainer');
+                container.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center p-10 text-center text-slate-400">
+                            <div class="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center mb-3 text-indigo-500">
+                                <i class="fa-regular fa-comment-dots text-lg"></i>
+                            </div>
+                            <p class="text-xs font-bold text-slate-700">No conversations yet</p>
+                            <span class="text-[11px] text-slate-400 mt-1">Click People above to start a chat.</span>
+                        </div>`;
+                    updateUnreadCounter(0);
+                    return;
+                }
+
+                let unreadCountTotal = 0;
+                const frag = document.createDocumentFragment();
+
+                data.forEach(chat => {
+                    const unread = Number(chat.unreadCount || chat.unread || 0);
+                    unreadCountTotal += unread;
+
+                    const previewText = (chat.isFile || isLikelyFileUrl(chat.message))
+                        ? `📎 ${chat.fileName || 'Attachment'}`
+                        : (chat.message || (chat.fileName ? '📎 ' + chat.fileName : ''));
+
+                    const row = document.createElement('div');
+                    row.setAttribute('data-search', (chat.firstName || '').toLowerCase());
+                    row.className = `chat-thread-row flex items-center gap-3 p-2.5 rounded-2xl cursor-pointer transition-all border ${
+                        unread > 0
+                            ? 'bg-indigo-50/70 border-indigo-200/80 shadow-2xs hover:bg-indigo-50'
+                            : 'bg-white hover:bg-slate-100/70 border-slate-200/60'
+                    }`;
+                    row.innerHTML = `
+                        <div class="relative w-10 h-10 flex-shrink-0">
+                            <img src="${escapeHtml(resolveAssetUrl(chat.image))}" alt="Avatar" class="w-full h-full rounded-full object-cover bg-slate-100 ring-1 ring-slate-200/80">
+                            ${chat.online ? '<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>' : ''}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(chat.firstName)}</span>
+                                <span class="text-[10px] ${unread > 0 ? 'text-indigo-600 font-bold' : 'text-slate-400'} flex-shrink-0 ml-2">${chat.time || ''}</span>
+                            </div>
+                            <div class="flex items-center justify-between mt-0.5">
+                                <p class="text-[11px] truncate ${unread > 0 ? 'font-semibold text-slate-900' : 'text-slate-500'}">
+                                    ${escapeHtml(previewText)}
+                                </p>
+                                ${unread > 0 ? `<span class="ml-2 min-w-[19px] h-[19px] px-1.5 text-[10px] font-extrabold text-white bg-indigo-600 rounded-full inline-flex items-center justify-center flex-shrink-0 shadow-2xs">${unread > 99 ? '99+' : unread}</span>` : ''}
+                            </div>
+                        </div>`;
+                    row.addEventListener('click', () => openChat(chat.firstName, resolveAssetUrl(chat.image), chat.otherUser, chat.id));
+                    frag.appendChild(row);
+                });
+
+                container.appendChild(frag);
+                updateUnreadCounter(unreadCountTotal);
+            }
+
+            function getChatList() {
+                $.ajax({
+                    url: '/getChatList',
+                    type: 'GET',
+                    dataType: 'JSON',
+                    success: (res) => renderChatList(res),
+                    error: err => console.error("Error loading chat list:", err)
+                });
+            }
+
+            function markRead(eid) {
+                $.ajax({
+                    url: '/markRead',
+                    type: 'PUT',
+                    headers: { 'X-CSRF-TOKEN': csrf },
+                    data: { eid: eid },
+                    dataType: 'JSON',
+                    success: () => getChatList()
+                });
+            }
+
+            function fetchChatHistory(eid) {
+                messageDisplay.innerHTML = `<div class="flex justify-center p-6 text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-xl"></i></div>`;
+                $.ajax({
+                    url: '/getChatHistory',
+                    type: 'GET',
+                    data: { eid: eid },
+                    dataType: 'JSON',
+                    success: function (res) {
+                        messageDisplay.innerHTML = '';
+                        if (!res || res.length === 0) {
+                            messageDisplay.innerHTML = `
+                                <div class="empty-placeholder flex flex-col items-center justify-center h-full text-center text-slate-400 py-10">
+                                    <div class="w-11 h-11 rounded-2xl bg-white shadow-2xs border border-slate-200/70 flex items-center justify-center mb-2.5 text-indigo-500">
+                                        <i class="fa-regular fa-paper-plane text-base"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-700">Start a conversation</p>
+                                    <span class="text-[11px] text-slate-400 mt-1">Type a message or paste a screenshot below.</span>
+                                </div>`;
+                            return;
+                        }
+                        res.forEach(msg => {
+                            const attachment = extractAttachment(msg);
+                            const text = extractCleanText(msg, attachment);
+                            appendMessage((msg.fromUser || msg.sender) === 'me' ? 'me' : 'them', text, attachment);
+                        });
+                    }
+                });
+            }
+
+            function appendMessage(sender, text, attachment = null) {
+                const empty = messageDisplay.querySelector('.empty-placeholder');
+                if (empty) empty.remove();
+
+                const isMe = sender === 'me';
+                const row = document.createElement('div');
+                row.className = `cw-msg-pop flex w-full ${isMe ? 'justify-end' : 'justify-start'}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-[78%] px-3.5 py-2 text-xs leading-relaxed break-words space-y-1.5 ${
+                    isMe
+                        ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-2xl rounded-br-sm shadow-[0_2px_8px_-2px_rgba(79,70,229,0.35)]'
+                        : 'bg-white text-slate-800 rounded-2xl rounded-bl-sm border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)]'
+                }`;
+
+                if (attachment && attachment.url) {
+                    const resolvedUrl = resolveAssetUrl(attachment.url);
+                    const isImg = (attachment.type && attachment.type.startsWith('image/')) ||
+                                  /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(attachment.name || resolvedUrl);
+
+                    if (isImg) {
+                        const imgLink = document.createElement('a');
+                        imgLink.href = resolvedUrl;
+                        imgLink.target = '_blank';
+                        imgLink.rel = 'noopener noreferrer';
+
+                        const imgEl = document.createElement('img');
+                        imgEl.src = resolvedUrl;
+                        imgEl.alt = attachment.name || 'Image attachment';
+                        imgEl.className = `max-h-48 w-auto rounded-xl object-cover border ${isMe ? 'border-indigo-400/50' : 'border-slate-200'}`;
+                        imgEl.onload = () => {
+                            messageDisplay.scrollTop = messageDisplay.scrollHeight;
+                        };
+                        imgEl.onerror = () => {
+                            imgLink.replaceWith(createFileFallbackCard(resolvedUrl, attachment.name, isMe));
+                        };
+
+                        imgLink.appendChild(imgEl);
+                        bubble.appendChild(imgLink);
+                    } else {
+                        bubble.appendChild(createFileFallbackCard(resolvedUrl, attachment.name, isMe));
+                    }
+                }
+
+                if (text) {
+                    const p = document.createElement('p');
+                    p.textContent = text;
+                    bubble.appendChild(p);
+                }
+
+                if (!bubble.hasChildNodes()) return;
+
+                row.appendChild(bubble);
+                messageDisplay.appendChild(row);
+                messageDisplay.scrollTop = messageDisplay.scrollHeight;
+            }
+
+            function createFileFallbackCard(url, name, isMe) {
+                const fileCard = document.createElement('a');
+                fileCard.href = url;
+                fileCard.download = name || 'file';
+                fileCard.target = '_blank';
+                fileCard.rel = 'noopener noreferrer';
+                fileCard.className = `flex items-center gap-2 p-2 rounded-xl text-[11px] font-semibold transition-colors ${
+                    isMe ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`;
+                fileCard.innerHTML = `
+                    <i class="fa-solid fa-file-arrow-down text-sm"></i>
+                    <span class="truncate flex-1">${escapeHtml(name || 'Download file')}</span>`;
+                return fileCard;
+            }
+
+            async function sendMessage() {
+                const text = messageInput.value.trim();
+                const filesToSend = [...pendingFiles];
+                if ((!text && filesToSend.length === 0) || !activeContact) return;
+
+                messageInput.value = '';
+                clearPendingFiles();
+
+                if (filesToSend.length > 0) {
+                    for (let i = 0; i < filesToSend.length; i++) {
+                        const file = filesToSend[i];
+                        const caption = (i === filesToSend.length - 1) ? text : '';
+                        const localPreviewUrl = URL.createObjectURL(file);
+
+                        appendMessage('me', caption, {
+                            url: localPreviewUrl,
+                            name: file.name,
+                            type: file.type
+                        });
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('reciever', activeContact);
+                        if (caption) formData.append('message', caption);
+
+                        try {
+                            const res = await fetch('/uploadChatFile', {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': csrf },
+                                body: formData
+                            });
+                            if (!res.ok) throw new Error('Upload failed');
+                            const uploaded = await res.json();
+
+                            const uploadedUrl = uploaded.fileUrl || uploaded.url || uploaded.filePath || uploaded.path || '';
+                            const uploadedName = uploaded.fileName || uploaded.originalFileName || file.name;
+                            const uploadedType = uploaded.fileType || uploaded.contentType || file.type;
+
+                            stompClient.send('/app/private-message', {}, JSON.stringify({
+                                reciever: activeContact,
+                                message: caption || uploadedUrl,
+                                content: caption || uploadedUrl,
+                                fileUrl: uploadedUrl,
+                                fileName: uploadedName,
+                                fileType: uploadedType,
+                                isFile: uploaded.isFile !== undefined ? uploaded.isFile : true
+                            }));
+                        } catch (err) {
+                            console.error('File send error:', err);
+                        }
+                    }
+                } else {
+                    stompClient.send('/app/private-message', {}, JSON.stringify({
+                        reciever: activeContact,
+                        message: text
+                    }));
+                    appendMessage('me', text);
+                }
+            }
+
+window.toggleWidgetState = function (forceState) {
+    widgetOpen = typeof forceState === 'boolean' ? forceState : !widgetOpen;
+    chatOverlay.classList.toggle('hidden', !widgetOpen);
+
+    if (widgetOpen) {
+        chatOverlay.classList.add('cw-open-anim');
+        chatOpenSvg.style.display = 'none';
+        chatCloseIcon.style.display = 'inline-block';
+        if (attnRing) attnRing.classList.add('hidden');
+        getChatList();
+    } else {
+        chatOverlay.classList.remove('cw-open-anim');
+        chatOpenSvg.style.display = 'block';
+        chatCloseIcon.style.display = 'none';
+        getChatList();
+    }
+};
+
+            chatToggle.addEventListener('click', () => window.toggleWidgetState());
+            if (minimizeWindowBtn) {
+                minimizeWindowBtn.addEventListener('click', () => window.toggleWidgetState(false));
+            }
+
+            window.showContacts = () => goTo('contactsView');
+            window.backToInbox = () => {
+                goTo('listView');
+                activeContact = null;
+                activeChatId = null;
+                clearPendingFiles();
+                getChatList();
+            };
+
+            window.openChat = function (name, avatar, eid, chatId = null) {
+                activeContact = eid;
+                activeChatId = chatId;
+                document.getElementById('activeName').innerText = name;
+                document.getElementById('activeAvatar').src = avatar;
+                goTo('conversationView');
+                messageInput.value = '';
+                clearPendingFiles();
+                fetchChatHistory(eid);
+                markRead(eid);
+            };
+
+            messageInput.addEventListener('input', updateSendButtonState);
+
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            sendBtn.addEventListener('click', sendMessage);
+
+            if (globalSearchInput) {
+                globalSearchInput.addEventListener('input', (e) => {
+                    const q = e.target.value.toLowerCase();
+                    document.querySelectorAll('#chatListContainer .chat-thread-row').forEach(row => {
+                        const name = row.getAttribute('data-search') || '';
+                        row.style.display = name.includes(q) ? 'flex' : 'none';
+                    });
+                    document.querySelectorAll('#contactsListContainer .contact-row').forEach(row => {
+                        const name = (row.getAttribute('data-name') || '').toLowerCase();
+                        row.style.display = name.includes(q) ? 'flex' : 'none';
+                    });
+                });
+            }
+
+            function getAvailableUsers() {
+                $.ajax({
+                    url: '/getAvailableUsers',
+                    type: 'GET',
+                    dataType: 'JSON',
+                    success: function (data) {
+                        const container = document.getElementById('contactsListContainer');
+                        const quickSection = document.getElementById('quickOnlineSection');
+                        const quickStrip = document.getElementById('quickAvatarsStrip');
+
+                        container.innerHTML = '';
+                        if (quickStrip) quickStrip.innerHTML = '';
+
+                        const users = data || [];
+                        if (users.length > 0 && quickSection && quickStrip) {
+                            quickSection.classList.remove('hidden');
+                            users.slice(0, 8).forEach(user => {
+                                const avatarSrc = resolveAssetUrl(user.avatarURl);
+                                const pill = document.createElement('button');
+                                pill.type = 'button';
+                                pill.className = 'flex flex-col items-center gap-1 flex-shrink-0 group focus:outline-none';
+                                pill.innerHTML = `
+                                    <div class="relative w-9 h-9 rounded-full p-0.5 bg-gradient-to-tr from-indigo-500 to-violet-400 group-hover:scale-105 transition-transform">
+                                        <img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(user.name)}" class="w-full h-full rounded-full object-cover bg-slate-100 border-2 border-white">
+                                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <span class="text-[10px] font-semibold text-slate-600 group-hover:text-indigo-600 max-w-[48px] truncate">${escapeHtml((user.name || '').split(' ')[0])}</span>`;
+                                pill.addEventListener('click', () => openChat(user.name, avatarSrc, user.eid));
+                                quickStrip.appendChild(pill);
+                            });
+                        }
+
+                        users.forEach(user => {
+                            const avatarSrc = resolveAssetUrl(user.avatarURl);
+                            const row = document.createElement('div');
+                            row.className = 'contact-row flex items-center gap-3 p-2.5 rounded-2xl cursor-pointer hover:bg-indigo-50/60 border border-transparent hover:border-indigo-100 transition-all';
+                            row.setAttribute('data-name', user.name);
+                            row.innerHTML = `
+                                <div class="relative w-9 h-9 flex-shrink-0">
+                                    <img src="${escapeHtml(avatarSrc)}" alt="Avatar" class="w-full h-full rounded-full object-cover bg-slate-100 ring-1 ring-slate-200/80">
+                                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(user.name)}</p>
+                                    <p class="text-[11px] text-emerald-600 font-medium">Available</p>
+                                </div>
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </span>`;
+                            row.addEventListener('click', () => openChat(user.name, avatarSrc, user.eid));
+                            container.appendChild(row);
+                        });
+                    }
+                });
+            }
+
+            // Initialize immediately on page load so unread badge renders automatically
+            getAvailableUsers();
+            getChatList();
+            connect();
+        })();
     </script>
 </div>
 </html>

@@ -8,7 +8,6 @@ import com.geosieben.gsbworkday.service.SeparationService;
 
 import java.time.LocalDate;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,8 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 public class SeparationRestController {
-    @Autowired
+
     private SeparationService separationService;
+public SeparationRestController(SeparationService separationService) {
+        this.separationService = separationService;
+    }
+
 @GetMapping("/admin/separtion/getRequests")
 public List<SeparationRequestsProjection> getRequests() {
     return separationService.getSeparationRequests();

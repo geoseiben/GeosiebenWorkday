@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<!-- NOTE: adjust ${employeeName} below to whatever attribute your controller
+     puts on the model (e.g. ${employee.name}, ${currentUser.fullName}, ...) -->
+<meta name="_employeeName" th:content="${session.uname}" />
+<title th:text="${course.courseTitle}">Course</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#F6F6F1',
+          surface: '#FFFFFF',
+          surfacealt: '#EFF1EA',
+          ink: '#172420',
+          inksoft: '#57655D',
+          line: '#E1E4DB',
+          primary: { DEFAULT:'#145C4E', dark:'#0E463C', soft:'#E3EFEA' },
+          accent: { DEFAULT:'#C98A2C', soft:'#FAF0DB' },
+          plum: { DEFAULT:'#6B4A7C', soft:'#EFE7F3' },
+          danger: { DEFAULT:'#B3432D', soft:'#FBEAE4' },
+        },
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        boxShadow: {
+          card: '0 1px 2px rgba(23,36,32,0.04), 0 1px 1px rgba(23,36,32,0.03)',
+          cardhover: '0 12px 24px -8px rgba(23,36,32,0.14)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D6D9CE; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C1C5B6; }
+
+  .num-serif { font-family:'Fraunces', serif; font-variant-numeric: oldstyle-nums; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .btn-press:active { transform: scale(.97); }
+  [x-cloak] { display: none !important; }
+
+  input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 3px #E3EFEA; border-color:#145C4E; }
+
+  @keyframes stepIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
+  .step-in { animation: stepIn .4s cubic-bezier(.16,1,.3,1) both; }
+
+  @keyframes stepInRight { from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:none;} }
+  @keyframes stepInLeft  { from{opacity:0; transform:translateX(-20px);} to{opacity:1; transform:none;} }
+  .step-slide-right { animation: stepInRight .35s cubic-bezier(.16,1,.3,1) both; }
+  .step-slide-left  { animation: stepInLeft .35s cubic-bezier(.16,1,.3,1) both; }
+
+  @keyframes popIn { from{opacity:0; transform:scale(.9);} to{opacity:1; transform:none;} }
+  .pop-in { animation: popIn .3s cubic-bezier(.34,1.56,.64,1) both; }
+
+  @keyframes checkDraw { from{ stroke-dashoffset: 24; } to{ stroke-dashoffset: 0; } }
+  .check-draw { stroke-dasharray: 24; animation: checkDraw .35s ease .05s both; }
+
+  @keyframes ringPulse { 0%{ box-shadow:0 0 0 0 rgba(20,92,78,.35);} 70%{ box-shadow:0 0 0 8px rgba(20,92,78,0);} 100%{ box-shadow:0 0 0 0 rgba(20,92,78,0);} }
+  .ring-pulse { animation: ringPulse 1.8s ease-out infinite; }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(120px) rotate(360deg); opacity:0; }
+  }
+  .confetti-piece { animation: confettiFall 1.4s ease-in forwards; }
+
+  .timer-ring { transition: stroke-dashoffset 1s linear; }
+
+  .step-item[data-state="locked"] { opacity:.45; cursor:not-allowed; }
+  .step-item[data-state="current"] { background:#E3EFEA; }
+
+  .rich-desc h4 { font-family:'Fraunces', serif; font-weight:600; font-size:1rem; color:#172420; margin:.6em 0 .25em; }
+  .rich-desc h4:first-child { margin-top:0; }
+  .rich-desc ul, .rich-desc ol { margin:.35em 0 .5em; padding-left:1.25em; }
+  .rich-desc ul { list-style:disc; }
+  .rich-desc ol { list-style:decimal; }
+  .rich-desc li { margin:.15em 0; }
+  .rich-desc p { margin:0 0 .5em; }
+  .rich-desc p:last-child { margin-bottom:0; }
+  .rich-desc strong { font-weight:600; color:#172420; }
+
+  .skel { position:relative; overflow:hidden; background:#EFF1EA; }
+  .skel::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,#ffffffb0,transparent); animation:shimmer 1.2s infinite; }
+  @keyframes shimmer { 100% { transform:translateX(100%); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+
+  /* ---- certificate ---- */
+  .cert-border {
+    background-image:
+      repeating-linear-gradient(45deg, #C98A2C 0 10px, transparent 10px 20px),
+      repeating-linear-gradient(45deg, #C98A2C 0 10px, transparent 10px 20px),
+      repeating-linear-gradient(45deg, #C98A2C 0 10px, transparent 10px 20px),
+      repeating-linear-gradient(45deg, #C98A2C 0 10px, transparent 10px 20px);
+    background-size: 100% 3px, 3px 100%, 100% 3px, 3px 100%;
+    background-position: 0 0, 0 0, 0 100%, 100% 0;
+    background-repeat: no-repeat;
+  }
+  .cert-corner { position:absolute; width:34px; height:34px; border-color:#C98A2C; }
+  @keyframes sealPop { 0%{opacity:0; transform:scale(.6) rotate(-12deg);} 100%{opacity:1; transform:scale(1) rotate(0);} }
+  .cert-seal { animation: sealPop .5s cubic-bezier(.34,1.56,.64,1) .1s both; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #certificateView, #certificateView * { visibility: visible; }
+    #certificateView { position:absolute; inset:0; margin:0; border-radius:0; box-shadow:none; }
+    #certActions { display:none !important; }
+    header, aside { display:none !important; }
+  }
+</style>
+<head th:replace="includes/header :: header"></head>
+</head>
+<body class="bg-bg text-ink font-body min-h-screen antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<header class="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-line">
+  <div class="max-w-8xl mx-auto px-5 md:px-8 h-16 flex items-center gap-4">
+    <button onclick="history.back()" class="btn-press shrink-0 w-9 h-9 rounded-lg border border-line hover:bg-surfacealt flex items-center justify-center transition-colors" title="Back">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="min-w-0 flex-1">
+      <p class="text-[11px] font-mono tracking-widest text-inksoft uppercase truncate">Course</p>
+      <h1 class="font-display text-lg leading-tight font-semibold truncate" th:text="${course.courseTitle}">Course title</h1>
+    </div>
+    <div class="hidden sm:flex flex-col items-end gap-1 shrink-0 w-40">
+      <span id="overallLabel" class="text-[11px] font-mono text-inksoft tabular">Step 1 of —</span>
+      <div class="w-full h-1.5 bg-surfacealt rounded-full overflow-hidden">
+        <div id="overallBar" class="h-full bg-primary transition-all duration-500 ease-out" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+  <!-- mobile progress -->
+  <div class="sm:hidden h-1 bg-surfacealt">
+    <div id="overallBarMobile" class="h-full bg-primary transition-all duration-500 ease-out" style="width:0%"></div>
+  </div>
+</header>
+
+<div class="max-w-8xl mx-auto px-5 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+
+  <!-- ============ STEP LIST (SIDEBAR) ============ -->
+  <aside class="lg:sticky lg:top-24 self-start">
+    <div class="bg-surface rounded-2xl border border-line shadow-card overflow-hidden">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft px-4 pt-4 pb-2">Steps</p>
+      <div id="stepList" class="pb-2"></div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN STEP VIEWER ============ -->
+  <main class="max-w-8xl">
+
+    <div id="loadingState" class="bg-surface rounded-2xl border border-line shadow-card p-8">
+      <div class="skel h-5 w-1/3 rounded mb-4"></div>
+      <div class="skel h-8 w-2/3 rounded mb-3"></div>
+      <div class="skel h-40 w-full rounded-xl mb-4"></div>
+      <div class="skel h-3 w-full rounded mb-2"></div>
+      <div class="skel h-3 w-5/6 rounded"></div>
+    </div>
+
+    <div id="errorState" class="hidden flex-col items-center justify-center text-center py-20 border border-dashed border-danger/40 rounded-2xl bg-danger-soft/40">
+      <div class="w-14 h-14 rounded-full bg-danger-soft flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+      </div>
+      <p class="font-display text-lg font-semibold">Couldn't load this course</p>
+      <p class="text-sm text-inksoft mt-1 max-w-xs">Check your connection and try again.</p>
+      <button onclick="loadContent()" class="btn-press mt-5 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">Retry</button>
+    </div>
+
+    <div id="emptyState" class="hidden flex-col items-center justify-center text-center py-20 border border-dashed border-line rounded-2xl bg-surface/50">
+      <p class="font-display text-lg font-semibold">This course has no content yet</p>
+      <p class="text-sm text-inksoft mt-1 max-w-xs">Check back once the course has been published.</p>
+    </div>
+
+    <!-- active step card -->
+    <div id="stepView" class="hidden bg-surface rounded-2xl border border-line shadow-card overflow-hidden">
+      <div id="stepCardInner" class="step-in p-6 sm:p-8">
+        <div class="flex items-center gap-2 mb-3">
+          <span id="stepSeq" class="num-serif text-xl font-semibold text-primary">01</span>
+          <span id="stepBadge" class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-surfacealt text-inksoft">Text</span>
+        </div>
+        <h2 id="stepTitle" class="font-display font-semibold text-2xl sm:text-3xl leading-snug">Step title</h2>
+
+        <div id="stepMedia" class="mt-5"></div>
+
+        <div id="stepDesc" class="rich-desc text-sm sm:text-[15px] text-inksoft mt-5 leading-relaxed"></div>
+      </div>
+
+      <!-- timer / completion control -->
+      <div class="border-t border-line bg-surfacealt/60 px-6 sm:px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="relative w-11 h-11 shrink-0">
+            <svg viewBox="0 0 44 44" class="w-11 h-11 -rotate-90">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#E1E4DB" stroke-width="4"/>
+              <circle id="timerRingCircle" class="timer-ring" cx="22" cy="22" r="18" fill="none" stroke="#145C4E" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="0"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <svg id="timerCheckIcon" class="hidden w-4.5 h-4.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path class="check-draw" stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+              <span id="timerNumber" class="text-[11px] font-mono tabular text-primary-dark"></span>
+            </div>
+          </div>
+          <div class="min-w-0">
+            <p id="timerLabel" class="text-[13px] font-medium leading-tight">Review this step</p>
+            <p id="timerSubLabel" class="text-[12px] text-inksoft leading-tight mt-0.5">Give it a moment before continuing</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:ml-auto">
+          <button id="prevBtn" onclick="goPrev()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+            ← Previous
+          </button>
+          <button id="markCompleteBtn" onclick="markCurrentComplete()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium bg-ink/10 text-inksoft transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            Mark step complete
+          </button>
+          <button id="nextBtn" onclick="goNext()" class="btn-press px-5 py-2.5 rounded-lg text-sm font-medium bg-primary hover:bg-primary-dark text-white shadow-card hover:shadow-cardhover transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:shadow-none">
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- completion screen -->
+    <div id="completeView" class="hidden pop-in bg-surface rounded-2xl border border-line shadow-card p-8 sm:p-12 text-center relative overflow-hidden">
+      <div id="confettiWrap" class="pointer-events-none absolute inset-x-0 top-0 h-24 overflow-hidden"></div>
+      <div class="w-16 h-16 mx-auto rounded-full bg-primary-soft flex items-center justify-center mb-5">
+        <svg class="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+      </div>
+      <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft mb-2">Course complete</p>
+      <h2 class="font-display font-semibold text-2xl sm:text-3xl leading-snug">Nice work — you've finished<br class="hidden sm:block"> <span th:text="${course.courseTitle}">this course</span></h2>
+      <p class="text-sm text-inksoft mt-3 max-w-md mx-auto">You worked through every step at your own pace. Your progress has been saved.</p>
+      <div class="flex items-center justify-center gap-3 mt-7">
+        <button onclick="reviewFromStart()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surfacealt transition-colors">Review again</button>
+        <button onclick="history.back()" class="btn-press px-5 py-2.5 rounded-lg text-sm font-medium bg-primary hover:bg-primary-dark text-white shadow-card transition-colors">Back to courses</button>
+      </div>
+    </div>
+
+    <!-- certificate screen (shown directly when the course was already completed, i.e. ?isCompleted=0) -->
+    <div id="certificateView" class="hidden pop-in">
+      <div class="relative bg-surface rounded-2xl border border-line shadow-card p-3 sm:p-4">
+        <div class="cert-border relative rounded-xl bg-surface p-8 sm:p-14 text-center">
+          <span class="cert-corner absolute top-3 left-3 border-t-2 border-l-2"></span>
+          <span class="cert-corner absolute top-3 right-3 border-t-2 border-r-2"></span>
+          <span class="cert-corner absolute bottom-3 left-3 border-b-2 border-l-2"></span>
+          <span class="cert-corner absolute bottom-3 right-3 border-b-2 border-r-2"></span>
+
+          <div class="cert-seal w-30 h-16 mx-auto rounded-full   border-accent flex items-center justify-center mb-6">
+            <img src="../images/gsblogo.png" alt="">          </div>
+
+          <p class="text-[11px] font-mono uppercase tracking-[0.25em] text-inksoft">Certificate of Completion</p>
+          <p class="text-sm text-inksoft mt-5">This certifies that</p>
+          <h2 id="certEmployeeName" class="font-display font-semibold text-3xl sm:text-4xl text-primary-dark mt-2 mb-2">&nbsp;</h2>
+          <p class="text-sm text-inksoft">has successfully completed the course</p>
+          <h3 id="certCourseTitle" class="font-display font-semibold text-xl sm:text-2xl mt-2" th:text="${course.courseTitle}">Course title</h3>
+          <p id="certDate" class="text-xs font-mono text-inksoft mt-6 tracking-wide">&nbsp;</p>
+
+          <div id="certActions" class="flex items-center justify-center gap-3 mt-9">
+            <button onclick="window.print()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surfacealt transition-colors">Print / Save as PDF</button>
+            <button onclick="history.back()" class="btn-press px-5 py-2.5 rounded-lg text-sm font-medium bg-primary hover:bg-primary-dark text-white shadow-card transition-colors">Back to courses</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ============ IMAGE LIGHTBOX ============ -->
+<div id="imageLightbox" class="fixed inset-0 z-[80] hidden bg-black/95">
+  <div class="absolute inset-0 flex flex-col" onclick="closeLightbox()">
+    <div class="flex items-center justify-end px-4 sm:px-6 py-3 shrink-0 relative z-10" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" title="Close" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex-1 min-h-0 flex items-center justify-center relative px-4 sm:px-16">
+      <img id="lightboxImg" src="" alt="" class="max-w-full max-h-full select-none" draggable="false" onclick="event.stopPropagation()">
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div id="toastWrap" class="fixed bottom-10 right-5 z-[60] flex flex-col gap-2.5 items-end " st></div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script th:inline="javascript">
+/* ================= state ================= */
+const params = new URLSearchParams(window.location.search);
+const courseid = params.get('courseId');
+const assignmentid = params.get('assignmentid');
+const isCompletedParam = params.get('isCompleted');
+const employeeName = $('meta[name="_employeeName"]').attr('content') || '';
+
+    const csrfToken = $('meta[name="_csrf"]').attr('content');
+    function markContentCompletion(assignmentid,contentid){
+      return $.ajax({
+        url:'/course/markCompleted',
+        type:'POST',
+        headers:{'X-CSRF-TOKEN':csrfToken},
+        dataType:'JSON',
+        data:{assignmentid,contentid},
+        success:(res)=>{
+          console.log(res);
+        },
+        error:(err)=>{
+          console.log(err);
+        }
+      })
+    }
+
+const TYPE_META = {
+  0: { label:'Text',      cls:'bg-surfacealt text-inksoft' },
+  1: { label:'Image',     cls:'bg-accent-soft text-accent' },
+  2: { label:'Video',     cls:'bg-primary-soft text-primary-dark' },
+  3: { label:'Document',  cls:'bg-plum-soft text-plum' },
+  4: { label:'Slideshow', cls:'bg-rose-50 text-rose-500' },
+};
+
+let items = [];               // sorted course content
+let currentIndex = 0;         // index into items
+let navDirection = 1;         // for slide-in animation
+let completedIds = new Set(); // ids the learner has marked complete (source of truth: backend)
+let maxUnlockedIndex = 0;     // furthest index reachable via the step list
+
+let timerInterval = null;
+let timerRemaining = 0;
+let timerTotal = 0;
+let timerReady = false;       // true once the countdown has reached 0 for the current view
+
+/* ================= helpers (shared with the editor pages) ================= */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function inlineFormat(str){ return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+function markdownToHtml(raw){
+  if(!raw || !raw.trim()) return '';
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  let html = '', listType = null, paragraphLines = [];
+  function flushParagraph(){ if(paragraphLines.length){ html += `<p>${paragraphLines.map(inlineFormat).join('<br>')}</p>`; paragraphLines = []; } }
+  function closeList(){ if(listType){ html += `</${listType}>`; listType = null; } }
+  lines.forEach(line=>{
+    const trimmed = line.trim();
+    if(trimmed === ''){ flushParagraph(); closeList(); return; }
+    const h = trimmed.match(/^#{1,3}\s+(.*)$/);
+    if(h){ flushParagraph(); closeList(); html += `<h4>${inlineFormat(h[1])}</h4>`; return; }
+    const b = trimmed.match(/^[-*]\s+(.*)$/);
+    if(b){ flushParagraph(); if(listType!=='ul'){ closeList(); html+='<ul>'; listType='ul'; } html += `<li>${inlineFormat(b[1])}</li>`; return; }
+    const n = trimmed.match(/^\d+[.)]\s+(.*)$/);
+    if(n){ flushParagraph(); if(listType!=='ol'){ closeList(); html+='<ol>'; listType='ol'; } html += `<li>${inlineFormat(n[1])}</li>`; return; }
+    closeList(); paragraphLines.push(trimmed);
+  });
+  flushParagraph(); closeList();
+  return html;
+}
+function fileNameFromUrl(url){
+  if(!url) return '';
+  try { const clean = url.split('?')[0].split('#')[0]; return decodeURIComponent(clean.substring(clean.lastIndexOf('/')+1)) || ''; }
+  catch(e){ return ''; }
+}
+function slidesFromFileUrl(url){
+  if(!url) return [];
+  let raw = url.trim();
+  try { const parsed = JSON.parse(raw); if(Array.isArray(parsed)) return parsed.map(u=>({url:u, name:fileNameFromUrl(u)})); } catch(e){}
+  return raw.split(/[,|]/).map(s=>s.trim()).filter(Boolean).map(u=>({url:u, name:fileNameFromUrl(u)}));
+}
+function mapServerItem(raw){
+  const type = Number(raw.type);
+  const fileUrl = raw.fileUrl || '';
+  return {
+    id: raw.id,
+    title: raw.title || '',
+    durationInSec:raw.durationInSec,
+    seq: Number(raw.seq) || 0,
+    desc: raw.description || '',
+    type: type,
+    fileUrl: (type===1 || type===2) ? fileUrl : '',
+    fileName: (type===2 || type===3) ? fileNameFromUrl(fileUrl) : '',
+    slides: type===4 ? slidesFromFileUrl(fileUrl) : [],
+  };
+}
+
+/* ================= progress (backend-driven) =================
+   Completion state is owned by the server. getCompletedIds() fetches the
+   learner's completed content ids for this course/assignment from
+   /course/getCompletedContent, and completedIds/maxUnlockedIndex are
+   rebuilt from that response — nothing is cached in localStorage. */
+async function getCompletedIds(){
+  try {
+    const res = await $.ajax({
+      url: '/course/getCompletedContent',
+      type: 'GET',
+      data: {assignmentid },
+      dataType: 'JSON'
+    });
+    console.log(res);
+    // Expecting an array of completed content ids from the backend.
+    if(Array.isArray(res)) return res;
+    if(res && Array.isArray(res)) return res;
+    return [];
+  } catch (err) {
+    console.error('getCompletedContent failed:', err);
+    return [];
+  }
+}
+function computeMaxUnlockedIndex(){
+  let lastCompletedIdx = -1;
+  items.forEach((it, i) => { if(completedIds.has(it.id)) lastCompletedIdx = i; });
+  return Math.min(items.length - 1, Math.max(0, lastCompletedIdx + 1));
+}
+async function refreshCompletedIds(){
+  const ids = await getCompletedIds();
+  completedIds = new Set(ids);
+  maxUnlockedIndex = computeMaxUnlockedIndex();
+}
+
+/* ================= load course content ================= */
+async function loadContent(){
+  document.getElementById('errorState').classList.add('hidden');
+  document.getElementById('errorState').classList.remove('flex');
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('emptyState').classList.remove('flex');
+  document.getElementById('stepView').classList.add('hidden');
+  document.getElementById('completeView').classList.add('hidden');
+  document.getElementById('loadingState').classList.remove('hidden');
+
+  try {
+    const res = await $.ajax({
+      url: '/course/getCourseContents',
+      type: 'GET',
+      data: { courseId: courseid },
+      dataType: 'JSON'
+    });
+
+    items = (res || []).map(mapServerItem).sort((a,b)=>a.seq-b.seq);
+    document.getElementById('loadingState').classList.add('hidden');
+    if(items.length === 0){
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('emptyState').classList.add('flex');
+      return;
+    }
+
+    await refreshCompletedIds();
+    // Resume where the learner left off: jump to the step right after the
+    // last completed one (i.e. the count of completed steps), clamped to
+    // the unlocked range and the final index.
+    currentIndex = Math.min(completedIds.size, maxUnlockedIndex, items.length - 1);
+    renderStepList();
+    goToStep(currentIndex, 1, true);
+  } catch (err) {
+    console.error('getCourseContents failed:', err);
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('errorState').classList.remove('hidden');
+    document.getElementById('errorState').classList.add('flex');
+  }
+}
+
+/* ================= per-type required viewing time =================
+   A simple, honest time gate: text scales with reading length, images and
+   documents get a flat skim allowance, slideshows scale with slide count,
+   and video uses the clip's own duration once its metadata loads. This is
+   a time-based gate, not verified watch-time — good enough to stop
+   click-through skipping without over-engineering playback tracking. */
+function requiredSeconds(item){
+  if(item.type === 2) return item._videoDuration ? Math.max(5, Math.round(item._videoDuration)) : 20;
+  if(item.type === 1) return 12;
+  if(item.type === 4) return Math.max(15, (item.slides?.length || 1) * 8);
+  if(item.type === 3) return 20;
+  const words = (item.desc || '').trim().split(/\s+/).filter(Boolean).length;
+  return Math.min(60, Math.max(8, Math.round(words / 3)));
+}
+
+/* ================= step list (sidebar) ================= */
+function stepState(i){
+  if(completedIds.has(items[i].id)) return 'done';
+  if(i === currentIndex) return 'current';
+  if(i <= maxUnlockedIndex) return 'visited';
+  return 'locked';
+}
+function renderStepList(){
+  const wrap = document.getElementById('stepList');
+  wrap.innerHTML = items.map((it, i) => {
+    const state = stepState(i);
+    const clickable = state !== 'locked';
+    const iconHtml = state === 'done'
+      ? `<span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg></span>`
+      : state === 'locked'
+      ? `<span class="w-6 h-6 rounded-full bg-surfacealt text-inksoft/50 flex items-center justify-center shrink-0"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg></span>`
+      : `<span class="w-6 h-6 rounded-full ${state==='current' ? 'bg-primary text-white ring-pulse' : 'bg-surface border border-line text-inksoft'} flex items-center justify-center shrink-0 text-[11px] font-mono tabular">${i+1}</span>`;
+    return `
+      <button type="button" data-step-item data-state="${state}" data-idx="${i}" ${clickable ? `onclick="goToStep(${i})"` : 'disabled'}
+        class="step-item w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors ${clickable ? 'hover:bg-surfacealt' : ''} ${state==='current' ? 'border-l-2 border-primary' : 'border-l-2 border-transparent'}">
+        ${iconHtml}
+        <span class="min-w-0">
+          <span class="block text-[13px] font-medium truncate ${state==='locked' ? 'text-inksoft/50' : 'text-ink'}">${escapeHtml(it.title || 'Untitled step')}</span>
+          <span class="block text-[10.5px] font-mono uppercase tracking-wider text-inksoft/70">${TYPE_META[it.type].label}</span>
+        </span>
+      </button>`;
+  }).join('');
+
+  const doneCount = items.filter(it => completedIds.has(it.id)).length;
+  document.getElementById('overallLabel').textContent = `Step ${currentIndex+1} of ${items.length} · ${doneCount} done`;
+  const pct = Math.round((doneCount / items.length) * 100);
+  document.getElementById('overallBar').style.width = pct + '%';
+  document.getElementById('overallBarMobile').style.width = pct + '%';
+}
+
+/* ================= navigation ================= */
+function goToStep(i, direction, skipAnim){
+  if(i < 0 || i >= items.length) return;
+  if(i > maxUnlockedIndex) return; // can't skip ahead of what's been reached
+  navDirection = direction !== undefined ? direction : (i >= currentIndex ? 1 : -1);
+  currentIndex = i;
+  renderCurrentStep(skipAnim);
+  renderStepList();
+}
+function goPrev(){ if(currentIndex > 0) goToStep(currentIndex - 1, -1); }
+async function goNext(){
+  const item = items[currentIndex];
+  if(!completedIds.has(item.id)) return; // guarded by disabled state too
+  if(currentIndex === items.length - 1){
+    showCompletion();
+    return;
+  }
+  const nextIndex = currentIndex + 1;
+  if(nextIndex > maxUnlockedIndex) maxUnlockedIndex = nextIndex;
+  goToStep(nextIndex, 1);
+}
+function reviewFromStart(){
+  document.getElementById('completeView').classList.add('hidden');
+  document.getElementById('stepView').classList.remove('hidden');
+  goToStep(0, -1, true);
+}
+
+/* ================= timer control ================= */
+function stopTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+}
+function startTimer(seconds){
+  stopTimer();
+  timerTotal = seconds;
+  timerRemaining = seconds;
+  timerReady = false;
+  updateTimerUI();
+  timerInterval = setInterval(()=>{
+    timerRemaining -= 1;
+    if(timerRemaining <= 0){
+      timerRemaining = 0;
+      timerReady = true;
+      stopTimer();
+    }
+    updateTimerUI();
+  }, 1000);
+}
+function updateTimerUI(){
+  const circumference = 113; // 2*pi*18, matches the SVG circle
+  const ratio = timerTotal > 0 ? (timerTotal - timerRemaining) / timerTotal : 1;
+  const offset = circumference * (1 - ratio);
+  document.getElementById('timerRingCircle').style.strokeDashoffset = offset;
+  document.getElementById('timerNumber').textContent = timerReady ? '' : String(timerRemaining);
+  document.getElementById('timerNumber').classList.toggle('hidden', timerReady);
+  document.getElementById('timerCheckIcon').classList.toggle('hidden', !timerReady);
+
+  const markBtn = document.getElementById('markCompleteBtn');
+  const item = items[currentIndex];
+  console.log(item);
+  console.log(completedIds);
+  const alreadyDone = completedIds.has(item.id);
+
+  if(alreadyDone){
+    document.getElementById('timerLabel').textContent = 'Step completed';
+    document.getElementById('timerSubLabel').textContent = 'You can revisit this step any time';
+    markBtn.textContent = 'Completed ✓';
+    markBtn.disabled = true;
+    markBtn.className = 'btn-press px-4 py-2.5 rounded-lg text-sm font-medium bg-primary-soft text-primary-dark transition-all disabled:cursor-default';
+  } else if(timerReady){
+    document.getElementById('timerLabel').textContent = 'Ready to continue';
+    document.getElementById('timerSubLabel').textContent = 'You can mark this step complete now';
+    markBtn.textContent = 'Mark step complete';
+    markBtn.disabled = false;
+    markBtn.className = 'btn-press px-4 py-2.5 rounded-lg text-sm font-medium bg-primary hover:bg-primary-dark text-white shadow-card hover:shadow-cardhover transition-all';
+  } else {
+    document.getElementById('timerLabel').textContent = 'Review this step';
+    document.getElementById('timerSubLabel').textContent = `Available in ${timerRemaining}s`;
+    markBtn.textContent = 'Mark step complete';
+    markBtn.disabled = true;
+    markBtn.className = 'btn-press px-4 py-2.5 rounded-lg text-sm font-medium bg-ink/10 text-inksoft transition-all disabled:opacity-50 disabled:cursor-not-allowed';
+  }
+
+  document.getElementById('nextBtn').disabled = !alreadyDone;
+  document.getElementById('nextBtn').textContent = (currentIndex === items.length - 1) ? 'Finish' : 'Next →';
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+}
+async function markCurrentComplete(){
+  const item = items[currentIndex];
+  if(!timerReady || completedIds.has(item.id)) return;
+
+  // Optimistically reflect completion locally so the UI (Next button, sidebar)
+  // updates instantly, without waiting on the network.
+  completedIds.add(item.id);
+  if(currentIndex > maxUnlockedIndex) maxUnlockedIndex = currentIndex;
+  updateTimerUI();
+  renderStepList();
+  showToast('Step complete', `"${item.title}" marked as done.`, 'ok');
+  try {
+    // IMPORTANT: wait for the write to land before reconciling with the
+    // backend's list. If the reconciling GET fires before the POST has been
+    // persisted, it comes back without this id, overwrites completedIds, and
+    // the optimistic "Next" unlock gets reverted a moment later.
+    await markContentCompletion(assignmentid, item.id);
+    await refreshCompletedIds();
+  } catch (err) {
+    console.error('markCurrentComplete reconciliation failed:', err);
+  } finally {
+    updateTimerUI();
+    renderStepList();
+  }
+}
+
+/* ================= step media + rendering ================= */
+function stepMediaHtml(item){
+  if(item.type === 1){
+    return item.fileUrl
+      ? `<div class="rounded-xl border border-line bg-surfacealt overflow-hidden flex items-center justify-center"><img src="${escapeHtml(item.fileUrl)}" class="w-full max-h-96 object-contain cursor-zoom-in" onclick="openLightbox('${escapeHtml(item.fileUrl)}')" alt=""></div>`
+      : `<div class="text-sm text-inksoft italic bg-surfacealt rounded-xl p-6 text-center">No image attached</div>`;
+  }
+  if(item.type === 2){
+    return item.fileUrl
+      ? `<video id="stepVideo" controls preload="metadata" playsinline class="w-full max-h-96 rounded-xl border border-line bg-ink" src="${escapeHtml(item.fileUrl)}">Your browser doesn't support embedded video.</video>`
+      : `<div class="rounded-xl border border-line bg-ink text-white/80 aspect-video flex items-center justify-center"><svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;
+  }
+  if(item.type === 4){
+    if(!item.slides || item.slides.length === 0) return `<div class="text-sm text-inksoft italic bg-surfacealt rounded-xl p-6 text-center">No slides attached</div>`;
+    const slidesHtml = item.slides.map((s,i)=>`<img src="${escapeHtml(s.url)}" data-idx="${i}" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 cursor-zoom-in ${i===0?'opacity-100':'opacity-0 pointer-events-none'}" onclick="openLightbox('${escapeHtml(s.url)}')" alt="">`).join('');
+    return `<div class="relative h-80 rounded-xl overflow-hidden border border-line bg-surfacealt" id="stepCarousel">${slidesHtml}
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1" id="stepCarouselDots">
+        ${item.slides.map((_,i)=>`<span data-dot="${i}" class="h-1.5 rounded-full transition-all ${i===0?'bg-white w-4':'bg-white/50 w-1.5'}"></span>`).join('')}
+      </div>
+      <span class="absolute top-2 right-2 text-[10px] font-mono bg-ink/50 text-white px-1.5 py-0.5 rounded-full" id="stepCarouselCount">1/${item.slides.length}</span>
+    </div>`;
+  }
+  if(item.type === 3){
+    return `<div class="flex items-center gap-3 border border-line rounded-xl p-4 bg-surfacealt">
+      <svg class="w-8 h-8 text-plum shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h1M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>
+      <div class="min-w-0 flex-1"><p class="text-sm font-medium truncate">${escapeHtml(item.fileName || 'document')}</p><p class="text-xs text-inksoft">Take a moment to review this document</p></div>
+      ${item.fileUrl ? `<a href="${escapeHtml(item.fileUrl)}" target="_blank" rel="noopener" class="btn-press shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border border-line hover:bg-surface transition-colors">Open</a>` : ''}
+    </div>`;
+  }
+  return '';
+}
+
+let stepSlideshowTimer = null;
+function startStepSlideshow(item){
+  if(stepSlideshowTimer){ clearInterval(stepSlideshowTimer); stepSlideshowTimer = null; }
+  if(item.type !== 4 || !item.slides || item.slides.length < 2) return;
+  let idx = 0;
+  stepSlideshowTimer = setInterval(()=>{
+    idx = (idx + 1) % item.slides.length;
+    const car = document.getElementById('stepCarousel');
+    if(!car) return;
+    car.querySelectorAll('img[data-idx]').forEach(img=>{
+      const active = parseInt(img.dataset.idx) === idx;
+      img.classList.toggle('opacity-100', active);
+      img.classList.toggle('opacity-0', !active);
+    });
+    car.querySelectorAll('[data-dot]').forEach(d=>{
+      const active = parseInt(d.dataset.dot) === idx;
+      d.classList.toggle('bg-white', active); d.classList.toggle('w-4', active);
+      d.classList.toggle('bg-white/50', !active); d.classList.toggle('w-1.5', !active);
+    });
+    document.getElementById('stepCarouselCount').textContent = (idx+1) + '/' + item.slides.length;
+  }, 3000);
+}
+
+function renderCurrentStep(skipAnim){
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('completeView').classList.add('hidden');
+  const stepView = document.getElementById('stepView');
+  stepView.classList.remove('hidden');
+
+  const item = items[currentIndex];
+  document.getElementById('stepSeq').textContent = String(item.seq).padStart(2,'0');
+  const badge = document.getElementById('stepBadge');
+  badge.textContent = TYPE_META[item.type].label;
+  badge.className = 'text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ' + TYPE_META[item.type].cls;
+  document.getElementById('stepTitle').textContent = item.title || 'Untitled step';
+  document.getElementById('stepMedia').innerHTML = stepMediaHtml(item);
+  document.getElementById('stepDesc').innerHTML = markdownToHtml(item.desc) || '';
+
+  const inner = document.getElementById('stepCardInner');
+  if(!skipAnim){
+    inner.classList.remove('step-slide-right', 'step-slide-left', 'step-in');
+    void inner.offsetWidth;
+    inner.classList.add(navDirection >= 0 ? 'step-slide-right' : 'step-slide-left');
+  }
+
+  startStepSlideshow(item);
+
+  const alreadyDone = completedIds.has(item.id);
+  if(alreadyDone){
+    stopTimer();
+    timerReady = true;
+    timerTotal = 1; timerRemaining = 0;
+    updateTimerUI();
+  } else if(item.type === 2 && item.fileUrl){
+    // wait for real video duration before sizing the timer, falling back if metadata never arrives
+    const vid = document.getElementById('stepVideo');
+      startTimer(item.durationInSec);
+      if(vid){
+      vid.addEventListener('loadedmetadata', ()=>{
+        item._videoDuration = vid.duration;
+        if(!completedIds.has(item.id)) startTimer(item.durationInSec);
+      }, { once: true });
+    }
+  } else {
+    startTimer(item.durationInSec);
+  }
+}
+
+/* ================= completion screen ================= */
+function markCourseComplete(assignmentid){
+  $.ajax({
+    url: '/course/markCourseComplete',
+    type: 'PUT',
+    headers: {'X-CSRF-TOKEN': csrfToken},
+    dataType: 'JSON',
+    data: { assignmentid },
+    success: (res) => {
+      console.log(res);
+    },
+    error: (err) => {
+      console.log(err);
+    }
+  });
+}
+function showCompletion(){
+  stopTimer();
+  document.getElementById('stepView').classList.add('hidden');
+  const view = document.getElementById('completeView');
+  view.classList.remove('hidden');
+  view.classList.remove('pop-in'); void view.offsetWidth; view.classList.add('pop-in');
+  fireConfetti();
+  markCourseComplete(assignmentid);
+}
+
+/* ================= certificate (entered directly via ?isCompleted=0) =================
+   When the caller lands here with isCompleted=0, the course is already done
+   server-side, so skip the step viewer entirely and show the certificate. */
+function showCertificate(){
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('errorState').classList.add('hidden');
+  document.getElementById('errorState').classList.remove('flex');
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('emptyState').classList.remove('flex');
+  document.getElementById('stepView').classList.add('hidden');
+  document.getElementById('completeView').classList.add('hidden');
+
+  document.getElementById('certEmployeeName').textContent = employeeName || 'Learner';
+  document.getElementById('certDate').textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const view = document.getElementById('certificateView');
+  view.classList.remove('hidden');
+  view.classList.remove('pop-in'); void view.offsetWidth; view.classList.add('pop-in');
+}
+function fireConfetti(){
+  const wrap = document.getElementById('confettiWrap');
+  const colors = ['#145C4E', '#C98A2C', '#6B4A7C', '#B3432D'];
+  wrap.innerHTML = '';
+  for(let i=0;i<24;i++){
+    const piece = document.createElement('span');
+    const size = 5 + Math.random()*4;
+    piece.className = 'confetti-piece absolute rounded-sm';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.top = '-10px';
+    piece.style.width = size + 'px';
+    piece.style.height = size + 'px';
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = (Math.random()*0.4) + 's';
+    piece.style.animationDuration = (1 + Math.random()*0.8) + 's';
+    wrap.appendChild(piece);
+  }
+}
+
+/* ================= lightbox ================= */
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('imageLightbox').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(){
+  document.getElementById('imageLightbox').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+/* ================= toasts ================= */
+function showToast(title, msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  const accentColor = kind==='danger' ? 'bg-danger' : 'bg-primary';
+  t.className = 'relative w-72 bg-surface border border-line rounded-xl shadow-cardhover overflow-hidden';
+  t.style.animation = 'stepIn .3s cubic-bezier(.16,1,.3,1) both';
+  t.innerHTML = `
+    <div class="p-3.5 flex gap-2.5">
+      <div class="w-1.5 rounded-full ${accentColor} shrink-0"></div>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold">${escapeHtml(title)}</p>
+        <p class="text-xs text-inksoft mt-0.5">${escapeHtml(msg)}</p>
+      </div>
+    </div>`;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .3s, transform .3s'; t.style.opacity='0'; t.style.transform='translateX(8px)'; setTimeout(()=>t.remove(),300); }, 2600);
+}
+
+/* ================= keyboard shortcuts ================= */
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('imageLightbox').classList.contains('hidden')){
+    if(e.key === 'Escape') closeLightbox();
+    return;
+  }
+  if(document.getElementById('stepView').classList.contains('hidden')) return;
+  if(e.key === 'ArrowLeft' && !document.getElementById('prevBtn').disabled) goPrev();
+  if(e.key === 'ArrowRight' && !document.getElementById('nextBtn').disabled) goNext();
+});
+
+if(isCompletedParam === '1'){
+  showCertificate();
+} else {
+  loadContent();
+}
+</script>
+</body>
+</html>

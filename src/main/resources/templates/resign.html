@@ -95,8 +95,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
+<head th:replace="includes/header :: header"></head>
 <body>
-    <div th:replace="includes/header :: header"></div>
   <div id="leave-toast-container"></div>
 <div class="form-container">
   <!-- Updated Title with new icon -->
@@ -106,8 +106,7 @@
     <!-- Last Working Date -->
     <div class="mb-4">
       <label for="lastworking" class="form-label">Last Working Date</label>
-      <input type="date" class="form-control" id="lastworking" name="lastworking"
-        value="<?php echo date('Y-m-d', strtotime('+30 days'));?>" >
+      <input type="date" class="form-control" id="lastworking" name="lastworking">
       <div class="form-text">System calculated (30 days from today)</div>
     </div>
 

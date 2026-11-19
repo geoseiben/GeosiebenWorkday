@@ -6,53 +6,47 @@ import com.geosieben.gsbworkday.repository.BasicInfoRepository;
 import com.geosieben.gsbworkday.service.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
-
-
-
 
 @RestController
 public class TestController {
     private final BasicInfoRepository basicInfoRepository;
-    @Autowired
-private TestService testService;
-    @Autowired
     private HttpSession httpSession;
-    @Autowired
     private EmployeeService employeeService;
-    @Autowired
-   private LeaveServices leaveServices;
-    @Autowired
+    private LeaveServices leaveServices;
     private ItTicketService itTicketService;
-    @Autowired
     private DepartmentService departmentService;
+    private ExcelService excelService;
+    private PayRollService payRollService;
 
 
-    TestController(BasicInfoRepository basicInfoRepository) {
-        this.basicInfoRepository = basicInfoRepository;
-    }
 
-
-    @PostMapping("/admin/testinfoo")
-    public ResponseEntity<Map<String,String>> addTestInfo(@RequestParam String eid, @RequestParam String name, @RequestParam String designation){
-        TestInfo testInfo=new TestInfo(eid,name);
-        TestDesgn testDesgn=new TestDesgn(designation,testInfo);
-        return testService.addinfo(testInfo,testDesgn);
-    }
+    public TestController(BasicInfoRepository basicInfoRepository,  HttpSession httpSession,
+        EmployeeService employeeService, LeaveServices leaveServices, ItTicketService itTicketService,
+        DepartmentService departmentService, ExcelService excelService,PayRollService payRollService) {
+    this.basicInfoRepository = basicInfoRepository;
+    this.httpSession = httpSession;
+    this.employeeService = employeeService;
+    this.leaveServices = leaveServices;
+    this.itTicketService = itTicketService;
+    this.departmentService = departmentService;
+    this.excelService = excelService;
+    this.payRollService =payRollService;
+}
 @PostMapping("/admin/addemployeee")
     public ResponseEntity<Map<String, String>> addEmployee(
             @ModelAttribute EmployeeRequestDto dto,@RequestParam("image") MultipartFile file) {
-                        return employeeService.addEmployee(dto);
+                 String path=null;
+                if(!file.isEmpty()){
+                 path=excelService.uploadImage(file);
+                }
+                System.out.println(path);
+                        return employeeService.addEmployee(dto, path);
     }
     @GetMapping("/leaves/getbalance")
     public LeaveBalanceReposnseDto getLeaveBalance() {
@@ -116,5 +110,24 @@ public List<EmployeeBasicInfo> getPayRollEmployee() {
 @GetMapping("/admin/getApprovedLeaves")
 public  List<Leaves> approvedLeaves() {
    return leaveServices.approvedLeaves();
+}
+
+@GetMapping("/getEncSalaryy")
+public List<SalaryResponseDecrypted> getEncSalaryy() throws Exception {
+
+return payRollService.getSalaryDecrypted();
+}
+
+@GetMapping("/getManageData")
+public List<ManageEmployeeResponseDto> getManageData() {
+    return basicInfoRepository.getManageEmployeeList();
+}
+@PostMapping("/admin/issueId")
+public ResponseEntity<Map<String,String>> issueId(@RequestParam("eid") String eid) {
+    return employeeService.issueIdCard(eid);
+}
+@GetMapping("/getAvailableUsers")
+public List<AvailableUsers> getAvailableUsers() {
+    return employeeService.getAvailableUsers((String) httpSession.getAttribute("eid"));
 }
 }

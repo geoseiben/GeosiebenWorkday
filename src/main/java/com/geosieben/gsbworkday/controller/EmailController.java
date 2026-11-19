@@ -2,7 +2,6 @@ package com.geosieben.gsbworkday.controller;
 
 import com.geosieben.gsbworkday.service.EmailService;
 import jakarta.mail.MessagingException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -12,8 +11,11 @@ import java.io.UnsupportedEncodingException;
 @Controller
 public class EmailController {
 
-    @Autowired
     private EmailService emailService;
+
+    public EmailController(EmailService emailService) {
+        this.emailService = emailService;
+    }
 
     @GetMapping("/send-mail")
     @ResponseBody

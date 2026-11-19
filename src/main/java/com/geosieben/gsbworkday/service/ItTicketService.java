@@ -11,7 +11,6 @@ import com.geosieben.gsbworkday.repository.JoiningInfoRepository;
 
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,20 +24,27 @@ import java.util.Optional;
 
 @Service
 public class ItTicketService implements ItTicketServiceInterface {
-    @Autowired
 private ItTicketRepository itTicketRepository;
     @Value("${app.itmail}")
     private String itmail;
     @Value("${app.itname}")
     private String itname;
-    @Autowired
     private BasicInfoRepository basicInfoRepository;
-    @Autowired
     private HttpSession httpSession;
-    @Autowired
     JoiningInfoRepository joiningInfoRepository;
-    @Autowired
     private EmailService emailService;
+
+    
+    public ItTicketService(ItTicketRepository itTicketRepository,
+            BasicInfoRepository basicInfoRepository, HttpSession httpSession,
+            JoiningInfoRepository joiningInfoRepository, EmailService emailService) {
+        this.itTicketRepository = itTicketRepository;
+        this.basicInfoRepository = basicInfoRepository;
+        this.httpSession = httpSession;
+        this.joiningInfoRepository = joiningInfoRepository;
+        this.emailService = emailService;
+    }
+
     @Override
     public ResponseEntity<Map<String, String>> raiseTicket(String issue, String description, String priority, String hostname, String anydeskid) throws MessagingException, UnsupportedEncodingException {
         Map<String,String> response=new HashMap<>();

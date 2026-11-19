@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Subscription Manager</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#090D1A',
+            slate2: '#5A6E85',
+            brand: {
+              50: '#EEF2FF',
+              100: '#E0E7FF',
+              200: '#C7D2FE',
+              300: '#A5B4FC',
+              400: '#818CF8',
+              500: '#4F46E5',
+              600: '#4338CA',
+              700: '#3730A3',
+              800: '#312E81',
+              900: '#1E1B4B'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          },
+          boxShadow: {
+            'card': '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+            'float': '0 20px 35px -10px rgba(15, 23, 42, 0.18)',
+            'glow': '0 0 20px -3px rgba(79, 70, 229, 0.35)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Typography & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js for safe canvas document rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* Modal transitions */
+    .modal-backdrop {
+      background: rgba(9, 13, 26, 0.72);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-panel {
+      transform: translateY(18px) scale(0.97);
+      opacity: 0;
+      transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      max-height: calc(100vh - 3rem);
+    }
+    .modal-backdrop.show .modal-panel {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* Buttons & Form controls */
+    .btn {
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .stat-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.09);
+    }
+    .fld {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      border-radius: 0.65rem;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.875rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+    .fld:focus {
+      outline: none;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+    }
+    .lbl {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.025em;
+      color: #475569;
+      margin-bottom: 0.35rem;
+    }
+    
+    /* Interactive drop area */
+    .drop-box {
+      border: 2px dashed #CBD5E1;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .drop-box:hover, .drop-box.drag-over {
+      border-color: #4F46E5;
+      background-color: #EEF2FF;
+      transform: scale(1.005);
+    }
+    .drop-box.has-file {
+      border-style: solid;
+      border-color: #818CF8;
+      background-color: #F8FAFC;
+    }
+
+    @keyframes flashIn {
+      0% { background-color: #E0E7FF; }
+      100% { background-color: transparent; }
+    }
+    .row-flash {
+      animation: flashIn 1.5s ease-out;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { height: 7px; width: 7px; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="bg-[#F8FAFC] text-ink min-h-screen antialiased flex flex-col selection:bg-brand-500 selection:text-white">
+
+<!-- Toast Notifications Container -->
+<div id="toastHost" class="fixed right-5 bottom-5 z-50 flex flex-col gap-2.5 pointer-events-none" aria-live="polite"></div>
+
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-30 bg-[#090D1A] text-white shadow-lg shadow-black/10 border-b border-slate-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-indigo-400 flex items-center justify-center font-extrabold text-white text-lg shadow-inner shadow-white/20">
+        S
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+          Subscription Manager
+          <span id="liveStatusBadge" class="inline-flex items-center gap-1 text-[11px] font-medium bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Connecting
+          </span>
+        </h1>
+        <p class="text-xs text-slate-400">Track renewals, payment receipts, and category health</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2.5">
+      <button id="toggleChartsBtn" class="btn hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/60">
+        <svg class="w-4 h-4 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        <span id="chartToggleText">Analytics View</span>
+      </button>
+
+      <button id="refreshBtn" title="Sync data" class="btn p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+        <svg id="refreshIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M8 16H3v5"/>
+        </svg>
+      </button>
+
+      <button id="openAddBtn" class="btn inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-md shadow-brand-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add Subscription</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-7 flex-1 w-full space-y-6">
+
+  <!-- Metric Overview Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="stat-card bg-white border border-slate-200/80 rounded-2xl p-4 shadow-card border-l-[5px] border-l-brand-500">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate2">Tracked Services</p>
+        <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-bold">∑</span>
+      </div>
+      <div class="flex items-baseline justify-between mt-2.5">
+        <p class="text-3xl font-extrabold text-ink" id="statTotal">0</p>
+        <span class="text-xs font-semibold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">Monitored</span>
+      </div>
+    </div>
+
+    <div class="stat-card bg-white border border-slate-200/80 rounded-2xl p-4 shadow-card border-l-[5px] border-l-amber-500">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate2">Expiring in 30d</p>
+        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">⏱</span>
+      </div>
+      <div class="flex items-baseline justify-between mt-2.5">
+        <p class="text-3xl font-extrabold text-amber-600" id="statSoon">0</p>
+        <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">Needs action</span>
+      </div>
+    </div>
+
+    <div class="stat-card bg-white border border-slate-200/80 rounded-2xl p-4 shadow-card border-l-[5px] border-l-rose-500">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate2">Expired</p>
+        <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs font-bold">!</span>
+      </div>
+      <div class="flex items-baseline justify-between mt-2.5">
+        <p class="text-3xl font-extrabold text-rose-600" id="statExpired">0</p>
+        <span class="text-xs font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md">Renew now</span>
+      </div>
+    </div>
+
+    <div class="stat-card bg-white border border-slate-200/80 rounded-2xl p-4 shadow-card border-l-[5px] border-l-slate-400">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate2">Missing Invoice</p>
+        <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold">📎</span>
+      </div>
+      <div class="flex items-baseline justify-between mt-2.5">
+        <p class="text-3xl font-extrabold text-slate-600" id="statNoInvoice">0</p>
+        <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">No receipt</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Analytics Charts Grid -->
+  <section id="analyticsSection" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <!-- Chart 1: Category Distribution -->
+    <div class="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-card flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+            Category Distribution
+          </h2>
+          <p class="text-xs text-slate-400">Click a category segment to filter table</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 mono" id="catCountBadge">0 types</span>
+      </div>
+
+      <div class="relative flex items-center justify-center min-h-[220px] py-2">
+        <canvas id="categoryChart" class="max-h-[220px] max-w-full"></canvas>
+        <div id="chartCenterNote" class="absolute pointer-events-none text-center">
+          <span class="text-xl font-extrabold text-slate-800" id="centerTotalCount">0</span>
+          <span class="block text-[10px] uppercase font-bold text-slate-400">Total</span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+        <span>Interactive segment filtering</span>
+        <button id="resetChartFilterBtn" class="text-brand-600 hover:text-brand-700 font-semibold hover:underline">Reset Filter</button>
+      </div>
+    </div>
+
+    <!-- Chart 2: Expiry & Renewal Health Status -->
+    <div class="lg:col-span-7 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-card flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Renewal Horizon & Health
+          </h2>
+          <p class="text-xs text-slate-400">Urgency and status distribution across categories</p>
+        </div>
+        <div class="flex items-center gap-2 text-[11px]">
+          <span class="inline-flex items-center gap-1 font-semibold text-emerald-600"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active</span>
+          <span class="inline-flex items-center gap-1 font-semibold text-amber-600"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Soon</span>
+          <span class="inline-flex items-center gap-1 font-semibold text-rose-600"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Expired</span>
+        </div>
+      </div>
+
+      <div class="relative min-h-[220px] py-1">
+        <canvas id="statusChart" class="max-h-[220px] w-full"></canvas>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <span id="healthNoticeText">Status calculated in real time</span>
+        <span class="text-slate-400 text-[11px]">Bar height = subscription count</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search, Filter & Quick Toolbar -->
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+    <div class="relative flex-1 max-w-lg">
+      <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search by name, provider, or reference no..." class="fld !pl-10 !bg-white focus:bg-white shadow-card">
+    </div>
+
+    <div class="flex items-center gap-2">
+      <select id="typeFilter" class="fld !w-auto text-sm cursor-pointer font-medium text-slate-700 shadow-card">
+        <option value="">All Categories</option>
+        <option value="Internet">Internet</option>
+        <option value="Domain">Domain</option>
+        <option value="WebServer">WebServer</option>
+        <option value="Licence">Licence</option>
+        <option value="Recharge">Recharge</option>
+        <option value="Cloud Storage">Cloud Storage</option>
+      </select>
+
+      <select id="statusFilter" class="fld !w-auto text-sm cursor-pointer font-medium text-slate-700 shadow-card">
+        <option value="">All Statuses</option>
+        <option value="expired">Expired</option>
+        <option value="expiring">Expiring Soon (30d)</option>
+        <option value="active">Active</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Subscriptions Table View -->
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-card overflow-hidden">
+    <div class="overflow-x-auto min-h-[300px]">
+      <table class="w-full text-left text-sm whitespace-nowrap">
+        <thead class="bg-slate-50/90 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+          <tr>
+            <th class="px-5 py-3.5">Subscription</th>
+            <th class="px-5 py-3.5">Category</th>
+            <th class="px-5 py-3.5">Provider</th>
+            <th class="px-5 py-3.5">Contact</th>
+            <th class="px-5 py-3.5">Start Date</th>
+            <th class="px-5 py-3.5">Expiry / Status</th>
+            <th class="px-5 py-3.5">Ref No.</th>
+            <th class="px-5 py-3.5">Invoice</th>
+            <th class="px-5 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody" class="divide-y divide-slate-100">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>
+        </svg>
+      </div>
+      <p class="text-base font-semibold text-slate-800">No subscriptions found</p>
+      <p class="text-sm text-slate2 mt-1 max-w-sm">No records match your criteria or none have been saved yet.</p>
+      <button onclick="document.getElementById('openAddBtn').click()" class="btn mt-4 inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-medium text-xs px-3.5 py-2 rounded-lg">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add your first subscription
+      </button>
+    </div>
+
+    <!-- Loading Spinner Indicator -->
+    <div id="loadingState" class="flex flex-col items-center justify-center py-20 px-4">
+      <div class="w-9 h-9 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin mb-3"></div>
+      <p class="text-sm font-medium text-slate-600">Loading subscriptions & metrics...</p>
+    </div>
+  </div>
+</main>
+
+<!-- Add Subscription Modal -->
+<div id="addModal" class="modal-backdrop fixed inset-0 z-40 flex items-center justify-center p-4">
+  <div class="modal-panel bg-white rounded-2xl w-full max-w-xl shadow-float border border-slate-100 overflow-hidden flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div>
+        <h2 class="text-base font-bold text-ink">Add Subscription</h2>
+        <p class="text-xs text-slate2">Create a new subscription record with billing attachments.</p>
+      </div>
+      <button data-close="addModal" aria-label="Close" class="btn text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl w-8 h-8 flex items-center justify-center text-sm">✕</button>
+    </div>
+
+    <form id="addForm" class="px-6 py-5 overflow-y-auto space-y-4">
+      <div class="grid sm:grid-cols-2 gap-3.5">
+        <div class="sm:col-span-2">
+          <label class="lbl">Subscription Name *</label>
+          <input required name="name" type="text" class="fld" placeholder="e.g. Office Fiber Leased Line">
+        </div>
+        <div>
+          <label class="lbl">Category *</label>
+          <select required name="type" class="fld">
+            <option value="">Select Category</option>
+            <option value="Internet">Internet</option>
+            <option value="Domain">Domain</option>
+            <option value="WebServer">WebServer</option>
+            <option value="Licence">Licence</option>
+            <option value="Recharge">Recharge</option>
+            <option value="Cloud Storage">Cloud Storage</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Provider *</label>
+          <input required name="provider" type="text" class="fld" placeholder="e.g. Airtel Enterprise">
+        </div>
+        <div>
+          <label class="lbl">Contact Phone *</label>
+          <input required name="phone" type="tel" class="fld" placeholder="e.g. +91 9876543210">
+        </div>
+        <div>
+          <label class="lbl">Contact Email *</label>
+          <input required name="email" type="email" class="fld" placeholder="e.g. accounts@provider.com">
+        </div>
+        <div>
+          <label class="lbl">Start Date *</label>
+          <input required name="startDate" id="addStartDate" type="date" class="fld">
+        </div>
+        <div>
+          <label class="lbl">Expiry Date *</label>
+          <input required name="expiryDate" id="addExpiryDate" type="date" class="fld">
+        </div>
+      </div>
+
+      <!-- Invoice Upload Section -->
+      <div class="rounded-xl bg-slate-50 border border-slate-200/80 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">Invoice Attachment</p>
+          <span class="text-[11px] text-slate-500">Supported: PDF, PNG, JPG</span>
+        </div>
+        <div>
+          <label class="lbl">Invoice Ref / ID *</label>
+          <input required name="invoiceRefNo" type="text" class="fld mono text-sm" placeholder="e.g. INV-2026-9021">
+        </div>
+        <div>
+          <label class="lbl">Upload Invoice File</label>
+          <div class="drop-box rounded-xl p-4 cursor-pointer text-center relative" data-drop-zone="addInvoice">
+            <input type="file" name="invoiceFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.png,.jpg,.jpeg">
+            
+            <div class="drop-default flex flex-col items-center justify-center gap-1.5 py-1">
+              <div class="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12 4 4m-4-4-4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              </div>
+              <p class="text-xs font-semibold text-slate-700">Click or drag file to attach</p>
+              <p class="text-[11px] text-slate-400">PDF, JPG, or PNG (Max 10MB)</p>
+            </div>
+
+            <div class="drop-preview hidden flex items-center justify-between gap-3 p-2 bg-white rounded-lg border border-slate-200 text-left">
+              <div class="flex items-center gap-2.5 overflow-hidden">
+                <div class="file-thumb w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 font-bold text-xs uppercase"></div>
+                <div class="overflow-hidden">
+                  <p class="file-name text-xs font-semibold text-slate-800 truncate">document.pdf</p>
+                  <p class="file-meta text-[11px] text-slate-500">240 KB</p>
+                </div>
+              </div>
+              <button type="button" class="btn remove-file p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50" title="Remove attachment">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" data-close="addModal" class="btn px-4 py-2 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100">Cancel</button>
+        <button type="submit" id="addSubmitBtn" class="btn px-5 py-2.5 text-sm font-semibold rounded-xl bg-brand-500 hover:bg-brand-600 text-white shadow-sm flex items-center gap-2">
+          <span>Save Subscription</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Renew Subscription Modal -->
+<div id="renewModal" class="modal-backdrop fixed inset-0 z-40 flex items-center justify-center p-4">
+  <div class="modal-panel bg-white rounded-2xl w-full max-w-lg shadow-float border border-slate-100 overflow-hidden flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-amber-50/60">
+      <div>
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          Renew Subscription
+        </h2>
+        <p class="text-xs text-amber-800/80 mt-0.5" id="renewSubtitle">Extend validity and upload the renewed invoice</p>
+      </div>
+      <button data-close="renewModal" aria-label="Close" class="btn text-slate-400 hover:text-slate-700 hover:bg-amber-100/50 rounded-xl w-8 h-8 flex items-center justify-center text-sm">✕</button>
+    </div>
+
+    <form id="renewForm" class="px-6 py-5 overflow-y-auto space-y-4">
+      <input type="hidden" name="id" id="renewSubId">
+
+      <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate2 font-medium">Subscription</span>
+          <p class="text-sm font-bold text-ink" id="renewSubName">—</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate2 font-medium">Current Status</span>
+          <p class="text-xs font-semibold" id="renewStatusBadge">—</p>
+        </div>
+      </div>
+
+      <!-- Specific inputs requested: Start Date, End Date, Ref ID, Invoice File -->
+      <div class="grid sm:grid-cols-2 gap-3.5">
+        <div>
+          <label class="lbl">Renewal Start Date *</label>
+          <input required name="startDate" id="renewStartDate" type="date" class="fld">
+        </div>
+        <div>
+          <label class="lbl">New Expiry (End Date) *</label>
+          <input required name="expiryDate" id="renewEndDate" type="date" class="fld">
+        </div>
+      </div>
+
+      <div>
+        <label class="lbl">Renewal Invoice Ref ID *</label>
+        <input required name="refId" id="renewRefId" type="text" class="fld mono text-sm" placeholder="e.g. REN-2026-8819">
+      </div>
+
+      <!-- Invoice File Attachment with Live Drop & Preview -->
+      <div>
+        <label class="lbl">New Invoice File *</label>
+        <div class="drop-box rounded-xl p-4 cursor-pointer text-center relative" data-drop-zone="renewInvoice">
+          <input required type="file" name="invoiceFile" id="renewFileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.png,.jpg,.jpeg">
+          
+          <div class="drop-default flex flex-col items-center justify-center gap-1.5 py-1">
+            <div class="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12 4 4m-4-4-4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            </div>
+            <p class="text-xs font-semibold text-slate-700">Attach renewal receipt or invoice</p>
+            <p class="text-[11px] text-slate-400">PDF, PNG, JPG (Required)</p>
+          </div>
+
+          <div class="drop-preview hidden flex items-center justify-between gap-3 p-2 bg-white rounded-lg border border-slate-200 text-left">
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <div class="file-thumb w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 font-bold text-xs"></div>
+              <div class="overflow-hidden">
+                <p class="file-name text-xs font-semibold text-slate-800 truncate">filename.pdf</p>
+                <p class="file-meta text-[11px] text-slate-500">0 KB</p>
+              </div>
+            </div>
+            <button type="button" class="btn remove-file p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50" title="Remove">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" data-close="renewModal" class="btn px-4 py-2 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100">Cancel</button>
+        <button type="submit" id="renewSubmitBtn" class="btn px-5 py-2.5 text-sm font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm flex items-center gap-2">
+          <span>Confirm & Renew</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Standalone Upload Missing Invoice Modal -->
+<div id="uploadModal" class="modal-backdrop fixed inset-0 z-40 flex items-center justify-center p-4">
+  <div class="modal-panel bg-white rounded-2xl w-full max-w-md shadow-float border border-slate-100 overflow-hidden flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div>
+        <h2 class="text-base font-bold text-ink">Upload Missing Invoice</h2>
+        <p class="text-xs text-slate2 mt-0.5">Attach proof of payment for this service</p>
+      </div>
+      <button data-close="uploadModal" aria-label="Close" class="btn text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl w-8 h-8 flex items-center justify-center text-sm">✕</button>
+    </div>
+
+    <form id="uploadForm" class="px-6 py-5 space-y-4">
+      <input type="hidden" name="id" id="uploadSubId">
+      <div class="text-sm font-semibold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200/70" id="uploadSubName">—</div>
+
+      <div>
+        <label class="lbl">Invoice Reference ID *</label>
+        <input required name="refId" id="uploadRefId" type="text" class="fld mono text-sm" placeholder="e.g. INV-2026-4412">
+      </div>
+
+      <div>
+        <label class="lbl">Invoice File *</label>
+        <div class="drop-box rounded-xl p-4 cursor-pointer text-center relative" data-drop-zone="standaloneUpload">
+          <input required type="file" name="invoiceFile" id="standaloneFileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.png,.jpg,.jpeg">
+          
+          <div class="drop-default flex flex-col items-center justify-center gap-1.5 py-1">
+            <div class="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12 4 4m-4-4-4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            </div>
+            <p class="text-xs font-semibold text-slate-700">Choose or drop invoice file</p>
+            <p class="text-[11px] text-slate-400">PDF, PNG, JPG up to 10MB</p>
+          </div>
+
+          <div class="drop-preview hidden flex items-center justify-between gap-3 p-2 bg-white rounded-lg border border-slate-200 text-left">
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <div class="file-thumb w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 font-bold text-xs"></div>
+              <div class="overflow-hidden">
+                <p class="file-name text-xs font-semibold text-slate-800 truncate">file.pdf</p>
+                <p class="file-meta text-[11px] text-slate-500">0 KB</p>
+              </div>
+            </div>
+            <button type="button" class="btn remove-file p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50" title="Remove">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" data-close="uploadModal" class="btn px-4 py-2 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-100">Cancel</button>
+        <button type="submit" class="btn px-5 py-2.5 text-sm font-semibold rounded-xl bg-brand-500 hover:bg-brand-600 text-white shadow-sm">Upload & Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Dedicated File Preview Modal (PDF.js Canvas & Images) -->
+<div id="viewModal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+  <div class="modal-panel bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div class="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-slate-100 bg-slate-50/90">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+          </svg>
+        </div>
+        <div class="truncate">
+          <h2 class="text-sm sm:text-base font-bold text-ink truncate" id="viewSubName">Invoice Document</h2>
+          <p class="text-xs text-slate-500 mono" id="viewSubRef">Ref: —</p>
+        </div>
+      </div>
+
+      <!-- Viewer Toolbar Controls -->
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- PDF Page Navigation Bar -->
+        <div id="pdfControls" class="hidden items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-2xs mr-1">
+          <button id="pdfPrevPage" class="btn p-1 text-slate-500 hover:text-ink rounded" title="Previous page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <span class="text-xs font-semibold text-slate-600 select-none">
+            <span id="pdfCurrentPage">1</span> / <span id="pdfTotalPages">1</span>
+          </span>
+          <button id="pdfNextPage" class="btn p-1 text-slate-500 hover:text-ink rounded" title="Next page">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <div class="h-3.5 w-px bg-slate-200 mx-1"></div>
+          <button id="pdfZoomOut" class="btn p-1 text-slate-500 hover:text-ink rounded" title="Zoom out">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+          </button>
+          <button id="pdfZoomIn" class="btn p-1 text-slate-500 hover:text-ink rounded" title="Zoom in">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+          </button>
+        </div>
+
+        <a id="viewOpenTabBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn text-xs font-semibold text-slate-600 hover:text-ink bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1.5 shadow-2xs" title="Open in new window">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          <span class="hidden sm:inline">Open</span>
+        </a>
+
+        <a id="viewDownloadBtn" href="#" download class="btn text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>
+          </svg>
+          Download
+        </a>
+        <button data-close="viewModal" aria-label="Close" class="btn text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl w-8 h-8 flex items-center justify-center text-sm">✕</button>
+      </div>
+    </div>
+    
+    <!-- Modal Document Display Area -->
+    <div id="viewContainer" class="p-4 flex-1 overflow-auto flex items-center justify-center bg-slate-900/5 min-h-[380px] max-h-[75vh]">
+      <!-- Populated dynamically via PDF.js Canvas, direct image, or fallback UI -->
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+const $q = s => document.querySelector(s);
+const $qa = s => document.querySelectorAll(s);
+
+const API = {
+  list:   '/it/getSubscriptions',
+  add:    '/it/addSubscription',
+  renew:  '/it/renewSubscription',
+  upload: '/it/uploadInvoice'
+};
+
+const CATEGORY_PALETTE = {
+  'Internet':     { bg: '#38BDF8', border: '#0284C7', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
+  'Domain':       { bg: '#A855F7', border: '#7E22CE', badge: 'bg-purple-50 text-purple-700 border-purple-200' },
+  'WebServer':    { bg: '#6366F1', border: '#4338CA', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  'Licence':      { bg: '#F59E0B', border: '#D97706', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+  'Recharge':     { bg: '#10B981', border: '#059669', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  'Cloud Storage':{ bg: '#06B6D4', border: '#0891B2', badge: 'bg-cyan-50 text-cyan-700 border-cyan-200' }
+};
+
+let subscriptions = [];
+let categoryChartInstance = null;
+let statusChartInstance = null;
+
+let activePdfDoc = null;
+let currentPdfPage = 1;
+let currentPdfScale = 1.15;
+
+function csrfHeaders() {
+  const t = document.querySelector("meta[name='_csrf']");
+  const h = document.querySelector("meta[name='_csrf_header']");
+  const headers = {};
+  if (t && h && t.content && h.content) {
+    headers[h.content] = t.content;
+  }
+  return headers;
+}
+
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toISO = v => v ? String(v).slice(0, 10) : '';
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return isNaN(d) ? iso : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return iso;
+  }
+}
+
+function daysUntil(iso) {
+  if (!iso) return 0;
+  const target = new Date(iso);
+  const now = new Date(new Date().toDateString());
+  return Math.ceil((target - now) / 86400000);
+}
+
+function formatBytes(bytes, decimals = 1) {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function showToast(msg, type = 'success') {
+  const toast = document.createElement('div');
+  const isErr = type === 'error';
+  const isWarn = type === 'warn';
+  
+  const icon = isErr 
+    ? '<path d="m18 6-12 12M6 6l12 12"/>' 
+    : (isWarn 
+        ? '<path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>'
+        : '<path d="M20 6 9 17l-5-5"/>');
+
+  const bgBorder = isErr
+    ? 'bg-rose-950/90 text-rose-100 border-rose-800'
+    : (isWarn ? 'bg-amber-950/90 text-amber-100 border-amber-800' : 'bg-slate-900/95 text-white border-slate-800');
+
+  toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-float backdrop-blur transition-all duration-200 transform translate-y-3 opacity-0 ${bgBorder}`;
+  toast.innerHTML = `
+    <svg class="w-4 h-4 shrink-0 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      ${icon}
+    </svg>
+    <span class="leading-snug">${esc(msg)}</span>
+  `;
+
+  $q('#toastHost').appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.remove('translate-y-3', 'opacity-0');
+  });
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 250);
+  }, 3200);
+}
+
+function normalizeSub(s) {
+  return {
+    id: s.id || s.subscriptionId || Math.random().toString(36).substring(2, 9),
+    name: s.name || s.sname || s.subscriptionName || 'Unnamed Subscription',
+    type: s.type || s.subscriptionType || 'Internet',
+    provider: s.provider || '—',
+    phone: s.phone || s.contactNumber || '—',
+    email: s.email || '—',
+    startDate: toISO(s.startDate),
+    expiryDate: toISO(s.expiryDate),
+    refNo: s.refNo || s.referenceNumber || '—',
+    invoicePath: s.invoicePath || s.filePath || null,
+    invoiceRefNo: s.invoiceRefNo || s.refId || null,
+    invoiceObjectUrl: s.invoiceObjectUrl || null,
+    invoiceFileBlob: s.invoiceFileBlob || null,
+    invoiceMime: s.invoiceMime || null,
+    renewedBy: s.renewedBy || null
+  };
+}
+
+function loadSubscriptions(flashId) {
+  $q('#loadingState').classList.remove('hidden');
+  $q('#emptyState').classList.add('hidden');
+
+  jQuery.ajax({
+    url: API.list,
+    type: 'GET',
+    dataType: 'json',
+    headers: csrfHeaders(),
+    timeout: 10000
+  })
+  .done(res => {
+    const list = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+    subscriptions = list.map(normalizeSub);
+    $q('#liveStatusBadge').className = 'inline-flex items-center gap-1 text-[11px] font-medium bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30';
+    $q('#liveStatusBadge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live';
+    renderTable(flashId);
+    updateCharts();
+  })
+  .fail(xhr => {
+    subscriptions = [];
+    $q('#liveStatusBadge').className = 'inline-flex items-center gap-1 text-[11px] font-medium bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30';
+    $q('#liveStatusBadge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Offline';
+    renderTable();
+    updateCharts();
+    showToast('Failed to connect to backend server. No records to display.', 'warn');
+  })
+  .always(() => {
+    $q('#loadingState').classList.add('hidden');
+  });
+}
+
+function initOrUpdateCharts() {
+  const categories = Object.keys(CATEGORY_PALETTE);
+  
+  // Category Counts
+  const catCounts = categories.map(cat => subscriptions.filter(s => s.type === cat).length);
+  const activeSubsCount = subscriptions.length;
+
+  $q('#catCountBadge').textContent = `${categories.filter((c, i) => catCounts[i] > 0).length} active types`;
+  $q('#centerTotalCount').textContent = activeSubsCount;
+
+  // Chart 1: Category Doughnut Chart
+  const ctxCat = document.getElementById('categoryChart').getContext('2d');
+  const catColors = categories.map(c => CATEGORY_PALETTE[c].bg);
+  const catBorders = categories.map(c => CATEGORY_PALETTE[c].border);
+
+  if (categoryChartInstance) {
+    categoryChartInstance.data.datasets[0].data = activeSubsCount === 0 ? [1] : catCounts;
+    categoryChartInstance.data.datasets[0].backgroundColor = activeSubsCount === 0 ? ['#E2E8F0'] : catColors;
+    categoryChartInstance.data.datasets[0].borderColor = activeSubsCount === 0 ? ['#CBD5E1'] : catBorders;
+    categoryChartInstance.update();
+  } else {
+    categoryChartInstance = new Chart(ctxCat, {
+      type: 'doughnut',
+      data: {
+        labels: categories,
+        datasets: [{
+          data: activeSubsCount === 0 ? [1] : catCounts,
+          backgroundColor: activeSubsCount === 0 ? ['#E2E8F0'] : catColors,
+          borderColor: activeSubsCount === 0 ? ['#CBD5E1'] : catBorders,
+          borderWidth: 2,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: activeSubsCount > 0,
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const val = context.raw || 0;
+                const pct = total ? Math.round((val / total) * 100) : 0;
+                return ` ${context.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0 && activeSubsCount > 0) {
+            const index = elements[0].index;
+            const selectedCat = categories[index];
+            $q('#typeFilter').value = selectedCat;
+            renderTable();
+            showToast(`Filtered by ${selectedCat}`);
+          }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Status Breakdown Bar Chart (Active, Soon, Expired)
+  const activeCountsByCat = [];
+  const soonCountsByCat = [];
+  const expiredCountsByCat = [];
+
+  categories.forEach(cat => {
+    const list = subscriptions.filter(s => s.type === cat);
+    activeCountsByCat.push(list.filter(s => daysUntil(s.expiryDate) > 30).length);
+    soonCountsByCat.push(list.filter(s => { const d = daysUntil(s.expiryDate); return d > 0 && d <= 30; }).length);
+    expiredCountsByCat.push(list.filter(s => daysUntil(s.expiryDate) <= 0).length);
+  });
+
+  const ctxStatus = document.getElementById('statusChart').getContext('2d');
+
+  if (statusChartInstance) {
+    statusChartInstance.data.datasets[0].data = activeCountsByCat;
+    statusChartInstance.data.datasets[1].data = soonCountsByCat;
+    statusChartInstance.data.datasets[2].data = expiredCountsByCat;
+    statusChartInstance.update();
+  } else {
+    statusChartInstance = new Chart(ctxStatus, {
+      type: 'bar',
+      data: {
+        labels: categories.map(c => c.length > 9 ? c.slice(0, 7) + '..' : c),
+        datasets: [
+          {
+            label: 'Active',
+            data: activeCountsByCat,
+            backgroundColor: '#10B981',
+            borderRadius: 4
+          },
+          {
+            label: 'Expiring Soon (30d)',
+            data: soonCountsByCat,
+            backgroundColor: '#F59E0B',
+            borderRadius: 4
+          },
+          {
+            label: 'Expired',
+            data: expiredCountsByCat,
+            backgroundColor: '#EF4444',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { size: 10, family: 'Inter' } }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 10, family: 'Inter' } },
+            grid: { color: '#F1F5F9' }
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const el = elements[0];
+            const datasetIndex = el.datasetIndex; // 0=active, 1=expiring, 2=expired
+            const catIndex = el.index;
+            const catName = categories[catIndex];
+            
+            $q('#typeFilter').value = catName;
+            if (datasetIndex === 0) $q('#statusFilter').value = 'active';
+            if (datasetIndex === 1) $q('#statusFilter').value = 'expiring';
+            if (datasetIndex === 2) $q('#statusFilter').value = 'expired';
+            
+            renderTable();
+            showToast(`Filtering: ${catName}`);
+          }
+        }
+      }
+    });
+  }
+}
+
+function updateCharts() {
+  initOrUpdateCharts();
+}
+
+// Reset chart filter button
+$q('#resetChartFilterBtn').addEventListener('click', () => {
+  $q('#typeFilter').value = '';
+  $q('#statusFilter').value = '';
+  $q('#searchInput').value = '';
+  renderTable();
+  showToast('Filters cleared');
+});
+
+function renderTable(flashId) {
+  const query = $q('#searchInput').value.trim().toLowerCase();
+  const typeFilter = $q('#typeFilter').value;
+  const statusFilter = $q('#statusFilter').value;
+
+  const filtered = subscriptions.filter(s => {
+    const days = daysUntil(s.expiryDate);
+    const isExpired = days <= 0;
+    const isExpiring = days > 0 && days <= 30;
+    const isActive = days > 30;
+
+    if (typeFilter && s.type !== typeFilter) return false;
+
+    if (statusFilter === 'expired' && !isExpired) return false;
+    if (statusFilter === 'expiring' && !isExpiring) return false;
+    if (statusFilter === 'active' && !isActive) return false;
+
+    if (query) {
+      const match = (s.name || '').toLowerCase().includes(query) ||
+                    (s.provider || '').toLowerCase().includes(query) ||
+                    (s.invoiceRefNo || '').toLowerCase().includes(query) ||
+                    (s.refNo || '').toLowerCase().includes(query);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const tbody = $q('#tableBody');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    $q('#emptyState').classList.remove('hidden');
+  } else {
+    $q('#emptyState').classList.add('hidden');
+
+    tbody.innerHTML = filtered.map(s => {
+      const days = daysUntil(s.expiryDate);
+      const isExpired = days <= 0;
+      const isExpiringSoon = days > 0 && days <= 30;
+
+      // Status Pill
+      let statusHtml;
+      if (isExpired) {
+        statusHtml = `<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>Expired (${Math.abs(days)}d ago)</span>`;
+      } else if (isExpiringSoon) {
+        statusHtml = `<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${days}d left</span>`;
+      } else {
+        statusHtml = `<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active</span>`;
+      }
+
+      // Invoice Button / Thumbnail
+      let invoiceCellHtml;
+      if (s.invoicePath || s.invoiceObjectUrl) {
+        invoiceCellHtml = `
+          <div class="flex items-center gap-1.5">
+            <button data-view="${esc(s.id)}" class="btn inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100/80 px-2.5 py-1 rounded-lg border border-brand-200/70">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View File
+            </button>
+            ${s.invoiceRefNo ? `<span class="mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${esc(s.invoiceRefNo)}</span>` : ''}
+          </div>
+        `;
+      } else {
+        invoiceCellHtml = `
+          <button data-upload="${esc(s.id)}" class="btn inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs">
+            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12 4 4m-4-4-4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Attach
+          </button>
+        `;
+      }
+
+      // Renewal Action Logic: If expired or approaching expiry, display Renew button
+      let actionCellHtml;
+      if (isExpired || isExpiringSoon) {
+        actionCellHtml = `
+          <button data-renew="${esc(s.id)}" class="btn inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg text-white ${isExpired ? 'bg-rose-600 hover:bg-rose-500 shadow-sm shadow-rose-600/30' : 'bg-amber-600 hover:bg-amber-500 shadow-sm shadow-amber-600/30'}">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            Renew
+          </button>
+        `;
+      } else {
+        actionCellHtml = `
+          <div class="flex items-center justify-end gap-1.5 text-xs text-slate-400">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Up to date</span>
+          </div>
+        `;
+      }
+
+      const typeMeta = CATEGORY_PALETTE[s.type] || { badge: 'bg-slate-100 text-slate-700 border-slate-200' };
+
+      return `
+        <tr id="row-${esc(s.id)}" class="hover:bg-slate-50/70 transition-colors ${s.id === flashId ? 'row-flash' : ''}">
+          <td class="px-5 py-4 font-bold text-ink">
+            <div class="text-sm">${esc(s.name)}</div>
+          </td>
+          <td class="px-5 py-4">
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-md border ${typeMeta.badge}">
+              ${esc(s.type)}
+            </span>
+          </td>
+          <td class="px-5 py-4 text-slate-600 font-medium">${esc(s.provider)}</td>
+          <td class="px-5 py-4">
+            <div class="mono text-xs text-slate-700 font-medium">${esc(s.phone)}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${esc(s.email)}</div>
+          </td>
+          <td class="px-5 py-4 text-xs font-medium text-slate-600">${fmtDate(s.startDate)}</td>
+          <td class="px-5 py-4">
+            <div class="font-semibold text-xs text-slate-800">${fmtDate(s.expiryDate)}</div>
+            <div class="mt-1">${statusHtml}</div>
+          </td>
+          <td class="px-5 py-4 mono text-xs text-slate-500">${esc(s.refNo)}</td>
+          <td class="px-5 py-4">${invoiceCellHtml}</td>
+          <td class="px-5 py-4 text-right">${actionCellHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Update Summary Metrics
+  $q('#statTotal').textContent = subscriptions.length;
+  $q('#statSoon').textContent = subscriptions.filter(s => {
+    const d = daysUntil(s.expiryDate);
+    return d > 0 && d <= 30;
+  }).length;
+  $q('#statExpired').textContent = subscriptions.filter(s => daysUntil(s.expiryDate) <= 0).length;
+  $q('#statNoInvoice').textContent = subscriptions.filter(s => !s.invoicePath && !s.invoiceObjectUrl).length;
+}
+
+function openModal(id) {
+  const modal = $q('#' + id);
+  if (!modal) return;
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  const modal = $q('#' + id);
+  if (!modal) return;
+  modal.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+$qa('[data-close]').forEach(b => {
+  b.addEventListener('click', () => closeModal(b.dataset.close));
+});
+
+$qa('.modal-backdrop').forEach(backdrop => {
+  backdrop.addEventListener('click', e => {
+    if (e.target === backdrop) closeModal(backdrop.id);
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    $qa('.modal-backdrop.show').forEach(m => closeModal(m.id));
+  }
+});
+
+function initDropZone(zone) {
+  const fileInput = zone.querySelector('input[type=file]');
+  const defaultView = zone.querySelector('.drop-default');
+  const previewView = zone.querySelector('.drop-preview');
+  const nameEl = zone.querySelector('.file-name');
+  const metaEl = zone.querySelector('.file-meta');
+  const thumbEl = zone.querySelector('.file-thumb');
+  const removeBtn = zone.querySelector('.remove-file');
+
+  function renderFilePreview(file) {
+    if (!file) {
+      zone.classList.remove('has-file');
+      defaultView.classList.remove('hidden');
+      previewView.classList.add('hidden');
+      thumbEl.innerHTML = '';
+      return;
+    }
+
+    zone.classList.add('has-file');
+    defaultView.classList.add('hidden');
+    previewView.classList.remove('hidden');
+
+    nameEl.textContent = file.name;
+    metaEl.textContent = formatBytes(file.size);
+
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      thumbEl.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-md" alt="Thumb">`;
+    } else if (file.type === 'application/pdf') {
+      thumbEl.innerHTML = `
+        <svg class="w-5 h-5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <path d="M14 2v6h6"/><path d="M10 12h4"/><path d="M10 16h4"/>
+        </svg>
+      `;
+    } else {
+      thumbEl.innerHTML = `
+        <svg class="w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        </svg>
+      `;
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) renderFilePreview(fileInput.files[0]);
+  });
+
+  if (removeBtn) {
+    removeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      fileInput.value = '';
+      renderFilePreview(null);
+    });
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    zone.addEventListener(eventName, e => {
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    zone.addEventListener(eventName, e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+    });
+  });
+
+  zone.addEventListener('drop', e => {
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      renderFilePreview(fileInput.files[0]);
+    }
+  });
+
+  zone._reset = () => {
+    fileInput.value = '';
+    renderFilePreview(null);
+  };
+}
+
+$qa('[data-drop-zone]').forEach(initDropZone);
+
+function resetModalForm(formId) {
+  const form = $q('#' + formId);
+  if (!form) return;
+  form.reset();
+  form.querySelectorAll('[data-drop-zone]').forEach(zone => {
+    if (zone._reset) zone._reset();
+  });
+}
+
+$q('#openAddBtn').addEventListener('click', () => {
+  resetModalForm('addForm');
+  const today = new Date().toISOString().slice(0, 10);
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  $q('#addStartDate').value = today;
+  $q('#addExpiryDate').value = nextYear.toISOString().slice(0, 10);
+  openModal('addModal');
+});
+
+$q('#addForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const file = formData.get('invoiceFile');
+  const hasFile = file && file.size > 0;
+
+  const submitBtn = $q('#addSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Saving...';
+
+  const localId = 'sub_' + Math.random().toString(36).substring(2, 9);
+  const optimisticSub = {
+    id: localId,
+    name: formData.get('name'),
+    type: formData.get('type'),
+    provider: formData.get('provider'),
+    phone: formData.get('phone'),
+    email: formData.get('email'),
+    startDate: formData.get('startDate'),
+    expiryDate: formData.get('expiryDate'),
+    refNo: 'REF-' + Math.floor(1000 + Math.random() * 9000),
+    invoicePath: hasFile ? file.name : null,
+    invoiceRefNo: formData.get('invoiceRefNo'),
+    invoiceObjectUrl: hasFile ? URL.createObjectURL(file) : null,
+    invoiceFileBlob: hasFile ? file : null,
+    invoiceMime: hasFile ? file.type : null,
+    renewedBy: null
+  };
+
+  jQuery.ajax({
+    url: API.add,
+    type: 'POST',
+    headers: csrfHeaders(),
+    data: formData,
+    processData: false,
+    contentType: false,
+    dataType: 'json'
+  })
+  .done(res => {
+    closeModal('addModal');
+    showToast(`"${optimisticSub.name}" added successfully!`);
+    loadSubscriptions(res && res.id ? res.id : null);
+  })
+  .fail(() => {
+    subscriptions.unshift(optimisticSub);
+    closeModal('addModal');
+    renderTable(localId);
+    updateCharts();
+    showToast(`Added locally (${optimisticSub.name}). Note: Backend sync offline.`, 'warn');
+  })
+  .always(() => {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Save Subscription</span>';
+  });
+});
+
+$q('#renewForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const subId = $q('#renewSubId').value;
+  const targetSub = subscriptions.find(s => s.id == subId);
+  console.log(subId);
+
+  const file = formData.get('invoiceFile');
+  const hasFile = file && file.size > 0;
+  const newStartDate = formData.get('startDate');
+  const newEndDate = formData.get('expiryDate');
+  const refId = formData.get('refId');
+
+  const submitBtn = $q('#renewSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Processing...';
+
+  jQuery.ajax({
+    url: API.renew,
+    type: 'POST',
+    headers: csrfHeaders(),
+    data: formData,
+    processData: false,
+    contentType: false,
+    dataType: 'json'
+  })
+  .done(() => {
+    closeModal('renewModal');
+    showToast(`Renewed "${targetSub ? targetSub.name : 'Subscription'}" successfully!`);
+    loadSubscriptions(subId);
+  })
+  .fail(() => {
+    if (targetSub) {
+      targetSub.startDate = newStartDate;
+      targetSub.expiryDate = newEndDate;
+      targetSub.invoiceRefNo = refId;
+      if (hasFile) {
+        targetSub.invoicePath = file.name;
+        targetSub.invoiceObjectUrl = URL.createObjectURL(file);
+        targetSub.invoiceFileBlob = file;
+        targetSub.invoiceMime = file.type;
+      }
+      renderTable(targetSub.id);
+      updateCharts();
+    }
+    closeModal('renewModal');
+    showToast(`Renewed locally. Backend sync unavailable.`, 'warn');
+  })
+  .always(() => {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Confirm & Renew</span>';
+  });
+});
+
+$q('#uploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const subId = $q('#uploadSubId').value;
+  const targetSub = subscriptions.find(s => s.id == subId);
+  const formData = new FormData(e.target);
+  const file = $q('#standaloneFileInput').files[0];
+  const refId = $q('#uploadRefId').value;
+
+  if (!file) return;
+
+  jQuery.ajax({
+    url: API.upload,
+    type: 'POST',
+    headers: csrfHeaders(),
+    data: formData,
+    processData: false,
+    contentType: false,
+    dataType: 'json'
+  })
+  .done(() => {
+    closeModal('uploadModal');
+    showToast(`Invoice attached for "${targetSub.name}"`);
+    loadSubscriptions(subId);
+  })
+  .fail(() => {
+    if (targetSub) {
+      targetSub.invoicePath = file.name;
+      targetSub.invoiceRefNo = refId;
+      targetSub.invoiceObjectUrl = URL.createObjectURL(file);
+      targetSub.invoiceFileBlob = file;
+      targetSub.invoiceMime = file.type;
+      renderTable(targetSub.id);
+      updateCharts();
+    }
+    closeModal('uploadModal');
+    showToast(`Attached locally for "${targetSub.name}"`, 'warn');
+  });
+});
+
+document.addEventListener('click', e => {
+  // 1. View Invoice Click
+  const viewBtn = e.target.closest('[data-view]');
+  if (viewBtn) {
+    const id = viewBtn.dataset.view;
+    const sub = subscriptions.find(x => x.id == id);
+    if (!sub) return;
+
+    $q('#viewSubName').textContent = `${sub.name} — Invoice`;
+    $q('#viewSubRef').textContent = sub.invoiceRefNo ? `Ref No: ${sub.invoiceRefNo}` : (sub.refNo ? `Subscription Ref: ${sub.refNo}` : '');
+    
+    const container = $q('#viewContainer');
+    const downloadBtn = $q('#viewDownloadBtn');
+    const openTabBtn = $q('#viewOpenTabBtn');
+    const pdfControls = $q('#pdfControls');
+
+    pdfControls.classList.add('hidden');
+    pdfControls.classList.remove('flex');
+    activePdfDoc = null;
+
+    const targetUrl = sub.invoiceObjectUrl || sub.invoicePath;
+    const fileBlob = sub.invoiceFileBlob;
+
+    if (!targetUrl && !fileBlob) {
+      downloadBtn.classList.add('hidden');
+      openTabBtn.classList.add('hidden');
+      container.innerHTML = `
+        <div class="py-16 px-6 text-center flex flex-col items-center justify-center">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
+            </svg>
+          </div>
+          <p class="font-bold text-slate-800 text-sm">No Preview Available</p>
+          <p class="text-xs text-slate-500 mt-1 max-w-xs">No attachment file is associated with this subscription record.</p>
+        </div>
+      `;
+      openModal('viewModal');
+      return;
+    }
+
+    const effectiveUrl = targetUrl || (fileBlob ? URL.createObjectURL(fileBlob) : '#');
+    downloadBtn.href = effectiveUrl;
+    downloadBtn.setAttribute('download', sub.invoicePath || `${sub.name}-invoice`);
+    downloadBtn.classList.remove('hidden');
+
+    openTabBtn.href = effectiveUrl;
+    openTabBtn.classList.remove('hidden');
+
+    const isPdf = (sub.invoiceMime && sub.invoiceMime.toLowerCase().includes('pdf')) || 
+                  (sub.invoicePath && sub.invoicePath.toLowerCase().endsWith('.pdf')) ||
+                  (fileBlob && fileBlob.type && fileBlob.type.includes('pdf'));
+
+    if (isPdf) {
+      container.innerHTML = `
+        <div id="pdfLoadingIndicator" class="flex flex-col items-center justify-center py-16 gap-3">
+          <div class="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+          <p class="text-xs font-semibold text-slate-600">Rendering document safely with PDF.js...</p>
+        </div>
+        <div id="pdfCanvasWrapper" class="hidden flex-col items-center w-full overflow-auto py-2">
+          <canvas id="pdfViewerCanvas" class="shadow-lg rounded-lg border border-slate-200 bg-white max-w-full"></canvas>
+        </div>
+      `;
+
+      openModal('viewModal');
+
+      function renderCurrentPage() {
+        if (!activePdfDoc) return;
+        activePdfDoc.getPage(currentPdfPage).then(page => {
+          const viewport = page.getViewport({ scale: currentPdfScale });
+          const canvas = $q('#pdfViewerCanvas');
+          if (!canvas) return;
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+          page.render(renderContext);
+          $q('#pdfCurrentPage').textContent = currentPdfPage;
+        });
+      }
+
+      const loadPdfData = async () => {
+        try {
+          let loadingTask;
+          if (fileBlob) {
+            const arrayBuffer = await fileBlob.arrayBuffer();
+            loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+          } else {
+            loadingTask = pdfjsLib.getDocument(targetUrl);
+          }
+
+          const pdf = await loadingTask.promise;
+          activePdfDoc = pdf;
+          currentPdfPage = 1;
+
+          $q('#pdfLoadingIndicator')?.classList.add('hidden');
+          const wrapper = $q('#pdfCanvasWrapper');
+          if (wrapper) {
+            wrapper.classList.remove('hidden');
+            wrapper.classList.add('flex');
+          }
+
+          pdfControls.classList.remove('hidden');
+          pdfControls.classList.add('flex');
+          $q('#pdfTotalPages').textContent = pdf.numPages;
+
+          renderCurrentPage();
+
+          $q('#pdfPrevPage').onclick = () => {
+            if (currentPdfPage <= 1) return;
+            currentPdfPage--;
+            renderCurrentPage();
+          };
+          $q('#pdfNextPage').onclick = () => {
+            if (currentPdfPage >= activePdfDoc.numPages) return;
+            currentPdfPage++;
+            renderCurrentPage();
+          };
+          $q('#pdfZoomIn').onclick = () => {
+            currentPdfScale += 0.2;
+            renderCurrentPage();
+          };
+          $q('#pdfZoomOut').onclick = () => {
+            if (currentPdfScale <= 0.6) return;
+            currentPdfScale -= 0.2;
+            renderCurrentPage();
+          };
+        } catch (err) {
+          console.warn('PDF.js render failed, showing fallback', err);
+          container.innerHTML = `
+            <div class="py-12 px-6 text-center flex flex-col items-center justify-center max-w-md">
+              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
+                </svg>
+              </div>
+              <p class="font-bold text-slate-800 text-sm">Preview Unavailable Inline</p>
+              <p class="text-xs text-slate-500 mt-1 mb-4 leading-relaxed">
+                The document source cannot be rendered directly inside this window. You can open or download it below.
+              </p>
+              <div class="flex items-center gap-2">
+                <a href="${effectiveUrl}" target="_blank" rel="noopener noreferrer" class="btn text-xs font-semibold text-white bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-sm">
+                  Open in New Window
+                </a>
+                <a href="${effectiveUrl}" download="${sub.invoicePath || 'invoice.pdf'}" class="btn text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl inline-flex items-center gap-1.5">
+                  Download
+                </a>
+              </div>
+            </div>
+          `;
+        }
+      };
+
+      loadPdfData();
+    } else {
+      container.innerHTML = `
+        <div class="w-full flex items-center justify-center overflow-auto p-2">
+          <img src="${effectiveUrl}" class="max-h-[68vh] max-w-full rounded-xl object-contain shadow-md border border-slate-200/80 bg-white" alt="Invoice Preview" onerror="this.parentElement.innerHTML='<div class=\\\'py-10 text-center\\\'> <p class=\\\'text-sm font-semibold text-rose-600 mb-1\\\'>Image could not be rendered</p><p class=\\\'text-xs text-slate-500\\\'>File path is unreachable or format is unsupported.</p></div>'">
+        </div>
+      `;
+      openModal('viewModal');
+    }
+    return;
+  }
+
+  // 2. Renew Button Click
+  const renewBtn = e.target.closest('[data-renew]');
+  if (renewBtn) {
+    const id = renewBtn.dataset.renew;
+    const sub = subscriptions.find(x => x.id == id);
+    if (!sub) return;
+
+    resetModalForm('renewForm');
+    $q('#renewSubId').value = sub.id;
+    $q('#renewSubName').textContent = sub.name;
+
+    const days = daysUntil(sub.expiryDate);
+    const badge = $q('#renewStatusBadge');
+    if (days <= 0) {
+      badge.className = 'text-xs font-bold text-rose-600';
+      badge.textContent = `Expired (${Math.abs(days)}d ago)`;
+    } else {
+      badge.className = 'text-xs font-bold text-amber-600';
+      badge.textContent = `${days} days remaining`;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    $q('#renewStartDate').value = sub.expiryDate && sub.expiryDate > today ? sub.expiryDate : today;
+
+    const newEnd = new Date();
+    newEnd.setFullYear(newEnd.getFullYear() + 1);
+    $q('#renewEndDate').value = newEnd.toISOString().slice(0, 10);
+    $q('#renewRefId').value = 'REN-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+
+    openModal('renewModal');
+    return;
+  }
+
+  // 3. Upload Missing Invoice Click
+  const uploadBtn = e.target.closest('[data-upload]');
+  if (uploadBtn) {
+    const id = uploadBtn.dataset.upload;
+    const sub = subscriptions.find(x => x.id == id);
+    if (!sub) return;
+
+    resetModalForm('uploadForm');
+    $q('#uploadSubId').value = sub.id;
+    $q('#uploadSubName').textContent = `${sub.name} (${sub.provider})`;
+    $q('#uploadRefId').value = 'INV-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    openModal('uploadModal');
+    return;
+  }
+});
+
+$q('#searchInput').addEventListener('input', () => renderTable());
+$q('#typeFilter').addEventListener('change', () => renderTable());
+$q('#statusFilter').addEventListener('change', () => renderTable());
+
+$q('#refreshBtn').addEventListener('click', () => {
+  const icon = $q('#refreshIcon');
+  icon.classList.add('animate-spin');
+  loadSubscriptions();
+  setTimeout(() => icon.classList.remove('animate-spin'), 650);
+});
+
+// Toggle analytics section visibility on smaller screens
+$q('#toggleChartsBtn').addEventListener('click', () => {
+  const section = $q('#analyticsSection');
+  const text = $q('#chartToggleText');
+  const isHidden = section.classList.contains('hidden');
+  if (isHidden) {
+    section.classList.remove('hidden');
+    text.textContent = 'Hide Charts';
+  } else {
+    section.classList.add('hidden');
+    text.textContent = 'Show Charts';
+  }
+});
+
+// Initial boot
+loadSubscriptions();
+</script>
+</body>
+</html>

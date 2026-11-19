@@ -1,0 +1,2117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<title th:text="${course.courseTitle}"></title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#F5F5F1',
+          surface: '#FFFFFF',
+          surfacealt: '#ECEDF1',
+          ink: '#161A26',
+          inksoft: '#5B6172',
+          line: '#E2E3E9',
+          primary: { DEFAULT:'#2F3C7E', dark:'#212C5C', soft:'#E7E9F5' },
+          accent: { DEFAULT:'#B9812E', soft:'#F8EEDA' },
+          plum: { DEFAULT:'#7A4B84', soft:'#F1E6F2' },
+          danger: { DEFAULT:'#B23B32', soft:'#FBE9E6' },
+        },
+        fontFamily: {
+          display: ['Newsreader', 'serif'],
+          body: ['Manrope', 'sans-serif'],
+          mono: ['IBM Plex Mono', 'monospace'],
+        },
+        boxShadow: {
+          card: '0 1px 2px rgba(22,26,38,0.05), 0 1px 1px rgba(22,26,38,0.04)',
+          cardhover: '0 16px 32px -10px rgba(22,26,38,0.16)',
+          panel: '-20px 0 48px -18px rgba(22,26,38,0.20)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Manrope', sans-serif;
+    background-image:
+      radial-gradient(1100px 480px at 12% -6%, rgba(47,60,126,0.06), transparent 60%),
+      radial-gradient(900px 420px at 100% 0%, rgba(185,129,46,0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+  .logo-mark {
+    background: linear-gradient(155deg, #38468F 0%, #2F3C7E 55%, #212C5C 100%);
+    box-shadow: 0 6px 14px -6px rgba(47,60,126,0.55), inset 0 1px 0 rgba(255,255,255,0.14);
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D3D5DE; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B7BACB; }
+
+  .spine::before {
+    content: '';
+    position: absolute;
+    left: 27px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, #D3D5DE 0 6px, transparent 6px 12px);
+  }
+  @media (max-width: 640px){ .spine::before { display:none; } }
+
+  .card-enter { animation: cardEnter .45s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes cardEnter { from { opacity:0; transform: translateY(10px) scale(.98);} to { opacity:1; transform:none;} }
+
+  .panel-enter { animation: panelEnter .38s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes panelEnter { from { transform: translateX(100%);} to { transform: translateX(0);} }
+  .scrim-enter { animation: scrimEnter .3s ease both; }
+  @keyframes scrimEnter { from{opacity:0} to{opacity:1} }
+
+  .modal-pop { animation: modalPop .28s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes modalPop { from{opacity:0; transform:scale(.92) translateY(8px);} to{opacity:1; transform:none;} }
+  .shake { animation: shake .45s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes shake { 10%,90%{transform:translateX(-1px)} 20%,80%{transform:translateX(2px)} 30%,50%,70%{transform:translateX(-4px)} 40%,60%{transform:translateX(4px)} }
+
+  .toast-enter { animation: toastIn .4s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes toastIn { from{opacity:0; transform:translateY(10px) scale(.95);} to{opacity:1; transform:none;} }
+  .toast-bar { animation: toastBar 3.2s linear forwards; }
+  @keyframes toastBar { from{width:100%} to{width:0%} }
+
+  .dragging { opacity:.4; }
+  .drag-over { box-shadow: inset 0 0 0 2px #2F3C7E; }
+
+  .btn-press:active { transform: scale(.97); }
+  .num-serif { font-family:'Newsreader', serif; font-variant-numeric: oldstyle-nums; font-optical-sizing: auto; }
+
+  [x-cloak] { display: none !important; }
+
+  .dropzone.dragging-file { background:#E7E9F5; border-color:#2F3C7E; }
+
+  .type-tab[data-active="true"] {
+    background: #161A26; color:#fff;
+  }
+
+  .view-tab[data-active="true"] {
+    background: #2F3C7E; color:#fff;
+  }
+
+  input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 3px #E7E9F5; border-color:#2F3C7E; }
+
+  /* ---------- loading skeleton + inline spinners ---------- */
+  @keyframes skelShimmer { 0%{ background-position:-200px 0 } 100%{ background-position:200px 0 } }
+  .skel {
+    background: linear-gradient(90deg, #ECEDF1 0px, #E0E2E9 40px, #ECEDF1 80px);
+    background-size: 400px 100%;
+    animation: skelShimmer 1.3s ease-in-out infinite;
+  }
+  .spinner {
+    width: 16px; height: 16px; border-radius: 9999px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    animation: spin .7s linear infinite;
+  }
+  .spinner-dark {
+    border: 2px solid #E2E3E9;
+    border-top-color: #2F3C7E;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- rich description formatting ---------- */
+  .rich-desc { color: inherit; }
+  .rich-desc h4 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #161A26;
+    margin: 0.6em 0 0.25em;
+  }
+  .rich-desc h4:first-child { margin-top: 0; }
+  .rich-desc ul, .rich-desc ol {
+    margin: 0.35em 0 0.5em;
+    padding-left: 1.25em;
+  }
+  .rich-desc ul { list-style: disc; }
+  .rich-desc ol { list-style: decimal; }
+  .rich-desc li { margin: 0.15em 0; }
+  .rich-desc p { margin: 0 0 0.4em; }
+  .rich-desc p:last-child { margin-bottom: 0; }
+  .rich-desc strong { font-weight: 600; color: #161A26; }
+  .rich-desc-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* light-on-dark variant, used where description text sits over a dark/image background
+     (e.g. the full-bleed course preview) so headers and bold text stay legible */
+  .rich-desc-light h4 { color: #FFFFFF; }
+  .rich-desc-light strong { color: #FFFFFF; font-weight: 700; }
+  .rich-desc-light p, .rich-desc-light li { color: inherit; }
+
+  .fmt-toolbar button {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- course preview: full-bleed slides + micro-interactions ---------- */
+  @keyframes slideInRight { from{opacity:0; transform:translateX(28px) scale(.99);} to{opacity:1; transform:none;} }
+  @keyframes slideInLeft  { from{opacity:0; transform:translateX(-28px) scale(.99);} to{opacity:1; transform:none;} }
+  .course-slide-right { animation: slideInRight .45s cubic-bezier(.16,1,.3,1) both; }
+  .course-slide-left  { animation: slideInLeft .45s cubic-bezier(.16,1,.3,1) both; }
+
+  @keyframes kenburns { from{ transform:scale(1) translate3d(0,0,0);} to{ transform:scale(1.09) translate3d(-1.5%,-1.5%,0);} }
+  .kenburns-img { animation: kenburns 9s ease-in-out infinite alternate; }
+
+  @keyframes fadeUp { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
+  .fade-up { animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+  .fade-up-d1 { animation-delay:.06s; }
+  .fade-up-d2 { animation-delay:.12s; }
+
+  @keyframes dotPulseRing { 0%{ box-shadow:0 0 0 0 rgba(185,129,46,.55);} 70%{ box-shadow:0 0 0 7px rgba(185,129,46,0);} 100%{ box-shadow:0 0 0 0 rgba(185,129,46,0);} }
+  .dot-pulse { animation: dotPulseRing 1.6s ease-out infinite; }
+
+  .cp-arrow { transition: transform .18s cubic-bezier(.34,1.56,.64,1), background-color .18s ease; }
+  .cp-arrow:hover { transform: translateY(-50%) scale(1.12); }
+  .cp-arrow:active { transform: translateY(-50%) scale(.92); }
+
+  .cp-scrim {
+    background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.42) 35%, rgba(0,0,0,0) 65%);
+  }
+  .cp-media-fade { animation: cpMediaFade .5s ease both; }
+  @keyframes cpMediaFade { from{opacity:0} to{opacity:1} }
+
+  .mute-toggle { transition: transform .15s ease, background-color .15s ease; }
+  .mute-toggle:hover { transform: scale(1.08); background-color: rgba(255,255,255,.22); }
+  .mute-toggle:active { transform: scale(.92); }
+
+  .cp-progress-fill { transition: width linear; }
+</style>
+
+</head>
+<head th:replace="includes/header :: header"></head>
+<body class="">
+<!-- ============ TOP BAR ============ -->
+<header class="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-line">
+  <div class="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="#" class="logo-mark w-9 h-9 rounded-lg text-white flex items-center justify-center font-display f  ont-semibold shrink-0">G7</a>
+      <div class="min-w-0">
+        <p class="text-[11px] font-mono tracking-widest text-inksoft uppercase truncate"><span th:text="${session.uname}"></span> · Course Content</p>
+        <h1 class="font-display text-lg leading-tight font-semibold tracking-tight truncate" th:text="${course.courseTitle}"><?php  echo htmlspecialchars($_GET['courseTitle']);?></h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="syncStatus" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-primary-soft text-primary-dark">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> <span id="syncStatusLabel">Loading content…</span>
+      </span>
+      <button onclick="openCoursePreview()" class="btn-press inline-flex items-center gap-2 bg-surface hover:bg-surfacealt text-ink text-sm font-medium px-4 py-2.5 rounded-lg border border-line transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 8.25 4.5 3.75-4.5 3.75V8.25Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/></svg>
+        <span class="hidden sm:inline">Preview course</span>
+      </button>
+      <button id="addContentBtn" onclick="openPanel()" class="btn-press inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-card transition-all duration-200 hover:shadow-cardhover">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span id="addContentBtnLabel" class="hidden sm:inline">Add content</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-full mx-auto px-6 md:px-10 py-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="space-y-6 lg:sticky lg:top-24 self-start">
+    <div class="bg-surface rounded-2xl border border-line p-5 shadow-card">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft mb-1">Course</p>
+      <h2 class="font-display font-semibold text-xl leading-snug" th:text="${course.courseTitle}"><?php  echo htmlspecialchars($_GET['courseTitle']);?></h2>
+      <p class="text-sm text-inksoft mt-1.5 line-clamp-2" th:text="${course.courseDescription}">-</p>
+      <div class="mt-4 flex items-center gap-2 text-xs font-mono text-inksoft">
+        <span th:text="${course.courseId}"></span>
+        <span>•</span>
+        <span th:text="${course.createdBy.firstName}">Published</span>
+      </div>
+    </div>
+
+    <div class="bg-surface rounded-2xl border border-line p-5 shadow-card">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft mb-3"> Course Content overview</p>
+      <div class="rounded-xl bg-surfacealt p-3 mb-3">
+        <p id="stat-total" class="font-display text-2xl font-semibold">0</p>
+        <p class="text-xs text-inksoft">Total Slides</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl bg-primary-soft p-3">
+          <p id="stat-video" class="font-display text-2xl font-semibold text-primary-dark">0</p>
+          <p class="text-xs text-inksoft">Videos</p>
+        </div>
+        <div class="rounded-xl bg-accent-soft p-3">
+          <p id="stat-image" class="font-display text-2xl font-semibold text-accent">0</p>
+          <p class="text-xs text-inksoft">Images</p>
+        </div>
+        <div class="rounded-xl bg-rose-50 p-3">
+          <p id="stat-slideshow" class="font-display text-2xl font-semibold text-rose-500">0</p>
+          <p class="text-xs text-inksoft">Slideshows</p>
+        </div>
+        <div class="rounded-xl bg-plum-soft p-3">
+          <p id="stat-doc" class="font-display text-2xl font-semibold text-plum">0</p>
+          <p class="text-xs text-inksoft">Documents</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-ink rounded-2xl p-5 text-white/90">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-white/50 mb-2">Tip</p>
+      <p id="sidebarTip" class="text-sm leading-relaxed">Drag the <span class="font-mono">⠿</span> handle on any card to reorder — sequence numbers renumber automatically.</p>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="min-w-0">
+
+    <!-- ============ CONTENT / ASSESSMENTS TOGGLE ============ -->
+    <div class="inline-flex items-center gap-1 bg-surface border border-line rounded-lg p-1 text-sm font-medium mb-6" id="viewToggle">
+      <button type="button" class="view-tab px-4 py-2 rounded-md transition-colors btn-press" data-view="content" data-active="true" onclick="setView('content', this)">Course Content</button>
+      <button type="button" class="view-tab px-4 py-2 rounded-md transition-colors btn-press" data-view="assessments" onclick="setView('assessments', this)">Assessments</button>
+    </div>
+
+    <!-- ============ COURSE CONTENT VIEW ============ -->
+    <div id="contentView">
+
+      <!-- toolbar -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div class="relative flex-1">
+          <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.34-4.34M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+          <input id="searchInput" oninput="renderList()" type="text" placeholder="Search content by title…" class="w-full bg-surface border border-line rounded-lg pl-10 pr-4 py-2.5 text-sm placeholder:text-inksoft/60 transition-shadow">
+        </div>
+        <div class="flex items-center gap-1.5 bg-surface border border-line rounded-lg p-1 text-sm font-medium overflow-x-auto">
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-active="true" data-filter="all" onclick="setFilter('all', this)">All</button>
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-filter="0" onclick="setFilter('0', this)">Text</button>
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-filter="1" onclick="setFilter('1', this)">Image</button>
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-filter="2" onclick="setFilter('2', this)">Video</button>
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-filter="4" onclick="setFilter('4', this)">Slideshow</button>
+          <button class="type-tab px-3 py-1.5 rounded-md transition-colors whitespace-nowrap" data-filter="3" onclick="setFilter('3', this)">Document</button>
+        </div>
+      </div>
+
+      <!-- content list (fully client-managed — sample data lives in the bootstrap() function below) -->
+      <div id="listWrap" class="relative pl-[52px] spine">
+        <div id="cards"></div>
+      </div>
+
+      <!-- empty state -->
+      <div id="emptyState" class="hidden flex-col items-center justify-center text-center py-20 border border-dashed border-line rounded-2xl bg-surface/50">
+        <div class="w-14 h-14 rounded-full bg-surfacealt flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        </div>
+        <p class="font-display text-lg font-semibold">No content yet</p>
+        <p class="text-sm text-inksoft mt-1 max-w-xs">This course module is empty. Add the first lesson, video, or resource to get started.</p>
+        <button onclick="openPanel()" class="btn-press mt-5 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">Add content</button>
+      </div>
+
+      <!-- error state (shown if the content fetch fails) -->
+      <div id="errorState" class="hidden flex-col items-center justify-center text-center py-20 border border-dashed border-danger/40 rounded-2xl bg-danger-soft/40">
+        <div class="w-14 h-14 rounded-full bg-danger-soft flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+        </div>
+        <p class="font-display text-lg font-semibold">Couldn't load content</p>
+        <p class="text-sm text-inksoft mt-1 max-w-xs">Something went wrong while fetching this course's content. Check your connection and try again.</p>
+        <button onclick="loadContent()" class="btn-press mt-5 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">Retry</button>
+      </div>
+
+    </div>
+
+    <!-- ============ ASSESSMENTS VIEW (mock data — no backend wired yet) ============ -->
+    <div id="assessmentsView" class="hidden">
+
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div class="relative flex-1">
+          <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.34-4.34M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+          <input id="assessmentSearchInput" oninput="renderAssessments()" type="text" placeholder="Search assessments by title…" class="w-full bg-surface border border-line rounded-lg pl-10 pr-4 py-2.5 text-sm placeholder:text-inksoft/60 transition-shadow">
+        </div>
+
+      </div>
+
+      <div id="assessmentCards" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+
+      <div id="assessmentEmptyState" class="hidden flex-col items-center justify-center text-center py-20 border border-dashed border-line rounded-2xl bg-surface/50">
+        <div class="w-14 h-14 rounded-full bg-surfacealt flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h1M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>
+        </div>
+        <p class="font-display text-lg font-semibold">No assessments found</p>
+        <p class="text-sm text-inksoft mt-1 max-w-xs">Try a different search term.</p>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- ============ CARD TEMPLATE (JS) ============ -->
+<template id="cardTemplate">
+  <article class="card-enter group relative bg-surface border border-line rounded-2xl p-4 sm:p-5 mb-4 shadow-card transition-all duration-200 hover:shadow-cardhover hover:border-primary/30" draggable="true">
+    <div class="flex gap-4">
+      <div class="flex flex-col items-center gap-2 pt-1 shrink-0">
+        <span class="drag-handle cursor-grab active:cursor-grabbing text-inksoft/50 hover:text-ink transition-colors select-none" title="Drag to reorder">⠿</span>
+        <span class="seq-badge num-serif text-2xl font-semibold text-primary leading-none">01</span>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="title font-display font-semibold text-base sm:text-lg leading-snug">Title</h3>
+              <span class="type-badge text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full">Type</span>
+            </div>
+            <div class="desc rich-desc rich-desc-clamp text-sm text-inksoft mt-1 leading-relaxed">Description</div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+            <button class="act-preview btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors" title="Preview">
+              <svg class="w-4 h-4 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+            </button>
+            <button class="act-edit btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors" title="Edit">
+              <svg class="w-4 h-4 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+            </button>
+            <button class="act-delete btn-press p-2 rounded-lg hover:bg-danger-soft transition-colors" title="Delete">
+              <svg class="w-4 h-4 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397M4.772 5.79c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- media preview strip, shown per type -->
+        <div class="media-strip mt-3"></div>
+      </div>
+    </div>
+  </article>
+</template>
+
+<!-- ============ ADD/EDIT SLIDE-OVER ============ -->
+<div id="scrim" onclick="closePanel()" class="fixed inset-0 bg-ink/40 backdrop-blur-sm z-40 hidden"></div>
+<aside id="panel" class="fixed top-0 right-0 h-full w-full sm:w-[560px] lg:w-[720px] bg-bg z-50 shadow-panel hidden overflow-y-auto">
+  <div class="panel-inner">
+    <div class="sticky top-0 bg-bg/95 backdrop-blur border-b border-line px-6 py-4 flex items-center justify-between z-10">
+      <div>
+        <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft" id="panelKicker">New content block</p>
+        <h2 class="font-display text-xl font-semibold" id="panelTitle">Add course content</h2>
+      </div>
+      <button onclick="closePanel()" class="btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="contentForm" onsubmit="return saveContent(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <!-- LEFT: form fields -->
+      <div class="space-y-5">
+        <input type="hidden" id="f-id" name="id">
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Content title</label>
+          <input id="f-title" name="contentTitle" required maxlength="120" oninput="syncPreview()" type="text" placeholder="e.g. Introduction to Gradient Descent" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm transition-shadow">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Sequence no.</label>
+          <input id="f-seq" name="sequenceNo" required min="1" type="number" oninput="syncPreview()" placeholder="1" class="w-32 bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm transition-shadow">
+        </div>
+     <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Duration In Minutes</label>
+          <input id="f-duration" name="duration" required min="1" type="number" oninput="syncPreview()" placeholder="1" class="w-32 bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm transition-shadow">
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-mono uppercase tracking-wider text-inksoft">Content description</label>
+            <span class="text-[10px] font-mono text-inksoft/60">Markdown supported</span>
+          </div>
+
+          <!-- formatting toolbar -->
+          <div class="fmt-toolbar flex items-center gap-1 mb-1.5 bg-surfacealt border border-line rounded-lg p-1 flex-wrap">
+            <button type="button" onclick="applyFormat('header')" title="Header" class="btn-press px-2.5 py-1.5 rounded-md text-xs font-semibold hover:bg-surface transition-colors">H</button>
+            <button type="button" onclick="applyFormat('bold')" title="Bold" class="btn-press px-2.5 py-1.5 rounded-md text-xs font-bold hover:bg-surface transition-colors">B</button>
+            <span class="w-px h-4 bg-line mx-0.5"></span>
+            <button type="button" onclick="applyFormat('bullet')" title="Bullet list" class="btn-press px-2.5 py-1.5 rounded-md text-xs hover:bg-surface transition-colors flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.008v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.008v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.008v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+              List
+            </button>
+            <button type="button" onclick="applyFormat('numbered')" title="Numbered list" class="btn-press px-2.5 py-1.5 rounded-md text-xs hover:bg-surface transition-colors">1.</button>
+            <span class="w-px h-4 bg-line mx-0.5"></span>
+            <button type="button" onclick="applyFormat('newline')" title="Line break" class="btn-press px-2.5 py-1.5 rounded-md text-xs hover:bg-surface transition-colors flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.75v10.5a1.5 1.5 0 0 1-1.5 1.5H8.25l-4.5-4.5 4.5-4.5h10.5a1.5 1.5 0 0 1 1.5 1.5v-4.5Z"/></svg>
+              Break
+            </button>
+          </div>
+
+          <textarea id="f-desc" name="description" required rows="6" maxlength="1200" oninput="syncPreview()" placeholder="Use the toolbar above, or type directly:&#10;## Header&#10;- bullet point&#10;1. numbered step&#10;**bold text**" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm resize-y font-mono leading-relaxed transition-shadow"></textarea>
+          <p class="text-xs text-inksoft mt-1 flex items-center justify-between">
+            <span class="text-inksoft/70">Headers <code class="font-mono">## </code>· bullets <code class="font-mono">- </code>· numbered <code class="font-mono">1. </code>· bold <code class="font-mono">**text**</code></span>
+            <span><span id="descCount">0</span>/1200</span>
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-2">Content type</label>
+          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="typeSelector">
+            <button type="button" data-type="0" onclick="setType(0)" class="type-opt flex flex-col items-center gap-1.5 py-3 rounded-xl border border-line bg-surface text-xs font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
+              Text only
+            </button>
+            <button type="button" data-type="1" onclick="setType(1)" class="type-opt flex flex-col items-center gap-1.5 py-3 rounded-xl border border-line bg-surface text-xs font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3 4.5h18M3.75 4.5v15a.75.75 0 0 0 .75.75h15a.75.75 0 0 0 .75-.75v-15M9 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>
+              Image
+            </button>
+            <button type="button" data-type="2" onclick="setType(2)" class="type-opt flex flex-col items-center gap-1.5 py-3 rounded-xl border border-line bg-surface text-xs font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+              Video
+            </button>
+            <button type="button" data-type="4" onclick="setType(4)" class="type-opt flex flex-col items-center gap-1.5 py-3 rounded-xl border border-line bg-surface text-xs font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 6.75v10.5A1.5 1.5 0 0 0 5.25 18.75h13.5a1.5 1.5 0 0 0 1.5-1.5V6.75m-16.5 0-.75-2.25h18l-.75 2.25M8.25 12h1.5m5.25 0h1.5"/></svg>
+              Slideshow
+            </button>
+            <button type="button" data-type="3" onclick="setType(3)" class="type-opt flex flex-col items-center gap-1.5 py-3 rounded-xl border border-line bg-surface text-xs font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-1.519-3.75L12 15m1.481-1.5L15 15m-6.75 3h9a2.25 2.25 0 0 0 2.25-2.25v-8.379a1.5 1.5 0 0 0-.44-1.06l-4.62-4.622a1.5 1.5 0 0 0-1.06-.439H6.75A2.25 2.25 0 0 0 4.5 4.5v13.5a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+              Document
+            </button>
+          </div>
+          <input type="hidden" id="f-type" name="fileType" value="0">
+        </div>
+
+        <div id="fileFieldWrap" class="hidden">
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5" id="fileFieldLabel">Upload file</label>
+          <label id="dropzone" for="f-file" class="dropzone flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line rounded-xl py-8 px-4 text-center cursor-pointer transition-colors bg-surface hover:bg-surfacealt">
+            <svg class="w-6 h-6 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+            <span class="text-sm"><span class="text-primary font-medium">Click to upload</span> or drag &amp; drop</span>
+            <span id="fileHint" class="text-xs text-inksoft">PNG, JPG up to 10MB</span>
+            <input id="f-file" type="file" class="hidden" onchange="handleFile(this.files)">
+          </label>
+          <div id="fileChosen" class="hidden mt-2 flex items-center justify-between gap-2 bg-primary-soft text-primary-dark text-sm px-3 py-2 rounded-lg">
+            <span class="truncate flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg><span id="fileChosenName"></span></span>
+            <button type="button" onclick="clearFile()" class="text-inksoft hover:text-danger transition-colors shrink-0">✕</button>
+          </div>
+          <div id="slideThumbs" class="hidden mt-2 flex gap-2 flex-wrap"></div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" id="saveBtn" class="btn-press flex-1 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all shadow-card hover:shadow-cardhover flex items-center justify-center gap-2">
+            <span id="saveBtnLabel">Save content</span>
+          </button>
+          <button type="button" onclick="closePanel()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surfacealt transition-colors">Cancel</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: live preview -->
+      <div class="md:sticky md:top-20 self-start" >
+        <p class="text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Live preview — learner view
+        </p>
+        <div class="bg-surface border border-line rounded-2xl p-5 shadow-card min-h-[320px]">
+          <div class="flex items-center gap-2 mb-3">
+            <span id="pv-seq" class="num-serif text-lg font-semibold text-primary">01</span>
+            <span id="pv-badge" class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-surfacealt text-inksoft">Text</span>
+          </div>
+          <h3 id="pv-title" class="font-display font-semibold text-xl leading-snug text-inksoft/50">Untitled content block</h3>
+          <div id="pv-desc" class="rich-desc text-sm text-inksoft mt-2 leading-relaxed">Your description will appear here as you type.</div>
+          <div id="pv-media" class="mt-4"></div>
+        </div>
+      </div>
+    </form>
+  </div>
+</aside>
+
+<!-- ============ ADD/EDIT ASSESSMENT SLIDE-OVER ============ -->
+<div id="assessmentScrim" onclick="closeAssessmentPanel()" class="fixed inset-0 bg-ink/40 backdrop-blur-sm z-40 hidden"></div>
+<aside id="assessmentPanel" class="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-bg z-50 shadow-panel hidden overflow-y-auto">
+  <div class="panel-inner">
+    <div class="sticky top-0 bg-bg/95 backdrop-blur border-b border-line px-6 py-4 flex items-center justify-between z-10">
+      <div>
+        <p class="text-[11px] font-mono uppercase tracking-widest text-inksoft" id="assessmentPanelKicker">New assessment</p>
+        <h2 class="font-display text-xl font-semibold" id="assessmentPanelTitle">Add assessment</h2>
+      </div>
+      <button onclick="closeAssessmentPanel()" class="btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="assessmentForm" onsubmit="return saveAssessment(event)" class="space-y-5 p-6">
+      <input type="hidden" id="a-id" name="id">
+
+      <div>
+        <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Assessment name</label>
+        <input id="a-name" name="assesmentName" required maxlength="120" type="text" placeholder="e.g. Module 1 Knowledge Check" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm transition-shadow">
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Assessment description</label>
+        <textarea id="a-desc" name="assessmentDescription" required rows="5" maxlength="600" placeholder="What does this assessment cover?" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-sm resize-y leading-relaxed transition-shadow"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Passing percentage</label>
+          <div class="relative">
+            <input id="a-pass" name="passingPercentage" required min="0" max="100" type="number" placeholder="70" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 pr-8 text-sm transition-shadow">
+            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-inksoft">%</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-inksoft mb-1.5">Duration in minutes</label>
+          <div class="relative">
+            <input id="a-duration" name="duration" required min="1" type="number" placeholder="15" class="w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 pr-9 text-sm transition-shadow">
+            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-inksoft">min</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" id="assessmentSaveBtn" class="btn-press flex-1 bg-primary hover:bg-primary-dark text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all shadow-card hover:shadow-cardhover flex items-center justify-center gap-2">
+          <span id="assessmentSaveBtnLabel">Save assessment</span>
+        </button>
+        <button type="button" onclick="closeAssessmentPanel()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surfacealt transition-colors">Cancel</button>
+      </div>
+      <p class="text-xs text-inksoft/70 -mt-2">This is preview-only mock data for now — nothing is saved to the server yet.</p>
+    </form>
+  </div>
+</aside>
+
+<!-- ============ DELETE CONFIRM MODAL ============ -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-ink/50 backdrop-blur-sm scrim-enter" onclick="closeDelete()"></div>
+  <div class="modal-pop relative bg-surface rounded-2xl border border-line shadow-cardhover max-w-sm w-full p-6">
+    <div class="w-12 h-12 rounded-full bg-danger-soft flex items-center justify-center mb-4">
+      <svg class="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+    </div>
+    <h3 class="font-display font-semibold text-lg">Delete this content block?</h3>
+    <p class="text-sm text-inksoft mt-1.5">"<span id="deleteItemTitle" class="font-medium text-ink"></span>" will be permanently removed from this course. This can't be undone.</p>
+    <div class="flex items-center gap-3 mt-6">
+      <button onclick="confirmDelete()" id="confirmDeleteBtn" class="btn-press flex-1 bg-danger hover:bg-danger/90 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+        <span id="confirmDeleteLabel">Delete</span>
+      </button>
+      <button onclick="closeDelete()" class="btn-press px-4 py-2.5 rounded-lg text-sm font-medium border border-line hover:bg-surfacealt transition-colors">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PREVIEW MODAL ============ -->
+<div id="previewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-8">
+  <div class="absolute inset-0 bg-ink/55 backdrop-blur-sm scrim-enter" onclick="closePreview()"></div>
+  <div class="modal-pop relative bg-surface w-[80vw] h-[80vh] max-w-[1200px] rounded-2xl border border-line shadow-cardhover flex flex-col overflow-hidden">
+    <div class="shrink-0 bg-surface/95 backdrop-blur border-b border-line px-5 py-3.5 flex items-center justify-between">
+      <p class="text-xs font-mono uppercase tracking-wider text-inksoft">Learner preview</p>
+      <button onclick="closePreview()" class="btn-press p-2 rounded-lg hover:bg-surfacealt hover:rotate-90 transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-8">
+      <div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 items-start h-full">
+        <div class="min-w-0 order-2 sm:order-1 fade-up">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span id="prev-seq" class="num-serif text-lg font-semibold text-primary"></span>
+            <span id="prev-badge" class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full"></span>
+          </div>
+          <h3 id="prev-title" class="font-display font-semibold text-xl sm:text-2xl leading-snug"></h3>
+          <div id="prev-desc" class="rich-desc text-sm text-inksoft mt-2 leading-relaxed"></div>
+        </div>
+        <div id="prev-media" class="order-1 sm:order-2 fade-up fade-up-d1 w-full h-full min-h-[220px] flex items-center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FULL COURSE PREVIEW (SLIDESHOW) ============ -->
+<div id="courseModal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 sm:p-8">
+  <div class="absolute inset-0 bg-ink/70 backdrop-blur-sm scrim-enter" onclick="closeCoursePreview()"></div>
+  <div class="modal-pop relative bg-ink w-[80vw] h-[80vh] max-w-[1200px] rounded-2xl overflow-hidden shadow-cardhover ring-1 ring-white/10">
+  <div class="absolute inset-0 flex flex-col" onmouseenter="pauseCourseAutoAdvance()" onmouseleave="resumeCourseAutoAdvance()">
+    <!-- story-style segmented progress bar, one segment per content block -->
+    <div id="courseProgressSegments" class="flex items-center gap-1 px-4 sm:px-6 pt-3.5 shrink-0"></div>
+    <div class="flex items-center justify-between px-4 sm:px-6 py-2.5 shrink-0">
+      <div class="min-w-0">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-white/40">Course preview · learner view</p>
+        <h2 class="font-display font-semibold text-base sm:text-lg text-white truncate" id="courseModalTitle">Course</h2>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span id="courseCounter" class="text-xs font-mono text-white/50"></span>
+        <button onclick="toggleCoursePlayPause()" id="coursePlayPauseBtn" title="Pause" class="btn-press p-2 rounded-lg hover:bg-white/10 transition-colors">
+          <svg id="coursePlayPauseIcon" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+        <button onclick="closeCoursePreview()" class="btn-press p-2 rounded-lg hover:bg-white/10 transition-colors">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 min-h-0 relative overflow-hidden">
+      <button id="coursePrevBtn" onclick="courseNav(-1)" class="btn-press cp-arrow hidden sm:flex absolute left-3 lg:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/10 hover:bg-white/25 text-white text-base items-center justify-center backdrop-blur-sm">‹</button>
+      <div id="courseSlideCard" class="absolute inset-0 w-full h-full"></div>
+      <button id="courseNextBtn" onclick="courseNav(1)" class="btn-press cp-arrow hidden sm:flex absolute right-3 lg:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/10 hover:bg-white/25 text-white text-base items-center justify-center backdrop-blur-sm">›</button>
+    </div>
+
+    <div class="shrink-0 pb-3.5 pt-1.5">
+      <div class="flex sm:hidden items-center justify-center gap-3 px-6 mb-2.5">
+        <button onclick="courseNav(-1)" class="btn-press flex-1 max-w-[140px] px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all hover:scale-[1.03]">← Previous</button>
+        <button onclick="courseNav(1)" class="btn-press flex-1 max-w-[140px] px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all hover:scale-[1.03]">Next →</button>
+      </div>
+      <div id="courseDots" class="hidden sm:flex items-center justify-center gap-1.5 px-4 flex-wrap"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ============ IMAGE LIGHTBOX (click-to-expand, Teams-style) ============ -->
+<div id="imageLightbox" class="fixed inset-0 z-[80] hidden bg-black/95">
+  <div class="absolute inset-0 flex flex-col" onclick="lightboxBackdropClick(event)">
+    <div class="flex items-center justify-between px-4 sm:px-6 py-3 shrink-0 relative z-10" onclick="event.stopPropagation()">
+      <span id="lightboxCounter" class="text-xs font-mono text-white/60"></span>
+      <div class="flex items-center gap-1">
+        <button onclick="lightboxZoom(-0.25)" title="Zoom out" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M8 11h6m5 0a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+        </button>
+        <span id="lightboxZoomLabel" class="text-xs font-mono text-white/60 w-10 text-center select-none">100%</span>
+        <button onclick="lightboxZoom(0.25)" title="Zoom in" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 8v6M8 11h6m5 0a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+        </button>
+        <button onclick="lightboxRotateImg()" title="Rotate" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+        </button>
+        <a id="lightboxDownload" href="#" download title="Download" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        </a>
+        <button onclick="closeLightbox()" title="Close" class="btn-press w-9 h-9 rounded-lg hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 min-h-0 flex items-center justify-center relative px-4 sm:px-16 overflow-hidden">
+      <button id="lightboxPrevBtn" onclick="event.stopPropagation(); lightboxNav(-1)" class="btn-press hidden absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white text-lg items-center justify-center transition-all z-10">‹</button>
+      <img id="lightboxImg" src="" alt="" class="max-w-full max-h-full select-none transition-transform duration-200 ease-out" style="cursor:zoom-in" onclick="event.stopPropagation(); lightboxToggleZoom()" draggable="false">
+      <button id="lightboxNextBtn" onclick="event.stopPropagation(); lightboxNav(1)" class="btn-press hidden absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white text-lg items-center justify-center transition-all z-10">›</button>
+    </div>
+
+    <div id="lightboxDots" class="shrink-0 pb-5 pt-1 flex items-center justify-center gap-2 px-4 flex-wrap" onclick="event.stopPropagation()"></div>
+  </div>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div id="toastWrap" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2.5 items-end"></div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+/* ---------- state ---------- */
+
+let items = [];
+let isLoading = true;
+let hasLoadError = false;
+let currentFilter = 'all';
+let deleteTargetId = null;
+let fileObjectUrl = null;
+let currentView = 'content';
+
+var TYPE_METE = {
+  0: { label:'Text',      cls:'bg-surfacealt text-inksoft',  hint:'' },
+  1: { label:'Image',     cls:'bg-accent-soft text-accent',  hint:'PNG, JPG up to 10MB' },
+  2: { label:'Video',     cls:'bg-primary-soft text-primary-dark', hint:'MP4, MOV up to 500MB' },
+  3: { label:'Document',  cls:'bg-plum-soft text-plum',       hint:'PDF, DOCX, PPTX up to 25MB' },
+  4: { label:'Slideshow', cls:'bg-rose-50 text-rose-500',     hint:'Select 2 or more images, PNG or JPG' },
+};
+let slideFiles = []; // [{url,name}] for the slideshow type in the form
+
+const params = new URLSearchParams(window.location.search);
+const courseid = params.get('courseId');
+
+/* ---------- mock assessments (preview-only, no backend wired yet) ---------- */
+const ASSESSMENT_TYPE_META = {
+  quiz: { label:'Quiz', cls:'bg-primary-soft text-primary-dark' },
+  exam: { label:'Exam', cls:'bg-danger-soft text-danger' },
+};
+
+let assesments = [];
+let assessmentIdSeq = assesments.length; // used to mint new mock ids
+
+/* ---------- view toggle: Course Content <-> Assessments ---------- */
+function setView(view, btn){
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(b=>b.removeAttribute('data-active'));
+  btn.setAttribute('data-active','true');
+
+  const contentView = document.getElementById('contentView');
+  const assessmentsView = document.getElementById('assessmentsView');
+  const addBtn = document.getElementById('addContentBtn');
+  const addBtnLabel = document.getElementById('addContentBtnLabel');
+  const syncStatus = document.getElementById('syncStatus');
+  const sidebarTip = document.getElementById('sidebarTip');
+
+  if(view === 'assessments'){
+    getAssesments();
+    contentView.classList.add('hidden');
+    assessmentsView.classList.remove('hidden');
+    addBtn.setAttribute('onclick', 'openAssessmentPanel()');
+    addBtnLabel.textContent = 'Add assessment';
+    syncStatus.classList.add('hidden');
+    sidebarTip.textContent = 'Assessments shown here are mock data for preview — nothing is saved yet.';
+    renderAssessments();
+  } else {
+    assessmentsView.classList.add('hidden');
+    contentView.classList.remove('hidden');
+    addBtn.setAttribute('onclick', 'openPanel()');
+    addBtnLabel.textContent = 'Add content';
+    syncStatus.classList.remove('hidden');
+    sidebarTip.innerHTML = 'Drag the <span class="font-mono">⠿</span> handle on any card to reorder — sequence numbers renumber automatically.';
+  }
+}
+
+function renderAssessments(){
+  const wrap = document.getElementById('assessmentCards');
+  const emptyState = document.getElementById('assessmentEmptyState');
+  const q = document.getElementById('assessmentSearchInput').value.trim().toLowerCase();
+  const filtered = assesments.filter(a => a.assesmentTitle.toLowerCase().includes(q));
+
+  emptyState.classList.toggle('hidden', filtered.length !== 0);
+  emptyState.classList.toggle('flex', filtered.length === 0);
+
+wrap.innerHTML = filtered.map(a => `
+  <article class="card-enter group relative bg-surface border border-line rounded-2xl p-5 shadow-card transition-all duration-200 hover:shadow-cardhover hover:border-primary/30">
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">Assessment</span>
+      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        <a href="/course/viewAssesment?assesmentid=${a.assesmentid}" class="btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors" title="Preview">
+          <svg class="w-4 h-4 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+        </a>
+        <button type="button" onclick="openAssessmentPanel('${a.assesmentid}')" class="btn-press p-2 rounded-lg hover:bg-surfacealt transition-colors" title="Edit">
+          <svg class="w-4 h-4 text-inksoft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+        </button>
+        <button type="button" onclick="deleteAssessment('${a.assesmentid}')" class="btn-press p-2 rounded-lg hover:bg-danger-soft transition-colors" title="Delete">
+          <svg class="w-4 h-4 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397M4.772 5.79c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+        </button>
+      </div>
+    </div>
+    <h3 class="font-display font-semibold text-lg leading-snug">${escapeHtml(a.assesmentTitle)}</h3>
+    <p class="text-sm text-inksoft mt-1.5 leading-relaxed">${escapeHtml(a.assesmentDescription)}</p>
+    <div class="grid grid-cols-3 gap-2 mt-4">
+      <div class="rounded-lg bg-surfacealt p-2.5 text-center">
+        <p class="font-display text-lg font-semibold">${escapeHtml(a.questions)}</p>
+        <p class="text-[10px] text-inksoft uppercase tracking-wide">Questions</p>
+      </div>
+      <div class="rounded-lg bg-surfacealt p-2.5 text-center">
+        <p class="font-display text-lg font-semibold">${a.durationInMinutes} <span class="text-xs font-body font-normal text-inksoft">m</span></p>
+        <p class="text-[10px] text-inksoft uppercase tracking-wide">Duration</p>
+      </div>
+      <div class="rounded-lg bg-surfacealt p-2.5 text-center">
+        <p class="font-display text-lg font-semibold">${a.passingScore}<span class="text-xs font-body font-normal text-inksoft">%</span></p>
+        <p class="text-[10px] text-inksoft uppercase tracking-wide">Pass score</p>
+      </div>
+    </div>
+  </article>
+`).join('');
+}
+
+/* ---------- add / edit assessment panel (mock, client-side only for now) ---------- */
+function openAssessmentPanel(id){
+  document.getElementById('assessmentForm').reset();
+  document.getElementById('a-id').value = '';
+
+  if(id){
+    const a = assesments.find(x => String(x.id) === String(id));
+    if(!a) return;
+    document.getElementById('assessmentPanelKicker').textContent = 'Editing assessment';
+    document.getElementById('assessmentPanelTitle').textContent = 'Edit assessment';
+    document.getElementById('a-id').value = a.id;
+    document.getElementById('a-name').value = a.title;
+    document.getElementById('a-desc').value = a.description;
+    document.getElementById('a-pass').value = a.passScore;
+    document.getElementById('a-duration').value = a.duration;
+  } else {
+    document.getElementById('assessmentPanelKicker').textContent = 'New assessment';
+    document.getElementById('assessmentPanelTitle').textContent = 'Add assessment';
+  }
+
+  document.getElementById('assessmentScrim').classList.remove('hidden');
+  document.getElementById('assessmentScrim').classList.add('scrim-enter');
+  const panel = document.getElementById('assessmentPanel');
+  panel.classList.remove('hidden');
+  panel.querySelector('.panel-inner').classList.add('panel-enter');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAssessmentPanel(){
+  document.getElementById('assessmentScrim').classList.add('hidden');
+  document.getElementById('assessmentPanel').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function saveAssessment(e){
+  e.preventDefault();
+
+  const editingId = document.getElementById('a-id').value;
+  const name = document.getElementById('a-name').value.trim();
+  const description = document.getElementById('a-desc').value.trim();
+  const passScore = Math.min(100, Math.max(0, parseInt(document.getElementById('a-pass').value) || 0));
+  const duration = Math.max(1, parseInt(document.getElementById('a-duration').value) || 1);
+
+  const saveBtn = document.getElementById('assessmentSaveBtn');
+  const saveBtnLabel = document.getElementById('assessmentSaveBtnLabel');
+  saveBtn.disabled = true;
+  saveBtn.classList.add('opacity-70', 'cursor-not-allowed');
+  saveBtnLabel.innerHTML = '<span class="spinner"></span> Saving…';
+  let data=null;
+  setTimeout(() => {
+    if(editingId){
+      const a = assesments.find(x => String(x.id) === String(editingId));
+      if(a){
+        a.title = name;
+        a.description = description;
+        a.passScore = passScore;
+        a.duration = duration;
+        data={assesmentname:name,desc:description,passScore:passScore,duration:duration};
+      }
+    } else {
+      assessmentIdSeq += 1;
+      assesments.push({
+        id: 'mock-a' + assessmentIdSeq,
+        title: name,
+        description: description,
+        type: 'quiz',
+        questions: 0,
+        duration: duration,
+        passScore: passScore,
+        attemptsAllowed: 1,
+      });
+      data={assesmentname:name,desc:description,passScore:passScore,duration:duration,courseid:courseid};
+    }
+      const token = $("meta[name='_csrf']").attr('content');
+
+    $.ajax({
+      url:'/course/createAssesment',
+      type:'POST',
+      headers:{'X-CSRF-TOKEN':token},
+      data:data,
+      success:(res)=>{
+        showToast(
+            editingId ? 'Assessment updated' : 'Assessment added',
+            editingId ? `"${name}" was saved successfully.` : `"${name}" was added to the course.`,
+            'ok'
+          );
+          closeAssessmentPanel();
+          renderAssessments();
+      },
+      error:(err)=>{
+      }
+    })
+
+ 
+
+    saveBtn.disabled = false;
+    saveBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+    saveBtnLabel.textContent = 'Save assessment';
+  }, 300);
+
+  return false;
+}
+
+function deleteAssessment(id){
+  const a = assesments.find(x => String(x.id) === String(id));
+  assesments = assesments.filter(x => String(x.id) !== String(id));
+  renderAssessments();
+  showToast('Assessment deleted', a ? `"${a.title}" was removed.` : 'Item removed.', 'danger');
+}
+
+/* ---------- lightweight markdown-style formatting ----------
+   Supports (kept intentionally small so it round-trips cleanly with a
+   plain-text `description` column on the backend):
+     ## Header text        -> <h4>
+     - item / * item       -> <ul><li>
+     1. item                -> <ol><li>
+     **bold text**          -> <strong>
+     blank line             -> paragraph break
+     single newline         -> <br> within a paragraph
+*/
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function inlineFormat(str){
+  // bold: **text**
+  return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+function markdownToHtml(raw){
+  if(!raw || !raw.trim()) return '';
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  let html = '';
+  let listType = null; // 'ul' | 'ol' | null
+  let paragraphLines = [];
+
+  function flushParagraph(){
+    if(paragraphLines.length){
+      html += `<p>${paragraphLines.map(inlineFormat).join('<br>')}</p>`;
+      paragraphLines = [];
+    }
+  }
+  function closeList(){
+    if(listType){ html += `</${listType}>`; listType = null; }
+  }
+
+  lines.forEach(line=>{
+    const trimmed = line.trim();
+
+    if(trimmed === ''){
+      flushParagraph();
+      closeList();
+      return;
+    }
+
+    const headerMatch = trimmed.match(/^#{1,3}\s+(.*)$/);
+    if(headerMatch){
+      flushParagraph();
+      closeList();
+      html += `<h4>${inlineFormat(headerMatch[1])}</h4>`;
+      return;
+    }
+
+    const bulletMatch = trimmed.match(/^[-*]\s+(.*)$/);
+    if(bulletMatch){
+      flushParagraph();
+      if(listType !== 'ul'){ closeList(); html += '<ul>'; listType = 'ul'; }
+      html += `<li>${inlineFormat(bulletMatch[1])}</li>`;
+      return;
+    }
+
+    const numberedMatch = trimmed.match(/^\d+[.)]\s+(.*)$/);
+    if(numberedMatch){
+      flushParagraph();
+      if(listType !== 'ol'){ closeList(); html += '<ol>'; listType = 'ol'; }
+      html += `<li>${inlineFormat(numberedMatch[1])}</li>`;
+      return;
+    }
+
+    closeList();
+    paragraphLines.push(trimmed);
+  });
+
+  flushParagraph();
+  closeList();
+  return html;
+}
+function getAssesments(){
+      $.ajax({
+      url:'/course/getAssesments',
+      type:'GET',
+      data:{courseid},
+      success:(res)=>{
+        console.log(res);
+      assesments=res;
+      },
+      error:(err)=>{
+        console.log(err);
+      }
+    })
+}
+getAssesments();
+
+/* insert/wrap helper for the formatting toolbar */
+function applyFormat(kind){
+  const ta = document.getElementById('f-desc');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const value = ta.value;
+  const selected = value.slice(start, end);
+
+  const atLineStart = start === 0 || value[start-1] === '\n';
+  const prefixNewline = atLineStart ? '' : '\n';
+
+  let insertText = '';
+  let cursorOffset = 0;
+
+  switch(kind){
+    case 'header':
+      insertText = `${prefixNewline}## ${selected || 'Header'}`;
+      cursorOffset = insertText.length;
+      break;
+    case 'bold':
+      insertText = `**${selected || 'bold text'}**`;
+      cursorOffset = selected ? insertText.length : 2;
+      break;
+    case 'bullet':
+      if(selected){
+        insertText = prefixNewline + selected.split('\n').map(l => `- ${l}`).join('\n');
+      } else {
+        insertText = `${prefixNewline}- `;
+      }
+      cursorOffset = insertText.length;
+      break;
+    case 'numbered':
+      if(selected){
+        insertText = prefixNewline + selected.split('\n').map((l,i) => `${i+1}. ${l}`).join('\n');
+      } else {
+        insertText = `${prefixNewline}1. `;
+      }
+      cursorOffset = insertText.length;
+      break;
+    case 'newline':
+      insertText = '\n';
+      cursorOffset = 1;
+      break;
+  }
+
+  ta.value = value.slice(0, start) + insertText + value.slice(end);
+  const newPos = start + cursorOffset;
+  ta.focus();
+  ta.setSelectionRange(newPos, newPos);
+  syncPreview();
+}
+
+/* ---------- server response mapping ----------
+   Backend returns ContentResponse: { id, title, seq, description, type, fileUrl }
+   Internally the UI keeps working with { id, title, seq, desc, type, fileUrl, fileName, slides }
+   so the rest of the rendering code doesn't need to change. */
+function fileNameFromUrl(url){
+  if(!url) return '';
+  try {
+    const clean = url.split('?')[0].split('#')[0];
+    const last = clean.substring(clean.lastIndexOf('/') + 1);
+    return decodeURIComponent(last) || '';
+  } catch(e) {
+    return '';
+  }
+}
+
+function slidesFromFileUrl(url){
+  if(!url) return [];
+  // Slideshow items are only given a single fileUrl field by the backend.
+  // Support either a JSON array string or a comma/pipe-delimited list of URLs.
+  let raw = url.trim();
+  try {
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)){
+      return parsed.map(u => ({ url: u, name: fileNameFromUrl(u) }));
+    }
+  } catch(e) { /* not JSON, fall through */ }
+
+  const parts = raw.split(/[,|]/).map(s => s.trim()).filter(Boolean);
+  return parts.map(u => ({ url: u, name: fileNameFromUrl(u) }));
+}
+
+function mapServerItem(raw){
+  const type = Number(raw.type);
+  const fileUrl = raw.fileUrl || '';
+  return {
+    id: raw.id,
+    title: raw.title || '',
+    seq: Number(raw.seq) || 0,
+    desc: raw.description || '',
+    type: type,
+    fileUrl: (type === 1 || type === 2) ? fileUrl : '',
+    fileName: (type === 2 || type === 3) ? fileNameFromUrl(fileUrl) : '',
+    slides: type === 4 ? slidesFromFileUrl(fileUrl) : [],
+  };
+}
+
+function setSyncStatus(state){
+  const wrap = document.getElementById('syncStatus');
+  const label = document.getElementById('syncStatusLabel');
+  const dot = wrap.querySelector('span.rounded-full');
+  wrap.classList.remove('hidden');
+  if(state === 'loading'){
+    label.textContent = 'Loading content…';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-primary animate-pulse';
+    wrap.className = 'hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-primary-soft text-primary-dark';
+  } else if(state === 'saved'){
+    label.textContent = 'Content up to date';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-primary';
+    wrap.className = 'hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-primary-soft text-primary-dark';
+  } else if(state === 'error'){
+    label.textContent = 'Sync failed';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-danger';
+    wrap.className = 'hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-danger-soft text-danger';
+  }
+}
+
+/* ---------- load content from server (single source of truth) ---------- */
+function loadContent(){
+  isLoading = true;
+  hasLoadError = false;
+  setSyncStatus('loading');
+  renderList();
+
+  $.ajax({
+    url: '/course/getCourseContents',
+    type: 'GET',
+    data: { courseId: courseid },
+    dataType: 'JSON',
+    success: (res) => {
+      items = (res || []).map(mapServerItem);
+      items.sort((a,b) => a.seq - b.seq);
+      isLoading = false;
+      hasLoadError = false;
+      setSyncStatus('saved');
+      renderList();
+    },
+    error: (err) => {
+      console.error('getCourseContents failed:', err);
+      isLoading = false;
+      hasLoadError = true;
+      setSyncStatus('error');
+      renderList();
+      showToast('Couldn\'t load content', 'Check your connection and try again.', 'danger');
+    }
+  });
+}
+
+/* kept for backward compatibility with any external caller */
+function getContent(){ loadContent(); }
+function bootstrap(){ loadContent(); }
+
+/* ---------- render list ---------- */
+function renderSkeletonCards(){
+  const wrap = document.getElementById('cards');
+  wrap.innerHTML = [0,1,2].map(() => `
+    <div class="bg-surface border border-line rounded-2xl p-4 sm:p-5 mb-4 shadow-card">
+      <div class="flex gap-4">
+        <div class="w-6 h-6 rounded skel shrink-0"></div>
+        <div class="min-w-0 flex-1 space-y-2.5">
+          <div class="h-4 w-1/3 rounded skel"></div>
+          <div class="h-3 w-2/3 rounded skel"></div>
+          <div class="h-3 w-1/2 rounded skel"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderList(){
+  const wrap = document.getElementById('cards');
+  const listWrap = document.getElementById('listWrap');
+  const emptyState = document.getElementById('emptyState');
+  const errorState = document.getElementById('errorState');
+
+  if(isLoading){
+    errorState.classList.add('hidden');
+    errorState.classList.remove('flex');
+    emptyState.classList.add('hidden');
+    emptyState.classList.remove('flex');
+    listWrap.classList.remove('hidden');
+    renderSkeletonCards();
+    updateStats();
+    return;
+  }
+
+  if(hasLoadError){
+    listWrap.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    emptyState.classList.remove('flex');
+    errorState.classList.remove('hidden');
+    errorState.classList.add('flex');
+    updateStats();
+    return;
+  }
+
+  errorState.classList.add('hidden');
+  errorState.classList.remove('flex');
+
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  wrap.innerHTML = '';
+
+  const filtered = items
+    .filter(i => currentFilter==='all' || String(i.type)===currentFilter)
+    .filter(i => i.title.toLowerCase().includes(q));
+
+  emptyState.classList.toggle('hidden', items.length !== 0);
+  emptyState.classList.toggle('flex', items.length === 0);
+  listWrap.classList.toggle('hidden', items.length === 0);
+
+  filtered.forEach((item, idx) => {
+    const tpl = document.getElementById('cardTemplate').content.cloneNode(true);
+    const card = tpl.querySelector('article');
+    card.dataset.id = item.id;
+    card.querySelector('.seq-badge').textContent = String(item.seq).padStart(2,'0');
+    card.querySelector('.title').textContent = item.title;
+    const badge = card.querySelector('.type-badge');
+    badge.textContent = TYPE_METE[item.type].label;
+    badge.className = 'type-badge text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ' + TYPE_METE[item.type].cls;
+
+    card.querySelector('.desc').innerHTML = markdownToHtml(item.desc) || '<p>—</p>';
+
+    card.querySelector('.media-strip').innerHTML = mediaStripHtml(item);
+
+    card.querySelector('.act-preview').addEventListener('click', ()=>openPreview(item.id));
+    card.querySelector('.act-edit').addEventListener('click', ()=>openPanel(item.id));
+    card.querySelector('.act-delete').addEventListener('click', ()=>openDelete(item.id));
+
+    /* drag reorder */
+    card.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', item.id); card.classList.add('dragging'); });
+    card.addEventListener('dragend', ()=> card.classList.remove('dragging'));
+    card.addEventListener('dragover', e=>{ e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', ()=> card.classList.remove('drag-over'));
+    card.addEventListener('drop', e=>{
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      reorder(draggedId, item.id);
+    });
+
+    wrap.appendChild(card);
+  });
+
+  updateStats();
+}
+
+function mediaStripHtml(item){
+  if(item.type === 1 && item.fileUrl){
+    // object-contain + letterbox background so portrait, landscape and
+    // square images of any resolution display fully without cropping/distortion.
+    return `<div class="rounded-xl overflow-hidden border border-line max-w-xs bg-surfacealt flex items-center justify-center"><img src="${escapeHtml(item.fileUrl)}" class="w-full max-h-40 object-contain cursor-zoom-in lightbox-trigger" data-lightbox-images='${lbAttr([item.fileUrl])}' data-lightbox-idx="0" title="Click to view full size" alt="" loading="lazy" onerror="this.closest('.media-strip').innerHTML='<div class=&quot;text-xs text-inksoft/70 italic bg-surfacealt rounded-lg px-3 py-2 max-w-xs&quot;>Image failed to load</div>'"></div>`;
+  }
+  if(item.type === 4){
+    if(!item.slides || item.slides.length === 0){
+      return `<div class="text-xs text-inksoft/70 italic bg-surfacealt rounded-lg px-3 py-2 max-w-xs">No slides added yet</div>`;
+    }
+    return buildCarousel(item.id, item.slides, 'card');
+  }
+  if(item.type === 2){
+    if(item.fileUrl){
+      return `<div class="rounded-xl overflow-hidden border border-line max-w-xs bg-ink">
+        <video class="w-full max-h-44 block" controls preload="metadata" playsinline src="${escapeHtml(item.fileUrl)}">
+          Your browser doesn't support embedded video.
+        </video>
+      </div>`;
+    }
+    return `<div class="flex items-center gap-2 text-xs font-mono text-inksoft bg-surfacealt rounded-lg px-3 py-2 max-w-xs">
+      <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <span class="truncate">${escapeHtml(item.fileName || 'video file')}</span></div>`;
+  }
+  if(item.type === 3){
+    return `<div class="flex items-center gap-2 text-xs font-mono text-inksoft bg-surfacealt rounded-lg px-3 py-2 max-w-xs">
+      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h1M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>
+      <span class="truncate">${escapeHtml(item.fileName || 'document')}</span></div>`;
+  }
+  return '';
+}
+
+function updateStats(){
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-video').textContent = items.filter(i=>i.type===2).length;
+  document.getElementById('stat-image').textContent = items.filter(i=>i.type===1).length;
+  document.getElementById('stat-slideshow').textContent = items.filter(i=>i.type===4).length;
+  document.getElementById('stat-doc').textContent = items.filter(i=>i.type===3).length;
+}
+
+/* ---------- slideshow carousel ---------- */
+/* ---------- image lightbox (click any content image to view full-size, Teams-style) ---------- */
+let lightboxImages = [];
+let lightboxIndex = 0;
+let lightboxZoomLevel = 1;
+let lightboxRotation = 0;
+
+/* HTML-escape a JSON string so it can safely sit inside a single-quoted attribute */
+function lbAttr(arr){ return escapeHtml(JSON.stringify(arr)); }
+
+function openLightbox(images, index){
+  if(!images || images.length === 0) return;
+  lightboxImages = images;
+  lightboxIndex = Math.min(Math.max(index || 0, 0), images.length - 1);
+  lightboxZoomLevel = 1;
+  lightboxRotation = 0;
+  renderLightbox();
+  document.getElementById('imageLightbox').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', lightboxKeyNav);
+}
+
+function closeLightbox(){
+  document.getElementById('imageLightbox').classList.add('hidden');
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', lightboxKeyNav);
+}
+
+function lightboxBackdropClick(){
+  // interactive children (toolbar, image, dots, arrows) stop propagation before this fires
+  closeLightbox();
+}
+
+function renderLightbox(){
+  const img = document.getElementById('lightboxImg');
+  img.src = lightboxImages[lightboxIndex];
+  img.style.transform = `scale(${lightboxZoomLevel}) rotate(${lightboxRotation}deg)`;
+  img.style.cursor = lightboxZoomLevel > 1 ? 'zoom-out' : 'zoom-in';
+
+  document.getElementById('lightboxZoomLabel').textContent = Math.round(lightboxZoomLevel * 100) + '%';
+  document.getElementById('lightboxDownload').href = lightboxImages[lightboxIndex];
+
+  const multi = lightboxImages.length > 1;
+  document.getElementById('lightboxCounter').textContent = multi ? `${lightboxIndex + 1} / ${lightboxImages.length}` : '';
+
+  const prevBtn = document.getElementById('lightboxPrevBtn');
+  const nextBtn = document.getElementById('lightboxNextBtn');
+  [prevBtn, nextBtn].forEach(b => { b.classList.toggle('hidden', !multi); b.classList.toggle('flex', multi); });
+  prevBtn.classList.toggle('opacity-30', lightboxIndex === 0);
+  prevBtn.classList.toggle('pointer-events-none', lightboxIndex === 0);
+  nextBtn.classList.toggle('opacity-30', lightboxIndex === lightboxImages.length - 1);
+  nextBtn.classList.toggle('pointer-events-none', lightboxIndex === lightboxImages.length - 1);
+
+  document.getElementById('lightboxDots').innerHTML = multi ? lightboxImages.map((_, i) => `
+    <button type="button" onclick="lightboxGoTo(${i})" class="btn-press h-2 rounded-full transition-all ${i === lightboxIndex ? 'w-7 bg-accent' : 'w-2 bg-white/25 hover:bg-white/45'}"></button>
+  `).join('') : '';
+}
+
+function lightboxNav(delta){
+  const next = lightboxIndex + delta;
+  if(next < 0 || next >= lightboxImages.length) return;
+  lightboxIndex = next;
+  lightboxZoomLevel = 1;
+  lightboxRotation = 0;
+  renderLightbox();
+}
+function lightboxGoTo(i){
+  lightboxIndex = i;
+  lightboxZoomLevel = 1;
+  lightboxRotation = 0;
+  renderLightbox();
+}
+function lightboxZoom(delta){
+  lightboxZoomLevel = Math.min(4, Math.max(0.5, +(lightboxZoomLevel + delta).toFixed(2)));
+  renderLightbox();
+}
+function lightboxToggleZoom(){
+  lightboxZoomLevel = lightboxZoomLevel > 1 ? 1 : 2;
+  renderLightbox();
+}
+function lightboxRotateImg(){
+  lightboxRotation = (lightboxRotation + 90) % 360;
+  renderLightbox();
+}
+function lightboxKeyNav(e){
+  if(e.key === 'Escape') closeLightbox();
+  if(e.key === 'ArrowLeft') lightboxNav(-1);
+  if(e.key === 'ArrowRight') lightboxNav(1);
+}
+
+const carouselState = {}; // id -> { index, slides }
+
+function buildCarousel(id, slides, variant){
+  const heights = { card:'h-32', form:'h-40', modal:'h-72' };
+  const h = heights[variant] || 'h-40';
+  if(!carouselState[id]) carouselState[id] = { index: 0, slides };
+  carouselState[id].slides = slides;
+  if(carouselState[id].index >= slides.length) carouselState[id].index = 0;
+  const idx = carouselState[id].index;
+  // Thumbnails (card/form) stay cropped for a tidy grid; the larger modal
+  // variant shows the full image regardless of its native resolution/orientation.
+  const objectFit = variant === 'modal' ? 'object-contain' : 'object-cover';
+
+  const slidesHtml = slides.map((s,i)=>
+    `<img src="${escapeHtml(s.url)}" data-idx="${i}" data-lightbox-idx="${i}" data-lightbox-group="${id}" class="absolute inset-0 w-full h-full ${objectFit} transition-opacity duration-300 cursor-zoom-in lightbox-trigger ${i===idx?'opacity-100':'opacity-0 pointer-events-none'}" title="Click to view full size" alt="">`
+  ).join('');
+  const dotsHtml = slides.map((_,i)=>
+    `<button type="button" data-dot onclick="event.stopPropagation(); goSlide('${id}', ${i}, true)" class="h-1.5 rounded-full transition-all ${i===idx?'bg-white w-4':'bg-white/50 w-1.5'}"></button>`
+  ).join('');
+  const arrows = slides.length > 1 ? `
+    <button type="button" onclick="event.stopPropagation(); goSlide('${id}', -1)" class="btn-press absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-ink/50 hover:bg-ink/75 text-white text-sm flex items-center justify-center transition-colors">‹</button>
+    <button type="button" onclick="event.stopPropagation(); goSlide('${id}', 1)" class="btn-press absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-ink/50 hover:bg-ink/75 text-white text-sm flex items-center justify-center transition-colors">›</button>` : '';
+
+  return `<div class="relative ${h} max-w-xs rounded-xl overflow-hidden border border-line bg-surfacealt" id="car-${id}">
+      ${slidesHtml}
+      ${arrows}
+      <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1">${dotsHtml}</div>
+      <span data-count class="absolute top-1.5 right-1.5 text-[10px] font-mono bg-ink/50 text-white px-1.5 py-0.5 rounded-full">${idx+1}/${slides.length}</span>
+    </div>`;
+}
+
+function goSlide(id, deltaOrIndex, isAbsolute){
+  const state = carouselState[id];
+  if(!state || !state.slides || state.slides.length === 0) return;
+  const slides = state.slides;
+  const idx = isAbsolute ? deltaOrIndex : (state.index + deltaOrIndex + slides.length) % slides.length;
+  state.index = idx;
+  const container = document.getElementById('car-' + id);
+  if(!container) return;
+  container.querySelectorAll('img[data-idx]').forEach(img=>{
+    const active = parseInt(img.dataset.idx) === idx;
+    img.classList.toggle('opacity-100', active);
+    img.classList.toggle('opacity-0', !active);
+    img.classList.toggle('pointer-events-none', !active);
+  });
+  container.querySelectorAll('[data-dot]').forEach((d,i)=>{
+    d.classList.toggle('bg-white', i===idx);
+    d.classList.toggle('w-4', i===idx);
+    d.classList.toggle('bg-white/50', i!==idx);
+    d.classList.toggle('w-1.5', i!==idx);
+  });
+  const countEl = container.querySelector('[data-count]');
+  if(countEl) countEl.textContent = (idx+1) + '/' + slides.length;
+}
+
+function renderSlideThumbs(){
+  const wrap = document.getElementById('slideThumbs');
+  const type = parseInt(document.getElementById('f-type').value);
+  if(type !== 4 || slideFiles.length === 0){ wrap.classList.add('hidden'); wrap.innerHTML=''; return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = slideFiles.map((s,i)=>`
+    <div class="relative group/thumb card-enter">
+      <img src="${escapeHtml(s.url)}" class="w-14 h-14 object-cover rounded-lg border border-line">
+      <span class="absolute bottom-0.5 left-0.5 text-[9px] font-mono bg-ink/60 text-white px-1 rounded">${i+1}</span>
+      <button type="button" onclick="removeSlide(${i})" class="btn-press absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-danger text-white text-xs flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">✕</button>
+    </div>`).join('');
+}
+
+function removeSlide(i){
+  if(slideFiles[i]?.url?.startsWith('blob:')) URL.revokeObjectURL(slideFiles[i].url);
+  slideFiles.splice(i,1);
+  renderSlideThumbs();
+  syncPreview();
+}
+
+function setFilter(val, btn){
+  currentFilter = val;
+  document.querySelectorAll('.type-tab').forEach(b=>b.removeAttribute('data-active'));
+  btn.setAttribute('data-active','true');
+  renderList();
+}
+
+function reorder(draggedId, targetId){
+  if(draggedId === targetId) return;
+  const from = items.findIndex(i=>String(i.id)===String(draggedId));
+  const to = items.findIndex(i=>String(i.id)===String(targetId));
+  if(from===-1||to===-1) return;
+  const [moved] = items.splice(from,1);
+  items.splice(to,0,moved);
+  items.forEach((it,i)=> it.seq = i+1);
+  renderList();
+  showToast('Order updated', 'Sequence numbers renumbered automatically.', 'ok');
+  // Note: this reorder is local-only. Wire this up to a reorder/bulk-update
+  // endpoint if the sequence needs to persist server-side.
+}
+
+/* ---------- add / edit panel ---------- */
+function openPanel(id){
+  document.getElementById('contentForm').reset();
+  document.getElementById('f-id').value = '';
+  resetFormFileState();
+  setType(0);
+
+  if(id){
+    const item = items.find(i=>String(i.id)===String(id));
+    document.getElementById('panelKicker').textContent = 'Editing block ' + String(item.seq).padStart(2,'0');
+    document.getElementById('panelTitle').textContent = 'Edit course content';
+    document.getElementById('f-id').value = item.id;
+    document.getElementById('f-title').value = item.title;
+    document.getElementById('f-seq').value = item.seq;
+    document.getElementById('f-desc').value = item.desc;
+    setType(item.type);
+    if(item.type === 4 && item.slides?.length){
+      slideFiles = item.slides.map(s => ({ url: s.url, name: s.name }));
+      renderSlideThumbs();
+    } else if(item.fileUrl || item.fileName){
+      showFileChosen(item.fileName || 'uploaded-file');
+    }
+  } else {
+    document.getElementById('panelKicker').textContent = 'New content block';
+    document.getElementById('panelTitle').textContent = 'Add course content';
+    document.getElementById('f-seq').value = items.length + 1;
+  }
+
+  syncPreview();
+  document.getElementById('scrim').classList.remove('hidden');
+  document.getElementById('scrim').classList.add('scrim-enter');
+  const panel = document.getElementById('panel');
+  panel.classList.remove('hidden');
+  panel.querySelector('.panel-inner').classList.add('panel-enter');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel(){
+  document.getElementById('scrim').classList.add('hidden');
+  document.getElementById('panel').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function setType(t){
+  document.getElementById('f-type').value = t;
+  document.querySelectorAll('.type-opt').forEach(btn=>{
+    const active = parseInt(btn.dataset.type) === t;
+    btn.classList.toggle('border-primary', active);
+    btn.classList.toggle('bg-primary-soft', active);
+    btn.classList.toggle('text-primary-dark', active);
+    btn.classList.toggle('border-line', !active);
+  });
+  const wrap = document.getElementById('fileFieldWrap');
+  if(t === 0){
+    wrap.classList.add('hidden');
+  } else {
+    wrap.classList.remove('hidden');
+    document.getElementById('fileFieldLabel').textContent =
+      t===1 ? 'Upload image' : t===2 ? 'Upload video' : t===4 ? 'Upload slides' : 'Upload document';
+    document.getElementById('fileHint').textContent = TYPE_METE[t].hint;
+    document.getElementById('f-file').accept = (t===1 || t===4) ? 'image/*' : t===2 ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx';
+    document.getElementById('f-file').multiple = (t === 4);
+    document.querySelector('#dropzone span.text-sm').innerHTML = t===4
+      ? '<span class="text-primary font-medium">Click to upload</span> or drag & drop — select several images'
+      : '<span class="text-primary font-medium">Click to upload</span> or drag & drop';
+    document.getElementById('fileChosen').classList.toggle('hidden', t === 4);
+  }
+  renderSlideThumbs();
+  syncPreview();
+}
+
+function handleFile(files){
+  if(!files || files.length === 0) return;
+  const type = parseInt(document.getElementById('f-type').value);
+  if(type === 4){
+    Array.from(files).forEach(f => slideFiles.push({ url: URL.createObjectURL(f), name: f.name }));
+    document.getElementById('f-file').value = '';
+    renderSlideThumbs();
+    syncPreview();
+    return;
+  }
+  const file = files[0];
+  showFileChosen(file.name);
+  if(fileObjectUrl) URL.revokeObjectURL(fileObjectUrl);
+  fileObjectUrl = URL.createObjectURL(file);
+  syncPreview();
+}
+function showFileChosen(name){
+  document.getElementById('fileChosenName').textContent = name;
+  document.getElementById('fileChosen').classList.remove('hidden');
+}
+function clearFile(){
+  document.getElementById('f-file').value = '';
+  document.getElementById('fileChosen').classList.add('hidden');
+  if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl = null; }
+  syncPreview();
+}
+function resetFormFileState(){
+  document.getElementById('f-file').value = '';
+  document.getElementById('fileChosen').classList.add('hidden');
+  fileObjectUrl = null;
+  slideFiles = [];
+  renderSlideThumbs();
+}
+
+/* drag & drop styling on dropzone */
+const dz = () => document.getElementById('dropzone');
+document.addEventListener('DOMContentLoaded', ()=>{
+  const zone = dz();
+  ['dragenter','dragover'].forEach(evt=> zone.addEventListener(evt, e=>{ e.preventDefault(); zone.classList.add('dragging-file'); }));
+  ['dragleave','drop'].forEach(evt=> zone.addEventListener(evt, e=>{ e.preventDefault(); zone.classList.remove('dragging-file'); }));
+  zone.addEventListener('drop', e=>{
+    const files = e.dataTransfer.files;
+    document.getElementById('f-file').files = files;
+    handleFile(files);
+  });
+
+  loadContent();
+
+  // Click-to-expand: any image tagged .lightbox-trigger opens the full-size viewer.
+  // Delegated on document since cards/previews are re-rendered dynamically.
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.lightbox-trigger');
+    if(!trigger) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    let images = [];
+    let idx = parseInt(trigger.dataset.lightboxIdx || '0');
+
+    if(trigger.dataset.lightboxGroup){
+      const state = carouselState[trigger.dataset.lightboxGroup];
+      images = state ? state.slides.map(s => s.url) : [trigger.src];
+    } else {
+      try { images = JSON.parse(trigger.dataset.lightboxImages || '[]'); } catch(err) { images = [trigger.src]; }
+    }
+    openLightbox(images, idx);
+  });
+});
+
+function syncPreview(){
+  const title = document.getElementById('f-title').value.trim();
+  const descRaw = document.getElementById('f-desc').value;
+  const seq = document.getElementById('f-seq').value || '1';
+  const type = parseInt(document.getElementById('f-type').value);
+
+  document.getElementById('descCount').textContent = descRaw.length;
+  document.getElementById('pv-seq').textContent = String(seq).padStart(2,'0');
+  document.getElementById('pv-title').textContent = title || 'Untitled content block';
+  document.getElementById('pv-title').classList.toggle('text-inksoft/50', !title);
+
+  const pvDesc = document.getElementById('pv-desc');
+  const renderedDesc = markdownToHtml(descRaw);
+  pvDesc.innerHTML = renderedDesc || 'Your description will appear here as you type.';
+  pvDesc.classList.toggle('text-inksoft/50', !renderedDesc);
+  pvDesc.classList.toggle('italic', !renderedDesc);
+
+  const badge = document.getElementById('pv-badge');
+  badge.textContent = TYPE_METE[type].label;
+  badge.className = 'text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ' + TYPE_METE[type].cls;
+
+  const mediaEl = document.getElementById('pv-media');
+  const fileInput = document.getElementById('f-file');
+  const fname = fileInput.files[0]?.name;
+
+  if(type === 1 && fileObjectUrl){
+    mediaEl.innerHTML = `<div class="rounded-xl border border-line bg-surfacealt overflow-hidden flex items-center justify-center"><img src="${fileObjectUrl}" class="w-full max-h-56 object-contain"></div>`;
+  } else if(type === 4){
+    mediaEl.innerHTML = slideFiles.length
+      ? buildCarousel('form-preview', slideFiles, 'form') + `<p class="text-xs text-inksoft mt-1.5">${slideFiles.length} slide${slideFiles.length===1?'':'s'} added</p>`
+      : `<div class="text-xs text-inksoft/70 italic">No slides selected yet</div>`;
+  } else if(type === 2){
+    mediaEl.innerHTML = fileObjectUrl
+      ? `<video controls preload="metadata" playsinline class="w-full max-h-56 rounded-xl border border-line bg-ink" src="${fileObjectUrl}"></video>`
+      : `<div class="text-xs text-inksoft/70 italic">No video selected yet</div>`;
+  } else if(type === 3){
+    mediaEl.innerHTML = fname
+      ? `<div class="flex items-center gap-2 text-xs font-mono text-inksoft bg-surfacealt rounded-lg px-3 py-2"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h1M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>${escapeHtml(fname)}</div>`
+      : `<div class="text-xs text-inksoft/70 italic">No document selected yet</div>`;
+  } else {
+    mediaEl.innerHTML = '';
+  }
+}
+
+/* ---------- save (create / update) ---------- */
+function saveContent(e){
+  e.preventDefault();
+
+  const editingId = document.getElementById('f-id').value;
+  const title = document.getElementById('f-title').value.trim();
+  const seq = parseInt(document.getElementById('f-seq').value) || items.length+1;
+  const desc = document.getElementById('f-desc').value; // raw markdown-style text, kept as-is for the plain-text backend column
+  const type = parseInt(document.getElementById('f-type').value);
+  const fileInput = document.getElementById('f-file');
+  const file = fileInput.files[0];
+  const duration=parseInt(document.getElementById('f-duration').value);
+  if(type === 4 && slideFiles.length < 2){
+    document.getElementById('dropzone').classList.add('shake');
+    setTimeout(()=> document.getElementById('dropzone').classList.remove('shake'), 450);
+    showToast('Add more slides', 'A slideshow needs at least 2 images.', 'danger');
+    return false;
+  }
+
+  const token = $("meta[name='_csrf']").attr('content');
+  const formData = new FormData();
+  formData.append('courseId', courseid);
+  if(editingId) formData.append('contentId', editingId);
+  formData.append('title', title);
+  formData.append('type', type);
+  formData.append('sequenceno', seq);
+  formData.append('summary', desc);
+  formData.append('duration',duration);
+  if(file) formData.append('file', file);
+  if(type === 4){
+    // Multiple images for a slideshow — appended individually if the field is set,
+    // in addition to any already-uploaded slide URLs kept from editing.
+    slideFiles.forEach(s => { if(s.url && s.url.startsWith('blob:')) return; });
+  }
+
+  const saveBtn = document.getElementById('saveBtn');
+  const saveBtnLabel = document.getElementById('saveBtnLabel');
+  saveBtn.disabled = true;
+  saveBtn.classList.add('opacity-70', 'cursor-not-allowed');
+  saveBtnLabel.innerHTML = '<span class="spinner"></span> Saving…';
+
+  $.ajax({
+    url: '/course/addSequence',
+    type: 'POST',
+    headers: { 'X-CSRF-TOKEN': token },
+    data: formData,
+    dataType: 'JSON',
+    processData: false,
+    contentType: false,
+    success: (res) => {
+      showToast(
+        editingId ? 'Content updated' : 'Content added',
+        editingId ? `"${title}" was saved successfully.` : `"${title}" was added to the course.`,
+        'ok'
+      );
+      closePanel();
+      loadContent(); // server is the source of truth — refetch rather than guess the shape locally
+    },
+    error: (err) => {
+      console.error('addSequence failed:', err);
+      showToast('Couldn\'t save content', 'Something went wrong while saving. Please try again.', 'danger');
+    },
+    complete: () => {
+      saveBtn.disabled = false;
+      saveBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      saveBtnLabel.textContent = 'Save content';
+    }
+  });
+
+  return false;
+}
+
+/* ---------- delete ---------- */
+function openDelete(id){
+  deleteTargetId = id;
+  const item = items.find(i=>String(i.id)===String(id));
+  document.getElementById('deleteItemTitle').textContent = item.title;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+function closeDelete(){
+  document.getElementById('deleteModal').classList.add('hidden');
+  document.getElementById('deleteModal').classList.remove('flex');
+  deleteTargetId = null;
+}
+function confirmDelete(){
+  const item = items.find(i=>String(i.id)===String(deleteTargetId));  
+  const btn = document.getElementById('confirmDeleteBtn');
+  const label = document.getElementById('confirmDeleteLabel');
+  btn.disabled = true;
+  btn.classList.add('opacity-70', 'cursor-not-allowed');
+  label.innerHTML = '<span class="spinner"></span> Deleting…';
+  const token = $("meta[name='_csrf']").attr('content');
+
+$.ajax({
+  url:'/course/deleteContent',
+  type:'DELETE',
+  data:{contentId:deleteTargetId},
+  headers:{'X-CSRF-TOKEN':token},
+  success:()=>{
+    items = items.filter(i=>String(i.id)!==String(deleteTargetId));
+    items.forEach((it,i)=> it.seq = i+1);
+    closeDelete();
+    renderList();
+    showToast('Content deleted', item ? `"${item.title}" was removed.` : 'Item removed.', 'danger');
+    btn.disabled = false;
+    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    label.textContent = 'Delete';
+  },
+  error:(err)=>{
+  }
+})
+}
+
+/* ---------- preview modal ---------- */
+function openPreview(id){
+  const item = items.find(i=>String(i.id)===String(id));
+  document.getElementById('prev-seq').textContent = String(item.seq).padStart(2,'0');
+  const badge = document.getElementById('prev-badge');
+  badge.textContent = TYPE_METE[item.type].label;
+  badge.className = 'text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ' + TYPE_METE[item.type].cls;
+  document.getElementById('prev-title').textContent = item.title;
+  document.getElementById('prev-desc').innerHTML = markdownToHtml(item.desc) || '<p>—</p>';
+
+  let mediaHtml = '';
+  if(item.type === 1){
+    // object-contain + letterbox so any resolution/orientation renders in full, uncropped
+    mediaHtml = item.fileUrl
+      ? `<div class="w-full h-full rounded-xl border border-line bg-surfacealt overflow-hidden flex items-center justify-center"><img src="${escapeHtml(item.fileUrl)}" class="w-full h-full max-h-[60vh] object-contain cursor-zoom-in lightbox-trigger transition-transform duration-300 hover:scale-[1.02]" data-lightbox-images='${lbAttr([item.fileUrl])}' data-lightbox-idx="0" title="Click to view full size"></div>`
+      : `<div class="w-full text-sm text-inksoft italic bg-surfacealt rounded-xl p-6 text-center">No image attached</div>`;
+  } else if(item.type === 4){
+    mediaHtml = (item.slides && item.slides.length)
+      ? `<div class="w-full">${buildCarousel('modal-preview', item.slides, 'modal')}<p class="text-xs text-inksoft mt-2 text-center">Use ← → or the arrows to browse ${item.slides.length} slides</p></div>`
+      : `<div class="w-full text-sm text-inksoft italic bg-surfacealt rounded-xl p-6 text-center">No slides attached</div>`;
+  } else if(item.type === 2){
+    mediaHtml = item.fileUrl
+      ? `<video autoplay muted loop controls playsinline class="w-full max-h-[60vh] rounded-xl border border-line bg-ink" src="${escapeHtml(item.fileUrl)}">Your browser doesn't support embedded video.</video>`
+      : `<div class="w-full rounded-xl border border-line bg-ink text-white/80 aspect-video flex flex-col items-center justify-center gap-2">
+      <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <span class="text-xs font-mono">${escapeHtml(item.fileName || 'video.mp4')}</span></div>`;
+  } else if(item.type === 3){
+    mediaHtml = `<div class="w-full flex items-center gap-3 border border-line rounded-xl p-4 bg-surfacealt">
+      <svg class="w-8 h-8 text-plum shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h1M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>
+      <div class="min-w-0"><p class="text-sm font-medium truncate">${escapeHtml(item.fileName || 'document.pdf')}</p><p class="text-xs text-inksoft">Ready for download</p></div>
+    </div>`;
+  }
+  document.getElementById('prev-media').innerHTML = mediaHtml;
+
+  const modal = document.getElementById('previewModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+
+  if(item.type === 4){
+    document.addEventListener('keydown', modalKeyNav);
+  }
+}
+function closePreview(){
+  document.getElementById('previewModal').classList.add('hidden');
+  document.getElementById('previewModal').classList.remove('flex');
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', modalKeyNav);
+}
+function modalKeyNav(e){
+  if(!document.getElementById('imageLightbox').classList.contains('hidden')) return; // lightbox handles its own keys
+  if(e.key === 'ArrowLeft') goSlide('modal-preview', -1);
+  if(e.key === 'ArrowRight') goSlide('modal-preview', 1);
+  if(e.key === 'Escape') closePreview();
+}
+
+/* ---------- full course preview (compact 80x80 modal, story-style auto-advance) ---------- */
+let courseIndex = 0;
+let courseNavDirection = 1; // 1 = forward (slide in from right), -1 = backward (slide in from left)
+let courseSlideshowTimer = null; // auto-advance timer for images *inside* a type=4 slideshow block
+let courseSegmentTimer = null;   // drives the currently-playing segment's fill + auto-advance to next item
+let courseSegmentStart = 0;      // timestamp the current segment started filling
+let courseSegmentElapsed = 0;    // ms already filled when paused, so resume continues smoothly
+let courseIsPaused = false;
+const COURSE_SLIDESHOW_INTERVAL = 3500;  // ms between images within an autoplaying slideshow block
+const COURSE_SEGMENT_DURATION = 6000;    // ms each content block stays on screen before auto-advancing
+
+function openCoursePreview(){
+  if(items.length === 0){
+    showToast('Nothing to preview', 'Add course content before previewing the course.', 'danger');
+    return;
+  }
+  courseIndex = 0;
+  courseNavDirection = 1;
+  courseIsPaused = false;
+  const titleEl = document.querySelector('h1[class*="font-display"]');
+  document.getElementById('courseModalTitle').textContent = titleEl ? titleEl.textContent.trim() : 'Course preview';
+  const modal = document.getElementById('courseModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+  renderCourseSegments();
+  renderCourseSlide();
+  document.addEventListener('keydown', courseKeyNav);
+}
+
+function closeCoursePreview(){
+  stopCourseSlideshowTimer();
+  stopCourseSegmentTimer();
+  const modal = document.getElementById('courseModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', courseKeyNav);
+}
+
+function courseKeyNav(e){
+  if(!document.getElementById('imageLightbox').classList.contains('hidden')) return; // lightbox handles its own keys
+  if(e.key === 'ArrowLeft') courseNav(-1);
+  if(e.key === 'ArrowRight') courseNav(1);
+  if(e.key === 'Escape') closeCoursePreview();
+  if(e.key === ' '){ e.preventDefault(); toggleCoursePlayPause(); }
+}
+
+function courseNav(delta){
+  goToCourseItem(courseIndex + delta, delta >= 0 ? 1 : -1);
+}
+
+function goToCourseItem(i, direction){
+  const sorted = [...items].sort((a,b)=>a.seq-b.seq);
+  if(i < 0){ i = 0; }
+  if(i >= sorted.length){ closeCoursePreview(); return; }
+  courseNavDirection = direction !== undefined ? direction : (i >= courseIndex ? 1 : -1);
+  courseIndex = i;
+  renderCourseSlide();
+}
+
+function stopCourseSlideshowTimer(){
+  if(courseSlideshowTimer){ clearInterval(courseSlideshowTimer); courseSlideshowTimer = null; }
+}
+
+/* ---- segmented "story" progress bar: one thin bar per content block, auto-fills and advances ---- */
+function renderCourseSegments(){
+  const sorted = [...items].sort((a,b)=>a.seq-b.seq);
+  const wrap = document.getElementById('courseProgressSegments');
+  wrap.innerHTML = sorted.map((_, i) => `
+    <div class="h-1 flex-1 rounded-full bg-white/20 overflow-hidden" data-seg="${i}">
+      <div class="h-full bg-accent rounded-full" data-segfill style="width:0%"></div>
+    </div>
+  `).join('');
+}
+
+function stopCourseSegmentTimer(){
+  if(courseSegmentTimer){ clearInterval(courseSegmentTimer); courseSegmentTimer = null; }
+}
+
+function startCourseSegmentTimer(resume){
+  stopCourseSegmentTimer();
+  const sorted = [...items].sort((a,b)=>a.seq-b.seq);
+  const item = sorted[courseIndex];
+  if(!item) return;
+
+  // Video slides advance when playback ends instead of on a fixed timer.
+  if(item.type === 2){ return; }
+
+  if(!resume) courseSegmentElapsed = 0;
+  courseSegmentStart = Date.now() - courseSegmentElapsed;
+
+  courseSegmentTimer = setInterval(()=>{
+    if(courseIsPaused) return;
+    courseSegmentElapsed = Date.now() - courseSegmentStart;
+    const pct = Math.min(100, (courseSegmentElapsed / COURSE_SEGMENT_DURATION) * 100);
+    updateActiveSegmentFill(pct);
+    if(pct >= 100){
+      stopCourseSegmentTimer();
+      courseNav(1);
+    }
+  }, 60);
+}
+
+function updateActiveSegmentFill(pct){
+  const seg = document.querySelector(`#courseProgressSegments [data-seg="${courseIndex}"] [data-segfill]`);
+  if(seg) seg.style.width = pct + '%';
+}
+
+function markSegmentsForIndex(){
+  document.querySelectorAll('#courseProgressSegments [data-seg]').forEach(seg=>{
+    const i = parseInt(seg.dataset.seg);
+    const fill = seg.querySelector('[data-segfill]');
+    if(i < courseIndex) fill.style.width = '100%';
+    else if(i > courseIndex) fill.style.width = '0%';
+    // current index handled by the live timer
+  });
+}
+
+function pauseCourseAutoAdvance(){
+  courseIsPaused = true;
+}
+function resumeCourseAutoAdvance(){
+  courseIsPaused = false;
+  courseSegmentStart = Date.now() - courseSegmentElapsed;
+}
+
+function toggleCoursePlayPause(){
+  courseIsPaused = !courseIsPaused;
+  const icon = document.getElementById('coursePlayPauseIcon');
+  const btn = document.getElementById('coursePlayPauseBtn');
+  if(courseIsPaused){
+    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    btn.title = 'Play';
+    const vid = document.getElementById('cp-video');
+    if(vid) vid.pause();
+  } else {
+    icon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+    btn.title = 'Pause';
+    courseSegmentStart = Date.now() - courseSegmentElapsed;
+    const vid = document.getElementById('cp-video');
+    if(vid) vid.play().catch(()=>{});
+  }
+}
+
+/* full-bleed media for the given content item — object-cover fills the whole slide,
+   video/slideshow autoplay automatically as the slide comes into view */
+function courseMediaHtml(item, groupId){
+  if(item.type === 1 && item.fileUrl){
+    return `<img src="${escapeHtml(item.fileUrl)}" class="cp-media-fade kenburns-img absolute inset-0 w-full h-full object-cover cursor-zoom-in lightbox-trigger" data-lightbox-images='${lbAttr([item.fileUrl])}' data-lightbox-idx="0" title="Click to view full size" alt="">`;
+  }
+  if(item.type === 4 && item.slides && item.slides.length){
+    return buildFullBleedCarousel(groupId, item.slides);
+  }
+  if(item.type === 2 && item.fileUrl){
+    return `<video id="cp-video" class="cp-media-fade absolute inset-0 w-full h-full object-cover" autoplay muted playsinline preload="auto" src="${escapeHtml(item.fileUrl)}" onended="courseNav(1)">Your browser doesn't support embedded video.</video>
+      <button type="button" onclick="event.stopPropagation(); toggleCourseVideoMute()" id="cp-mute-btn" class="mute-toggle absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-sm" title="Unmute">
+        <svg id="cp-mute-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M2.25 9v6a.75.75 0 0 0 .75.75h3.373a.75.75 0 0 1 .53.22l3.723 3.723a.375.375 0 0 0 .64-.265V5.572a.375.375 0 0 0-.64-.265L6.953 9.03a.75.75 0 0 1-.53.22H3a.75.75 0 0 0-.75.75Z"/></svg>
+      </button>`;
+  }
+  // text / document / missing-media slides keep a calm gradient hero background
+  const grad = { 0:'from-primary/25 via-ink to-ink', 3:'from-plum/25 via-ink to-ink', 2:'from-primary/25 via-ink to-ink' }[item.type] || 'from-primary/25 via-ink to-ink';
+  return `<div class="absolute inset-0 bg-gradient-to-br ${grad}"></div>`;
+}
+
+function buildFullBleedCarousel(groupId, slides){
+  if(!carouselState[groupId]) carouselState[groupId] = { index: 0, slides };
+  carouselState[groupId].slides = slides;
+  const idx = carouselState[groupId].index;
+  const slidesHtml = slides.map((s,i)=>
+    `<img src="${escapeHtml(s.url)}" data-idx="${i}" data-lightbox-idx="${i}" data-lightbox-group="${groupId}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 cursor-zoom-in lightbox-trigger ${i===idx?'opacity-100':'opacity-0 pointer-events-none'}" title="Click to view full size" alt="">`
+  ).join('');
+  return `<div class="cp-media-fade absolute inset-0" id="car-${groupId}">${slidesHtml}</div>`;
+}
+
+function toggleCourseVideoMute(){
+  const vid = document.getElementById('cp-video');
+  const icon = document.getElementById('cp-mute-icon');
+  const btn = document.getElementById('cp-mute-btn');
+  if(!vid) return;
+  vid.muted = !vid.muted;
+  btn.title = vid.muted ? 'Unmute' : 'Mute';
+  icon.innerHTML = vid.muted
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M2.25 9v6a.75.75 0 0 0 .75.75h3.373a.75.75 0 0 1 .53.22l3.723 3.723a.375.375 0 0 0 .64-.265V5.572a.375.375 0 0 0-.64-.265L6.953 9.03a.75.75 0 0 1-.53.22H3a.75.75 0 0 0-.75.75Z"/>'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.483 0-.964-.078-1.423-.23l-.244-.082a.75.75 0 0 1-.51-.71V9.99a.75.75 0 0 1 .51-.71l.244-.082a4.5 4.5 0 0 0 1.423-.23H6.75Z"/>';
+}
+
+function renderCourseSlide(){
+  const sorted = [...items].sort((a,b)=>a.seq-b.seq);
+  const item = sorted[courseIndex];
+  if(!item) return;
+
+  stopCourseSlideshowTimer();
+  stopCourseSegmentTimer();
+  markSegmentsForIndex();
+
+  document.getElementById('courseCounter').textContent = `${courseIndex+1} / ${sorted.length}`;
+
+  const prevBtn = document.getElementById('coursePrevBtn');
+  const nextBtn = document.getElementById('courseNextBtn');
+  prevBtn.classList.toggle('opacity-30', courseIndex===0);
+  prevBtn.classList.toggle('pointer-events-none', courseIndex===0);
+  nextBtn.classList.toggle('opacity-30', courseIndex===sorted.length-1);
+  nextBtn.classList.toggle('pointer-events-none', courseIndex===sorted.length-1);
+
+  const groupId = 'course-' + item.id;
+  const mediaHtml = courseMediaHtml(item, groupId);
+  const animClass = courseNavDirection >= 0 ? 'course-slide-right' : 'course-slide-left';
+
+  const card = document.getElementById('courseSlideCard');
+  card.innerHTML = `
+    <div class="relative w-full h-full ${animClass}">
+      ${mediaHtml}
+      <div class="absolute inset-0 cp-scrim pointer-events-none"></div>
+      <div class="absolute inset-x-0 bottom-0 p-5 sm:p-8 lg:p-10 max-w-2xl">
+        <div class="flex items-center gap-2 mb-2 fade-up">
+          <span class="num-serif text-lg sm:text-xl font-semibold text-accent">${String(item.seq).padStart(2,'0')}</span>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-white backdrop-blur-sm">${TYPE_METE[item.type].label}</span>
+          ${item.type===2 ? '<span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/70 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>Autoplaying</span>' : ''}
+        </div>
+        <h3 class="font-display font-semibold text-xl sm:text-3xl leading-snug text-white fade-up fade-up-d1">${escapeHtml(item.title)}</h3>
+        <div class="rich-desc rich-desc-light rich-desc-clamp text-sm text-white/80 mt-2 leading-relaxed fade-up fade-up-d2">${markdownToHtml(item.desc) || ''}</div>
+      </div>
+    </div>
+  `;
+
+  renderCourseDots(sorted);
+
+  // autoplay: slideshow blocks auto-advance their own images while this slide is showing
+  if(item.type === 4 && item.slides && item.slides.length > 1){
+    courseSlideshowTimer = setInterval(()=>{
+      if(courseIsPaused) return;
+      const state = carouselState[groupId];
+      if(!state) return;
+      const nextIdx = (state.index + 1) % state.slides.length;
+      state.index = nextIdx;
+      const container = document.getElementById('car-' + groupId);
+      if(container){
+        container.querySelectorAll('img[data-idx]').forEach(img=>{
+          const active = parseInt(img.dataset.idx) === nextIdx;
+          img.classList.toggle('opacity-100', active);
+          img.classList.toggle('opacity-0', !active);
+        });
+      }
+    }, COURSE_SLIDESHOW_INTERVAL);
+  }
+
+  // drive the top segmented bar: fixed duration for everything except video,
+  // which instead advances on its own 'ended' event (see courseMediaHtml)
+  startCourseSegmentTimer(false);
+}
+
+function renderCourseDots(sorted){
+  document.getElementById('courseDots').innerHTML = sorted.map((it,i)=>`
+    <button type="button" onclick="goToCourseItem(${i})" title="${escapeHtml(it.title)}" class="btn-press h-1.5 rounded-full transition-all duration-300 hover:scale-125 ${i===courseIndex ? 'w-6 bg-accent dot-pulse' : 'w-1.5 bg-white/25 hover:bg-white/50'}"></button>
+  `).join('');
+}
+
+/* ---------- toasts ---------- */
+function showToast(title, msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  const accentColor = kind==='danger' ? 'bg-danger' : 'bg-primary';
+  t.className = 'toast-enter relative w-72 bg-surface border border-line rounded-xl shadow-cardhover overflow-hidden';
+  t.innerHTML = `
+    <div class="p-3.5 flex gap-2.5">
+      <div class="w-1.5 rounded-full ${accentColor} shrink-0"></div>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold">${escapeHtml(title)}</p>
+        <p class="text-xs text-inksoft mt-0.5">${escapeHtml(msg)}</p>
+      </div>
+    </div>
+    <div class="h-0.5 ${accentColor} toast-bar"></div>`;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .3s, transform .3s'; t.style.opacity='0'; t.style.transform='translateX(8px)'; setTimeout(()=>t.remove(),300); }, 3200);
+}
+</script>
+</body>
+</html>

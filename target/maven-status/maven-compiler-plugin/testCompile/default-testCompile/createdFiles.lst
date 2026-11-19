@@ -1,1 +1,14 @@
+com\geosieben\gsbworkday\service\AttendanceServiceTest$MarkAttendanceForAllTests.class
+service\List.class
+service\PayRollServiceTest.class
 com\geosieben\gsbworkday\GsbWorkDayApplicationTests.class
+service\EmployeeServiceTest.class
+service\SeparationServiceTest.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest$GetMasterDataTests.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest$GetMonthsTests.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest$MarkAttendanceTests.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest$GetAttendanceDataTests.class
+service\ClientServiceTest.class
+service\CategoryServiceTest.class
+com\geosieben\gsbworkday\service\AttendanceServiceTest$UpdateLopTests.class

@@ -3,1044 +3,514 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuGen Pro — Geosieben</title>
+    <title>Geosieben Letters - HR Letter Studio</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --ink: #0c0e14;
-            --ink-2: #2e3245;
-            --ink-3: #6b7094;
-            --ink-4: #a8adc4;
-            --surface: #f7f6f2;
-            --surface-2: #eeede8;
-            --surface-3: #e4e2d9;
-            --white: #ffffff;
-            --navy: #1a2744;
-            --navy-2: #253566;
-            --blue: #3256b0;
-            --blue-light: #dde6f9;
-            --gold: #b07a1a;
-            --gold-light: #fdf3da;
-            --emerald: #1a7a4e;
-            --emerald-light: #d4f0e3;
-            --amber: #a0521a;
-            --amber-light: #fde8d0;
-            --rose: #9b2240;
-            --rose-light: #fde8ee;
-            --violet: #5b2d8e;
-            --violet-light: #ede0fa;
-            --teal: #0e7490;
-            --teal-light: #ccf2f9;
-            --r: 16px;
-            --r-sm: 10px;
-            --shadow-sm: 0 2px 8px rgba(12,14,20,0.06);
-            --shadow: 0 8px 32px rgba(12,14,20,0.1);
-            --shadow-lg: 0 20px 60px rgba(12,14,20,0.15);
-        }
-
-        body {
-            font-family: 'Sora', sans-serif;
-            background: var(--surface);
-            color: var(--ink);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.5;
-        }
-
-        /* ── HEADER ── */
-        header {
-            background: var(--navy);
-            padding: 0 2.5rem;
-            height: 62px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        header::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(100,140,230,0.4), transparent);
-        }
-
-        .logo-wrap { display: flex; align-items: center; gap: 12px; }
-
-        .logo-mark {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--blue), #6a90e8);
-            border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(50,86,176,0.5);
-        }
-
-        .logo-text { display: flex; flex-direction: column; gap: 1px; }
-
-        .logo-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: 0.01em;
-            line-height: 1;
-        }
-
-        .logo-sub {
-            font-size: 0.6rem;
-            font-weight: 500;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.35);
-        }
-
-        .header-right { display: flex; align-items: center; gap: 12px; }
-
-        .header-pill {
-            font-size: 0.62rem;
-            font-weight: 600;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.06);
-            padding: 5px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .header-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: #4ade80;
-            box-shadow: 0 0 8px #4ade80;
-            animation: pulse-dot 2s ease infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(0.85); }
-        }
-
-        /* ── HERO ── */
-        .hero-band {
-            background: var(--navy);
-            padding: 3rem 2.5rem 3.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-band::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(50,86,176,0.18) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .hero-band::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(100,140,230,0.3), transparent);
-        }
-
-        .hero-inner { max-width: 960px; margin: 0 auto;  }
-
-        .hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 0.63rem;
-            font-weight: 700;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: #7a9de8;
-            margin-bottom: 1rem;
-        }
-
-        .hero-eyebrow::before {
-            content: '';
-            width: 18px; height: 1.5px;
-            background: #7a9de8;
-        }
-
-        .hero-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(2rem, 4vw, 2.8rem);
-            font-weight: 700;
-            color: #fff;
-            line-height: 1.15;
-            margin-bottom: 0.75rem;
-            letter-spacing: -0.01em;
-            text-align: left;
-        }
-
-        .hero-title em { font-style: italic; color: #7a9de8; }
-
-        .hero-desc {
-            font-size: 0.875rem;
-            color: rgba(255,255,255,0.45);
-            max-width: 520px;
-            line-height: 1.7;
-            font-weight: 300;
-        }
-
-        /* ── STATS BAR ── */
-        .stats-bar {
-            display: flex;
-            gap: 2rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-num {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: rgba(255,255,255,0.35);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            line-height: 1.3;
-        }
-
-        .stat-divider {
-            width: 1px;
-            height: 30px;
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* ── MAIN ── */
-        main {
-            max-width: 1500px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 2.5rem 2rem 5rem;
-            flex-grow: 1;
-        }
-
-        /* ── SECTION LABEL ── */
-        .grid-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1.25rem;
-        }
-
-        .grid-label-text {
-            font-size: 0.62rem;
-            font-weight: 700;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--ink-3);
-            white-space: nowrap;
-        }
-
-        .grid-label-line { flex: 1; height: 1px; background: var(--surface-3); }
-
-        /* ── SEARCH BAR ── */
-        .search-bar-wrap {
-            margin-bottom: 1.5rem;
-        }
-
-        .search-bar {
-            width: 100%;
-            max-width: 320px;
-            padding: 9px 14px 9px 36px;
-            border: 1.5px solid var(--surface-3);
-            border-radius: var(--r-sm);
-            font-family: 'Sora', sans-serif;
-            font-size: 0.8rem;
-            color: var(--ink);
-            background: var(--white);
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-            position: relative;
-        }
-
-        .search-bar:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
-
-        .search-wrap {
-            position: relative;
-            display: inline-block;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 11px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--ink-4);
-            pointer-events: none;
-        }
-
-        /* ── CATEGORY TABS ── */
-        .category-tabs {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .cat-tab {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            cursor: pointer;
-            border: 1.5px solid var(--surface-3);
-            background: var(--white);
-            color: var(--ink-3);
-            transition: all 0.15s;
-            font-family: 'Sora', sans-serif;
-        }
-
-        .cat-tab:hover { border-color: var(--blue); color: var(--blue); }
-        .cat-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
-
-        /* ── TEMPLATE GRID ── */
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 14px;
-        }
-
-        .template-card {
-            background: var(--white);
-            border: 1.5px solid var(--surface-3);
-            border-radius: var(--r);
-            padding: 1.4rem 1.2rem 1.15rem;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            text-align: left;
-            position: relative;
-            overflow: hidden;
-            appearance: none;
-            font-family: inherit;
-        }
-
-        .template-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 60%, rgba(0,0,0,0.02));
-            border-radius: inherit;
-        }
-
-        .template-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-        .template-card:active { transform: translateY(-1px); }
-        .template-card.card-hidden { display: none; }
-
-        .card--blue { border-color: #c2d1f0; }
-        .card--blue:hover { border-color: var(--blue); box-shadow: 0 20px 60px rgba(50,86,176,0.14); }
-
-        .card--gold { border-color: #e6d39a; }
-        .card--gold:hover { border-color: var(--gold); box-shadow: 0 20px 60px rgba(176,122,26,0.12); }
-
-        .card--emerald { border-color: #9adfc0; }
-        .card--emerald:hover { border-color: var(--emerald); box-shadow: 0 20px 60px rgba(26,122,78,0.12); }
-
-        .card--amber { border-color: #f0c09a; }
-        .card--amber:hover { border-color: var(--amber); box-shadow: 0 20px 60px rgba(160,82,26,0.12); }
-
-        .card--rose { border-color: #f0aabb; }
-        .card--rose:hover { border-color: var(--rose); box-shadow: 0 20px 60px rgba(155,34,64,0.12); }
-
-        .card--violet { border-color: #c9aef0; }
-        .card--violet:hover { border-color: var(--violet); box-shadow: 0 20px 60px rgba(91,45,142,0.12); }
-
-        .card--teal { border-color: #99dff0; }
-        .card--teal:hover { border-color: var(--teal); box-shadow: 0 20px 60px rgba(14,116,144,0.12); }
-
-        .card-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 1rem;
-        }
-
-        .icon--blue { background: var(--blue-light); color: var(--blue); }
-        .icon--gold { background: var(--gold-light); color: var(--gold); }
-        .icon--emerald { background: var(--emerald-light); color: var(--emerald); }
-        .icon--amber { background: var(--amber-light); color: var(--amber); }
-        .icon--rose { background: var(--rose-light); color: var(--rose); }
-        .icon--violet { background: var(--violet-light); color: var(--violet); }
-        .icon--teal { background: var(--teal-light); color: var(--teal); }
-
-        .card-title { font-size: 0.875rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.01em; }
-
-        .card-tag { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-
-        .tag--blue { color: var(--blue); }
-        .tag--gold { color: var(--gold); }
-        .tag--emerald { color: var(--emerald); }
-        .tag--amber { color: var(--amber); }
-        .tag--rose { color: var(--rose); }
-        .tag--violet { color: var(--violet); }
-        .tag--teal { color: var(--teal); }
-
-        .card-arrow {
-            position: absolute;
-            bottom: 1.1rem; right: 1.1rem;
-            width: 26px; height: 26px;
-            background: var(--surface-2);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--ink-3);
-            transition: all 0.2s;
-        }
-
-        .template-card:hover .card-arrow { background: var(--ink); color: #fff; transform: rotate(45deg); }
-
-        .official-badge {
-            position: absolute;
-            top: 12px; right: 12px;
-            font-size: 0.52rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            background: var(--navy);
-            color: #fff;
-            padding: 3px 8px;
-            border-radius: 20px;
-        }
-
-        .coming-soon-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(2px);
-            border-radius: inherit;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 5;
-        }
-
-        .coming-soon-tag {
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            background: var(--surface-3);
-            color: var(--ink-3);
-            padding: 5px 12px;
-            border-radius: 20px;
-        }
-
-        /* ── MODAL ── */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(12,14,20,0.6);
-            backdrop-filter: blur(6px);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.22s ease;
-        }
-
-        .overlay.open { opacity: 1; pointer-events: all; }
-
-        .modal {
-            background: var(--white);
-            border-radius: 20px;
-            width: 100%;
-            max-width: 460px;
-            box-shadow: 0 40px 100px rgba(12,14,20,0.25);
-            overflow: hidden;
-            transform: translateY(20px) scale(0.96);
-            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-        }
-
-        .overlay.open .modal { transform: translateY(0) scale(1); }
-
-        .modal-header {
-            padding: 1.25rem 1.5rem 1rem;
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--surface-2);
-        }
-
-        .modal-eyebrow { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 3px; }
-        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); font-weight: 600; }
-
-        .modal-close {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            background: var(--surface-2);
-            border: none;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--ink-3);
-            transition: all 0.15s;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .modal-close:hover { background: var(--ink); color: #fff; }
-
-        .modal-body { padding: 1.25rem 1.5rem; }
-
-        .modal-fields {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.875rem;
-            max-height: 52vh;
-            overflow-y: auto;
-            padding-right: 2px;
-        }
-
-        .modal-fields::-webkit-scrollbar { width: 3px; }
-        .modal-fields::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
-
-        .field-wrap { display: flex; flex-direction: column; gap: 5px; }
-        .field-wrap.full-width { grid-column: 1 / -1; }
-
-        .field-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
-
-        .field-input, .field-select {
-            width: 100%;
-            padding: 9px 12px;
-            border: 1.5px solid var(--surface-3);
-            border-radius: var(--r-sm);
-            font-family: 'Sora', sans-serif;
-            font-size: 0.82rem;
-            color: var(--ink);
-            background: var(--surface);
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-        }
-
-        .field-input:focus, .field-select:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px var(--blue-light);
-            background: var(--white);
-        }
-
-        .field-input:hover:not(:focus), .field-select:hover:not(:focus) {
-            border-color: var(--surface-3);
-            background: var(--white);
-        }
-
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--surface-2);
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 9px 20px;
-            border-radius: var(--r-sm);
-            font-family: 'Sora', sans-serif;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            letter-spacing: 0.01em;
-        }
-
-        .btn-ghost { background: transparent; color: var(--ink-3); border: 1.5px solid var(--surface-3); }
-        .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
-
-        .btn-primary { background: var(--navy); color: #fff; display: flex; align-items: center; gap: 6px; }
-        .btn-primary:hover { background: var(--blue); }
-        .btn-primary:active { transform: scale(0.98); }
-
-        /* ── PREVIEW ── */
-        .preview-section {
-            max-width: 960px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 0 2rem 5rem;
-        }
-
-        .preview-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem 0 1.25rem;
-            border-top: 1px solid var(--surface-3);
-            margin-bottom: 1.5rem;
-        }
-
-        .preview-eyebrow { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 3px; }
-        .preview-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--ink); }
-
-        .toolbar-actions { display: flex; gap: 8px; }
-
-        .btn-print {
-            background: var(--navy);
-            color: #fff;
-            padding: 9px 20px;
-            border-radius: var(--r-sm);
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-family: 'Sora', sans-serif;
-        }
-
-        .btn-print:hover { background: var(--blue); }
-
-        .btn-back {
-            background: transparent;
-            color: var(--ink-2);
-            padding: 9px 16px;
-            border-radius: var(--r-sm);
-            font-size: 0.72rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1.5px solid var(--surface-3);
-            transition: all 0.15s;
-            font-family: 'Sora', sans-serif;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-back:hover { background: var(--surface-2); }
-
-        .doc-info-strip {
-            background: var(--white);
-            border: 1px solid var(--surface-3);
-            border-radius: var(--r);
-            padding: 0.875rem 1.5rem;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .doc-info-left { display: flex; align-items: center; gap: 12px; }
-
-        .doc-info-icon {
-            width: 34px; height: 34px;
-            background: var(--blue-light);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--blue);
-            flex-shrink: 0;
-        }
-
-        .doc-info-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); }
-        .doc-info-name { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
-
-        .doc-ready-pill {
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            background: var(--emerald-light);
-            color: var(--emerald);
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-
-        .letter-paper {
-            background: var(--white);
-            border: 1px solid var(--surface-3);
-            border-radius: var(--r);
-            box-shadow: var(--shadow-lg);
-            min-height: 1060px;
-            overflow: hidden;
-        }
-
-        .letter-preview { line-height: 1.7; color: #1a1a2e; font-size: 0.9rem; }
-
-        .lh-margin-top {
-            height: 100px;
-            background: repeating-linear-gradient(45deg, #f0f4ff, #f0f4ff 5px, #e8eef9 5px, #e8eef9 10px);
-            border-bottom: 2px dashed #b0c4e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            color: #6b88c0;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            user-select: none;
-            font-family: 'Sora', sans-serif;
-        }
-
-        .lh-margin-bottom {
-            height: 75px;
-            background: repeating-linear-gradient(45deg, #f0f4ff, #f0f4ff 5px, #e8eef9 5px, #e8eef9 10px);
-            border-top: 2px dashed #b0c4e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            color: #6b88c0;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            user-select: none;
-            font-family: 'Sora', sans-serif;
-        }
-
-        footer {
-            background: var(--navy);
-            text-align: center;
-            padding: 1.1rem;
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.25);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-
-        @media print {
-            header, footer, .no-print, .hero-band { display: none !important; }
-            body { background: white !important; }
-            body::before { display: none !important; }
-            .preview-section { padding: 0 !important; max-width: none !important; }
-            .preview-toolbar, .doc-info-strip { display: none !important; }
-            .letter-paper { border: none !important; box-shadow: none !important; border-radius: 0 !important; min-height: auto !important; }
-            .lh-margin-top, .lh-margin-bottom { display: none !important; }
-            @page {
-                size: A4;
-                margin-top: 28mm;
-                margin-bottom: 16mm;
-                margin-right: 14mm;
-                margin-left: 14mm;
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            DEFAULT: 'oklch(42.4% 0.199 265.638)',
+                            dark: 'oklch(35% 0.185 265.638)',
+                            hover: 'oklch(37% 0.19 265.638)',
+                            light: 'oklch(95% 0.04 265.638)',
+                            border: 'oklch(84% 0.07 265.638)',
+                            subtle: 'oklch(98% 0.015 265.638)',
+                            muted: 'oklch(42.4% 0.199 265.638 / 0.08)'
+                        }
+                    },
+                    boxShadow: {
+                        'tile': '0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
+                        'tile-hover': '0 8px 24px -4px oklch(42.4% 0.199 265.638 / 0.16), 0 2px 6px -1px oklch(42.4% 0.199 265.638 / 0.08)',
+                        'modal': '0 20px 50px -10px oklch(42.4% 0.199 265.638 / 0.28)'
+                    }
+                }
             }
-            #printArea { padding: 2mm 0 0 !important; font-size: 0.8rem !important; }
-            #printArea div, #printArea p { line-height: 1.55 !important; }
-            #printArea p { margin-bottom: 0.6rem !important; }
         }
-
-        .hidden { display: none !important; }
-
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
+    </script>
+    <style>
+        .lh-margin-top, .lh-margin-bottom {
+            background: repeating-linear-gradient(45deg, #f8f9ff, #f8f9ff 6px, #edf0fc 6px, #edf0fc 12px);
+            user-select: none;
         }
-
-        .template-card { animation: fade-up 0.4s ease both; }
-        .template-card:nth-child(1) { animation-delay: 0.05s; }
-        .template-card:nth-child(2) { animation-delay: 0.08s; }
-        .template-card:nth-child(3) { animation-delay: 0.11s; }
-        .template-card:nth-child(4) { animation-delay: 0.14s; }
-        .template-card:nth-child(5) { animation-delay: 0.17s; }
-        .template-card:nth-child(6) { animation-delay: 0.20s; }
-        .template-card:nth-child(7) { animation-delay: 0.23s; }
-        .template-card:nth-child(8) { animation-delay: 0.26s; }
-        .template-card:nth-child(9) { animation-delay: 0.29s; }
-        .template-card:nth-child(10) { animation-delay: 0.32s; }
-        .template-card:nth-child(11) { animation-delay: 0.35s; }
-
-        .print-notice {
-            background: #fffbea;
-            border: 1.5px solid #f0d060;
-            border-radius: var(--r-sm);
-            padding: 0.75rem 1.1rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            font-size: 0.78rem;
-            color: #7a5a00;
-            line-height: 1.5;
-        }
-        .print-notice strong { display: block; margin-bottom: 2px; font-size: 0.8rem; }
-        .print-notice svg { flex-shrink: 0; margin-top: 1px; color: #b07a00; }
 
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        .no-results {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 3rem;
-            color: var(--ink-4);
-            font-size: 0.85rem;
+        @media print {
+            header, footer, .no-print, #heroBand, #mainSection, .preview-toolbar, #docInfoStrip, .print-notice { 
+                display: none !important; 
+            }
+            body { 
+                background: white !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                display: block !important; 
+            }
+            #resultSection { 
+                padding: 0 !important; 
+                max-width: none !important; 
+                display: block !important; 
+            }
+            .letter-paper { 
+                border: none !important; 
+                box-shadow: none !important; 
+                border-radius: 0 !important; 
+                min-height: auto !important; 
+            }
+            .lh-margin-top, .lh-margin-bottom { 
+                display: none !important; 
+            }
+            @page { 
+                size: A4; 
+                margin-top: 28mm; 
+                margin-bottom: 16mm; 
+                margin-right: 14mm; 
+                margin-left: 14mm; 
+            }
+            #printArea { 
+                padding: 2mm 0 0 !important; 
+                font-size: 0.8rem !important; 
+            }
+            #printArea div, #printArea p { 
+                line-height: 1.55 !important; 
+            }
+            #printArea p { 
+                margin-bottom: 0.6rem !important; 
+            }
         }
     </style>
+
 </head>
-<body>
+</head><head th:replace="includes/header :: header"></head>
 
-<div class="hero-band no-print" id="heroBand">
-    <div class="hero-inner">
-        <div class="hero-eyebrow">Document Library</div>
-        <h1 class="hero-title">Generate a <em>Letter</em></h1>       
+<body class="bg-slate-50/90 text-slate-800 min-h-screen flex flex-col font-sans antialiased text-[13px]">
+
+<header class="h-[96px] bg-gradient-to-r from-brand via-[oklch(39%_0.19_265.638)] to-brand-dark px-4 sm:px-8 flex items-center relative overflow-hidden border-b border-brand-border/40 shadow-sm no-print" id="heroBand">
+    <div class="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+    <div class="absolute left-1/3 -bottom-16 w-56 h-56 rounded-full bg-brand-light/10 blur-2xl pointer-events-none"></div>
+
+    <div class="w-full max-w-[1720px] mx-auto flex items-center justify-between relative z-10">
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center text-white font-bold text-base shadow-inner">
+                G
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[0.62rem] font-bold tracking-[0.2em] uppercase text-white/80">Internal Portal</span>
+                    <span class="px-1.5 py-0.5 rounded text-[0.58rem] font-bold bg-white/20 text-white tracking-wide uppercase border border-white/20">HR Studio</span>
+                </div>
+                <h1 class="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+                    Geosieben <span class="italic font-normal text-white/95">Letter Studio</span>
+                </h1>
+            </div>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-3">
+            <div class="text-right">
+                <div class="text-[0.65rem] font-semibold text-white/70">Company Standard v2.4</div>
+                <div class="text-[0.75rem] font-medium text-white/95">Hassan Branch Office</div>
+            </div>
+            <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+        </div>
     </div>
-</div>
+</header>
 
-<main class="no-print" id="mainSection">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
-        <div class="search-wrap">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input class="search-bar" type="text" placeholder="Search templates…" id="searchInput" oninput="filterCards()">
+<main class="max-w-[1720px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-grow no-print" id="mainSection">
+    
+    <!-- Controls Toolbar (Compact Single Row) -->
+    <div class="bg-white border border-slate-200/90 rounded-xl p-2.5 sm:p-3 mb-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        
+        <!-- Search bar -->
+        <div class="relative w-full md:w-80">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input 
+                class="w-full pl-9 pr-3.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 transition outline-none hover:border-brand-border focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/15" 
+                type="text" 
+                placeholder="Search letter templates..." 
+                id="searchInput" 
+                oninput="filterCards()"
+            >
+        </div>
+
+        <!-- Category pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none" id="categoryTabs">
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-semibold tracking-wide border transition-all duration-150 bg-brand text-white border-brand shadow-sm shadow-brand/25 whitespace-nowrap" onclick="filterCategory('all', this)">All</button>
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap" onclick="filterCategory('onboarding', this)">Onboarding</button>
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap" onclick="filterCategory('performance', this)">Performance</button>
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap" onclick="filterCategory('exit', this)">Exit</button>
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap" onclick="filterCategory('compliance', this)">Compliance</button>
+            <button class="cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap" onclick="filterCategory('recognition', this)">Recognition</button>
+        </div>
+
+        <!-- Available Badge -->
+        <div class="hidden lg:flex items-center gap-2 pl-3 border-l border-slate-200/80">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+            <span class="text-[0.7rem] font-semibold text-slate-500 whitespace-nowrap" id="countLabel">12 available</span>
         </div>
     </div>
 
-    <div class="category-tabs" id="categoryTabs">
-        <button class="cat-tab active" onclick="filterCategory('all', this)">All</button>
-        <button class="cat-tab" onclick="filterCategory('onboarding', this)">Onboarding</button>
-        <button class="cat-tab" onclick="filterCategory('performance', this)">Performance</button>
-        <button class="cat-tab" onclick="filterCategory('exit', this)">Exit</button>
-        <button class="cat-tab" onclick="filterCategory('compliance', this)">Compliance</button>
-        <button class="cat-tab" onclick="filterCategory('recognition', this)">Recognition</button>
-    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-3.5" id="templateGrid">
 
-    <div class="grid-label">
-        <span class="grid-label-text">Templates</span>
-        <span class="grid-label-line"></span>
-        <span class="grid-label-text" id="countLabel">11 available</span>
-    </div>
-
-    <div class="template-grid" id="templateGrid">
-
-        <!-- Offer Letter -->
-        <button class="template-card card--blue" data-type="offer" data-category="onboarding" data-keywords="offer employment job hire" onclick="openModal('offer')">
-            <span class="official-badge">Official</span>
-            <div class="card-icon icon--blue">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <!-- Tile 1: Offer Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="offer" data-category="onboarding" data-keywords="offer employment job hire candidate" onclick="openModal('offer')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-brand-light text-brand border border-brand-border/60 px-1.5 py-0.5 rounded">Official</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Offer Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Standard candidate employment offer with CTC, benefits & terms.</p>
             </div>
-            <div class="card-title">Offer Letter</div>
-            <div class="card-tag tag--blue">Onboarding</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Onboarding</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Appointment -->
-        <button class="template-card card--gold" data-type="appointment" data-category="onboarding" data-keywords="appointment join confirm" onclick="openModal('appointment')">
-            <div class="card-icon icon--gold">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <!-- Tile 2: Offer Letter (Contract) -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="offerContract" data-category="onboarding" data-keywords="offer employment job hire contract stipend" onclick="openModal('offerContract')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-brand-light text-brand border border-brand-border/60 px-1.5 py-0.5 rounded">Contract</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Offer (Contract)</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Fixed-term contract engagement with monthly stipend & TDS terms.</p>
             </div>
-            <div class="card-title">Appointment Letter</div>
-            <div class="card-tag tag--gold">Onboarding</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Onboarding</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Probation -->
-        <button class="template-card card--amber" data-type="probation" data-category="onboarding compliance" data-keywords="probation agreement terms" onclick="openModal('probation')">
-            <div class="card-icon icon--amber">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <!-- Tile 3: Appointment -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="appointment" data-category="onboarding" data-keywords="appointment join confirm terms" onclick="openModal('appointment')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Standard</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Appointment</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Formal joining & appointment confirmation with operational duties.</p>
             </div>
-            <div class="card-title">Probation Agreement</div>
-            <div class="card-tag tag--amber">Compliance</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Onboarding</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Confirmation -->
-        <button class="template-card card--emerald" data-type="confirmation" data-category="onboarding performance" data-keywords="confirmation permanent confirmed" onclick="openModal('confirmation')">
-            <div class="card-icon icon--emerald">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <!-- Tile 4: Probation Agreement -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="probation" data-category="onboarding compliance" data-keywords="probation agreement terms" onclick="openModal('probation')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">Agreement</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Probation Agreement</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Probationary clauses, leaves, and terms of employment review.</p>
             </div>
-            <div class="card-title">Confirmation Letter</div>
-            <div class="card-tag tag--emerald">Performance</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Compliance</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Increment -->
-        <button class="template-card card--violet" data-type="increment" data-category="recognition performance" data-keywords="increment salary hike raise appraisal" onclick="openModal('increment')">
-            <div class="card-icon icon--violet">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <!-- Tile 5: Confirmation Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="confirmation" data-category="onboarding performance" data-keywords="confirmation permanent confirmed" onclick="openModal('confirmation')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center transition group-hover:bg-emerald-600 group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">Confirmed</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Confirmation Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Probation completion letter with permanent revision details.</p>
             </div>
-            <div class="card-title">Increment Letter</div>
-            <div class="card-tag tag--violet">Recognition</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Performance</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Relieving -->
-        <button class="template-card card--teal" data-type="relieving" data-category="exit" data-keywords="relieving relieve noc exit" onclick="openModal('relieving')">
-            <div class="card-icon icon--teal">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <!-- Tile 6: Increment Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="increment" data-category="recognition performance" data-keywords="increment salary hike raise appraisal" onclick="openModal('increment')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded">Appraisal</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Increment Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Compensation revision & performance appraisal certification.</p>
             </div>
-            <div class="card-title">Relieving Letter</div>
-            <div class="card-tag tag--teal">Exit</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Recognition</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Experience -->
-        <button class="template-card card--blue" data-type="experience" data-category="exit" data-keywords="experience certificate service noc" onclick="openModal('experience')">
-            <div class="card-icon icon--blue">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        <!-- Tile 7: Relieving Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="relieving" data-category="exit" data-keywords="relieving relieve noc exit resignation" onclick="openModal('relieving')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center transition group-hover:bg-teal-600 group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200 px-1.5 py-0.5 rounded">Exit</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Relieving Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Formal duties handover completion and separation clearance.</p>
             </div>
-            <div class="card-title">Experience Letter</div>
-            <div class="card-tag tag--blue">Exit</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Exit</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Termination -->
-        <button class="template-card card--rose" data-type="termination" data-category="exit performance" data-keywords="termination terminate fired dismiss" onclick="openModal('termination')">
-            <div class="card-icon icon--rose">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <!-- Tile 8: Experience Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="experience" data-category="exit" data-keywords="experience certificate service tenure" onclick="openModal('experience')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-brand-light text-brand border border-brand-border/60 px-1.5 py-0.5 rounded">Service</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Experience Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Certification of employee tenure, department and conduct rating.</p>
             </div>
-            <div class="card-title">Termination Letter</div>
-            <div class="card-tag tag--rose">Exit</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Exit</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Warning -->
-        <button class="template-card card--amber" data-type="warning" data-category="performance compliance" data-keywords="warning show cause misconduct" onclick="openModal('warning')">
-            <div class="card-icon icon--amber">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <!-- Tile 9: Termination Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-rose-400 rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="termination" data-category="exit performance" data-keywords="termination terminate fired dismiss severance" onclick="openModal('termination')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center transition group-hover:bg-rose-600 group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded">Notice</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-rose-600 transition leading-tight mb-1">Termination Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Official contract disengagement with return of asset instructions.</p>
             </div>
-            <div class="card-title">Warning Letter</div>
-            <div class="card-tag tag--amber">Compliance</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Exit</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Marks Card -->
-        <button class="template-card card--emerald" data-type="marksCard" data-category="compliance" data-keywords="marks card original documents return" onclick="openModal('marksCard')">
-            <div class="card-icon icon--emerald">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <!-- Tile 10: Warning Letter -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-amber-400 rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="warning" data-category="performance compliance" data-keywords="warning show cause misconduct disciplinary" onclick="openModal('warning')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center transition group-hover:bg-amber-600 group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">Action</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-amber-600 transition leading-tight mb-1">Warning Letter</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Formal disciplinary memo citing incident details and cure terms.</p>
             </div>
-            <div class="card-title">Marks Card Return</div>
-            <div class="card-tag tag--emerald">Compliance</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Compliance</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
-        <!-- Employment Bond -->
-        <button class="template-card card--blue" data-type="bond" data-category="compliance onboarding" data-keywords="bond service agreement" onclick="openModal('bond')">
-            <div class="card-icon icon--blue">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6M20 6H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z"/></svg>
+        <!-- Tile 11: Marks Card Return -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="marksCard" data-category="compliance" data-keywords="marks card original documents return certificate" onclick="openModal('marksCard')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Release</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Marks Card Return</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Acknowledgment receipt of original certificates returned to staff.</p>
             </div>
-            <div class="card-title">Employment Bond</div>
-            <div class="card-tag tag--blue">Compliance</div>
-            <span class="card-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Compliance</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
+        </button>
+
+        <!-- Tile 12: Employment Bond -->
+        <button class="template-card group bg-white border border-slate-200 hover:border-brand rounded-xl p-3.5 cursor-pointer text-left relative flex flex-col justify-between shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200" data-type="bond" data-category="compliance onboarding" data-keywords="bond service agreement minimum term" onclick="openModal('bond')">
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand border border-brand/20 flex items-center justify-center transition group-hover:bg-brand group-hover:text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6M20 6H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z"/></svg>
+                    </div>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-wider bg-brand-light text-brand border border-brand-border/60 px-1.5 py-0.5 rounded">Legal</span>
+                </div>
+                <h3 class="text-[0.84rem] font-bold text-slate-800 group-hover:text-brand transition leading-tight mb-1">Employment Bond</h3>
+                <p class="text-[0.7rem] text-slate-400 leading-normal line-clamp-2">Six-month service commitment agreement & liability clause.</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-400">
+                <span class="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500">Compliance</span>
+                <span class="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-brand group-hover:text-white flex items-center justify-center transition text-slate-500">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+            </div>
         </button>
 
     </div>
 </main>
 
-<!-- MODAL -->
-<div class="overlay" id="modalOverlay">
-    <div class="modal" id="modalBox">
-        <div class="modal-header">
-            <div class="modal-header-text">
-                <div class="modal-eyebrow">Fill in Details</div>
-                <span class="modal-title" id="modalTitle">Template Details</span>
+<div class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-[200] flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-all duration-200" id="modalOverlay">
+    <div class="bg-white rounded-xl w-full max-w-lg shadow-modal border border-brand-border overflow-hidden transform translate-y-3 scale-[0.98] transition-all duration-200" id="modalBox">
+        
+        <!-- Modal Header (Compact) -->
+        <div class="px-5 py-3.5 flex items-center justify-between bg-gradient-to-r from-brand to-brand-dark text-white border-b border-brand-border/40">
+            <div>
+                <div class="text-[0.62rem] font-bold tracking-[0.16em] uppercase text-white/80">Configure Letter</div>
+                <h3 class="font-serif text-base sm:text-lg font-bold text-white tracking-wide" id="modalTitle">Template Details</h3>
             </div>
-            <button class="modal-close" onclick="closeModal()">
+            <button class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15" onclick="closeModal()">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
+
         <form id="letterForm">
-            <div class="modal-body">
-                <div class="modal-fields" id="formFields"></div>
+            <!-- Modal Body -->
+            <div class="p-4 sm:p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[56vh] overflow-y-auto pr-1" id="formFields"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">
-                    Generate
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </button>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <span class="text-[0.65rem] text-slate-400">All fields adapt into letterhead format</span>
+                <div class="flex gap-2">
+                    <button type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition duration-150" onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-brand hover:bg-brand-hover shadow-sm shadow-brand/30 flex items-center gap-1.5 transition duration-150">
+                        Generate
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- PREVIEW -->
-<section class="preview-section hidden" id="resultSection">
-    <div class="preview-toolbar no-print">
-        <div class="preview-title-wrap">
-            <div class="preview-eyebrow">Document Ready</div>
-            <h2 class="preview-title">Preview &amp; Print</h2>
+<section class="max-w-[960px] mx-auto w-full px-4 sm:px-6 pb-16 hidden" id="resultSection">
+    
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between py-4 mb-2 no-print">
+        <div>
+            <div class="text-[0.64rem] font-bold tracking-[0.14em] uppercase text-brand mb-0.5">Ready for Output</div>
+            <h2 class="font-serif text-xl sm:text-2xl font-bold text-slate-900">Document Preview</h2>
         </div>
-        <div class="toolbar-actions">
-            <button class="btn-back" onclick="resetApp()">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back
+        <div class="flex gap-2">
+            <button class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:border-brand-border hover:bg-brand-subtle hover:text-brand transition flex items-center gap-1.5 shadow-xs" onclick="resetApp()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Templates
             </button>
-            <button class="btn-print" onclick="window.print()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+            <button class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-brand hover:bg-brand-hover shadow-sm shadow-brand/30 transition flex items-center gap-1.5" onclick="window.print()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                 Print / Save PDF
             </button>
         </div>
     </div>
 
-    <div class="doc-info-strip no-print" id="docInfoStrip">
-        <div class="doc-info-left">
-            <div class="doc-info-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <!-- Doc Info Strip (Compact) -->
+    <div class="bg-white border border-slate-200 border-l-[3px] border-l-brand rounded-xl px-4 py-3 mb-3.5 flex items-center justify-between gap-3 shadow-xs no-print" id="docInfoStrip">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-brand-light border border-brand-border/40 rounded-lg flex items-center justify-center text-brand flex-shrink-0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </div>
             <div>
-                <div class="doc-info-label">Generated Document</div>
-                <div class="doc-info-name" id="docInfoName">—</div>
+                <div class="text-[0.58rem] font-bold tracking-wider uppercase text-slate-400">Current Letter</div>
+                <div class="text-[0.82rem] font-semibold text-slate-900" id="docInfoName">—</div>
             </div>
         </div>
-        <span class="doc-ready-pill">Ready to Print</span>
+        <span class="text-[0.62rem] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">Ready to Print</span>
     </div>
 
-    <div class="print-notice no-print">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <!-- Print Notice Banner -->
+    <div class="bg-amber-50/70 border border-amber-200/80 text-amber-900 rounded-lg p-2.5 mb-4 flex items-start gap-2.5 text-[0.75rem] leading-relaxed no-print">
+        <svg class="text-amber-600 flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div>
-            <strong>To hide the page URL, date &amp; title while printing:</strong>
-            In the print dialog → click <b>More settings</b> → uncheck <b>"Headers and footers"</b>. This is a browser setting that cannot be disabled automatically.
+            <strong class="font-semibold text-amber-950">Clean PDF Tip:</strong>
+            In the print preview dialog &rarr; click <b>More settings</b> &rarr; uncheck <b>"Headers and footers"</b> to remove default URL & timestamp.
         </div>
     </div>
 
-    <div class="letter-paper">
-        <div class="lh-margin-top">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    <!-- Letter Mock Paper -->
+    <div class="letter-paper bg-white border border-slate-200 rounded-xl shadow-tile min-h-[1020px] overflow-hidden">
+        <div class="lh-margin-top h-20 border-b border-dashed border-brand-border flex items-center justify-center gap-2 text-brand font-bold text-[0.65rem] tracking-wider uppercase">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             Letterhead Space — Top (38 mm on print)
         </div>
-        <div id="printArea" class="letter-preview" style="padding: 1.5rem 3.5rem 2rem;"></div>
-        <div class="lh-margin-bottom">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18M9 21v-6"/></svg>
+        
+        <div id="printArea" class="p-8 sm:p-12 leading-relaxed text-slate-900 text-sm"></div>
+        
+        <div class="lh-margin-bottom h-16 border-t border-dashed border-brand-border flex items-center justify-center gap-2 text-brand font-bold text-[0.65rem] tracking-wider uppercase">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18M9 21v-6"/></svg>
             Footer Space — Bottom (28 mm on print)
         </div>
     </div>
 </section>
 
-<footer>
-    Geosieben Consulting Pvt Ltd &nbsp;·&nbsp; DocuGen Pro &nbsp;·&nbsp; Internal Use Only
+<!-- Footer -->
+<footer class="bg-slate-900 text-center py-3 text-[0.68rem] text-slate-400 tracking-wider uppercase mt-auto border-t border-slate-800">
+    Geosieben Consulting Pvt Ltd &nbsp;&bull;&nbsp; Internal HR Tools
 </footer>
-
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
 <script>
-/* ─── HELPERS ─── */
 function today() { return new Date().toISOString().split('T')[0]; }
 
 function fmtDate(s) {
@@ -1051,7 +521,7 @@ function fmtDate(s) {
 }
 
 function geoFooter() {
-    return `<div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #e2e8f0; text-align:center; font-size:0.72rem; color:#64748b; line-height:1.8;">
+    return `<div style="margin-top:1rem; padding-top:0.5rem; border-top:1px solid #e2e8f0; text-align:center; font-size:0.72rem; color:#64748b; line-height:1.8;">
         <p style="font-weight:700;">Geosieben Consulting Private Limited</p>
         <p>2nd Floor, Shri Shabarish Plaza, Aryabhata Road, Ring Road, Jaya Nagar, Hassan-573201</p>
         <p>E-mail: info@geosieben.com &nbsp;|&nbsp; Off: 63648 48844</p>
@@ -1074,7 +544,6 @@ function wrapper(content) {
     return `<div style="font-family:'Times New Roman',Times,serif; color:#1a1a2e; line-height:1.7; font-size:0.93rem;">${content}</div>`;
 }
 
-/* ─── BOND / PROBATION SHARED TEMPLATE ─── */
 function bondTemplate(d) {
     return wrapper(`
     ${docHead(d.date)}
@@ -1083,7 +552,7 @@ function bondTemplate(d) {
     </div>
     <p style="text-align:justify; margin-bottom:1rem; line-height:1.8;">This Employment Bond Agreement ("Agreement") is entered into on <strong>${fmtDate(d.joiningDate)}</strong>, between <strong>Geosieben Consulting Pvt Ltd</strong>, with its principal place of business at Above Sri Krishna Motors TVS, SECOND FLOOR, Sri Shabrish Plaza, Ring Road, Jaya Nagar, Hassan, 573201 (hereinafter referred to as the "Company"),</p>
     <p style="text-align:center; font-weight:700; margin-bottom:1rem;">AND</p>
-    <p style="text-align:justify; margin-bottom:1.2rem; line-height:1.8;"><strong>${d.employeeName}</strong>, S/o <strong>${d.fatherName}</strong> residing at <strong>${d.address}</strong> (hereinafter referred to as the "Employee").</p>
+    <p style="text-align:justify; margin-bottom:1.2rem; line-height:1.8;"><strong>${d.employeeName}</strong>, ${d.prefix || 'S/O'} <strong>${d.fatherName}</strong> residing at <strong>${d.address}</strong> (hereinafter referred to as the "Employee").</p>
     <p style="margin-bottom:1.5rem;"><strong>Aadhar Number:</strong> ${d.aadhar}</p>
     <p style="font-weight:700; text-decoration:underline; margin-bottom:1rem;">Terms &amp; Conditions:</p>
     <div style="display:flex; flex-direction:column; gap:0.65rem; text-align:justify;">
@@ -1092,7 +561,7 @@ function bondTemplate(d) {
         <p><strong>3. Release of Original Mark Sheets:</strong><br>The Company agrees to release the original mark sheets and any other relevant documents, only after the employee has formally resigned and successfully completed all exit formalities, including the required notice period.</p>
         <p><strong>4. Salary Withholding Policy for Un-notified Employee Departure:</strong><br>a. In the event of an employee's sudden resignation without providing notice or informing the company, and if the departure occurs before completing the minimum term of 6 months, the salary for the respective month shall not be disbursed as per the terms outlined in the employee agreement.<br><br>b. If an employee's performance during the training period is found to be unsatisfactory, the company reserves the right to terminate the employment and withhold the salary for the respective month, in accordance with the terms stated in the employee agreement.</p>
         <p><strong>5. Confirmation of Employment:</strong><br>After completing the 6-month probation period, the Employee will be considered for confirmation based on overall performance, discipline, behavior, and the performance report received from the Team Lead.</p>
-        <p><strong>6. Leave during Probation:</strong><br>During the 3-month probation period, the Employee will be eligible for:<br>&nbsp;&nbsp;&bull;&nbsp; 3 Sick Leaves (SL)<br>&nbsp;&nbsp;&bull;&nbsp; 3 Applied Leaves (AL) – prior approval required<br>Any unapproved or excess leaves will be treated as Loss of Pay (LOP).</p>
+        <p><strong>6. Leave during Probation:</strong><br>During the ${d.probation || 6}-month probation period, the Employee will be eligible for:<br>&nbsp;&nbsp;&bull;&nbsp; ${(d.probation || 6)/2} Sick Leaves (SL)<br>&nbsp;&nbsp;&bull;&nbsp; ${(d.probation || 6)/2} Casual Leaves (CL) – prior approval required<br>Any unapproved or excess leaves will be treated as Loss of Pay (LOP).</p>
         <p><strong>7. Governing Law:</strong><br>This Agreement shall be governed by and construed in accordance with the laws of India.</p>
         <p><strong>8.</strong> After successful completion and serving the company for a minimum duration of 6 months; this agreement thereafter is considered to be <strong>NULL and VOID</strong>.</p>
         <p><strong>9.</strong> This agreement is effective from <strong>${fmtDate(d.joiningDate)}</strong>.</p>
@@ -1100,7 +569,7 @@ function bondTemplate(d) {
     <div style="margin-top:2rem; line-height:2;">
         <p><strong>Employee Name:</strong> ${d.employeeName}</p>
         <p><strong>Employee Email ID:</strong> ${d.email}</p>
-        <p><strong>Employee Phone Number:</strong> ${d.phone}</p>
+        <p><strong>Employee Phone Number:</strong> ${d.phone}</p>   
     </div>
     <div style="margin-top:2rem;">
         <p style="font-weight:700;">For,</p>
@@ -1118,106 +587,239 @@ function bondTemplate(d) {
     </div>`);
 }
 
-/* ─── CONFIG ─── */
 const config = {
+    offer: {
+        title: "Geosieben Offer Letter",
+        fields: [
+            { name: 'date', label: 'Offer Date', type: 'date', default: today(), full: false },
+            { name: 'candidateName', label: 'Candidate Name', type: 'text', full: true },
+            { name: 'role',   label: 'Position', type: 'text',  full: false},
+            { name: 'startDate', label: 'Start Date', type: 'date', full: false },
+            { name: 'salary', label: 'Monthly Salary', type: 'text', default: '20,000', full: false },
+            { name: 'salaryType', label: 'Salary Type', type: 'select', options: ['In-Hand Salary', 'CTC'], default: 'In-Hand Salary' },
+            { name: 'probationMonths', label: 'Probation Duration', type: 'text', default: 'three (3) to six (6)', full: false },
+            { name: 'deadline', label: 'Acceptance Deadline', type: 'date', full: false }
+        ],
+        template: (d) => `<style>
+            @media print {
+                @page { size: A4; margin: 15mm 20mm; }
+                body { margin: 0; padding: 0; }
+            }
+            .offer-container {
+                font-family: 'Times New Roman', Times, serif;
+                color: #1a1a2e;
+                line-height: 1.5;
+                font-size: 12pt; 
+                width: 100%;
+                margin: 0 auto;
+            }
+            .section-break { margin-bottom: 0.9rem; text-align: justify; }
+            .keep-together { page-break-inside: avoid; break-inside: avoid; }
+        </style>
 
-offer: {
-    title: "Geosieben Offer Letter",
-    fields: [
-        { name: 'date', label: 'Offer Date', type: 'date', default: today(), full: false },
-        { name: 'candidateName', label: 'Candidate Name', type: 'text', full: true },
-        { name: 'role', label: 'Position', type: 'text', default: 'Web Developer', full: false },
-        { name: 'startDate', label: 'Start Date', type: 'date', full: false },
-        { name: 'salary', label: 'Monthly CTC (Probation)', type: 'text', default: '20,000', full: false },
-        { name: 'probationMonths', label: 'Probation Duration', type: 'text', default: 'three (3) to six (6)', full: false },
-        { name: 'deadline', label: 'Acceptance Deadline', type: 'date', full: false },
-        { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R', full: false }
-    ],
-    template: (d) => `
-<div style="font-family:'Times New Roman',Times,serif; color:#1a1a2e; line-height:1.7; font-size:1.05rem; margin-left: 5%;">
-
-    <div style="page-break-after: always;">
-        <p style="margin-bottom:1.6rem; font-size:0.95rem; text-align:right;">Date: <strong>${fmtDate(d.date)}</strong></p>
-
-        <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; letter-spacing:0.01em; text-align:center;"><u>Offer of Employment</u></h2>
-
-        <p style="margin-bottom:1.2rem;">Dear <strong>${d.candidateName}</strong>,</p>
-
-        <p style="margin-bottom:1.2rem; text-align:justify;">We are pleased to extend an offer to you for the position of <strong>${d.role}</strong> at <strong>Geosieben Consulting Pvt Ltd</strong>. We recognize your potential and enthusiasm, and we believe that your academic background and passion to learn will make you a valuable part of our team.</p>
-
-        <p style="margin-bottom:1rem;">This letter outlines the terms and conditions of your employment. Kindly review the details below:</p>
-
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-            <p><strong>1. Job Title:</strong><br>
-            You will be employed as a <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd.</p>
-
-            <p><strong>2. Start Date:</strong><br>
-            Your employment will commence on <strong>${fmtDate(d.startDate)}</strong>.</p>
-
-            <p><strong>3. Compensation:</strong><br>
-            Your monthly salary during the probationary period will be ₹${d.salary} (CTC). Upon successful completion of the probation period, your salary will be reviewed and revised based on performance.</p>
-
-            <p><strong>4. Probation Period:</strong><br>
-            You will be placed on a probation period of ${d.probationMonths} months starting from your joining date. During this period, your performance and suitability for the role will be evaluated. Upon successful 
-            completion of the probation period, you will be confirmed in your role and become eligible for the company’s benefits as per policy.</p>
-
-            <p><strong>5. Work Schedule:</strong><br>
-            Your normal working hours will be 9:00 AM – 6:30 PM, from Monday to Saturday, totaling 51 hours per week. There may be occasional flexibility depending on business needs.</p>
-        </div>
-    </div>
-
-    <div style="break-before: page; margin-top: 2rem;">
-        <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:1.6rem;">
-            <p><strong>6. Benefits:</strong><br>
-            Once confirmed in your role, you will be entitled to the following benefits:<br>
-            &nbsp;&nbsp;&nbsp;Paid Time Off (PTO): Leaves as per Standard MNC policy.</p>
-            
-            <p><strong>7. Confidentiality and Non-Disclosure Agreement:</strong><br>
-            As part of your employment, you will be required to adhere to the company’s confidentiality and non-disclosure agreements. All intellectual property developed during your employment will remain the property of the company.</p>
-
-            <p><strong>8. Company Policies:</strong><br>
-            You will be expected to comply with all applicable company policies, rules, and regulations, including but not limited to: 
-            <ol type="a" style="margin-top:0.5rem; margin-left:15px;">
-                <li>Working hours and attendance</li>
-                <li>Code of conduct and behavior</li>
-                <li>Health and safety protocols</li>
-                <li>IT security policies</li>
-            </ol></p>
-
-            <p><strong>9. At-Will Employment Statement:</strong><br>
-            Your employment with Geosieben Consulting Pvt Ltd is at-will, meaning either you or the company may terminate the relationship at any time, with or without notice, and for any lawful reason, in accordance with applicable local labor laws.</p>
-
-            <p><strong>10. Location:</strong><br>
-            You will be based at our office located at Hassan. You may be required to travel to other company locations, or work remotely, depending on business requirements.</p>
-
-            <p><strong>11. Acceptance Deadline:</strong><br>
-            Please confirm your acceptance of this offer by signing and returning a copy of this letter by <strong>${fmtDate(d.deadline)}</strong>.</p>
-        </div>
-    </div>
-
-    <div style="break-before: page; margin-top: 2rem;">
-        <p><strong>12. Signatures:</strong><br>
-        By signing this offer letter, you agree to the terms and conditions outlined above. A copy of the signed offer letter will be provided to you for your records.<br><br>
-        We are excited about the prospect of you joining our dynamic team. Please do not hesitate to reach out if you have any questions or need clarification.<br><br>
-        We look forward to working with you!</p>
-        
-        <p style="margin-top:1.5rem;">Sincerely,</p>
-        <p style="font-weight:700; margin-top:1rem; margin-bottom:0;">${d.signatory}</p>
-        <p style="font-size:0.9rem; margin:0;">HR-Admin</p>
-        <p style="font-size:0.9rem; font-weight:700; margin:0;">Geosieben Consulting Pvt Ltd</p>
-
-        <div style="border-top:2px solid #cbd5e1; margin-top:3rem; padding-top:1.5rem;">
-            <h3 style="font-weight:700; margin-bottom:1rem; font-size:1.1rem;">Acknowledgement and Acceptance</h3>
-            <p style="margin-bottom:2rem;">I, <strong>${d.candidateName}</strong>, accept the offer as outlined in this letter.</p>
-            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
-                <div style="flex:1.5; border-bottom:1px solid #334155; padding-bottom:8px;">Signature: ___________________</div>
-                <div style="flex:1; border-bottom:1px solid #334155; padding-bottom:8px;">Date: ___________________</div>
+        <div class="offer-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; ">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 50px; width: auto;">
             </div>
-        </div>
-    </div>
 
-</div>`
-},
+            <p style="text-align:right; margin-bottom: 5px;">Date: <strong>${fmtDate(d.date)}</strong></p>
+
+            <h2 style="font-size:1.4rem; font-weight:700; margin-bottom:1.5rem; text-align:center;"><u>Offer of Employment</u></h2>
+
+            <p class="section-break">Dear <strong>${d.candidateName}</strong>,</p>
+
+            <p class="section-break">We are pleased to extend an offer to you for the position of <strong>${d.role}</strong> at <strong>Geosieben Consulting Pvt Ltd</strong>. After a thorough review of your qualifications and experience, we believe that your skills and expertise will be a valuable addition to our team and contribute to our continued growth and success.</p>
+
+            <p class="section-break">This letter outlines the terms and conditions of your employment. Kindly review the details below:</p>
+
+            <div class="section-break"><strong>1. Job Title:</strong><br> You will be employed as a <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd.</div>
+            
+            <div class="section-break"><strong>2. Start Date:</strong><br> Your employment will commence on <strong>${fmtDate(d.startDate)}</strong>.</div>
+            
+            <div class="section-break"><strong>3. Compensation:</strong><br> Your monthly salary during the probationary period will be ₹${d.salary} (${d.salaryType}).<br>
+                Upon successful completion of the probation period, your salary will be reviewed and revised based on performance. Additionally, the following statutory benefits will be applicable: <br>
+                <ol type="a" style="margin-top:0.3rem; margin-left:15px;">
+                    <li>Employee State Insurance (ESI) / Personal Health Insurance</li>
+                    <li>Provident Fund (PF)</li>
+                    <li>Gratuity, in accordance with company policy and statutory guidelines.</li>
+                    <li>Additional Leave benefits</li>
+                </ol>
+            </div>
+
+            <div class="section-break"><strong>4. Probation Period:</strong><br> You will be placed on a probation period of ${d.probationMonths} months starting from your joining date. During this period, your performance and suitability for the role will be evaluated. During the probation period, you will be eligible to take one (1) leave per month, subject to prior approval from your reporting manager. Upon successful completion of the probation period, you will be confirmed in your role and become eligible for the company’s benefits as per policy. </div>
+            
+            <div class="section-break"><strong>5. Work Schedule:</strong><br> Your normal working hours will be 9:00 AM – 6:30 PM, from Monday to Saturday, totaling 51 hours per week. There may be occasional flexibility depending on business needs.</div>
+            
+            ${geoFooter()}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; margin-top:2rem;">
+                <img src="/images/gsblogo.png" style="height: 50px; width: auto;">
+            </div>
+            <div class="section-break"><strong>6. Leaves:</strong><br> The number of annual leaves is determined by the number of declared holidays for that business area. The total number of annual leave entitlement for the calendar year is 24 for all employees. Your annual leave will be pro-rated depending on your date of confirmation. Additional days are given each year for national & public holidays and the Company will let you know when they are. The Company reserve the right to ask you to work on a public holiday. </div>
+            
+            <div class="section-break"><strong>7. Confidentiality and Non-Disclosure Agreement:</strong><br> As part of your employment, you will be required to adhere to the company’s confidentiality and non-disclosure agreements. All intellectual property developed during your employment will remain the property of the company.</div>
+            
+            <div class="section-break keep-together">
+                <strong>8. Company Policies:</strong><br>
+                You will be expected to comply with all applicable company policies, rules, and regulations, including but not limited to: 
+                <ol type="a" style="margin-top:0.3rem; margin-left:15px;">
+                    <li>Working hours and attendance</li>
+                    <li>Code of conduct and behavior</li>
+                    <li>Health and safety protocols</li>
+                    <li>IT security policies</li>
+                </ol>
+            </div>
+
+            <div class="section-break"><strong>9. At-Will Employment Statement:</strong><br> Your employment with Geosieben Consulting Pvt Ltd is at-will, meaning either you or the company may terminate the relationship at any time, with or without notice, and for any lawful reason, in accordance with applicable local labor laws.</div>
+            
+            <div class="section-break"><strong>10. Location:</strong><br> You will be based at our office located at Hassan. You may be required to travel to other company locations, or work remotely, depending on business requirements.</div>
+            
+            <div class="section-break"><strong>11. Acceptance Deadline:</strong><br> Please confirm your acceptance of this offer by signing and returning a copy of this letter by <strong>${fmtDate(d.deadline)}</strong>.</div>
+            <br>
+            ${geoFooter()}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; margin-top:2rem;">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 50px; width: auto;">
+            </div>
+            <div class="section-break keep-together">
+                <p><strong>12. Signatures:</strong><br>
+                By signing this offer letter, you agree to the terms and conditions outlined above. A copy of the signed offer letter will be provided to you for your records.<br><br>
+                We are excited about the prospect of you joining our dynamic team. Please do not hesitate to reach out if you have any questions or need clarification.<br><br>
+                We look forward to working with you!</p>
+                
+                <p style="margin-top:1.2rem; margin-bottom:0.2rem;">Sincerely,</p>
+                <p style="font-size:10pt; margin:0;">HR Department</p>
+                <p style="font-size:10pt; font-weight:700; margin:0;">Geosieben Consulting Pvt Ltd</p>
+            </div>
+
+            <div class="keep-together" style="border: 1px solid #cbd5e1; margin-top:1.5rem; padding:1rem;">
+                <h3 style="font-weight:700; margin-top:0; margin-bottom:0.8rem; font-size:1.2rem;">Acknowledgement and Acceptance</h3>
+                <p style="margin-bottom:1.5rem;">I, <strong>${d.candidateName}</strong>, accept the offer as outlined in this letter.</p>
+                <div style="display:flex; justify-content:space-between; gap:2rem;">
+                    <div style="flex:1.5; border-bottom:1px solid #334155; padding-bottom:5px;">Signature: ___________________</div>
+                    <div style="flex:1; border-bottom:1px solid #334155; padding-bottom:5px;">Date: ___________________</div>
+                </div>
+            </div>
+            <div style="padding-top:320px;">
+                ${geoFooter()}
+            </div>
+        </div>`
+    },
+    offerContract: {
+        title: "Geosieben Offer Letter (Contract)",
+        fields: [
+            { name: 'date', label: 'Offer Date', type: 'date', default: today(), full: false },
+            { name: 'candidateName', label: 'Candidate Name', type: 'text', full: true },
+            { name: 'role',   label: 'Position', type: 'text',  full: false},
+            { name: 'startDate', label: 'Start Date', type: 'date', full: false },
+            { name: 'salary', label: 'Monthly Stipend ', type: 'text', default: '12,000', full: false },
+            { name: 'salaryType', label: 'Stipend Type', type: 'select', options: ['In-Hand Salary', 'CTC'], default: 'In-Hand Salary' },
+            { name: 'probationMonths', label: 'Contract Duration', type: 'text', default: 'six (6)', full: false },
+            { name: 'deadline', label: 'Acceptance Deadline', type: 'date', full: false }
+        ],
+        template: (d) => `<style>
+            @media print {
+                @page { size: A4; margin: 15mm 20mm; }
+                body { margin: 0; padding: 0; }
+            }
+            .offer-container {
+                font-family: 'Times New Roman', Times, serif;
+                color: #1a1a2e;
+                line-height: 1.5;
+                font-size: 12pt; 
+                width: 100%;
+                margin: 0 auto;
+            }
+            .section-break { margin-bottom: 0.9rem; text-align: justify; }
+            .keep-together { page-break-inside: avoid; break-inside: avoid; }
+        </style>
+
+        <div class="offer-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; ">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 50px; width: auto;">
+            </div>
+
+            <p style="text-align:right; margin-bottom: 5px;">Date: <strong>${fmtDate(d.date)}</strong></p>
+
+            <h2 style="font-size:1.4rem; font-weight:700; margin-bottom:1.5rem; text-align:center;"><u>Offer of Employment</u></h2>
+
+            <p class="section-break">Dear <strong>${d.candidateName}</strong>,</p>
+
+            <p class="section-break">We are pleased to extend an offer to you for the position of <strong>${d.role}</strong> at <strong>Geosieben Consulting Pvt Ltd</strong>. After a thorough review of your qualifications and experience, we believe that your skills and expertise will be a valuable addition to our team and contribute to our continued growth and success.</p>
+
+            <p class="section-break">This letter outlines the terms and conditions of your employment. Kindly review the details below:</p>
+
+            <div class="section-break"><strong>1. Job Title:</strong><br> You will be employed as a <strong>${d.role}</strong> at Geosieben Consulting Pvt Ltd.</div>
+            
+            <div class="section-break"><strong>2. Start Date:</strong><br> Your employment will commence on <strong>${fmtDate(d.startDate)}</strong>, and your reporting time will be 9:00 AM.</div>
+            
+            <div class="section-break"><strong>3. Compensation:</strong><br> Your monthly stipend will be ₹${d.salary} (${d.salaryType}). A 2% TDS will be deducted from the payable amount as per applicable tax regulations.<br>
+                Upon successful completion of the contract period, your salary will be reviewed and revised based on performance. Additionally, the following statutory benefits will be applicable: <br>
+                <ol type="a" style="margin-top:0.3rem; margin-left:15px;">
+                    <li>Employee State Insurance (ESI) / Personal Health Insurance</li>
+                    <li>Provident Fund (PF)</li>
+                    <li>Gratuity, in accordance with company policy and statutory guidelines.</li>
+                    <li>Additional Leave benefits</li>
+                </ol>
+            </div>
+
+            <div class="section-break"><strong>4. Contract Period:</strong><br> You will be employed on a fixed-term contract basis for a period of ${d.probationMonths} months starting from your joining date. During this period, your performance and suitability for the role will be evaluated. During the contract period, you will be eligible to take one (1) leave per month, subject to prior approval from your reporting manager. Upon successful completion of the contract period, you may be considered for regular employment based on your performance and the company’s requirements. </div>
+            
+            ${geoFooter()}
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; margin-top:2rem;">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 50px; width: auto;">
+            </div>
+            <div class="section-break"><strong>5. Work Schedule:</strong><br> Your normal working hours will be 9:00 AM – 6:30 PM, from Monday to Saturday, totaling 51 hours per week. There may be occasional flexibility depending on business needs.</div>
+
+            <div class="section-break"><strong>6. Leaves:</strong><br> The number of annual leaves is determined by the number of declared holidays for that business area. The total number of annual leave entitlement for the calendar year is 24 for all employees. Your annual leave will be pro-rated depending on your date of confirmation. Additional days are given each year for national & public holidays and the Company will let you know when they are. The Company reserve the right to ask you to work on a public holiday. </div>
+            
+            <div class="section-break"><strong>7. Confidentiality and Non-Disclosure Agreement:</strong><br> As part of your employment, you will be required to adhere to the company’s confidentiality and non-disclosure agreements. All intellectual property developed during your employment will remain the property of the company.</div>
+            <div class="section-break"><strong>8. Contract Period – Separation Clause:</strong><br> If the employee resigns from the organization or the contract is terminated before the completion of the contract period, the Company reserves the right to determine the issuance of employment-related documents and certificates in accordance with applicable laws and company policy.</div>
+
+            <div class="section-break keep-together">
+                <strong>9. Company Policies:</strong><br>
+                You will be expected to comply with all applicable company policies, rules, and regulations, including but not limited to: 
+                <ol type="a" style="margin-top:0.3rem; margin-left:15px;">
+                    <li>Working hours and attendance</li>
+                    <li>Code of conduct and behavior</li>
+                    <li>Health and safety protocols</li>
+                    <li>IT security policies</li>
+                </ol>
+            </div>
+
+            <div class="section-break"><strong>10. At-Will Employment Statement:</strong><br> Your employment with Geosieben Consulting Pvt Ltd is at-will, meaning either you or the company may terminate the relationship at any time, with or without notice, and for any lawful reason, in accordance with applicable local labor laws.</div>
+
+            <br>
+            ${geoFooter()}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; margin-top:2rem;">
+                <img src="/uploads/images/gsblogo.png" alt="Geosieben Logo" style="height: 50px; width: auto;">
+            </div>
+            <div class="section-break"><strong>11. Location:</strong><br> You will be based at our office located at Hassan. You may be required to travel to other company locations, or work remotely, depending on business requirements.</div>
+            
+            <div class="section-break"><strong>12. Acceptance Deadline:</strong><br> Please confirm your acceptance of this offer by signing and returning a copy of this letter by <strong>${fmtDate(d.deadline)}</strong>.</div>
+            <div class="section-break keep-together">
+                <p><strong>13. Signatures:</strong><br>
+                By signing this offer letter, you agree to the terms and conditions outlined above. A copy of the signed offer letter will be provided to you for your records.<br><br>
+                We are excited about the prospect of you joining our dynamic team. Please do not hesitate to reach out if you have any questions or need clarification.<br><br>
+                We look forward to working with you!</p>
+                
+                <p style="margin-top:1.2rem; margin-bottom:0.2rem;">Sincerely,</p>
+                <p style="font-size:10pt; margin:0;">HR Department</p>
+                <p style="font-size:10pt; font-weight:700; margin:0;">Geosieben Consulting Pvt Ltd</p>
+            </div>
+
+            <div class="keep-together" style="border: 1px solid #cbd5e1; margin-top:1.5rem; padding:1rem;">
+                <h3 style="font-weight:700; margin-top:0; margin-bottom:0.8rem; font-size:1.2rem;">Acknowledgement and Acceptance</h3>
+                <p style="margin-bottom:1.5rem;">I, <strong>${d.candidateName}</strong>, accept the offer as outlined in this letter.</p>
+                <div style="display:flex; justify-content:space-between; gap:2rem;">
+                    <div style="flex:1.5; border-bottom:1px solid #334155; padding-bottom:5px;">Signature: ___________________</div>
+                    <div style="flex:1; border-bottom:1px solid #334155; padding-bottom:5px;">Date: ___________________</div>
+                </div>
+            </div>
+            <div style="padding-top:150px;">
+                ${geoFooter()}
+            </div>
+        </div>`
+    },
 
     appointment: {
         title: "Appointment Letter",
@@ -1225,38 +827,31 @@ offer: {
             { name: 'date', label: 'Letter Date', type: 'date', default: today() },
             { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
             { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
-            { name: 'department', label: 'Department', type: 'text', default: 'Technology' },
             { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
-            { name: 'salary', label: 'Monthly CTC', type: 'text', default: '20,000' },
-            { name: 'reportingTo', label: 'Reporting To', type: 'text', default: 'Team Lead' },
-            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+            { name: 'probationMonths', label: 'Probation (Months)', type: 'text', default: '6' },
+            { name: 'salary', label: 'Monthly CTC (₹)', type: 'text', default: '20,000' },
+            { name: 'signatory', label: 'HR Signatory Name', type: 'text', default: 'Amruth R' }
         ],
         template: (d) => wrapper(`
         ${docHead(d.date)}
         <p style="margin-bottom:1.4rem;">To,<br><strong>${d.employeeName}</strong></p>
-        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">APPOINTMENT LETTER</h2>
-        <p style="margin-bottom:1.2rem; text-align:justify;">With reference to your application and the subsequent interview, we are pleased to appoint you as <strong>${d.role}</strong> in the <strong>${d.department}</strong> Department at Geosieben Consulting Pvt Ltd, effective <strong>${fmtDate(d.joiningDate)}</strong>.</p>
-        <p style="margin-bottom:1rem;">The terms and conditions of your appointment are as follows:</p>
-        <div style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;">
-            <p><strong>1. Designation:</strong> ${d.role}</p>
-            <p><strong>2. Department:</strong> ${d.department}</p>
-            <p><strong>3. Date of Joining:</strong> ${fmtDate(d.joiningDate)}</p>
-            <p><strong>4. Place of Posting:</strong> Hassan, Karnataka. You may be transferred to any other branch/location of the company as required.</p>
-            <p><strong>5. Compensation:</strong> You will be paid a gross monthly salary of ₹${d.salary} (CTC). The salary will be credited to your bank account by the 7th of every month.</p>
-            <p><strong>6. Reporting:</strong> You will report to <strong>${d.reportingTo}</strong> or such other person as designated by the Management.</p>
-            <p><strong>7. Working Hours:</strong> 9:00 AM to 6:30 PM, Monday to Saturday. You may be required to work beyond normal hours based on business requirements.</p>
-            <p><strong>8. Leave Entitlement:</strong> You are entitled to leaves as per the Company's leave policy communicated at the time of joining.</p>
-            <p><strong>9. Probation:</strong> You will be on probation for a period of six (6) months, during which your performance will be assessed. Confirmation is subject to satisfactory performance review.</p>
-            <p><strong>10. Termination / Notice Period:</strong> During probation, either party may terminate the employment with 15 days' written notice. Post-confirmation, 30 days' notice is required.</p>
-            <p><strong>11. Confidentiality:</strong> You shall not disclose any confidential or proprietary information of the Company during or after your employment.</p>
-            <p><strong>12. Code of Conduct:</strong> You are expected to conduct yourself with the highest standards of professionalism and integrity at all times.</p>
+        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem; text-align:center;">LETTER OF APPOINTMENT</h2>
+        <p style="margin-bottom:1.2rem;">Dear <strong>${d.employeeName}</strong>,</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">We are pleased to appoint you to the position of <strong>${d.role}</strong> at <strong>Geosieben Consulting Pvt Ltd</strong> with effect from <strong>${fmtDate(d.joiningDate)}</strong>.</p>
+        <div style="margin:1.4rem 0; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.2rem; background:#f8fafc;">
+            <p style="margin-bottom:0.4rem;"><strong>Designation:</strong> ${d.role}</p>
+            <p style="margin-bottom:0.4rem;"><strong>Date of Commencement:</strong> ${fmtDate(d.joiningDate)}</p>
+            <p style="margin-bottom:0.4rem;"><strong>Probationary Term:</strong> ${d.probationMonths} Months</p>
+            <p style="margin-bottom:0;"><strong>Compensation:</strong> ₹${d.salary} per month (CTC)</p>
         </div>
-        <p style="margin-bottom:1.8rem;">Please sign and return a copy of this letter as your acceptance of the above terms.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">You will be on probation for a period of ${d.probationMonths} months from the date of your joining. During or at the end of the probationary period, the company may confirm or extend your probation or terminate your services based on performance.</p>
+        <p style="margin-bottom:1.2rem; text-align:justify;">You agree to abide by the rules, standard operating procedures, and professional ethics established by the organization.</p>
+        <p style="margin-bottom:1.8rem;">We welcome you to Geosieben Consulting Pvt Ltd and wish you a rewarding association with us.</p>
         ${signatureBlock(d.signatory)}
         <div style="border-top:1.5px solid #cbd5e1; padding-top:1.5rem; margin-top:2rem;">
-            <p>I, <strong>${d.employeeName}</strong>, accept the appointment on the terms stated above.</p>
+            <p>I have read, understood, and accept the terms of this appointment letter.</p>
             <div style="display:flex; justify-content:space-between; margin-top:2.5rem; gap:2rem;">
-                <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Employee Signature:</div>
+                <div style="flex:1.5; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Signature:</div>
                 <div style="flex:1; border-bottom:1px solid #334155; font-size:0.8rem; padding-bottom:4px;">Date:</div>
             </div>
         </div>
@@ -1335,75 +930,77 @@ offer: {
         }
     },
 
-relieving: {
-    title: "Relieving Letter",
-    fields: [
-        { name: 'date', label: 'Letter Date', type: 'date', default: today() },
-        { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
-        { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'GSB-XXXX' },
-        { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
-        { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date' },
-        { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
-    ],
-    template: (d) => wrapper(`
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-            <img src="/uploads/images/gsblogo.png" alt="Geosieben Logo" style="height: 60px; width: auto;">
-            <div style="text-align: right; font-weight: 600;">Date: ${fmtDate(d.date)}</div>
-        </div>
+    relieving: {
+        title: "Relieving Letter",
+        fields: [
+            { name: 'date', label: 'Letter Date', type: 'date', default: today() },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
+            { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'GSB-XXXX' },
+            { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
+            { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date' }
+        ],
+        template: (d) => wrapper(`
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 60px; width: auto;">
+                <div style="text-align: right; font-weight: 600;">Date: ${fmtDate(d.date)}</div>
+            </div>
 
-        <h2 style="font-size:1.2rem; font-weight:700; text-align:center; margin-bottom:2rem; text-decoration: underline;">RELIEVING LETTER</h2>
-        
-        <p style="margin-bottom:1.5rem;">To Whom It May Concern,</p>
-        
-        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
-            This is to certify that <strong>Mr/Ms. ${d.employeeName}</strong> [EMP ID: ${d.empId}] was employed with <strong>Geosieben Consulting Pvt Ltd</strong> from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>. 
-            He/She has completed all necessary formalities and has been relieved from his/her duties on <strong>${fmtDate(d.lastWorkingDate)}</strong>.
-        </p>
-        
-        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
-            You may please get in touch with HR/Service Desk for all your future correspondence and final settlement.
-        </p>
-        
-        <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
-            Your contributions to the organization will always be valued and recognized.
-        </p>
-        
-        <p style="margin-bottom:2rem; text-align:justify; line-height: 1.6;">
-            We thank you for your services and wish the very best in all your future endeavors.
-        </p>
+            <h2 style="font-size:1.2rem; font-weight:700; text-align:center; margin-bottom:2rem; text-decoration: underline;">RELIEVING LETTER</h2>
+            
+            <p style="margin-bottom:1.5rem;">To Whom It May Concern,</p>
+            
+            <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+                This is to certify that <strong>Mr/Ms. ${d.employeeName}</strong> [EMP ID: ${d.empId}] was employed with <strong>Geosieben Consulting Pvt Ltd</strong> from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>. 
+                He/She has completed all necessary formalities and has been relieved from his/her duties on <strong>${fmtDate(d.lastWorkingDate)}</strong>.
+            </p>
+            
+            <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+                You may please get in touch with HR/Service Desk for all your future correspondence and final settlement.
+            </p>
+            
+            <p style="margin-bottom:1.2rem; text-align:justify; line-height: 1.6;">
+                Your contributions to the organization will always be valued and recognized.
+            </p>
+            
+            <p style="margin-bottom:2rem; text-align:justify; line-height: 1.6;">
+                We thank you for your services and wish the very best in all your future endeavors.
+            </p><br>
+            <p style="margin-bottom:1.8rem; text-align:justify;"><b>For Geosieben Consulting Pvt Ltd, </b></p>
 
-        <div style="margin-top: 3rem;">
-            <p style="margin-bottom:0.5rem; font-weight: 700;">For Geosieben Consulting Pvt Ltd</p>
-            <br><br>
-            <p><strong>${d.signatory}</strong><br>Human Resources</p>
-        </div>
-        
-        ${geoFooter()}
-    `)
-},
+            <div style="margin-top:450px;">
+            ${geoFooter()}
+            </div>
+        `)
+    },
 
     experience: {
         title: "Experience Letter",
         fields: [
             { name: 'date', label: 'Letter Date', type: 'date', default: today() },
-            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
-            { name: 'role', label: 'Designation', type: 'text', default: 'Web Developer' },
-            { name: 'department', label: 'Department', type: 'text', default: 'Technology' },
-            { name: 'joiningDate', label: 'Date of Joining', type: 'date' },
-            { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date' },
+            { name: 'employeeName', label: 'Employee Name', type: 'text', full: true, default:"<?php echo htmlspecialchars($result->FirstName.' '.$result->LastName);?>" },
+            { name: 'role', label: 'Designation', type: 'text',default:"<?php echo htmlspecialchars($result->Designation);?>"  },
+            { name: 'department', label: 'Department', type: 'text', default:"<?php echo htmlspecialchars($result->DepartmentName);?>" },
+            { name: 'joiningDate', label: 'Date of Joining', type: 'date',default:"<?php echo htmlspecialchars($result->DateOfJoining);?>" },
+            { name: 'lastWorkingDate', label: 'Last Working Date', type: 'date', default:"<?php echo htmlspecialchars($result->LastWorkingDay);?>" },
             { name: 'conduct', label: 'Conduct (Good / Excellent)', type: 'text', default: 'good' },
-            { name: 'signatory', label: 'HR Name', type: 'text', default: 'Amruth R' }
+            { name: 'signatory', label: 'HR Name', type: 'text', default: 'HR Department' }
         ],
         template: (d) => wrapper(`
-        ${docHead(d.date)}
-        <p style="margin-bottom:1.4rem;">To Whom It May Concern,</p>
-        <h2 style="font-size:1.1rem; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">EXPERIENCE CERTIFICATE</h2>
-        <p style="margin-bottom:1.2rem; text-align:justify;">This is to certify that <strong>${d.employeeName}</strong> was employed with <strong>Geosieben Consulting Pvt Ltd</strong> as a <strong>${d.role}</strong> in the <strong>${d.department}</strong> Department from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>.</p>
-        <p style="margin-bottom:1.2rem; text-align:justify;">During his/her tenure with us, ${d.employeeName} has demonstrated ${d.conduct} conduct, professional attitude, and a willingness to learn and grow. He/She has contributed positively to the team and has been a responsible and dependable team member.</p>
-        <p style="margin-bottom:1.2rem; text-align:justify;">He/She is relieved from his/her duties on <strong>${fmtDate(d.lastWorkingDate)}</strong> on his/her own request after completion of the required formalities.</p>
-        <p style="margin-bottom:1.8rem; text-align:justify;">We wish ${d.employeeName} all the very best for his/her future endeavours.</p>
-        ${signatureBlock(d.signatory)}
-        ${geoFooter()}`)
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 60px; width: auto;">
+                <div style="text-align: right; font-weight: 600;">Date: ${fmtDate(d.date)}</div>
+            </div>
+           
+            <h2 style="font-size:1.1rem; text-align:center; font-weight:700; text-decoration:underline; margin-bottom:1.4rem;">EXPERIENCE LETTER </h2>
+            <p style="margin-bottom:1.4rem;"><b>To Whom It May Concern,</b></p>
+            <p style="margin-bottom:1.2rem; text-align:justify;">This is to certify that <strong>${d.employeeName}</strong> was employed with <strong>Geosieben Consulting Pvt Ltd</strong> as a <strong>${d.role}</strong> in the <strong>${d.department}</strong> Department from <strong>${fmtDate(d.joiningDate)}</strong> to <strong>${fmtDate(d.lastWorkingDate)}</strong>.</p>
+            <p style="margin-bottom:1.2rem; text-align:justify;">During his/her tenure with us, <b>${d.employeeName}</b> displayed professionalism and dedication in performing his/her duties and responsibilities. He/She contributed positively to the department and the company, and we appreciate his/her efforts during the course of his/her employment.</p>
+            <p style="margin-bottom:1.8rem; text-align:justify;">We wish <b>${d.employeeName}</b> all the very best for his/her future endeavours.</p><br>
+            <p style="margin-bottom:1.8rem; text-align:justify;"><b>For Geosieben Consulting Pvt Ltd, </b></p>
+
+            <div style="padding-top:450px;">  
+                ${geoFooter()}
+            </div>`)
     },
 
     termination: {
@@ -1485,11 +1082,13 @@ relieving: {
         fields: [
             { name: 'date', label: 'Agreement Date', type: 'date', default: today() },
             { name: 'joiningDate', label: 'Joining Date', type: 'date' },
+            { name: 'prefix', label: 'Prefix', type: 'select', options: ['S/O', 'D/O'], default: 'S/O' },
             { name: 'employeeName', label: 'Employee Name', type: 'text', full: true },
             { name: 'fatherName', label: "Father's Name", type: 'text' },
             { name: 'aadhar', label: 'Aadhar Number', type: 'text' },
             { name: 'email', label: 'Employee Email', type: 'text' },
             { name: 'phone', label: 'Phone Number', type: 'text' },
+            { name: 'probation', label: 'Probation Period(In Months)', type: 'text' },
             { name: 'address', label: 'Residential Address', type: 'text', full: true }
         ],
         template: (d) => bondTemplate(d)
@@ -1515,39 +1114,62 @@ relieving: {
         fields: [
             { name: 'date', label: 'Return Date', type: 'date', default: today() },
             { name: 'candidateName', label: 'Candidate / Employee Name', type: 'text', full: true },
-            { name: 'hrName', label: 'HR Admin Name', type: 'text', default: 'Amruth R' }
+            { name: 'hrName', label: 'HR Admin Name', type: 'text', default: 'Amruth R' },
+            { 
+                name: 'excludeSSLC', 
+                label: 'Exclude SSLC?', 
+                type: 'select', 
+                options: ['Yes', 'No'], 
+                default: 'Yes' 
+            }
         ],
         template: (d) => wrapper(`
-        <div style="margin-bottom:1.8rem;">
-            <p style="font-weight:700;">The HR Admin,</p>
-            <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
-            <p style="font-weight:700;">Hassan – 573201</p>
-        </div>
-        <p style="margin-bottom:2rem;">Dear <strong>${d.candidateName || '<Candidate/Employee Name>'}</strong>,</p>
-        <p style="margin-bottom:3rem; text-align:justify; line-height:1.8;">This is to acknowledge the receipt of returning back original marks cards from <strong>Geosieben Consulting Pvt Ltd</strong> on <strong>${fmtDate(d.date)}</strong>. The company is no longer responsible for the same.</p>
-        <div style="margin-bottom:4rem;">
-            <p style="margin-bottom:0.4rem;">Employee Signature,</p>
-            <div style="border-bottom:1px solid #334155; width:220px; height:2rem;"></div>
-        </div>
-        <div>
-            <p>Regards,</p>
-            <p style="font-weight:700; margin-top:0.8rem;">HR Admin</p>
-            <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
-            <p style="font-size:0.85rem; color:#475569;">Name: ${d.hrName}</p>
-        </div>
-        <div style="margin-top:3rem; padding-top:1rem; border-top:1px solid #e2e8f0; text-align:center; font-size:0.72rem; color:#94a3b8;">
-            Geosieben Consulting Private Limited &nbsp;|&nbsp; Hassan Office
-        </div>`)
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <img src="/images/gsblogo.png" alt="Geosieben Logo" style="height: 60px; width: auto;">
+                <div style="text-align: right; font-weight: 600;">Date: ${fmtDate(d.date)}</div>
+            </div>
+
+            <div style="margin-bottom:1.8rem;">
+                <p style="font-weight:700;">The HR Admin,</p>
+                <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
+                <p style="font-weight:700;">Hassan – 573201</p>
+            </div>
+
+            <p style="margin-bottom:2rem;">Dear <strong>${d.candidateName || '<Candidate/Employee Name>'}</strong>,</p>
+
+            <p style="margin-bottom:3rem; text-align:justify; line-height:1.8;">
+                This is to acknowledge the receipt of returning back original marks cards 
+                ${d.excludeSSLC === 'Yes' ? '(Except SSLC)' : ''} 
+                from <strong>Geosieben Consulting Pvt Ltd</strong> on <strong>${fmtDate(d.date)}</strong>. 
+                The company is no longer responsible for the same.
+            </p>
+
+            <div style="margin-bottom:4rem;">
+                <p style="margin-bottom:0.4rem;">Employee Signature,</p>
+                <div style="border-bottom:1px solid #334155; width:220px; height:2rem;"></div>
+            </div>
+
+            <div>
+                <p>Regards,</p>
+                <p style="font-weight:700; margin-top:0.8rem;">HR Admin</p>
+                <p style="font-weight:700;">Geosieben Consulting Pvt Ltd</p>
+            </div>
+
+            <div style="padding-top:300px;">
+                ${geoFooter()}
+            </div>
+        `)
     }
 };
 
-/* ─── SEARCH & FILTER ─── */
 let activeCategory = 'all';
 
 function filterCategory(cat, btn) {
     activeCategory = cat;
-    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.cat-tab').forEach(t => {
+        t.className = 'cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-medium tracking-wide border border-slate-200 bg-white text-slate-600 hover:border-brand-border hover:text-brand hover:bg-brand-subtle transition-all duration-150 whitespace-nowrap';
+    });
+    btn.className = 'cat-tab px-3 py-1.5 rounded-lg text-[0.72rem] font-semibold tracking-wide border transition-all duration-150 bg-brand text-white border-brand shadow-sm shadow-brand/25 whitespace-nowrap';
     applyFilters();
 }
 
@@ -1560,31 +1182,29 @@ function applyFilters() {
 
     cards.forEach(card => {
         const cat = card.dataset.category || '';
-        const keywords = (card.dataset.keywords || '') + ' ' + (card.querySelector('.card-title')?.textContent || '');
+        const keywords = (card.dataset.keywords || '') + ' ' + (card.querySelector('h3')?.textContent || '');
         const catMatch = activeCategory === 'all' || cat.includes(activeCategory);
         const searchMatch = !query || keywords.toLowerCase().includes(query);
         if (catMatch && searchMatch) {
-            card.classList.remove('card-hidden');
+            card.classList.remove('hidden');
             visible++;
         } else {
-            card.classList.add('card-hidden');
+            card.classList.add('hidden');
         }
     });
 
     document.getElementById('countLabel').textContent = visible + ' available';
 
-    // Show no-results
     const existing = document.querySelector('.no-results');
     if (existing) existing.remove();
     if (visible === 0) {
         const msg = document.createElement('div');
-        msg.className = 'no-results';
-        msg.textContent = 'No templates match your search.';
+        msg.className = 'no-results col-span-full text-center py-12 text-slate-400 text-xs font-medium';
+        msg.textContent = 'No letter templates found matching criteria.';
         document.getElementById('templateGrid').appendChild(msg);
     }
 }
 
-/* ─── MODAL ─── */
 let currentType = null;
 const overlay = document.getElementById('modalOverlay');
 
@@ -1597,24 +1217,38 @@ function openModal(type) {
         const isSelect = f.type === 'select';
         const isTextarea = f.type === 'textarea';
         let input = '';
+        const baseClasses = "w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 bg-white outline-none transition hover:border-brand-border focus:border-brand focus:ring-2 focus:ring-brand/15";
+        
         if (isSelect) {
             const opts = (f.options||[]).map(o => `<option value="${o}" ${o === f.default ? 'selected' : ''}>${o}</option>`).join('');
-            input = `<select class="field-select" name="${f.name}">${opts}</select>`;
+            input = `<select class="${baseClasses}" name="${f.name}">${opts}</select>`;
         } else if (isTextarea) {
-            input = `<textarea class="field-input" name="${f.name}" rows="3" style="resize:vertical;">${f.default||''}</textarea>`;
+            input = `<textarea class="${baseClasses}" name="${f.name}" rows="2" style="resize:vertical;">${f.default||''}</textarea>`;
         } else {
-            input = `<input class="field-input" type="${f.type}" name="${f.name}" value="${f.default || ''}" ${f.type !== 'date' ? 'required' : ''}>`;
+            input = `<input class="${baseClasses}" type="${f.type}" name="${f.name}" value="${f.default || ''}" ${f.type !== 'date' ? 'required' : ''}>`;
         }
-        return `<div class="field-wrap ${f.full ? 'full-width' : ''}">\n<label class="field-label">${f.label}</label>\n${input}\n</div>`;
+        return `<div class="flex flex-col gap-1 ${f.full ? 'sm:col-span-2' : ''}">\n<label class="text-[0.62rem] font-bold uppercase tracking-wider text-slate-500">${f.label}</label>\n${input}\n</div>`;
     }).join('');
-    overlay.classList.add('open');
+    
+    overlay.classList.remove('opacity-0', 'pointer-events-none');
+    overlay.classList.add('opacity-100', 'pointer-events-auto');
+    const modalBox = document.getElementById('modalBox');
+    modalBox.classList.remove('translate-y-3', 'scale-[0.98]');
+    modalBox.classList.add('translate-y-0', 'scale-100');
+
     setTimeout(() => {
-        const first = document.querySelector('.field-input[type="text"], .field-select');
+        const first = document.querySelector('#formFields input[type="text"], #formFields select');
         if (first) first.focus();
-    }, 250);
+    }, 150);
 }
 
-function closeModal() { overlay.classList.remove('open'); }
+function closeModal() { 
+    overlay.classList.remove('opacity-100', 'pointer-events-auto');
+    overlay.classList.add('opacity-0', 'pointer-events-none');
+    const modalBox = document.getElementById('modalBox');
+    modalBox.classList.remove('translate-y-0', 'scale-100');
+    modalBox.classList.add('translate-y-3', 'scale-[0.98]');
+}
 
 overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -1638,8 +1272,6 @@ function resetApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* Update count on load */
-document.getElementById('templateCount').textContent = document.querySelectorAll('.template-card').length;
 document.getElementById('countLabel').textContent = document.querySelectorAll('.template-card').length + ' available';
 </script>
 </body>

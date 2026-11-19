@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">.
+    <meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compensation Time Off — Approvals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --color-bg: #F3F5F9;
+            --color-surface: #FFFFFF;
+            --color-primary: #0F3B5F;
+            --color-primary-dark: #0A2A44;
+            --color-primary-soft: #E9EFF5;
+            --color-accent: #D9822B;
+            --color-accent-soft: #FBEDDA;
+            --color-success: #1E8E5A;
+            --color-success-soft: #E5F6EC;
+            --color-danger: #C6413A;
+            --color-danger-soft: #FBEAE9;
+            --color-warning: #B4780F;
+            --color-warning-soft: #FBF0DC;
+            --color-border: #E3E7EE;
+            --color-text: #1C2531;
+            --color-text-muted: #667085;
+        }
+
+        * { -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg);
+            background-image:
+                radial-gradient(circle at 100% 0%, rgba(15,59,95,0.05) 0%, transparent 45%),
+                radial-gradient(circle at 0% 100%, rgba(217,130,43,0.05) 0%, transparent 40%);
+            color: var(--color-text);
+        }
+
+        .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        /* Header */
+        .brand-bar { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); }
+
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 9999px;
+            background: #34D399;
+            box-shadow: 0 0 0 0 rgba(52,211,153,0.7);
+            animation: live-pulse 2s infinite;
+        }
+        @keyframes live-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.55); }
+            70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+            100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+        }
+
+        /* Stat cards */
+        .stat-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 14px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(15,59,95,0.18); }
+
+        /* Table card */
+        .table-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            /* border-radius: 16px; */
+            box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 12px 28px -18px rgba(16,24,40,0.18);
+        }
+
+        #request-table thead th {
+            position: sticky; top: 0; z-index: 5;
+            background: var(--color-primary-soft);
+            color: var(--color-primary-dark);
+        }
+
+        #request-table thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.15s ease;
+        }
+        #request-table thead th.sortable:hover { background: #DCE6EF; }
+
+        .sort-icon {
+            display: inline-block;
+            font-size: 0.65rem;
+            opacity: 0.4;
+            margin-left: 2px;
+        }
+        .sort-icon.active { opacity: 1; color: var(--color-accent); }
+
+        #request-list-container tr { border-bottom: 1px solid var(--color-border); }
+        #request-list-container tr:last-child { border-bottom: none; }
+        #request-list-container tr:hover { background-color: #FAFBFD; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 9999px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+        }
+
+        .action-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; border-radius: 10px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .btn-approve { background: var(--color-success-soft); color: var(--color-success); }
+        .btn-approve:hover:not(:disabled) { background: var(--color-success); color: #fff; }
+
+        .btn-reject { background: var(--color-danger-soft); color: var(--color-danger); }
+        .btn-reject:hover:not(:disabled) { background: var(--color-danger); color: #fff; }
+
+        .btn-primary-solid { background: var(--color-primary); color: #fff; }
+        .btn-primary-solid:hover { background: var(--color-primary-dark); }
+
+        /* Modal */
+        .modal-overlay { background-color: rgba(15,23,32,0.55); backdrop-filter: blur(2px); }
+
+        /* Skeleton loading */
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        .skeleton {
+            background: linear-gradient(90deg, #EEF1F5 25%, #F7F8FA 37%, #EEF1F5 63%);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s linear infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #CBD3DF; border-radius: 8px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .live-dot, .animate-spin, .skeleton, .stat-card { animation: none !important; transition: none !important; }
+        }
+
+        button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible {
+            outline: 2px solid var(--color-accent); outline-offset: 2px;
+        }
+    </style>
+    <head th:replace="includes/header :: header"></head>
+
+</head>
+<body class="min-h-screen">
+
+<div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="brand-bar rounded-2xl px-6 py-6 sm:px-8 sm:py-7 mb-6 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">Approvals · Time Off</p>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Compensation Time Off Requests</h1>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 self-start sm:self-auto">
+                <span class="live-dot"></span>
+                <span class="text-sm text-white/90 font-medium">Live</span>
+                <span class="text-white/40">·</span>
+                <span id="last-updated" class="text-sm text-white/70 mono">just now</span>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="stat-card px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[--color-text-muted]" style="color:var(--color-text-muted)">Pending</p>
+            <p id="stat-pending" class="text-3xl font-extrabold mt-1" style="color:var(--color-warning)">—</p>
+        </div>
+        <div class="stat-card px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Approved</p>
+            <p id="stat-approved" class="text-3xl font-extrabold mt-1" style="color:var(--color-success)">—</p>
+        </div>
+        <div class="stat-card px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Rejected</p>
+            <p id="stat-rejected" class="text-3xl font-extrabold mt-1" style="color:var(--color-danger)">—</p>
+        </div>
+        <div class="stat-card px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Total</p>
+            <p id="stat-total" class="text-3xl font-extrabold mt-1" style="color:var(--color-primary)">—</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="table-card px-5 py-4 mb-4">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="filter-worked-from" class="block text-xs font-semibold uppercase tracking-wide mb-1.5" style="color:var(--color-text-muted)">Worked Date — From</label>
+                    <input type="date" id="filter-worked-from" onchange="handleFilterChange()" class="w-full px-3 py-2 rounded-lg border text-sm mono" style="border-color:var(--color-border)">
+                </div>
+                <div>
+                    <label for="filter-worked-to" class="block text-xs font-semibold uppercase tracking-wide mb-1.5" style="color:var(--color-text-muted)">Worked Date — To</label>
+                    <input type="date" id="filter-worked-to" onchange="handleFilterChange()" class="w-full px-3 py-2 rounded-lg border text-sm mono" style="border-color:var(--color-border)">
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="clearFilters()" class="px-4 py-2 text-sm font-semibold rounded-lg border transition" style="border-color:var(--color-border); background:#fff; color:var(--color-text)">
+                    Clear Filters
+                </button>
+                <span id="filter-result-count" class="text-sm whitespace-nowrap" style="color:var(--color-text-muted)"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table id="request-table" class="min-w-full">
+                <thead>
+                    <tr class="text-left text-xs font-bold uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3.5 w-1/12 min-w-[90px] sortable" onclick="handleSort('id')">
+                            ID <span id="sort-icon-id" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 w-2/12 min-w-[150px] sortable" onclick="handleSort('requestType')">
+                            Type <span id="sort-icon-requestType" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 hidden md:table-cell w-1/12 min-w-[100px] sortable" onclick="handleSort('workedDate')">
+                            Worked Date <span id="sort-icon-workedDate" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 hidden md:table-cell w-1/12 min-w-[120px] sortable" onclick="handleSort('compOffdate')">
+                            Comp-Off Date <span id="sort-icon-compOffdate" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 hidden sm:table-cell w-2/12 min-w-[150px] sortable" onclick="handleSort('requester')">
+                            Requested By <span id="sort-icon-requester" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 hidden lg:table-cell w-2/12 min-w-[130px] sortable" onclick="handleSort('requestedOn')">
+                            Requested On <span id="sort-icon-requestedOn" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 text-center w-1/12 min-w-[100px] sortable" onclick="handleSort('status')">
+                            Status <span id="sort-icon-status" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 text-center w-1/12 min-w-[100px] sortable" onclick="handleSort('actionBy')">
+                            Approved/Rejected By <span id="sort-icon-actionBy" class="sort-icon">⇅</span>
+                        </th>
+                        <th scope="col" class="px-4 py-3.5 text-center w-1/12 min-w-[120px]">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="request-list-container"></tbody>
+            </table>
+        </div>
+
+        <!-- Empty state -->
+        <div id="no-results" class="hidden text-center px-6 py-16">
+            <svg class="mx-auto h-12 w-12 mb-4" style="color:var(--color-border)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="text-base font-semibold" style="color:var(--color-text)">No requests to review</p>
+            <p id="no-results-subtext" class="text-sm mt-1" style="color:var(--color-text-muted)">New comp-off requests will appear here as they come in.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination-controls" class="hidden flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t" style="border-color:var(--color-border); background:#FAFBFD">
+            <div id="page-info" class="text-sm" style="color:var(--color-text-muted)"></div>
+            <div class="flex space-x-2" id="pagination-buttons-container">
+                <button id="prev-page-btn" onclick="prevPage()" class="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-40 disabled:cursor-not-allowed" style="border-color:var(--color-border); background:#fff; color:var(--color-text)">
+                    Previous
+                </button>
+                <button id="next-page-btn" onclick="nextPage()" class="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-40 disabled:cursor-not-allowed" style="border-color:var(--color-border); background:#fff; color:var(--color-text)">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div id="rejection-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center border-b pb-3 mb-4" style="border-color:var(--color-border)">
+            <h3 id="modal-title" class="text-xl font-bold" style="color:var(--color-text)">Reject Request</h3>
+            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        <p id="modal-instructions" class="mb-4" style="color:var(--color-text-muted)">Please provide a brief reason for rejecting request <span id="modal-request-id" class="font-bold mono" style="color:var(--color-primary)"></span>.</p>
+
+        <div id="rejection-input-area">
+            <textarea id="rejection-reason" rows="4" class="w-full p-3 rounded-lg resize-none mb-2 shadow-sm border" style="border-color:var(--color-border)" placeholder="Enter reason (minimum 5 characters)..."></textarea>
+            <p id="reason-error" class="text-sm hidden mb-4" style="color:var(--color-danger)"></p>
+        </div>
+
+        <div id="rejection-display-area" class="hidden p-3 rounded-lg border" style="background:#FAFBFD; border-color:var(--color-border)">
+            <p id="displayed-reason" class="italic" style="color:var(--color-text)"></p>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-4">
+            <button onclick="closeRejectModal()" class="px-4 py-2 font-semibold rounded-lg transition" style="background:#EEF0F3; color:var(--color-text)">
+                Close
+            </button>
+            <button id="submit-rejection-btn" onclick="submitRejection()" class="px-4 py-2 font-semibold rounded-lg transition shadow-md text-white" style="background:var(--color-danger)">
+                <span id="submit-rejection-text">Confirm Rejection</span>
+                <svg id="submit-rejection-spinner" class="hidden animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notification-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay transition-opacity duration-300">
+    <div id="notification-content" class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+        <div class="flex flex-col items-center">
+            <div id="notification-icon-container" class="mb-4 w-12 h-12 flex items-center justify-center rounded-full"></div>
+            <h3 id="notification-title" class="text-xl font-bold mb-2 text-center" style="color:var(--color-text)"></h3>
+            <p id="notification-message" class="mb-6 text-center" style="color:var(--color-text-muted)"></p>
+            <button onclick="closeNotificationModal()" class="px-6 py-2 font-semibold rounded-lg transition shadow-md text-white btn-primary-solid">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    let mockRequestData = [];   // raw data from the API
+    let processedData = [];     // filtered + sorted data currently in view
+    let hasLoadedOnce = false;
+
+    // Sorting state
+    let sortColumn = null;          // e.g. 'workedDate'
+    let sortDirection = 'asc';      // 'asc' | 'desc'
+    const SORT_COLUMNS = ['id', 'requestType', 'workedDate', 'compOffdate', 'requester', 'requestedOn', 'status', 'actionBy'];
+
+    let selectedRequestId = null;
+    const listContainer = document.getElementById('request-list-container');
+    const noResults = document.getElementById('no-results');
+    const noResultsSubtext = document.getElementById('no-results-subtext');
+    const rejectionModal = document.getElementById('rejection-modal');
+    const reasonError = document.getElementById('reason-error');
+    const rejectionReasonInput = document.getElementById('rejection-reason');
+    const modalRequestIdDisplay = document.getElementById('modal-request-id');
+    const modalTitle = document.getElementById('modal-title');
+    const modalInstructions = document.getElementById('modal-instructions');
+    const rejectionInputArea = document.getElementById('rejection-input-area');
+    const rejectionDisplayArea = document.getElementById('rejection-display-area');
+    const displayedReason = document.getElementById('displayed-reason');
+    const submitButton = document.getElementById('submit-rejection-btn');
+    const submitButtonText = document.getElementById('submit-rejection-text');
+    const submitButtonSpinner = document.getElementById('submit-rejection-spinner');
+
+    const notificationModal = document.getElementById('notification-modal');
+    const notificationTitle = document.getElementById('notification-title');
+    const notificationMessage = document.getElementById('notification-message');
+    const notificationIconContainer = document.getElementById('notification-icon-container');
+
+    const lastUpdatedEl = document.getElementById('last-updated');
+
+    const rowsPerPage = 10;
+    let currentPage = 1;
+    const pageInfo = document.getElementById('page-info');
+    const prevPageBtn = document.getElementById('prev-page-btn');
+    const nextPageBtn = document.getElementById('next-page-btn');
+    const paginationContainer = document.getElementById('pagination-controls');
+
+    const filterFromInput = document.getElementById('filter-worked-from');
+    const filterToInput = document.getElementById('filter-worked-to');
+    const filterResultCountEl = document.getElementById('filter-result-count');
+
+    function closeNotificationModal() {
+        notificationModal.classList.add('hidden');
+    }
+
+    function showNotificationModal(type, title, message) {
+        notificationTitle.textContent = title;
+        notificationMessage.textContent = message;
+
+        notificationIconContainer.className = 'mb-4 w-12 h-12 flex items-center justify-center rounded-full';
+        notificationIconContainer.innerHTML = '';
+
+        let icon, bgColor, iconColor;
+
+        if (type === 'success') {
+            bgColor = 'bg-green-100'; iconColor = 'text-green-600';
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+        } else if (type === 'error') {
+            bgColor = 'bg-red-100'; iconColor = 'text-red-600';
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.3 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+        } else {
+            bgColor = 'bg-blue-100'; iconColor = 'text-blue-600';
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+        }
+
+        notificationIconContainer.classList.add(bgColor, iconColor);
+        notificationIconContainer.innerHTML = icon;
+        notificationModal.classList.remove('hidden');
+    }
+
+    function getStatusStyle(status) {
+        let styleMap = {
+            'Pending':  { bg: 'style="background:var(--color-warning-soft);color:var(--color-warning)"', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 10.586V6z" clip-rule="evenodd" /></svg>' },
+            'Approved': { bg: 'style="background:var(--color-success-soft);color:var(--color-success)"', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>' },
+            'Rejected': { bg: 'style="background:var(--color-danger-soft);color:var(--color-danger)"', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>' },
+            'Default':  { bg: 'style="background:#F1F2F4;color:#4B5563"', icon: '' }
+        };
+        return styleMap[status] || styleMap['Default'];
+    }
+
+    function setButtonLoadingState(id, action) {
+        const button = document.getElementById(`${action}-btn-${id}`);
+        if (!button) return;
+        button.setAttribute('data-original-content', button.innerHTML);
+        button.disabled = true;
+        button.innerHTML = `
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        `;
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+            row.querySelectorAll('button').forEach(btn => { if (btn !== button) btn.disabled = true; });
+        }
+    }
+
+    function resetButtonState(id, action) {
+        const button = document.getElementById(`${action}-btn-${id}`);
+        if (!button) return;
+        const originalContent = button.getAttribute('data-original-content');
+        if (originalContent) {
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            button.removeAttribute('data-original-content');
+        }
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) row.querySelectorAll('button').forEach(btn => { btn.disabled = false; });
+    }
+
+    function updateRequestStatus(id, newStatus, reason = null){ 
+        console.log({id, newStatus, reason});
+        const actionType = newStatus === 'Approved' ? 'approveRequest' : 'rejectRequest';
+        const sts = newStatus === 'Approved' ? 'approve' : 'reject';
+        if (newStatus === 'Approved') setButtonLoadingState(id, 'approve');
+            const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+
+
+        $.ajax({
+            url: '/admin/updateCoRequest',
+            type: 'POST',
+            headers:{'X-CSRF-TOKEN':csrfToken},
+            dataType: 'json',
+            data: { action: actionType, id: id, ...(reason && { rejectionReason: reason }) },
+            success: function(response) {
+                Swal.fire({
+                    title: newStatus,
+                    icon: "success",
+                    text: `Comp-Off Request ${newStatus} successfully`,
+                    draggable: true
+                }).then(() => {
+                    resetButtonState(id, sts);
+                    fetchRequests();
+                });
+            },
+            error: function(err) {
+                console.error(err);
+                if (newStatus === 'Approved') {
+                    resetButtonState(id, 'approve');
+                } else if (newStatus === 'Rejected') {
+                    submitButtonText.classList.remove('hidden');
+                    submitButtonSpinner.classList.add('hidden');
+                    submitButton.disabled = false;
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) row.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                }
+            },
+        });
+    }
+
+    function handleApprove(id) {
+        updateRequestStatus(id, 'Approved');
+    }
+
+    function openRejectModal(id) {
+        selectedRequestId = id;
+        modalRequestIdDisplay.textContent = id;
+        modalTitle.textContent = "Reject Request";
+        modalInstructions.innerHTML = `Please provide a brief reason for rejecting request <span class="font-bold mono" style="color:var(--color-primary)">${id}</span>.`;
+
+        rejectionInputArea.classList.remove('hidden');
+        rejectionDisplayArea.classList.add('hidden');
+        submitButton.classList.remove('hidden');
+
+        submitButton.disabled = false;
+        submitButtonText.classList.remove('hidden');
+        submitButtonSpinner.classList.add('hidden');
+
+        rejectionModal.classList.remove('hidden');
+        rejectionReasonInput.focus();
+        rejectionReasonInput.value = '';
+        reasonError.classList.add('hidden');
+
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
+
+    function viewRejectedReason(id) {
+        const request = mockRequestData.find(r => r.id === id);
+        if (!request || !request.rejectionReason) return;
+
+        selectedRequestId = id;
+        modalRequestIdDisplay.textContent = id;
+        modalTitle.textContent = "Rejection Reason";
+        modalInstructions.innerHTML = `Reason provided for rejection of request <span class="font-bold mono" style="color:var(--color-primary)">${id}</span>:`;
+
+        rejectionInputArea.classList.add('hidden');
+        rejectionDisplayArea.classList.remove('hidden');
+        displayedReason.textContent = request.rejectionReason;
+        submitButton.classList.add('hidden');
+
+        rejectionModal.classList.remove('hidden');
+    }
+
+    function closeRejectModal() {
+        if (selectedRequestId) {
+            const row = document.querySelector(`tr[data-id="${selectedRequestId}"]`);
+            if (row) row.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        selectedRequestId = null;
+        rejectionModal.classList.add('hidden');
+    }
+
+    function submitRejection() {
+        const reason = rejectionReasonInput.value.trim();
+
+        if (reason.length < 5) {
+            reasonError.classList.remove('hidden');
+            reasonError.textContent = "Please provide a rejection reason (minimum 5 characters).";
+            return;
+        }
+
+        reasonError.classList.add('hidden');
+
+        if (selectedRequestId) {
+            submitButton.disabled = true;
+            submitButtonText.classList.add('hidden');
+            submitButtonSpinner.classList.remove('hidden');
+            updateRequestStatus(selectedRequestId, 'Rejected', reason);
+        }
+    }
+
+    function setupPagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+        if (totalItems <= rowsPerPage || totalItems === 0) {
+            paginationContainer.classList.add('hidden');
+        } else {
+            paginationContainer.classList.remove('hidden');
+        }
+
+        const startItem = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+        const endItem = Math.min(currentPage * rowsPerPage, totalItems);
+        pageInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} entries`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+    }
+
+    function updateStats(requestsData) {
+        const pending = requestsData.filter(r => r.status === 'Pending').length;
+        const approved = requestsData.filter(r => r.status === 'Approved').length;
+        const rejected = requestsData.filter(r => r.status === 'Rejected').length;
+        document.getElementById('stat-pending').textContent = pending;
+        document.getElementById('stat-approved').textContent = approved;
+        document.getElementById('stat-rejected').textContent = rejected;
+        document.getElementById('stat-total').textContent = requestsData.length;
+    }
+
+    // ------------------------------------------------------------------
+    //  FILTERING (Worked Date range)
+    // ------------------------------------------------------------------
+    function isFilterActive() {
+        return !!(filterFromInput.value || filterToInput.value);
+    }
+
+    function filterData(data) {
+        const fromVal = filterFromInput.value;
+        const toVal = filterToInput.value;
+
+        if (!fromVal && !toVal) return data;
+
+        const fromDate = fromVal ? new Date(fromVal) : null;
+        let toDate = null;
+        if (toVal) {
+            toDate = new Date(toVal);
+            toDate.setHours(23, 59, 59, 999); // include the whole "to" day
+        }
+
+        return data.filter(r => {
+            const wd = new Date(r.workedDate);
+            if (isNaN(wd.getTime())) return false; // can't evaluate against an active filter, so exclude
+            if (fromDate && wd < fromDate) return false;
+            if (toDate && wd > toDate) return false;
+            return true;
+        });
+    }
+
+    function clearFilters() {
+        filterFromInput.value = '';
+        filterToInput.value = '';
+        handleFilterChange();
+    }
+
+    function handleFilterChange() {
+        currentPage = 1;
+        refreshProcessedData();
+    }
+
+    function updateFilterResultCount(filteredCount, totalCount) {
+        if (isFilterActive()) {
+            filterResultCountEl.textContent = `${filteredCount} of ${totalCount} request${totalCount === 1 ? '' : 's'} match filter`;
+        } else {
+            filterResultCountEl.textContent = '';
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  SORTING
+    // ------------------------------------------------------------------
+    function sortData(data, column, direction) {
+        const isDateColumn = column === 'workedDate' || column === 'compOffdate' || column === 'requestedOn';
+
+        return [...data].sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+
+            if (valA === null || valA === undefined) valA = '';
+            if (valB === null || valB === undefined) valB = '';
+
+            if (column === 'id') {
+                valA = parseFloat(String(valA).replace(/[^0-9.-]/g, '')) || 0;
+                valB = parseFloat(String(valB).replace(/[^0-9.-]/g, '')) || 0;
+            } else if (isDateColumn) {
+                const dateA = new Date(valA);
+                const dateB = new Date(valB);
+                const validA = !isNaN(dateA.getTime());
+                const validB = !isNaN(dateB.getTime());
+                // push unparsable / missing dates to the end regardless of direction
+                if (!validA && !validB) return 0;
+                if (!validA) return 1;
+                if (!validB) return -1;
+                valA = dateA.getTime();
+                valB = dateB.getTime();
+            } else {
+                valA = String(valA).toLowerCase();
+                valB = String(valB).toLowerCase();
+            }
+
+            if (valA < valB) return direction === 'asc' ? -1 : 1;
+            if (valA > valB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    function updateSortIcons() {
+        SORT_COLUMNS.forEach(col => {
+            const el = document.getElementById(`sort-icon-${col}`);
+            if (!el) return;
+            if (sortColumn === col) {
+                el.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                el.classList.add('active');
+            } else {
+                el.textContent = '⇅';
+                el.classList.remove('active');
+            }
+        });
+    }
+
+    function handleSort(column) {
+        if (sortColumn === column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortColumn = column;
+            sortDirection = 'asc';
+        }
+        updateSortIcons();
+        currentPage = 1;
+        refreshProcessedData();
+    }
+
+    // ------------------------------------------------------------------
+    //  COMBINED FILTER + SORT + RENDER PIPELINE
+    // ------------------------------------------------------------------
+    function refreshProcessedData() {
+        let data = filterData(mockRequestData);
+        if (sortColumn) {
+            data = sortData(data, sortColumn, sortDirection);
+        }
+        processedData = data;
+        displayList(processedData);
+        updateFilterResultCount(processedData.length, mockRequestData.length);
+    }
+
+    function displayList(requestsData) {
+        const totalItems = requestsData.length;
+
+        if (totalItems === 0) {
+            noResults.classList.remove('hidden');
+            noResultsSubtext.textContent = isFilterActive()
+                ? 'No requests match the selected Worked Date range.'
+                : 'New comp-off requests will appear here as they come in.';
+        } else {
+            noResults.classList.add('hidden');
+        }
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const requestsToDisplay = requestsData.slice(start, end);
+
+        renderRequestList(requestsToDisplay);
+        setupPagination(totalItems);
+        updateStats(requestsData);
+    }
+
+    function nextPage() {
+        const totalPages = Math.ceil(processedData.length / rowsPerPage);
+        if (currentPage < totalPages) { currentPage++; displayList(processedData); }
+    }
+
+    function prevPage() {
+        if (currentPage > 1) { currentPage--; displayList(processedData); }
+    }
+
+    function renderSkeletonRows() {
+        listContainer.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-4 py-4"><div class="skeleton h-4 w-16"></div></td>
+                <td class="px-4 py-4"><div class="skeleton h-4 w-24"></div></td>
+                <td class="px-4 py-4 hidden md:table-cell"><div class="skeleton h-4 w-20"></div></td>
+                <td class="px-4 py-4 hidden md:table-cell"><div class="skeleton h-4 w-20"></div></td>
+                <td class="px-4 py-4 hidden sm:table-cell"><div class="skeleton h-4 w-28"></div></td>
+                <td class="px-4 py-4 hidden lg:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                <td class="px-4 py-4 text-center"><div class="skeleton h-5 w-16 mx-auto rounded-full"></div></td>
+                <td class="px-4 py-4 text-center"><div class="skeleton h-8 w-20 mx-auto rounded-lg"></div></td>
+            `;
+            listContainer.appendChild(row);
+        }
+    }
+
+    function formatTimeAgo() {
+        const now = new Date();
+        return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function fetchRequests() {
+        if (!hasLoadedOnce) renderSkeletonRows();
+
+        $.ajax({
+            url: '/admin/getCoRequests',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                mockRequestData = response;
+                hasLoadedOnce = true;
+                lastUpdatedEl.textContent = formatTimeAgo();
+                currentPage = 1;
+                refreshProcessedData();
+            },
+            error: function(err) {
+                console.log(err);
+                showNotificationModal('error', 'Data Fetch Error', 'Could not retrieve records from the API.');
+            },
+        });
+    }
+
+    function renderRequestList(requestsToDisplay) {
+        if (rejectionModal.classList.contains('fixed') && selectedRequestId) {
+            const processed = requestsToDisplay.find(r => r.id === selectedRequestId && r.status !== 'Pending');
+            if (processed) closeRejectModal();
+        }
+
+        listContainer.innerHTML = '';
+
+        requestsToDisplay.forEach(request => {
+            const style = getStatusStyle(request.status);
+
+            const row = document.createElement('tr');
+            row.className = 'transition-colors duration-150';
+            row.setAttribute('data-id', request.id);
+
+            row.innerHTML += `
+                <td class="px-4 text-sm font-semibold mono whitespace-nowrap" style="color:var(--color-primary)">
+                    CO-${request.id}
+                </td>
+            `;
+
+            row.innerHTML += `
+                <td class="px-1 py-3.5 text-sm font-semibold whitespace-nowrap" style="color:var(--color-text)">
+                    ${request.requestType}
+                </td>
+            `;
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-sm hidden md:table-cell whitespace-nowrap mono" style="color:var(--color-text-muted)">
+                    ${request.workedDate}
+                </td>
+            `;
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-sm hidden md:table-cell whitespace-nowrap mono" style="color:var(--color-text-muted)">
+                     ${request.compOffdate ?? 'N/A'}
+                </td>
+            `;
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-sm hidden sm:table-cell whitespace-nowrap" style="color:var(--color-text)">
+                    ${request.requester}
+                </td>
+            `;
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-sm hidden lg:table-cell whitespace-nowrap mono" style="color:var(--color-text-muted)">
+                     ${request.requestedOn ?? 'N/A'}
+                </td>
+            `;
+
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-center">
+                    <span class="status-pill" ${style.bg}>
+                        ${style.icon}
+                        <span>${request.status}</span>
+                    </span>
+                </td>
+            `;
+       row.innerHTML += `
+                <td class="px-4 py-3.5 text-sm hidden sm:table-cell whitespace-nowrap text-center" style="color:var(--color-text)">
+                    ${request.actionBy ?? '--'}
+                </td>
+            `;
+            const isPending = request.status === 'Pending';
+            let actionContent;
+
+            if (isPending) {
+                actionContent = `
+                    <div class="flex space-x-2 justify-center">
+                        <button
+                            id="approve-btn-${request.id}"
+                            onclick="handleApprove('${request.id}')"
+                            class="action-btn btn-approve"
+                            title="Approve"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <button
+                            id="reject-btn-${request.id}"
+                            onclick="openRejectModal('${request.id}')"
+                            class="action-btn btn-reject"
+                            title="Reject"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                `;
+            } else if (request.status === 'Rejected') {
+                actionContent = `
+                    <button onclick="viewRejectedReason('${request.id}')" class="text-xs font-semibold underline underline-offset-2" style="color:var(--color-text-muted)">
+                        View reason
+                    </button>
+                `;
+            } else {
+                actionContent = `<span class="text-xs font-semibold italic" style="color:var(--color-text-muted)">NA</span>`;
+            }
+
+            row.innerHTML += `
+                <td class="px-4 py-3.5 text-center">
+                    ${actionContent}
+                </td>
+            `;
+
+            listContainer.appendChild(row);
+        });
+    }
+
+    window.onload = () => {
+        updateSortIcons();
+        fetchRequests();
+        setInterval(() => { fetchRequests(); }, 25000);
+    };
+</script>
+</body>
+</html>

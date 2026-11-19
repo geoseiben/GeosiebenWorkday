@@ -2,7 +2,6 @@ package com.geosieben.gsbworkday.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -14,13 +13,15 @@ import java.time.LocalDate;
 @Service
 public class EmailService {
 
-    @Autowired
     private JavaMailSender mailSender;
     @Value("${spring.mail.username}")
     private String from;
  private String fromname="Geosieben! HR Portal";
 
 
+    public EmailService(JavaMailSender mailSender) {
+    this.mailSender = mailSender;
+}
     public void sendHtmlEmail(String to, String subject, String htmlBody) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);

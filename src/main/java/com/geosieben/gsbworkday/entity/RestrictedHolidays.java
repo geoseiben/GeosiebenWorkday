@@ -3,8 +3,6 @@ package com.geosieben.gsbworkday.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.apache.poi.ss.usermodel.Cell;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 // DTO Import
 import com.geosieben.gsbworkday.dto.CandidateAssessmentDTO;
 
+import jakarta.persistence.CascadeType;
 // Standard JPA Annotations
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,7 +70,7 @@ private String specialization;
 private String resumeFilepath;
 private String location;
 private LocalDateTime createdOn=LocalDateTime.now();
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="createdBy")
 private EmployeeBasicInfo createdBy;
 

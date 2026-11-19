@@ -1,745 +1,355 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title>Employee Portal | Velocity</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --ink: #0d0d12;
-            --ink-muted: #6b6b80;
-            --ink-faint: #a8a8b8;
-            --surface: #f5f4f0;
-            --surface-alt: #eeecea;
-            --white: #ffffff;
-            --accent: #5c5bd4;
-            --accent-glow: rgba(92, 91, 212, 0.15);
-            --emerald: #22c55e;
-            --amber: #f59e0b;
-            --rose: #f43f5e;
-            --blue: #3b82f6;
-            --radius: 18px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Dashboard · Aarav Mehta</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0B1220',
+          ink2: '#141B2D',
+          panel: '#101828',
+          gold: { DEFAULT:'#C9A24B', light:'#E6C876', dim:'#8A6F2E' },
+          teal: { DEFAULT:'#12897A', light:'#DFF3EF' },
+          coral: { DEFAULT:'#DA5B4F', light:'#FBE7E4' },
+          amber2: { DEFAULT:'#D79A34', light:'#FBEEDA' },
+          mist: '#F4F5F8',
+          green:'#7dd87d'
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"','sans-serif'],
+          body: ['"Inter"','sans-serif'],
+          mono: ['"IBM Plex Mono"','monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html{ scroll-behavior:smooth; }
+  body{ font-family:'Inter',sans-serif; background:#F4F5F8; }
+  #top, #leave, #projects, #tasks, #tickets, #attendance{ scroll-margin-top:5.5rem; }
+  .nav-link.is-active{ color:#fff; background:rgba(255,255,255,0.08); }
+  .dropdown-trigger.is-active .chev{ transform:rotate(180deg); }
+  .dropdown-panel{ animation: pop-in .15s ease both; }
+  @keyframes pop-in{ from{ opacity:0; transform:translateY(-4px);} to{ opacity:1; transform:translateY(0);} }
+  .font-display{ font-family:'Space Grotesk',sans-serif; }
+  .font-mono{ font-family:'IBM Plex Mono',monospace; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::-webkit-scrollbar{ height:8px; width:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:#D8DCE3; border-radius:8px; }
+  ::-webkit-scrollbar-thumb:hover{ background:#C2C7D0; }
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--surface);
-            color: var(--ink);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+  .marquee-track{
+    display:flex;
+    width:max-content;
+    animation:scroll-left 32s linear infinite;
+  }
+  .marquee-wrap:hover .marquee-track{ animation-play-state:paused; }
+  @keyframes scroll-left{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-50%); }
+  }
 
-        /* ---- Background texture ---- */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 0;
-        }
+  .ring-progress{ transition: stroke-dashoffset 1s ease; }
 
-        .page-wrapper {
-            position: relative;
-            z-index: 1;
-        }
+  .card-rise{ animation: rise .5s ease both; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
 
-        /* ---- Typography ---- */
-        .font-display { font-family: 'Syne', sans-serif; }
+  .status-dot{ box-shadow:0 0 0 3px rgba(255,255,255,0.6); }
 
-        /* ---- Card ---- */
-        .card {
-            background: var(--white);
-            border-radius: var(--radius);
-            border: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-        }
+  @media (prefers-reduced-motion: reduce){
+    .marquee-track{ animation:none; }
+    .card-rise{ animation:none; }
+  }
+</style>
+<head th:replace="includes/header :: header"></head>
 
-        /* ---- Ticker ---- */
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .animate-scroll {
-            display: inline-flex;
-            animation: scroll 50s linear infinite;
-            width: max-content;
-        }
-        .animate-scroll:hover { animation-play-state: paused; }
-
-        /* ---- Tile Actions ---- */
-        .tile {
-            background: var(--white);
-            border-radius: var(--radius);
-            border: 1px solid rgba(0,0,0,0.06);
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            transition: all 0.25s ease;
-            cursor: pointer;
-            text-decoration: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            position: relative;
-            overflow: hidden;
-        }
-        .tile::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 60%, rgba(0,0,0,0.02));
-            pointer-events: none;
-        }
-        .tile:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            border-color: rgba(92, 91, 212, 0.3);
-        }
-        .tile:hover .tile-icon {
-            transform: scale(1.05);
-        }
-        .tile-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            transition: transform 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        /* ---- Stat Cards ---- */
-        .stat-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            border: 1px solid rgba(0,0,0,0.06);
-            padding: 22px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            width: 100px; height: 100px;
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-            opacity: 0.07;
-        }
-        .stat-card.s-indigo::before { background: var(--accent); }
-        .stat-card.s-emerald::before { background: var(--emerald); }
-        .stat-card.s-amber::before { background: var(--amber); }
-        .stat-card.s-rose::before { background: var(--rose); }
-
-        /* ---- Badge ---- */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 10px;
-            border-radius: 100px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        /* ---- Pulse dot ---- */
-        .pulse-ring {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .pulse-ring span {
-            display: block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--emerald);
-        }
-        .pulse-ring::before {
-            content: '';
-            position: absolute;
-            width: 18px; height: 18px;
-            border-radius: 50%;
-            background: rgba(34, 197, 94, 0.3);
-            animation: pulse-anim 1.8s ease-in-out infinite;
-        }
-        @keyframes pulse-anim {
-            0%, 100% { transform: scale(0.8); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0; }
-        }
-
-        /* ---- Modal ---- */
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.96) translateY(12px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .modal-inner { animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-
-        /* ---- Inputs ---- */
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--surface);
-            border: 1.5px solid rgba(0,0,0,0.07);
-            border-radius: 12px;
-            font-size: 13px;
-            font-family: 'DM Sans', sans-serif;
-            color: var(--ink);
-            outline: none;
-            transition: all 0.2s;
-        }
-        .form-input:focus {
-            background: var(--white);
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-        }
-        .form-label {
-            display: block;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--ink-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 6px;
-        }
-
-        /* ---- Scrollbar ---- */
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
-
-        /* ---- Activity Timeline ---- */
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 36px;
-            bottom: -20px;
-            width: 1px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.08), transparent);
-        }
-        .timeline-item:last-child::before { display: none; }
-
-        /* ---- Section label ---- */
-        .section-eyebrow {
-            font-family: 'Syne', sans-serif;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--ink-muted);
-        }
-
-        /* ---- Number animate ---- */
-        @keyframes countUp {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .stat-num { animation: countUp 0.5s ease forwards; }
-    </style>
 </head>
+<body class="text-ink antialiased">
 
-<body>
-<div class="page-wrapper">
-    <div th:replace="includes/header :: header"></div>
+<div id="top"></div>
 
-    <main class="w-full mx-auto px-4 lg:px-8 py-7 space-y-6">
-
-        <!-- ===== TOP BAR ===== -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 class="font-display text-[28px] font-800 tracking-tight text-[var(--ink)] leading-tight" id="greetingText">Loading…</h1>
-                <div class="flex items-center gap-2 mt-1.5">
-                    <span class="badge" style="background:#ebe9ff;color:var(--accent)">Velocity v3.0</span>
-                    <span class="section-eyebrow">Workspace · 2026</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <!-- Date chip -->
-                <div class="card px-4 py-2.5 flex items-center gap-2.5">
-                    <i class="fa-regular fa-calendar-days text-[var(--ink-faint)] text-sm"></i>
-                    <span class="font-display text-[12px] font-600 text-[var(--ink)] tracking-tight" id="todayDate">—</span>
-                </div>
-                <!-- Status chip -->
-                <div class="card px-4 py-2.5 flex items-center gap-2.5">
-                    <span class="pulse-ring"><span></span></span>
-                    <div>
-                        <p class="section-eyebrow leading-none mb-0.5">System</p>
-                        <p class="font-display text-[12px] font-700 text-[var(--ink)] tracking-tight">All Systems Operational</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== TICKER ===== -->
-        <div class="card relative py-4 overflow-hidden" style="border-radius:14px;">
-            <div class="absolute left-0 top-0 bottom-0 z-20 px-5 flex items-center bg-white border-r border-black/5" style="border-radius:14px 0 0 14px">
-                <span class="section-eyebrow flex items-center gap-1.5">
-                    <i class="fa-solid fa-bolt-lightning text-[var(--accent)]"></i> Today's Pulse
-                </span>
-            </div>
-            <div class="animate-scroll pl-44" id="celebrationTicker"></div>
-        </div>
-
-        <!-- ===== ADMIN STATS ===== -->
-        <div sec:authorize="hasAuthority('admin')" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-            <div class="stat-card s-indigo">
-                <p class="section-eyebrow mb-4">Pending Leaves</p>
-                <div class="flex items-end justify-between">
-                    <span class="font-display text-4xl font-800 stat-num" id="pendingLeaves">--</span>
-                    <span class="badge" style="background:#ebe9ff;color:var(--accent)">Review</span>
-                </div>
-                <div class="mt-3 h-1 rounded-full bg-[var(--surface-alt)] overflow-hidden">
-                    <div class="h-full rounded-full bg-[var(--accent)]" style="width:40%"></div>
-                </div>
-            </div>
-
-            <div class="stat-card s-amber">
-                <p class="section-eyebrow mb-4">IT Tickets</p>
-                <div class="flex items-end justify-between">
-                    <span class="font-display text-4xl font-800 stat-num" id="pendingIT">--</span>
-                    <span class="badge" style="background:#fef3c7;color:#b45309">Open</span>
-                </div>
-                <div class="mt-3 h-1 rounded-full bg-[var(--surface-alt)] overflow-hidden">
-                    <div class="h-full rounded-full bg-[var(--amber)]" style="width:30%"></div>
-                </div>
-            </div>
-
-            <div class="stat-card s-emerald">
-                <p class="section-eyebrow mb-4">Active Staff</p>
-                <div class="flex items-end justify-between">
-                    <span class="font-display text-4xl font-800 stat-num" id="activeEmployees">--</span>
-                    <span class="badge" style="background:#dcfce7;color:#15803d">Live</span>
-                </div>
-                <div id="active" class="flex gap-3 mt-3 text-[10px] font-700 text-[var(--ink-muted)]"></div>
-            </div>
-
-            <div class="stat-card s-rose">
-                <p class="section-eyebrow mb-4">Exits</p>
-                <div class="flex items-end justify-between">
-                    <span class="font-display text-4xl font-800 stat-num" id="seperatedEmployees">--</span>
-                    <span class="badge" style="background:#ffe4e6;color:#be123c">YTD</span>
-                </div>
-                <div class="mt-3 h-1 rounded-full bg-[var(--surface-alt)] overflow-hidden">
-                    <div class="h-full rounded-full bg-[var(--rose)]" style="width:15%"></div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ===== MAIN GRID ===== -->
-        <div class="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
-
-            <!-- Left: Tiles + Quick Info -->
-            <div class="space-y-6">
-
-                <!-- Section eyebrow -->
-                <div class="flex items-center gap-3">
-                    <span class="section-eyebrow">Quick Actions</span>
-                    <div class="flex-1 h-px bg-black/06"></div>
-                </div>
-
-                <!-- Action Tiles -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-
-                    <a href="/leaves/apply" class="tile">
-                        <div class="tile-icon" style="background:#ebe9ff;color:var(--accent)">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Leave Request</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Apply for time off</p>
-                        </div>
-                        <div class="absolute top-4 right-4 text-[var(--ink-faint)] text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i class="fa-solid fa-arrow-up-right"></i>
-                        </div>
-                    </a>
-
-                    <a href="/myTasks" class="tile">
-                        <div class="tile-icon relative" style="background:#dcfce7;color:#16a34a" id="attendance-icon">
-                            <i class="fa-solid fa-clock-pulse"></i>
-                            <span id="clock-status-dot" class="hidden absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-emerald-500 border-[3px] border-white rounded-full animate-pulse"></span>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Attendance</p>
-                            <p id="clock-status-text" class="text-[11px] text-[var(--ink-muted)] mt-0.5">MyTasks & Tracking</p>
-                        </div>
-                    </a>
-
-                    <a sec:authorize="hasAnyAuthority('admin','hr')" id="open-modal-btn" class="tile">
-                        <div class="tile-icon" style="background:#dbeafe;color:#2563eb">
-                            <i class="fa-solid fa-layer-group"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Log Project</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Record daily activity</p>
-                        </div>
-                    </a>
-
-                    <a sec:authorize="hasAnyAuthority('admin')" href="/admin/addemployee" class="tile">
-                        <div class="tile-icon" style="background:#f3e8ff;color:#9333ea">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Onboarding</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Hire new talent</p>
-                        </div>
-                    </a>
-
-                    <a href="/performance" class="tile">
-                        <div class="tile-icon" style="background:#fef3c7;color:#d97706">
-                            <i class="fa-solid fa-medal"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">KPI / Reviews</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Performance tracking</p>
-                        </div>
-                    </a>
-
-                    <a href="/separtion/resign" class="tile">
-                        <div class="tile-icon" style="background:#ffe4e6;color:#e11d48">
-                            <i class="fa-solid fa-door-open"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Separation</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Resignation process</p>
-                        </div>
-                    </a>
-
-                    <a sec:authorize="hasAnyAuthority('admin','hr')" href="/admin/generateLetters" class="tile">
-                        <div class="tile-icon" style="background:#ecfdf5;color:#059669">
-                            <i class="fa-solid fa-file-contract"></i>
-                        </div>
-                        <div>
-                            <p class="font-display text-[14px] font-700 text-[var(--ink)]">Generate Letters</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Offer, exp & HR docs</p>
-                        </div>
-                    </a>
-
-                </div>
-
-                <!-- Mini info bar -->
-                <div class="card p-4 flex flex-wrap gap-4 items-center">
-                    <i class="fa-solid fa-circle-info text-[var(--accent)] text-sm"></i>
-                    <p class="text-[12px] text-[var(--ink-muted)]">Your performance review window opens <strong class="text-[var(--ink)]">March 15</strong>. Prepare your self-assessment early.</p>
-                    <a href="/performance" class="ml-auto text-[11px] font-700 text-[var(--accent)] hover:underline whitespace-nowrap">Go to Reviews →</a>
-                </div>
-
-            </div>
-
-            <!-- Right: Activity -->
-            <div class="card overflow-hidden flex flex-col" style="max-height:480px;">
-                <div class="px-5 py-4 border-b border-black/05 flex items-center justify-between flex-shrink-0">
-                    <h2 class="font-display text-[13px] font-700 text-[var(--ink)]">Recent Activity</h2>
-                    <span class="flex h-2 w-2 rounded-full bg-[var(--emerald)]"></span>
-                </div>
-                <div class="flex-1 overflow-y-auto custom-scroll p-5 space-y-5">
-
-                    <!-- static placeholders; replace with dynamic load -->
-                    <div class="relative timeline-item flex gap-3 pb-2">
-                        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] z-10 ring-4 ring-[var(--surface)]" style="background:#dbeafe;color:#2563eb">
-                            <i class="fa-solid fa-rocket"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-[12px] font-700 text-[var(--ink)]">New Project Logged</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] truncate">Cloud Migration v2.0</p>
-                            <p class="text-[10px] text-[var(--ink-faint)] mt-0.5">4h ago</p>
-                        </div>
-                    </div>
-
-                    <div class="relative timeline-item flex gap-3 pb-2">
-                        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] z-10 ring-4 ring-[var(--surface)]" style="background:#dcfce7;color:#16a34a">
-                            <i class="fa-solid fa-calendar-check"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-[12px] font-700 text-[var(--ink)]">Leave Approved</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] truncate">2-day casual leave</p>
-                            <p class="text-[10px] text-[var(--ink-faint)] mt-0.5">Yesterday</p>
-                        </div>
-                    </div>
-
-                    <div class="relative timeline-item flex gap-3 pb-2">
-                        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] z-10 ring-4 ring-[var(--surface)]" style="background:#f3e8ff;color:#9333ea">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-[12px] font-700 text-[var(--ink)]">New Hire Onboarded</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] truncate">Joined UI/UX Team</p>
-                            <p class="text-[10px] text-[var(--ink-faint)] mt-0.5">2 days ago</p>
-                        </div>
-                    </div>
-
-                    <div class="relative flex gap-3 pb-2">
-                        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] z-10 ring-4 ring-[var(--surface)]" style="background:#fef3c7;color:#d97706">
-                            <i class="fa-solid fa-medal"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-[12px] font-700 text-[var(--ink)]">KPI Review Updated</p>
-                            <p class="text-[11px] text-[var(--ink-muted)] truncate">Q1 targets submitted</p>
-                            <p class="text-[10px] text-[var(--ink-faint)] mt-0.5">3 days ago</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-    </main>
-</div>
-
-<!-- ===== ADD PROJECT MODAL ===== -->
-<div id="add-project-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-    <div class="bg-white rounded-[24px] shadow-2xl max-w-xl w-full modal-inner overflow-hidden">
-
-        <div class="px-7 py-5 border-b border-black/06 flex items-center justify-between">
-            <h3 class="font-display text-[17px] font-800 text-[var(--ink)] flex items-center gap-3">
-                <span class="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--accent)]" style="background:#ebe9ff">
-                    <i class="fa-solid fa-plus text-sm"></i>
-                </span>
-                Log Project Entry
-            </h3>
-            <button id="cancel-add-project-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--ink-muted)] hover:bg-[var(--surface)] transition-colors">
-                <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
-        </div>
-
-        <form id="add-project-form" class="p-7 space-y-5">
-
-            <div>
-                <label class="form-label">Project Name</label>
-                <input type="text" name="projectName" required placeholder="e.g. Cloud Migration 3.0" class="form-input">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="form-label">Type</label>
-                    <select id="project-type" name="projectType" class="form-input">
-                        <option value="Project">Project</option>
-                        <option value="Pilot">Pilot</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label">Category</label>
-                    <select id="category" name="categoryId" class="form-input" required>
-                        <option value="">Select Category</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="form-label">Project Lead</label>
-                    <select id="project-lead" name="projectLeadId" class="form-input" required>
-                        <option value="">Select Lead…</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label">Client</label>
-                    <select id="associated-client" name="clientId" class="form-input" required>
-                        <option value="">Select Client…</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="pilot-fields" class="grid grid-cols-2 gap-4 bg-[var(--surface)] p-4 rounded-2xl border border-black/05 hidden">
-                <div>
-                    <label class="form-label">Start Date</label>
-                    <input type="date" name="startDate" class="form-input">
-                </div>
-                <div>
-                    <label class="form-label">Deadline</label>
-                    <input type="date" name="deadline" class="form-input">
-                </div>
-                <div>
-                    <label class="form-label">Hours</label>
-                    <input type="text" name="hours" placeholder="0.00" class="form-input">
-                </div>
-                <div>
-                    <label class="form-label">File Path</label>
-                    <input type="text" name="filepath" placeholder="https://…" class="form-input">
-                </div>
-            </div>
-
-            <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
-
-            <div class="flex justify-end items-center gap-3 pt-4 border-t border-black/05">
-                <button type="button" id="cancel-add-project" class="text-[12px] font-700 text-[var(--ink-muted)] hover:text-[var(--ink)] px-4 uppercase tracking-wide transition-colors">Cancel</button>
-                <button type="submit" id="submit-btn"
-                    class="px-7 py-3 rounded-xl text-[12px] font-800 uppercase tracking-wide text-white transition-all"
-                    style="background:var(--accent); box-shadow:0 4px 16px var(--accent-glow)">
-                    Submit Entry
-                </button>
-            </div>
-        </form>
+<!-- ===================== CELEBRATIONS MARQUEE ===================== -->
+<div class="marquee-wrap bg-gradient-to-r from-[#1C1506] via-ink2 to-[#1C1506] border-b border-gold/20 overflow-hidden">
+  <div class="max-w-8xl mx-auto px-6 lg:px-8 py-2.5 flex items-center gap-4">
+    <span class="shrink-0 flex items-center gap-2 text-gold-light text-xs font-display tracking-wide uppercase pr-4 border-r border-white/10">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 14l-5 3 1.2-5.6L4 7.6l5.6-.6z"/></svg>
+      July Celebrations
+    </span>
+    <div class="overflow-hidden flex-1">
+      <div class="marquee-track" id="marqueeTrack"><!-- injected --></div>
     </div>
+  </div>
 </div>
 
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<!-- ===================== MAIN ===================== -->
+<main class="max-w-8xl mx-auto px-6 lg:px-8 py-8 space-y-8">
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script th:src="@{/js/script.js}" type="text/javascript"></script>
+  <!-- Greeting -->
+  <div class="flex flex-wrap items-end justify-between gap-3 card-rise">
+    <div>
+      <h1 class="font-display text-3xl tracking-tight text-ink">WelCome Back,<span th:text="${session.uname}"></span> 👋</h1>
+      <p class="text-sm text-ink/50 mt-1">Here's what's on your plate today.</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="text-sm font-medium px-4 py-2 rounded-lg bg-ink text-white hover:bg-ink2 transition">Apply Leave</button>
+      <button class="text-sm font-medium px-4 py-2 rounded-lg border border-ink/10 bg-white hover:bg-mist transition">Raise Ticket</button>
+    </div>
+  </div>
 
-<script th:inline="javascript">
-    /* ---------- Admin Stats ---------- */
-    function fetchAdminStats() {
-        $.ajax({
-            url: '/admin/stats', type: 'GET', dataType: 'json',
-            success: function(r) {
-                if ($('#pendingLeaves').length) {
-                    $('#pendingLeaves').text(r.pendingLeaves || 0);
-                    $('#pendingIT').text(r.pendingtickets || 0);
-                    $('#activeEmployees').text(r.totalActiveEmployees || 0);
-                    $('#active').html(`<span>M: ${r.activeMale||0}</span> <span style="color:#d1d5db">·</span> <span>F: ${r.activeFemale||0}</span>`);
-                    $('#seperatedEmployees').text(r.totalSeparated || 0);
-                }
-            }
-        });
-    }
+  <!-- ============ KPI CARDS: Leave / Projects / Tasks / Tickets ============ -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
-    /* ---------- Clock-in visuals ---------- */
-    function updateClockInVisuals(isActive) {
-        const dot = document.getElementById('clock-status-dot');
-        const text = document.getElementById('clock-status-text');
-        if (isActive) {
-            dot.classList.remove('hidden');
-            text.innerText = 'Currently Active';
-            text.style.color = '#16a34a';
-            text.style.fontWeight = '700';
-        } else {
-            dot.classList.add('hidden');
-            text.innerText = 'Attendance Tracking';
-            text.style.color = '';
-            text.style.fontWeight = '';
-        }
-    }
+    <!-- Leave Balance -->
+    <div id="leave" class="card-rise bg-ink rounded-2xl p-5 text-white relative overflow-hidden">
+      <div class="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gold/10"></div>
+      <div class="flex items-start justify-between relative">
+        <div>
+          <p class="text-[11px] uppercase tracking-widest text-white/40">Leave Balance</p>
+          <p class="font-display text-4xl mt-2">18.5<span class="text-base text-white/40 font-body"> / 26 days</span></p>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-gold/15 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gold-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+      <div class="mt-4 space-y-2 relative">
+        <div>
+          <div class="flex justify-between text-[11px] text-white/50 mb-1"><span>Annual</span><span class="font-mono">9.5 / 15</span></div>
+          <div class="h-1.5 rounded-full bg-white/10"><div class="h-1.5 rounded-full bg-gold-light" style="width:63%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[11px] text-white/50 mb-1"><span>Sick</span><span class="font-mono">5 / 8</span></div>
+          <div class="h-1.5 rounded-full bg-white/10"><div class="h-1.5 rounded-full bg-teal-light" style="width:62%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[11px] text-white/50 mb-1"><span>Casual</span><span class="font-mono">4 / 3</span></div>
+          <div class="h-1.5 rounded-full bg-white/10"><div class="h-1.5 rounded-full bg-coral" style="width:100%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-[11px] text-white/50 mb-1"><span>Festival</span><span class="font-mono">4 / 6</span></div>
+          <div class="h-1.5 rounded-full bg-white/20"><div class="h-1.5 rounded-full bg-green" style="width:40%"></div></div>
+        </div>
+      </div>
+    </div>
 
-    /* ---------- Dropdowns ---------- */
-    function projectNeeds() {
-        $.ajax({
-            url: '/admin/getprojectrequired', type: 'GET', dataType: 'json',
-            success: function(r) {
-                populateSelect('category', r[1], 'categoryId', 'catagoryShortname');
-                populateSelect('project-lead', r[0], 'eid', 'name');
-                populateSelect('associated-client', r[2], 'cid', 'clientId');
-            }
-        });
-    }
+    <!-- Projects -->
+    <div class="card-rise bg-white rounded-2xl p-5 border border-ink/5 shadow-sm shadow-ink/5">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-widest text-ink/40">Projects</p>
+          <p class="font-display text-4xl mt-2 text-ink">4<span class="text-base text-ink/30 font-body"> active</span></p>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-teal-light flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+        </div>
+      </div>
+      <div class="mt-4 space-y-3">
+        <div>
+          <div class="flex justify-between text-xs text-ink/60 mb-1"><span class="font-medium text-ink">Orion Checkout Revamp</span><span class="font-mono">72%</span></div>
+          <div class="h-1.5 rounded-full bg-mist"><div class="h-1.5 rounded-full bg-teal" style="width:72%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs text-ink/60 mb-1"><span class="font-medium text-ink">Vault Auth Migration</span><span class="font-mono">45%</span></div>
+          <div class="h-1.5 rounded-full bg-mist"><div class="h-1.5 rounded-full bg-amber2" style="width:45%"></div></div>
+        </div>
+      </div>
+    </div>
 
-    function runningAllotments() {
-        $.ajax({
-            url: '/getRunningAllotments', type: 'GET', dataType: 'json',
-            success: function(r) { updateClockInVisuals(r !== null); }
-        });
-    }
+    <!-- Tasks -->
+    <div class="card-rise bg-white rounded-2xl p-5 border border-ink/5 shadow-sm shadow-ink/5">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-widest text-ink/40">My Tasks</p>
+          <p class="font-display text-4xl mt-2 text-ink">7<span class="text-base text-ink/30 font-body"> open</span></p>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-amber2-light flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-coral"></span> 2 due today</div>
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber2"></span> 3 this week</div>
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-teal"></span> 2 backlog</div>
+      </div>
+    </div>
 
-    function populateSelect(id, items, vk, tk) {
-        const s = document.getElementById(id);
-        if (!s) return;
-        s.innerHTML = '<option value="">— Select —</option>';
-        items.forEach(i => {
-            const o = document.createElement('option');
-            o.value = i[vk]; o.textContent = i[tk];
-            s.appendChild(o);
-        });
-    }
+    <!-- IT Tickets -->
+    <div class="card-rise bg-white rounded-2xl p-5 border border-ink/5 shadow-sm shadow-ink/5">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-widest text-ink/40">IT Tickets</p>
+          <p class="font-display text-4xl mt-2 text-ink">3<span class="text-base text-ink/30 font-body"> open</span></p>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-coral-light flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-coral" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-coral"></span> 1 critical</div>
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber2"></span> 1 in progress</div>
+        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-ink/30"></span> 1 queued</div>
+      </div>
+    </div>
+  </section>
 
-    /* ---------- Greeting + Date ---------- */
-    function updateGreeting() {
-        const h = new Date().getHours();
-        const user = /*[[${username}]]*/ 'Employee';
-        const g = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
-        document.getElementById('greetingText').textContent = `${g}, ${user} 👋`;
+  <!-- ============ PROJECTS + TASKS (left) / TICKETS (right) ============ -->
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-        const d = new Date();
-        document.getElementById('todayDate').textContent = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
-    }
 
-    /* ---------- Ticker ---------- */
-    function populateCelebrations() {
-        const ticker = document.getElementById('celebrationTicker');
-        if (!ticker) return;
-        const events = [
-            { name:'Sarah Jenkins', type:'Birthday', detail:'Today', icon:'fa-cake-candles', bg:'#ebe9ff', color:'#5c5bd4' },
-            { name:'David Chen', type:'Work Anniversary', detail:'5 Years', icon:'fa-medal', bg:'#fef3c7', color:'#d97706' },
-            { name:'Elena Rodriguez', type:'New Joiner', detail:'UI/UX Team', icon:'fa-user-plus', bg:'#dcfce7', color:'#16a34a' },
-            { name:'Cloud Migration', type:'Project Launch', detail:'Live', icon:'fa-rocket', bg:'#dbeafe', color:'#2563eb' },
-            { name:'Alex Thompson', type:'Promotion', detail:'Senior Dev', icon:'fa-arrow-trend-up', bg:'#fce7f3', color:'#db2777' },
-        ];
-        const html = events.map(e => `
-            <div class="flex items-center gap-3 px-8 border-r border-black/05 last:border-0 flex-shrink-0">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background:${e.bg}">
-                    <i class="fa-solid ${e.icon} text-sm" style="color:${e.color}"></i>
-                </div>
-                <div>
-                    <p class="font-display text-[12px] font-700 text-[var(--ink)] whitespace-nowrap">${e.name}</p>
-                    <p class="text-[10px] text-[var(--ink-muted)] uppercase tracking-wide font-600 whitespace-nowrap">${e.type} · ${e.detail}</p>
-                </div>
-            </div>
-        `).join('');
-        ticker.innerHTML = html + html;
-    }
 
-    /* ---------- Modal ---------- */
-    const toggleModal = show => {
-        const m = $('#add-project-modal');
-        show ? m.removeClass('hidden').addClass('flex') : m.addClass('hidden').removeClass('flex');
-        if (!show) { $('#add-project-form')[0].reset(); $('#pilot-fields').addClass('hidden'); }
-    };
+    
+    </div>
+  </section>
 
-    /* ---------- Init ---------- */
-    $(document).ready(function () {
-        updateGreeting();
-        fetchAdminStats();
-        projectNeeds();
-        runningAllotments();
-        populateCelebrations();
+  <!-- ============ ATTENDANCE — LAST 30 DAYS ============ -->
+  <section id="attendance" class="bg-white rounded-2xl border border-ink/5 shadow-sm shadow-ink/5">
+    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-ink/5">
+      <div>
+        <h2 class="font-display text-base tracking-tight">Attendance — Last 30 Days</h2>
+        <p class="text-xs text-ink/40 mt-0.5">16 Jun – 15 Jul 2026 · hours logged per day</p>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-teal"></span>Present</span>
+        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-gold"></span>WFH</span>
+        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber2"></span>Late</span>
+        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-coral"></span>Leave</span>
+        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-ink/15"></span>Weekend</span>
+      </div>
+    </div>
 
-        $('#open-modal-btn').on('click', () => toggleModal(true));
-        $('#cancel-add-project, #cancel-add-project-icon').on('click', () => toggleModal(false));
+    <!-- summary stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-5 pt-5">
+      <div class="rounded-xl bg-mist p-4">
+        <p class="text-[11px] uppercase tracking-widest text-ink/40">Total Hours</p>
+        <p class="font-display text-2xl mt-1" id="statTotalHours">—</p>
+      </div>
+      <div class="rounded-xl bg-mist p-4">
+        <p class="text-[11px] uppercase tracking-widest text-ink/40">Avg Hrs / Day</p>
+        <p class="font-display text-2xl mt-1" id="statAvgHours">—</p>
+      </div>
+      <div class="rounded-xl bg-mist p-4">
+        <p class="text-[11px] uppercase tracking-widest text-ink/40">On-Time Rate</p>
+        <p class="font-display text-2xl mt-1" id="statOnTime">—</p>
+      </div>
+      <div class="rounded-xl bg-mist p-4">
+        <p class="text-[11px] uppercase tracking-widest text-ink/40">WFH Days</p>
+        <p class="font-display text-2xl mt-1" id="statWfh">—</p>
+      </div>
+    </div>
 
-        $('#project-type').on('change', function () {
-            this.value === 'Pilot' ? $('#pilot-fields').removeClass('hidden') : $('#pilot-fields').addClass('hidden');
-        });
+    <!-- tile grid -->
+    <div class="px-5 pt-5 pb-6">
+      <div id="attendanceGrid" class="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-3"><!-- injected --></div>
+    </div>
+  </section>
 
-        $('#add-project-form').on('submit', function (e) {
-            e.preventDefault();
-            const $btn = $('#submit-btn');
-            $btn.prop('disabled', true).text('Saving…');
-            $.ajax({
-                url: '/admin/addproject', type: 'POST',
-                headers: { 'X-CSRF-TOKEN': $('#csrfToken').val() },
-                data: {
-                    projectName: $("input[name='projectName']").val(),
-                    projectType: $('#project-type').val(),
-                    categoryId: $('#category').val(),
-                    projectLeadId: $('#project-lead').val(),
-                    clientId: $('#associated-client').val(),
-                    startDate: $("input[name='startDate']").val(),
-                    deadline: $("input[name='deadline']").val(),
-                    hours: $("input[name='hours']").val(),
-                    filepath: $("input[name='filepath']").val()
-                },
-                success: function () { toggleModal(false); fetchAdminStats(); },
-                error: () => alert('Error saving project.'),
-                complete: () => $btn.prop('disabled', false).text('Submit Entry')
-            });
-        });
+  <footer class="text-center text-xs text-ink/30 pb-6">Nexora Workspace · Employee Portal · Data refreshed 15 Jul 2026, 09:41 IST</footer>
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+</main>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  // ---------- Nav scroll-spy ----------
+  const navLinks = document.querySelectorAll('.nav-link[data-section]');
+  const sectionMap = Array.from(navLinks).map(a => ({ el:a, section:document.getElementById(a.dataset.section) }))
+    .filter(x => x.section);
+  function updateActiveNav(){
+    const pos = window.scrollY + 140;
+    let current = sectionMap[0];
+    sectionMap.forEach(x => { if(x.section.offsetTop <= pos) current = x; });
+    const activeSection = current ? current.section.id : null;
+    document.querySelectorAll('.nav-link[data-section]').forEach(a => {
+      a.classList.toggle('is-active', a.dataset.section === activeSection);
     });
+  }
+  window.addEventListener('scroll', updateActiveNav);
+  updateActiveNav();
+
+  // ---------- Celebrations (current month) ----------
+  const celebrations = [
+    { name:'Priya Raman', team:'Design', type:'Birthday', date:'Jul 16', icon:'🎂' },
+    { name:'Kabir Anand', team:'Platform', type:'Work Anniversary · 3 yrs', date:'Jul 18', icon:'🎉' },
+    { name:'Sara Thomas', team:'QA', type:'Birthday', date:'Jul 21', icon:'🎂' },
+    { name:'Rahul Verma', team:'Sales', type:'Work Anniversary · 5 yrs', date:'Jul 24', icon:'🏆' },
+    { name:'Meera Iyer', team:'Product', type:'Birthday', date:'Jul 27', icon:'🎂' },
+    { name:'Divya Nair', team:'Platform', type:'Work Anniversary · 1 yr', date:'Jul 30', icon:'🎉' },
+  ];
+
+  function celebrationChip(c){
+    return `<div class="flex items-center gap-2.5 px-4 shrink-0 border-r border-white/10 last:border-none">
+      <span class="text-base">${c.icon}</span>
+      <span class="text-xs text-white/90"><span class="font-medium text-gold-light">${c.name}</span> · ${c.type} <span class="text-white/30">(${c.date})</span></span>
+    </div>`;
+  }
+  const track = document.getElementById('marqueeTrack');
+  const chips = celebrations.map(celebrationChip).join('');
+  track.innerHTML = chips + chips; // duplicate for seamless loop
+
+  // ---------- Attendance data (last 30 days) ----------
+  const attendance = [{"date": "2026-06-16", "dow": "Tue", "status": "Present", "cin": "09:00", "cout": "18:19", "hrs": 9.1}, {"date": "2026-06-17", "dow": "Wed", "status": "WFH", "cin": "09:14", "cout": "18:13", "hrs": 8.9}, {"date": "2026-06-18", "dow": "Thu", "status": "Late", "cin": "10:10", "cout": "19:13", "hrs": 7.5}, {"date": "2026-06-19", "dow": "Fri", "status": "Present", "cin": "09:11", "cout": "18:51", "hrs": 8.2}, {"date": "2026-06-20", "dow": "Sat", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-06-21", "dow": "Sun", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-06-22", "dow": "Mon", "status": "Late", "cin": "10:8", "cout": "19:18", "hrs": 7.7}, {"date": "2026-06-23", "dow": "Tue", "status": "Leave", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-06-24", "dow": "Wed", "status": "Late", "cin": "10:40", "cout": "19:27", "hrs": 7.2}, {"date": "2026-06-25", "dow": "Thu", "status": "Present", "cin": "09:28", "cout": "18:34", "hrs": 8.7}, {"date": "2026-06-26", "dow": "Fri", "status": "Present", "cin": "09:09", "cout": "18:55", "hrs": 8.2}, {"date": "2026-06-27", "dow": "Sat", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-06-28", "dow": "Sun", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-06-29", "dow": "Mon", "status": "WFH", "cin": "09:15", "cout": "18:14", "hrs": 8.3}, {"date": "2026-06-30", "dow": "Tue", "status": "Present", "cin": "09:08", "cout": "18:42", "hrs": 9.0}, {"date": "2026-07-01", "dow": "Wed", "status": "Present", "cin": "09:21", "cout": "18:34", "hrs": 8.3}, {"date": "2026-07-02", "dow": "Thu", "status": "Late", "cin": "10:20", "cout": "19:2", "hrs": 7.7}, {"date": "2026-07-03", "dow": "Fri", "status": "Present", "cin": "09:24", "cout": "18:33", "hrs": 8.8}, {"date": "2026-07-04", "dow": "Sat", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-07-05", "dow": "Sun", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-07-06", "dow": "Mon", "status": "WFH", "cin": "09:14", "cout": "18:36", "hrs": 7.7}, {"date": "2026-07-07", "dow": "Tue", "status": "Present", "cin": "09:23", "cout": "18:17", "hrs": 9.3}, {"date": "2026-07-08", "dow": "Wed", "status": "WFH", "cin": "09:14", "cout": "18:30", "hrs": 8.0}, {"date": "2026-07-09", "dow": "Thu", "status": "Present", "cin": "09:07", "cout": "18:19", "hrs": 9.1}, {"date": "2026-07-10", "dow": "Fri", "status": "Present", "cin": "09:01", "cout": "18:18", "hrs": 9.0}, {"date": "2026-07-11", "dow": "Sat", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-07-12", "dow": "Sun", "status": "Weekend", "cin": "", "cout": "", "hrs": 0}, {"date": "2026-07-13", "dow": "Mon", "status": "Present", "cin": "09:24", "cout": "18:33", "hrs": 8.9}, {"date": "2026-07-14", "dow": "Tue", "status": "Present", "cin": "09:07", "cout": "18:37", "hrs": 8.2}, {"date": "2026-07-15", "dow": "Wed", "status": "WFH", "cin": "09:10", "cout": "18:23", "hrs": 8.7}];
+
+  const statusColor = {
+    Present:{ bar:'#12897A', badgeBg:'#DFF3EF', badgeText:'#12897A' },
+    WFH:{ bar:'#C9A24B', badgeBg:'#F6EED9', badgeText:'#8A6F2E' },
+    Late:{ bar:'#D79A34', badgeBg:'#FBEEDA', badgeText:'#8A5E12' },
+    Leave:{ bar:'#DA5B4F', badgeBg:'#FBE7E4', badgeText:'#DA5B4F' },
+    Weekend:{ bar:'#C7CBD3', badgeBg:'#F4F5F8', badgeText:'#8A93A1' },
+  };
+
+  function pad(t){
+    if(!t) return '—';
+    const [h,m] = t.split(':');
+    return h.padStart(2,'0') + ':' + m.padStart(2,'0');
+  }
+
+  function getStats(){
+    $.get('/getStats',
+    (res)=>{
+        console.log(res);
+    },
+  'json')
+}
+getStats();
+
+  // stats
+  const workDays = attendance.filter(d => d.status !== 'Weekend');
+  const totalHours = attendance.reduce((s,d)=>s+d.hrs,0);
+  const loggedDays = attendance.filter(d=>d.hrs>0).length;
+  const onTimeDays = attendance.filter(d=>d.status==='Present'||d.status==='WFH').length;
+  const wfhDays = attendance.filter(d=>d.status==='WFH').length;
+
+  document.getElementById('statTotalHours').textContent = totalHours.toFixed(1)+'h';
+  document.getElementById('statAvgHours').textContent = (totalHours/loggedDays).toFixed(1)+'h';
+  document.getElementById('statOnTime').textContent = Math.round((onTimeDays/workDays.length)*100)+'%';
+  document.getElementById('statWfh').textContent = wfhDays+' days';
+
+  // tile grid
+  const grid = document.getElementById('attendanceGrid');
+  grid.innerHTML = attendance.map(d=>{
+    const c = statusColor[d.status];
+    const dateLabel = new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{ day:'2-digit', month:'short' });
+    const tooltip = d.status==='Weekend' ? 'Weekend'
+      : d.status==='Leave' ? 'On Leave'
+      : `In ${pad(d.cin)} · Out ${pad(d.cout)}`;
+    const isToday = d.date === attendance[attendance.length-1].date;
+    return `<div title="${tooltip}"
+        class="group relative rounded-xl border px-2.5 py-3 flex flex-col items-center text-center transition hover:-translate-y-0.5 hover:shadow-md ${isToday ? 'ring-2 ring-gold' : ''}"
+        style="background:${c.badgeBg};border-color:${c.badgeText}22">
+      <span class="text-[10px] uppercase tracking-wider font-medium" style="color:${c.badgeText}">${d.dow}</span>
+      <span class="font-display text-[13px] text-ink/70 mt-0.5">${dateLabel}</span>
+      <span class="font-mono text-base font-semibold mt-1.5" style="color:${d.hrs>0 ? '#0B1220' : c.badgeText}">${d.hrs>0 ? d.hrs.toFixed(1) : '—'}</span>
+      <span class="text-[9px] text-ink/30 -mt-0.5">${d.hrs>0 ? 'hrs' : d.status}</span>
+      <span class="mt-1.5 h-1.5 w-1.5 rounded-full" style="background:${c.badgeText}"></span>
+    </div>`;
+  }).join('');
 </script>
 </body>
 </html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+      <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Request</title>
+  <link rel="icon" href="assets/images/favicon-32x32.png" type="image/png">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 10px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .main-container {
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Custom scrollbar for table */
+    .overflow-x-auto::-webkit-scrollbar {
+      height: 6px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Animation for table rows */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-row {
+      animation: fadeIn 0.4s ease forwards;
+    }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+<div class="container mx-auto px-4 py-12 main-container">
+  <!-- Header Branding -->
+  <div class="mb-10 text-center lg:text-left">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Document Center</h1>
+    <p class="text-slate-500 mt-2">Manage and track your official document requests easily.</p>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Left Side: Form (4/12 columns) -->
+    <div class="lg:col-span-4 sticky top-10">
+      <div class="glass rounded-2xl p-8 border border-white/60">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="p-2 bg-indigo-50 rounded-lg">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h2 class="text-xl font-bold text-slate-800">New Request</h2>
+        </div>
+
+        <form id="reqDoc" class="space-y-6">
+          <div class="space-y-1.5">
+            <label for="employeeName" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">Requester</label>
+            <div class="relative">
+                <input type="text" id="employeeName" th:value="${session.uname}" disabled
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50/50 text-slate-500 font-medium cursor-not-allowed">
+                <div class="absolute right-3 top-3.5">
+                    <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                </div>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="documentType" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">Document Category <span class="text-rose-500">*</span></label>
+            <select id="documentType" required
+                    class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 bg-white transition-all outline-none appearance-none cursor-pointer">
+              <option disabled selected>Select an option</option>
+              <option value="Original Documents (Except SSLC Marks card)">Original Documents</option>
+              <option value="Salary Slips">Salary Slips</option>
+            </select>
+          </div>
+
+          <input type="hidden" name="csrf" id="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf']); ?>">
+
+          <div class="space-y-1.5">
+            <label for="remarks" class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">Details / Reason <span class="text-rose-500">*</span></label>
+            <textarea id="remarks" required placeholder="Why do you need this document?"
+                      class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 bg-white transition-all outline-none h-32 resize-none"></textarea>
+          </div>
+
+          <button type="submit" id="btnSubmit"
+                  class="w-full py-4 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all transform active:scale-[0.98] shadow-lg shadow-slate-200 flex items-center justify-center gap-2">
+            Submit Request
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Side: Table (8/12 columns) -->
+    <div class="lg:col-span-8">
+      <div class="glass rounded-2xl border border-white/60 overflow-hidden">
+        <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white/40">
+          <div>
+            <h5 class="text-lg font-bold text-slate-800">Recent Activity</h5>
+            <p class="text-xs text-slate-500">History of your document requests</p>
+          </div>
+          <button onclick="renderMyRequests()" class="p-2 hover:bg-white rounded-full transition-colors text-slate-400 hover:text-indigo-600 group" title="Refresh list">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-active:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-separate border-spacing-0">
+            <thead>
+              <tr class="bg-slate-50/50">
+                <th class="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">ID</th>
+                <th class="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Document Name</th>
+                <th class="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Date</th>
+                <th class="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Status</th>
+                <th class="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="render" class="bg-white/20">
+              <!-- Content rendered via AJAX -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="mt-auto py-10 border-t border-slate-200">
+  <div class="container mx-auto px-4 text-center">
+      <p class="text-slate-400 text-sm font-medium">
+        &copy; <span id="year"></span> <span class="text-slate-600">Geosieben</span>. Human Resource Management System
+      </p>
+  </div>
+</footer>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script>document.getElementById("year").textContent=new Date().getFullYear();</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+  renderMyRequests();
+
+  $('#reqDoc').submit(function(e){
+    e.preventDefault();
+    const btn = $('#btnSubmit');
+    const originalText = btn.html();
+    
+    btn.prop('disabled', true).addClass('opacity-70 cursor-not-allowed').html('<span class="spinner"></span> Processing...');
+    
+    const dtype = $('#documentType').val();
+    const remarks = $('#remarks').val();
+    const csrf = $('#csrf').val();
+    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+
+    $.ajax({
+      url:'/requestDoc',
+      type:'POST',
+      headers:{'X-CSRF-TOKEN':csrfToken},
+      data:{documentType:dtype,remarks:remarks},
+      dataType:'json',
+      success:function(data){
+          Swal.fire({
+            icon: `${data.status}`,
+            title: data.status === 'success' ? 'Request Submitted' : 'Note',
+            text: data.message || 'Action completed successfully.',
+            confirmButtonColor: '#0f172a',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl px-8 py-3'
+            }
+          }).then(()=>{
+            if(data.status === 'success') {
+              document.getElementById('reqDoc').reset();
+              renderMyRequests();
+            }
+            btn.prop('disabled', false).removeClass('opacity-70 cursor-not-allowed').html(originalText);
+          });
+      },
+      error:function(err){
+        console.log(err);
+        Swal.fire({ 
+            icon:'error', 
+            title:'Connection Error', 
+            text:'Unable to reach the server. Please try again.', 
+            confirmButtonColor:'#0f172a' 
+        });
+        btn.prop('disabled', false).removeClass('opacity-70 cursor-not-allowed').html(originalText);
+      }
+    });
+  });
+
+  function renderMyRequests(){
+    const csrf = "<?php echo htmlspecialchars($_SESSION['csrf']); ?>";
+    const renderBox = $('#render');
+    renderBox.html('<tr><td colspan="5" class="py-20 text-center"><span class="spinner !border-slate-300 !border-top-slate-600"></span><p class="text-slate-400 text-xs mt-3 font-medium">Fetching history...</p></td></tr>');
+
+    $.ajax({
+      url:'/getDocRequests',
+      type:'GET',
+      dataType:'json',
+      success:function(data){
+        let output="";
+        let count=1;
+        if(data && data.length>0){
+          data.forEach((element, index) => {
+            let downloadBtn = element.documentpath 
+              ? `<a href="api/download.php?file=${encodeURIComponent(element.documentpath)}" class="inline-flex items-center px-3 py-1.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all text-[11px] font-bold shadow-sm">
+                  <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2.5"></path></svg>
+                  Download</a>` 
+              : '<span class="text-slate-300 text-xs">—</span>';
+            
+            let statusStyles = "";
+            if(element.status === "Delivered") statusStyles = "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20";
+            else if(element.status === "Pending") statusStyles = "bg-amber-50 text-amber-600 ring-1 ring-amber-500/20";
+            else if(element.status === "Rejected") statusStyles = "bg-rose-50 text-rose-600 ring-1 ring-rose-500/20";
+            else statusStyles = "bg-slate-50 text-slate-600 ring-1 ring-slate-500/20";
+
+            output+=`<tr class="hover:bg-slate-50/80 transition-colors animate-row" style="animation-delay: ${index * 0.05}s">
+              <td class="py-5 px-6 border-b border-slate-100 font-bold text-slate-300 text-xs">${String(count++).padStart(2, '0')}</td>
+              <td class="py-5 px-6 border-b border-slate-100">
+                <div class="font-bold text-slate-800 text-sm leading-tight">${element.requestedDocument}</div>
+                <div class="text-[10px] text-slate-400 mt-1 truncate max-w-[200px]" title="${element.reason}">${element.reason}</div>
+              </td>
+              <td class="py-5 px-6 border-b border-slate-100 text-slate-500 text-xs font-medium whitespace-nowrap">
+                ${element.requestedOn}
+              </td>
+              <td class="py-5 px-6 border-b border-slate-100 text-center">
+                <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyles}">
+                    ${element.status}
+                </span>
+              </td>
+              <td class="py-5 px-6 border-b border-slate-100 text-right">${downloadBtn}</td>
+            </tr>`;
+          });
+        } else {
+          output=`<tr><td colspan="5" class="py-24 text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                </div>
+                <p class="text-slate-400 font-medium">No request history found.</p>
+            </div>
+          </td></tr>`;
+        }
+        renderBox.html(output);
+      },
+      error:function(err){
+        console.log(err);
+        renderBox.html(`<tr><td colspan="5" class="py-20 text-center">
+            <p class="text-rose-500 font-bold text-sm">Oops! Something went wrong while loading history.</p>
+            <button onclick="renderMyRequests()" class="mt-3 text-xs text-indigo-600 font-bold underline">Try again</button>
+        </td></tr>`);
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

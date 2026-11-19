@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<title>Courses — Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          canvas: '#F2F3F6',
+          surface: '#FFFFFF',
+          ink: '#12141C',
+          sub: '#6B7180',
+          line: '#E4E6EC',
+          accent: '#2C5CE0',
+          accentDeep: '#1E3FA8',
+          hr: '#C3492E',
+          it: '#1B8768',
+          emp: '#9C6B14',
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          mono: ['IBM Plex Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { background: #F2F3F6; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .row-enter { animation: rowIn .28s ease both; }
+  @keyframes rowIn { from { opacity:0; transform: translateY(4px);} to {opacity:1; transform:translateY(0);} }
+  .row-exit { animation: rowOut .18s ease forwards; }
+  @keyframes rowOut { to { opacity:0; transform: translateX(12px); } }
+
+  .panel-in { animation: panelIn .28s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes panelIn { from { transform: translateX(24px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+  .scrim-in { animation: scrimIn .2s ease both; }
+  @keyframes scrimIn { from { opacity:0; } to { opacity:1; } }
+
+  .pop-in { animation: popIn .18s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes popIn { from { opacity:0; transform: scale(.96); } to { opacity:1; transform: scale(1); } }
+
+  .toast-in { animation: toastIn .25s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes toastIn { from { opacity:0; transform: translateY(8px) translateX(-50%);} to {opacity:1; transform: translateY(0) translateX(-50%);} }
+
+  .btn-press:active { transform: scale(.96); }
+
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid #2C5CE0; outline-offset: 1px;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px #2C5CE01f; border-color:#2C5CE0; }
+
+  .row-actions { opacity: 1; transition: opacity .12s ease; }
+  .row:hover .row-actions, .row:focus-within .row-actions { opacity: 1; }
+
+  .skeleton { position:relative; overflow:hidden; background:#E4E6EC; }
+  .skeleton::after {
+    content:''; position:absolute; inset:0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, #ffffffb0, transparent);
+    animation: shimmer 1.2s infinite;
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+  .field-error { animation: shake .3s ease; }
+  @keyframes shake { 20%,60% { transform: translateX(-3px);} 40%,80% { transform: translateX(3px);} }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  .drop-zone.drag { background:#2C5CE00d; border-color:#2C5CE0; }
+  ::selection { background:#2C5CE02e; }
+</style>
+<head th:replace="includes/header :: header"></head>
+
+</head>
+<body class="min-h-screen font-sans text-ink text-[13.5px] antialiased">
+<!-- Top bar -->
+<header class="sticky top-0 z-30 bg-surface border-b border-line">
+  <div class="max-w-8xl mx-auto px-5 h-14 flex items-center gap-4">
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="w-6 h-6 rounded-md bg-accent flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <span class="font-semibold text-[14px] tracking-tight">Courses</span>
+    </div>
+
+    <div class="relative flex-1 max-w-xs">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-sub absolute left-2.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Search courses…" class="w-full bg-canvas border border-line rounded-md pl-8 pr-7 py-1.5 text-[13px] transition-shadow duration-150">
+      <button id="clearSearchBtn" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-sub hover:text-ink w-5 h-5 flex items-center justify-center rounded transition-colors" title="Clear">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-1 ml-auto">
+      <button data-filter="ALL" class="filter-btn active-filter px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-colors duration-150">All</button>
+      <button data-filter="HR" class="filter-btn px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-colors duration-150">HR</button>
+      <button data-filter="IT" class="filter-btn px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-colors duration-150">IT</button>
+      <button data-filter="Operations" class="filter-btn px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-colors duration-150">Operations</button>
+    </div>
+
+    <button id="openAddBtn" class="btn-press shrink-0 inline-flex items-center gap-1.5 bg-ink text-white px-3 py-1.5 rounded-md text-[12.5px] font-medium hover:bg-ink/85 transition-colors duration-150">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      New course
+    </button>
+  </div>
+</header>
+
+<main class="max-w-8xl mx-auto px-5 py-6">
+
+  <!-- Compact stat strip -->
+  <div class="flex items-center gap-px bg-line rounded-lg overflow-hidden mb-4 border border-line">
+    <div class="flex-1 bg-surface px-4 py-2.5">
+      <p class="text-[10.5px] font-mono uppercase tracking-wider text-sub">Total</p>
+      <p id="statTotal" class="tabular font-semibold text-[17px] leading-tight">0</p>
+    </div>
+    <div class="flex-1 bg-surface px-4 py-2.5">
+      <p class="text-[10.5px] font-mono uppercase tracking-wider text-sub flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-hr inline-block"></span>HR</p>
+      <p id="statHR" class="tabular font-semibold text-[17px] leading-tight">0</p>
+    </div>
+    <div class="flex-1 bg-surface px-4 py-2.5">
+      <p class="text-[10.5px] font-mono uppercase tracking-wider text-sub flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-it inline-block"></span>IT</p>
+      <p id="statIT" class="tabular font-semibold text-[17px] leading-tight">0</p>
+    </div>
+    <div class="flex-1 bg-surface px-4 py-2.5">
+      <p class="text-[10.5px] font-mono uppercase tracking-wider text-sub flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emp inline-block"></span>Operations</p>
+      <p id="statEMP" class="tabular font-semibold text-[17px] leading-tight">0</p>
+    </div>
+  </div>
+
+  <p id="resultCount" class="text-[12px] text-sub mb-2 hidden"></p>
+
+  <!-- Table -->
+  <div class="bg-surface rounded-lg border border-line overflow-hidden">
+    <div class="overflow-x-auto">
+    <table class="w-full border-collapse text-left">
+      <colgroup>
+        <col style="width:44px">
+        <col style="width:220px">
+        <col>
+        <col style="width:96px">
+        <col style="width:200px">
+        <col style="width:72px">
+      </colgroup>
+      <thead>
+        <tr class="border-b border-line">
+          <th class="px-5 py-2 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left"></th>
+          <th class="py-2 pr-3 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left">Title</th>
+          <th class="py-2 pr-3 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left">Description</th>
+          <th class="py-2 pr-3 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left">Category</th>
+          <th class="py-2 pr-3 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left" style="width:400px;">Assigned</th>
+          <th class="px-5 py-2 text-[10.5px] font-mono uppercase tracking-wider text-sub font-normal text-left">Actions</th>
+        </tr>
+      </thead>
+
+      <!-- Loading skeleton -->
+      <tbody id="loadingState" class="divide-y divide-line">
+        <tr>
+          <td class="px-4 py-2.5"><div class="skeleton w-9 h-9 rounded-md"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-3/4 rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-full rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-4 w-14 rounded"></div></td>
+          <td class="py-2.5 pr-3" style="width:200px;"><div class="flex -space-x-2"><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div></div></td>
+          <td class="px-4 py-2.5"><div class="skeleton h-6 w-full rounded"></div></td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5"><div class="skeleton w-9 h-9 rounded-md"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-2/3 rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-5/6 rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-4 w-14 rounded"></div></td>
+          <td class="py-2.5 pr-3" style="width:200px;"><div class="flex -space-x-2"><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div></div></td>
+          <td class="px-4 py-2.5"><div class="skeleton h-6 w-full rounded"></div></td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2.5"><div class="skeleton w-9 h-9 rounded-md"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-1/2 rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-3 w-2/3 rounded"></div></td>
+          <td class="py-2.5 pr-3"><div class="skeleton h-4 w-14 rounded"></div></td>
+          <td class="py-2.5 pr-3" style="width:200px;"><div class="flex -space-x-2"><div class="skeleton w-6 h-6 rounded-full border-2 border-surface"></div></div></td>
+          <td class="px-4 py-2.5"><div class="skeleton h-6 w-full rounded"></div></td>
+        </tr>
+      </tbody>
+
+      <tbody id="courseRows" class="divide-y divide-line"></tbody>
+
+      <tbody id="emptyState" class="hidden">
+        <tr>
+          <td colspan="6" class="p-0">
+            <div class="flex flex-col items-center justify-center text-center py-14 px-6">
+              <div class="w-9 h-9 rounded-lg bg-canvas flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+              </div>
+              <p class="font-semibold text-[14px]">No courses yet</p>
+              <p class="text-[12.5px] text-sub mt-0.5">Add your first course to build the catalog.</p>
+              <button id="emptyAddBtn" class="btn-press mt-3.5 inline-flex items-center gap-1.5 bg-ink text-white px-3.5 py-1.5 rounded-md text-[12.5px] font-medium hover:bg-ink/85 transition-colors duration-150">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                New course
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+      <tbody id="noMatchState" class="hidden">
+        <tr>
+          <td colspan="6" class="p-0">
+            <div class="flex flex-col items-center justify-center text-center py-14 px-6">
+              <div class="w-9 h-9 rounded-lg bg-canvas flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+              <p class="font-semibold text-[14px]">No matches</p>
+              <p class="text-[12.5px] text-sub mt-0.5">Try a different search term or filter.</p>
+              <button id="resetFiltersBtn" class="btn-press mt-3.5 px-3.5 py-1.5 rounded-md text-[12.5px] font-medium border border-line hover:bg-canvas transition-colors duration-150">Reset filters</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+      <tbody id="errorState" class="hidden">
+        <tr>
+          <td colspan="6" class="p-0">
+            <div class="flex flex-col items-center justify-center text-center py-14 px-6">
+              <div class="w-9 h-9 rounded-lg bg-hr/10 flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 text-hr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+              </div>
+              <p class="font-semibold text-[14px]">Couldn't load courses</p>
+              <p class="text-[12.5px] text-sub mt-0.5">There was a problem reaching the server.</p>
+              <button id="retryLoadBtn" class="btn-press mt-3.5 px-3.5 py-1.5 rounded-md text-[12.5px] font-medium border border-line hover:bg-canvas transition-colors duration-150">Try again</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</main>
+
+<!-- Slide-over panel: Add/Edit -->
+<div id="modalOverlay" class="hidden fixed inset-0 bg-ink/25 z-40">
+  <div id="scrim" class="scrim-in absolute inset-0"></div>
+  <div id="modalCard" class="panel-in absolute top-0 right-0 h-full w-full max-w-sm bg-surface border-l border-line shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between px-5 h-14 border-b border-line shrink-0">
+      <h2 id="modalTitle" class="font-semibold text-[14px]">New course</h2>
+      <button id="closeModalBtn" type="button" class="btn-press w-7 h-7 rounded-md hover:bg-canvas flex items-center justify-center transition-colors duration-150" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="courseForm" class="px-5 py-4 space-y-4 overflow-y-auto flex-1" enctype="multipart/form-data" novalidate>
+      <input type="hidden" id="courseId">
+
+      <div>
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-sub mb-1.5">Image</label>
+        <label for="imageInput" id="dropZone" class="drop-zone cursor-pointer flex items-center gap-3 border border-dashed border-line rounded-md p-2.5 transition-colors duration-150 hover:border-accent hover:bg-accent/5">
+          <div id="imgPreviewWrap" class="w-12 h-12 rounded-md bg-canvas flex items-center justify-center overflow-hidden shrink-0">
+            <svg id="imgPlaceholderIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sub" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16m-2-2 1.586-1.586a2 2 0 0 1 2.828 0L20 14M4 6h16v12H4z"/></svg>
+            <img id="imgPreview" class="hidden w-full h-full object-cover" src="" alt="preview">
+          </div>
+          <div class="text-[12.5px]">
+            <span class="text-accent font-medium">Upload</span>
+            <span class="text-sub"> or drag file</span>
+            <p class="text-[11px] text-sub/80">PNG/JPG, up to 5MB</p>
+          </div>
+        </label>
+        <input id="imageInput" type="file" name="image" accept="image/*" class="hidden">
+        <p id="imageError" class="hidden text-[11.5px] text-hr mt-1"></p>
+      </div>
+
+      <div>
+        <label for="titleInput" class="block text-[11px] font-mono uppercase tracking-wider text-sub mb-1.5">Title</label>
+        <input id="titleInput" type="text" required placeholder="Advanced Excel for Analysts"
+          class="w-full bg-canvas border border-line rounded-md px-3 py-2 text-[13px] transition-shadow duration-150">
+        <p id="titleError" class="hidden text-[11.5px] text-hr mt-1">Give the course a title.</p>
+      </div>
+      
+
+      <div>
+        <div class="flex items-baseline justify-between mb-1.5">
+          <label for="descInput" class="block text-[11px] font-mono uppercase tracking-wider text-sub">Description</label>
+          <span id="descCount" class="text-[11px] font-mono text-sub/70">0/280</span>
+        </div>
+        <textarea id="descInput" required rows="4" maxlength="280" placeholder="What will learners walk away knowing how to do?"
+          class="w-full bg-canvas border border-line rounded-md px-3 py-2 text-[13px] resize-none transition-shadow duration-150"></textarea>
+        <p id="descError" class="hidden text-[11.5px] text-hr mt-1">Add a short description.</p>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-sub mb-1.5">Category</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <label class="cat-option cursor-pointer">
+            <input type="radio" name="category" value="HR" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-hr peer-checked:bg-hr/10 peer-checked:text-hr transition-colors duration-150">HR</div>
+          </label>
+          <label class="cat-option cursor-pointer">
+            <input type="radio" name="category" value="IT" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-it peer-checked:bg-it/10 peer-checked:text-it transition-colors duration-150">IT</div>
+          </label>
+          <label class="cat-option cursor-pointer">
+            <input type="radio" name="category" value="Operations" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-emp peer-checked:bg-emp/10 peer-checked:text-emp transition-colors duration-150">Operations</div>
+          </label>
+        </div>
+        <p id="categoryError" class="hidden text-[11.5px] text-hr mt-1">Choose where this belongs.</p>
+      </div>
+            <div>
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-sub mb-1.5">Profeciency Leavel</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <label class="cat-option cursor-pointer">
+            <input type="radio" name="proficiency" value="Beginner" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-hr peer-checked:bg-hr/10 peer-checked:text-hr transition-colors duration-150">Beginner</div>
+          </label>
+
+          <label class="cat-option cursor-pointer">
+            <input type="radio" name="proficiency" value="Intermediate" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-emp peer-checked:bg-emp/10 peer-checked:text-emp transition-colors duration-150">Intermediate</div>
+          </label>
+                    <label class="cat-option cursor-pointer">
+            <input type="radio" name="proficiency" value="Proficient" class="peer hidden">
+            <div class="text-center px-2 py-1.5 rounded-md border border-line text-[12px] font-medium text-sub peer-checked:border-it peer-checked:bg-it/10 peer-checked:text-it transition-colors duration-150">Proficient</div>
+          </label>
+        </div>
+        <p id="profeciencyError" class="hidden text-[11.5px] text-hr mt-1">Choose Profeciency.</p>
+      </div>
+    </form>
+
+    <div class="flex items-center gap-2 px-5 py-3.5 border-t border-line shrink-0">
+      <button type="submit" form="courseForm" id="submitBtn" class="btn-press flex-1 bg-ink text-white rounded-md py-2 text-[13px] font-medium hover:bg-ink/85 transition-colors duration-150 flex items-center justify-center gap-2">
+        <svg id="submitSpinner" class="hidden w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+        <span id="submitLabel">Save course</span>
+      </button>
+      <button type="button" id="cancelBtn" class="btn-press px-4 py-2 rounded-md text-[13px] font-medium border border-line hover:bg-canvas transition-colors duration-150">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div id="deleteOverlay" class="hidden fixed inset-0 bg-ink/25 z-40 flex items-center justify-center p-4">
+  <div class="pop-in bg-surface w-full max-w-[320px] rounded-lg border border-line shadow-2xl p-5 text-center">
+    <div class="w-9 h-9 mx-auto rounded-full bg-hr/10 flex items-center justify-center mb-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5 text-hr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M6 18 18 6"/></svg>
+    </div>
+    <h3 class="font-semibold text-[14px]">Delete <span id="deleteTargetTitle">this course</span>?</h3>
+    <p class="text-[12.5px] text-sub mt-1 mb-4">This can't be undone.</p>
+    <div class="flex gap-2">
+      <button id="confirmDeleteBtn" class="btn-press flex-1 bg-hr text-white rounded-md py-2 text-[13px] font-medium hover:bg-hr/90 transition-colors duration-150 flex items-center justify-center gap-2">
+        <svg id="deleteSpinner" class="hidden w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+        <span id="deleteLabel">Delete</span>
+      </button>
+      <button id="cancelDeleteBtn" class="btn-press flex-1 border border-line rounded-md py-2 text-[13px] font-medium hover:bg-canvas transition-colors duration-150">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign course -->
+<div id="assignOverlay" class="hidden fixed inset-0 bg-ink/25 z-40 flex items-center justify-center p-4">
+  <div id="assignScrim" class="scrim-in absolute inset-0"></div>
+  <div class="pop-in relative bg-surface w-full max-w-md rounded-lg border border-line shadow-2xl flex flex-col max-h-[82vh]">
+    <div class="flex items-center justify-between gap-3 px-5 h-14 border-b border-line shrink-0">
+      <div class="min-w-0">
+        <h2 class="font-semibold text-[14px]">Assign course</h2>
+        <p id="assignCourseTitle" class="text-[11.5px] text-sub truncate mt-0.5">—</p>
+      </div>
+      <button id="closeAssignBtn" type="button" class="btn-press w-7 h-7 rounded-md hover:bg-canvas flex items-center justify-center transition-colors duration-150 shrink-0" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="px-5 py-3 border-b border-line shrink-0">
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-sub absolute left-2.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="employeeSearchInput" type="text" placeholder="Search employees…" class="w-full bg-canvas border border-line rounded-md pl-8 pr-3 py-1.5 text-[13px] transition-shadow duration-150">
+      </div>
+      <p class="text-[11px] text-sub mt-1.5"><span id="selectedCount">0</span> selected</p>
+    </div>
+
+    <div id="employeeList" class="overflow-y-auto flex-1 px-2 py-1.5"></div>
+
+    <div class="flex items-center gap-2 px-5 py-3.5 border-t border-line shrink-0">
+      <button type="button" id="confirmAssignBtn" class="btn-press flex-1 bg-ink text-white rounded-md py-2 text-[13px] font-medium hover:bg-ink/85 transition-colors duration-150">Assign</button>
+      <button type="button" id="cancelAssignBtn" class="btn-press px-4 py-2 rounded-md text-[13px] font-medium border border-line hover:bg-canvas transition-colors duration-150">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating assignee tooltip -->
+<div id="assigneeTooltip" class="hidden fixed z-50 bg-ink text-white rounded-lg shadow-2xl p-3 w-72 pop-in"></div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 z-50 text-[12.5px] px-4 py-2.5 rounded-lg shadow-lg toast-in flex items-center gap-2"></div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script>
+  const categoryStyles = {
+    HR:       { dot: 'bg-hr',  text: 'text-hr',  bg: 'bg-hr/10',  label: 'HR' },
+    IT:       { dot: 'bg-it',  text: 'text-it',  bg: 'bg-it/10',  label: 'IT' },
+    Operations: { dot: 'bg-emp', text: 'text-emp', bg: 'bg-emp/10', label: 'Operations' },
+  };
+
+  const placeholderImg = (seed) => `https://placehold.co/120x120/12141C/FFFFFF?text=${encodeURIComponent((seed||'C').slice(0,1).toUpperCase())}`;
+  const avatarPlaceholder = (seed) => `https://ui-avatars.com/api/?name=${encodeURIComponent(seed||'?')}&background=6B7180&color=fff&bold=true&size=64`;
+
+  function progressColor(p) {
+    if (p >= 100) return 'bg-it';
+    if (p >= 40) return 'bg-emp';
+    return 'bg-hr';
+  }
+  function avgCompletion(assignees) {
+    if (!assignees.length) return 0;
+    return Math.round(assignees.reduce((sum, a) => sum + (a.percentage || 0), 0) / assignees.length);
+  }
+  function renderAssigneeCell(assignees) {
+    if (!assignees.length) {
+      return `<span class="assign-inline text-[11.5px] text-accent font-medium">+ Assign</span>`;
+    }
+    const top3 = assignees.slice(0, 3);
+    const overflowCount = assignees.length - top3.length;
+    const avatarsHtml = top3.map(a => `<img src="../${a.image || avatarPlaceholder(a.assignee)}" class="w-6 h-6 rounded-full border-2 border-surface object-cover" alt="${escapeHtml(a.assignee)}" title="${escapeHtml(a.assignee)}" onerror="this.src='${avatarPlaceholder(a.assignee)}'">`).join('')
+      + (overflowCount > 0 ? `<div class="w-6 h-6 rounded-full border-2 border-surface bg-canvas text-[9px] font-semibold text-sub flex items-center justify-center">+${overflowCount}</div>` : '');
+    const latestName = (assignees[0].assignee || '').split(' ')[0];
+    const label = assignees.length > 1 ? `${escapeHtml(latestName)} + ${assignees.length - 1} more` : escapeHtml(latestName);
+    return `
+      <div class="flex -space-x-2 shrink-0">${avatarsHtml}</div>
+      <span class="text-[11.5px] text-sub truncate">${label}</span>
+    `;
+  }
+  function buildTooltipContent(assignees) {
+    if (!assignees.length) return '';
+    return `
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10.5px] font-mono uppercase tracking-wider text-white/60">${assignees.length} assigned</p>
+        <p class="text-[10.5px] font-mono text-white/60">${avgCompletion(assignees)}% avg</p>
+      </div>
+      <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+        ${assignees.map(a => `
+          <div class="flex items-center gap-2">
+            <img src="../${a.image || avatarPlaceholder(a.assignee)}" class="w-6 h-6 rounded-full object-cover shrink-0" alt="" onerror="this.src='${avatarPlaceholder(a.assignee)}'">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[12px] truncate">${escapeHtml(a.assignee)}</span>
+                <span class="text-[10.5px] text-white/80 tabular shrink-0">${a.percentage || 0}%</span>
+              </div>
+              <div class="h-1 rounded-full bg-white/15 mt-1 overflow-hidden">
+                <div class="h-full rounded-full ${progressColor(a.percentage || 0)}" style="width:${a.percentage || 0}%"></div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  const assigneeTooltip = document.getElementById('assigneeTooltip');
+  let tooltipHideTimer;
+  function showAssigneeTooltip(target, assignees) {
+    if (!assignees.length) return;
+    clearTimeout(tooltipHideTimer);
+    assigneeTooltip.innerHTML = buildTooltipContent(assignees);
+    assigneeTooltip.classList.remove('hidden');
+    const rect = target.getBoundingClientRect();
+    const tw = 288; // matches w-72
+    let left = rect.left + rect.width / 2 - tw / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+    assigneeTooltip.style.left = left + 'px';
+    assigneeTooltip.style.top = (rect.top - 8) + 'px';
+    assigneeTooltip.style.transform = 'translateY(-100%)';
+  }
+  function hideAssigneeTooltip() {
+    tooltipHideTimer = setTimeout(() => assigneeTooltip.classList.add('hidden'), 80);
+  }
+  assigneeTooltip.addEventListener('mouseenter', () => clearTimeout(tooltipHideTimer));
+  assigneeTooltip.addEventListener('mouseleave', hideAssigneeTooltip);
+        
+    // Directly printing to console
+  let courses = [];
+  let activeFilter = 'ALL';
+  let searchTerm = '';
+  let editingId = null;
+  let deletingId = null;
+  let assigningCourseId = null;
+  let selectedEmployeeIds = new Set();
+  let availableEmployees = []; // unassigned employees for the currently open assign modal: {name, eid, image}
+
+  const rowsEl = document.getElementById('courseRows');
+  const emptyEl = document.getElementById('emptyState');
+  const noMatchEl = document.getElementById('noMatchState');
+  const errorEl = document.getElementById('errorState');
+  const loadingEl = document.getElementById('loadingState');
+  const resultCountEl = document.getElementById('resultCount');
+
+  function getFiltered() {
+    return courses.filter(c => {
+      const matchesFilter = activeFilter === 'ALL' || c.category === activeFilter;
+      const term = searchTerm.trim().toLowerCase();
+      const matchesSearch = !term ||
+        (c.courseTitle || '').toLowerCase().includes(term) ||
+        (c.courseDescription || '').toLowerCase().includes(term);
+      return matchesFilter && matchesSearch;
+    });
+  }
+
+  function render() {
+    const list = getFiltered();
+    rowsEl.innerHTML = '';
+
+    const hasAnyCourses = courses.length > 0;
+    const hasFilteredResults = list.length > 0;
+    const isFiltering = activeFilter !== 'ALL' || searchTerm.trim().length > 0;
+
+    emptyEl.classList.toggle('hidden', !(!hasAnyCourses && !isFiltering));
+    noMatchEl.classList.toggle('hidden', !(hasAnyCourses && isFiltering && !hasFilteredResults));
+
+    resultCountEl.classList.toggle('hidden', !(isFiltering && hasAnyCourses));
+    if (isFiltering && hasAnyCourses) {
+      resultCountEl.textContent = `${list.length} of ${courses.length} courses`;
+    }
+
+    list.forEach((c, i) => {
+      const cat = categoryStyles[c.courseCategory] || categoryStyles.Operations;
+      const imgSrc = c.courseImage || placeholderImg(c.courseTitle);
+      const assignees = c.assignees || [];
+      const row = document.createElement('tr');
+      row.className = 'row row-enter hover:bg-canvas/70 transition-colors duration-100';
+      row.style.animationDelay = Math.min(i * 20, 240) + 'ms';
+      row.dataset.id = c.courseId;
+      row.innerHTML = `
+        <td class="px-4 py-2 align-middle">
+          <div class="w-9 h-9 rounded-md bg-canvas overflow-hidden shrink-0">
+            <img src="${imgSrc}" class="w-full h-full object-cover" alt="" loading="lazy" onerror="this.src='${placeholderImg(c.courseTitle)}'">
+          </div>
+        </td>
+        <td class="py-2 pr-3 align-middle">
+          <a href="/course/viewCourse?courseId=${c.courseId}" class="block min-w-0">
+            <p class="font-medium text-[13px] truncate" style="color:blue;">${escapeHtml(c.courseTitle)}</p>
+          </a>
+        </td>
+        <td class="py-2 pr-3 align-middle">
+          <p class="text-[12.5px] text-sub truncate">${escapeHtml(c.courseDescription)}</p>
+        </td>
+        <td class="py-2 pr-3 align-middle">
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full ${cat.dot} shrink-0"></span>
+            <span class="text-[12px] ${cat.text} font-medium truncate">${cat.label}</span>
+          </div>
+        </td>
+        <td class="py-2 pr-3 align-middle" style="width:200px;">
+          <div class="assignee-stack flex items-center gap-2 cursor-pointer min-w-0">
+            ${renderAssigneeCell(assignees)}
+          </div>
+        </td>
+        <td class="px-5 py-2 align-middle text-right">
+          <div class="row-actions inline-flex gap-1 justify-end">
+            <button class="assign-btn btn-press w-7 h-7 rounded-md flex items-center justify-center hover:bg-canvas text-sub hover:text-ink transition-colors duration-100" data-courseid="${c.courseId}" title="Assign" aria-label="Assign ${escapeHtml(c.courseTitle)}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+            </button>
+            <button class="edit-btn btn-press w-7 h-7 rounded-md flex items-center justify-center hover:bg-canvas text-sub hover:text-ink transition-colors duration-100" title="Edit" aria-label="Edit ${escapeHtml(c.courseTitle)}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="delete-btn btn-press w-7 h-7 rounded-md flex items-center justify-center hover:bg-hr/10 text-sub hover:text-hr transition-colors duration-100" title="Delete" aria-label="Delete ${escapeHtml(c.courseTitle)}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+            </button>
+          </div>
+        </td>
+      `;
+      row.querySelector('.edit-btn').addEventListener('click', () => openEdit(c.courseId));
+      row.querySelector('.delete-btn').addEventListener('click', () => openDelete(c.courseId));
+      row.querySelector('.assign-btn').addEventListener('click', () => openAssign(c.courseId));
+      const stackEl = row.querySelector('.assignee-stack');
+      stackEl.addEventListener('click', () => openAssign(c.courseId));
+      stackEl.addEventListener('mouseenter', () => showAssigneeTooltip(stackEl, c.assignees || []));
+      stackEl.addEventListener('mouseleave', hideAssigneeTooltip);
+      rowsEl.appendChild(row);
+    });
+    document.getElementById('statTotal').textContent = courses.length;
+    document.getElementById('statHR').textContent = courses.filter(c => c.category === 'HR').length;
+    document.getElementById('statIT').textContent = courses.filter(c => c.category === 'IT').length;
+    document.getElementById('statEMP').textContent = courses.filter(c => c.category === 'Operations').length;
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  // Filters
+  function paintFilterButtons() {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      const active = b.dataset.filter === activeFilter;
+      b.classList.toggle('bg-ink', active);
+      b.classList.toggle('text-white', active);
+      b.classList.toggle('text-sub', !active);
+      b.classList.toggle('hover:bg-canvas', !active);
+    });
+  }
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      paintFilterButtons();
+      render();
+    });
+  });
+  paintFilterButtons();
+
+  document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+    activeFilter = 'ALL';
+    searchTerm = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    paintFilterButtons();
+    render();
+  });
+
+  // Search
+  let searchDebounce;
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  searchInput.addEventListener('input', (e) => {
+    clearSearchBtn.classList.toggle('hidden', !e.target.value);
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => { searchTerm = e.target.value; render(); }, 150);
+  });
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchTerm = '';
+    clearSearchBtn.classList.add('hidden');
+    render();
+    searchInput.focus();
+  });
+
+  // Panel controls
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const form = document.getElementById('courseForm');
+  const titleInput = document.getElementById('titleInput');
+  const descInput = document.getElementById('descInput');
+  const descCount = document.getElementById('descCount');
+  const imageInput = document.getElementById('imageInput');
+  const imgPreview = document.getElementById('imgPreview');
+  const imgPlaceholderIcon = document.getElementById('imgPlaceholderIcon');
+  const dropZone = document.getElementById('dropZone');
+
+  descInput.addEventListener('input', () => { descCount.textContent = `${descInput.value.length}/280`; });
+
+  function openModal() {
+    modalOverlay.classList.remove('hidden');
+    modalOverlay.classList.add('flex');
+    const card = document.getElementById('modalCard');
+    card.classList.remove('panel-in');
+    void card.offsetWidth;
+    card.classList.add('panel-in');
+    setTimeout(() => titleInput.focus(), 60);
+  }
+  function closeModal() {
+    modalOverlay.classList.add('hidden');
+    modalOverlay.classList.remove('flex');
+    form.reset();
+    imgPreview.classList.add('hidden');
+    imgPlaceholderIcon.classList.remove('hidden');
+    descCount.textContent = '0/280';
+    clearFieldErrors();
+    editingId = null;
+  }
+  function clearFieldErrors() {
+    ['titleError', 'descError', 'categoryError', 'imageError'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    [titleInput, descInput].forEach(el => el.classList.remove('border-hr', 'field-error'));
+  }
+
+  document.getElementById('openAddBtn').addEventListener('click', () => {
+    editingId = null;
+    modalTitle.textContent = 'New course';
+    document.getElementById('submitLabel').textContent = 'Save course';
+    openModal();
+  });
+  document.getElementById('emptyAddBtn').addEventListener('click', () => document.getElementById('openAddBtn').click());
+  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('scrim').addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!modalOverlay.classList.contains('hidden')) closeModal();
+    if (!deleteOverlay.classList.contains('hidden')) closeDelete();
+    if (!assignOverlay.classList.contains('hidden')) closeAssign();
+  });
+
+  // Assign course flow
+  const assignOverlay = document.getElementById('assignOverlay');
+  const employeeListEl = document.getElementById('employeeList');
+  const employeeSearchInput = document.getElementById('employeeSearchInput');
+
+  async function openAssign(courseId) {
+    const c = courses.find(x => x.courseId === courseId);
+    assigningCourseId = courseId;
+    document.getElementById('assignCourseTitle').textContent = c ? c.courseTitle : '';
+    selectedEmployeeIds = new Set();
+    employeeSearchInput.value = '';
+    updateSelectedCount();
+    assignOverlay.classList.remove('hidden');
+    assignOverlay.classList.add('flex');
+
+    employeeListEl.innerHTML = `<p class="text-[12.5px] text-sub text-center py-8">Loading employees…</p>`;
+    availableEmployees = await fetchUnAssigned(courseId);
+    renderEmployeeList('');
+  }
+  function closeAssign() {
+    assignOverlay.classList.add('hidden');
+    assignOverlay.classList.remove('flex');
+    assigningCourseId = null;
+    availableEmployees = [];
+  }
+  function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = selectedEmployeeIds.size;
+  }
+  async function fetchUnAssigned(courseid) {
+    try {
+      const res = await $.ajax({
+        url: '/course/getUnAssigned',
+        type: 'GET',
+        data: { courseid },
+        dataType: 'JSON'
+      });
+      // Expecting an array of { name, eid, image } for employees not yet assigned to this course.
+      if (Array.isArray(res)) return res;
+      if (res && Array.isArray(res.employees)) return res.employees;
+      return [];
+    } catch (err) {
+      console.error('fetchUnAssigned failed:', err);
+      showToast('Could not load employees', 'error');
+      return [];
+    }
+  }
+  function renderEmployeeList(filterText) {
+    const term = (filterText || '').trim().toLowerCase();
+    const filtered = availableEmployees.filter(e => (e.name || '').toLowerCase().includes(term));
+    employeeListEl.innerHTML = filtered.length ? filtered.map(e => `
+      <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-canvas cursor-pointer transition-colors duration-100">
+        <input type="checkbox" data-emp-id="${e.eid}" class="employee-checkbox w-3.5 h-3.5 rounded border-line accent-accent" ${selectedEmployeeIds.has(String(e.eid)) ? 'checked' : ''}>
+        <img src="../${e.image || avatarPlaceholder(e.name)}" class="w-7 h-7 rounded-full object-cover shrink-0" alt="" onerror="this.src='${avatarPlaceholder(e.name)}'">
+        <span class="text-[12.5px] flex-1 truncate">${escapeHtml(e.name)}</span>
+      </label>
+    `).join('') : `<p class="text-[12.5px] text-sub text-center py-8">No employees match.</p>`;
+    employeeListEl.querySelectorAll('.employee-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) selectedEmployeeIds.add(cb.dataset.empId);
+        else selectedEmployeeIds.delete(cb.dataset.empId);
+        updateSelectedCount();
+      });
+    });
+  }
+  employeeSearchInput.addEventListener('input', (e) => renderEmployeeList(e.target.value));
+  document.getElementById('closeAssignBtn').addEventListener('click', closeAssign);
+  document.getElementById('cancelAssignBtn').addEventListener('click', closeAssign);
+  document.getElementById('assignScrim').addEventListener('click', closeAssign);
+  document.getElementById('confirmAssignBtn').addEventListener('click', () => {
+    if (!assigningCourseId) return;
+    const eids = Array.from(selectedEmployeeIds);
+    if (!eids.length) {
+      showToast('Select at least one employee', 'error');
+      return;
+    }
+    console.log(selectedEmployeeIds.toString());
+    const token = $("meta[name='_csrf']").attr('content');
+    const header = $("meta[name='_csrf_header']").attr('content') || 'X-CSRF-TOKEN';
+    const btn = document.getElementById('confirmAssignBtn');
+    btn.disabled = true;
+    btn.classList.add('opacity-70');
+console.log(assigningCourseId);
+    $.ajax({
+      url: '/course/assignCourse',
+      type: 'POST',
+        traditional: true,
+      data: { courseId: assigningCourseId, eids: eids },
+      dataType:'json',
+      headers: { [header]: token },
+      success: function () {
+        closeAssign();
+        showToast(`Assigned to ${eids.length} employee${eids.length === 1 ? '' : 's'}`, 'success');
+        getCourses();
+      },
+      error: function (err) {
+        console.error('Assign error:', err);
+        showToast('Could not assign course', 'error');
+      },
+      complete: function () {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70');
+      }
+    });
+  });
+
+  function openEdit(id) {
+    const c = courses.find(x => x.courseId === id);
+    if (!c) return;
+    editingId = id;
+    modalTitle.textContent = 'Edit course';
+    document.getElementById('submitLabel').textContent = 'Update course';
+    titleInput.value = c.courseTitle || '';
+    descInput.value = c.courseDescription || '';
+    descCount.textContent = `${descInput.value.length}/280`;
+    const radio = document.querySelector(`input[name="category"][value="${c.category}"]`);
+    if (radio) radio.checked = true;
+    if (c.courseImage) {
+      imgPreview.src = c.courseImage;
+      imgPreview.classList.remove('hidden');
+      imgPlaceholderIcon.classList.add('hidden');
+    }
+    openModal();
+  }
+
+  // Image handling
+  function handleFile(file) {
+    const imageError = document.getElementById('imageError');
+    imageError.classList.add('hidden');
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      imageError.textContent = 'Please choose an image file.';
+      imageError.classList.remove('hidden');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      imageError.textContent = 'Image is larger than 5MB.';
+      imageError.classList.remove('hidden');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imgPreview.src = e.target.result;
+      imgPreview.classList.remove('hidden');
+      imgPlaceholderIcon.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+  imageInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove('drag'); }));
+  dropZone.addEventListener('drop', (e) => {
+    handleFile(e.dataTransfer.files[0]);
+    imageInput.files = e.dataTransfer.files;
+  });
+
+  function validateForm() {
+    clearFieldErrors();
+    let valid = true;
+    if (!titleInput.value.trim()) {
+      document.getElementById('titleError').classList.remove('hidden');
+      titleInput.classList.add('border-hr', 'field-error');
+      valid = false;
+    }
+    if (!descInput.value.trim()) {
+      document.getElementById('descError').classList.remove('hidden');
+      descInput.classList.add('border-hr', 'field-error');
+      valid = false;
+    }
+    if (!document.querySelector('input[name="category"]:checked')) {
+      document.getElementById('categoryError').classList.remove('hidden');
+      valid = false;
+    }
+    return valid;
+  }
+
+  function setSubmitting(isSubmitting) {
+    document.getElementById('submitSpinner').classList.toggle('hidden', !isSubmitting);
+    document.getElementById('submitBtn').disabled = isSubmitting;
+    document.getElementById('submitBtn').classList.toggle('opacity-70', isSubmitting);
+  }
+
+  // Submit (create or update)
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    const category = document.querySelector('input[name="category"]:checked').value;
+        const proficiency = document.querySelector('input[name="proficiency"]:checked').value;
+
+    const formData = new FormData();
+    formData.append('title', titleInput.value.trim());
+    formData.append('description', descInput.value.trim());
+    formData.append('category', category);
+    formData.append('proficiency',proficiency);
+    if (editingId) formData.append('courseId', editingId);
+
+    const file = imageInput.files[0];
+    if (file) formData.append('image', file);
+
+    const token = $("meta[name='_csrf']").attr('content');
+    const header = $("meta[name='_csrf_header']").attr('content') || 'X-CSRF-TOKEN';
+
+    setSubmitting(true);
+    $.ajax({
+      url: '/course/addCourse',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: { [header]: token },
+      success: function () {
+        showToast(editingId ? 'Course updated' : 'Course saved', 'success');
+        closeModal();
+        getCourses();
+      },
+      error: function (err) {
+        console.error('Save error:', err);
+        showToast('Could not save this course', 'error');
+      },
+      complete: function () { setSubmitting(false); }
+    });
+  });
+
+  function getCourses() {
+    errorEl.classList.add('hidden');
+    loadingEl.classList.remove('hidden');
+    rowsEl.innerHTML = '';
+    emptyEl.classList.add('hidden');
+    noMatchEl.classList.add('hidden');
+
+    $.ajax({
+      url: '/course/getCourses',
+      type: 'GET',
+      dataType: 'JSON',
+      success: (res) => {
+        console.log(res);
+        courses = Array.isArray(res) ? res : [];
+        loadingEl.classList.add('hidden');
+        render();
+      },
+      error: (err) => {
+        console.error('Load error:', err);
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+      }
+    });
+  }
+  document.getElementById('retryLoadBtn').addEventListener('click', getCourses);
+
+  // Delete flow
+  const deleteOverlay = document.getElementById('deleteOverlay');
+  function openDelete(id) {
+    const c = courses.find(x => x.courseId === id);
+    deletingId = id;
+    document.getElementById('deleteTargetTitle').textContent = c ? `"${c.courseTitle}"` : 'this course';
+    deleteOverlay.classList.remove('hidden');
+    deleteOverlay.classList.add('flex');
+  }
+  function closeDelete() {
+    deleteOverlay.classList.add('hidden');
+    deleteOverlay.classList.remove('flex');
+    deletingId = null;
+  }
+  document.getElementById('cancelDeleteBtn').addEventListener('click', closeDelete);
+  deleteOverlay.addEventListener('click', (e) => { if (e.target === deleteOverlay) closeDelete(); });
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    if (!deletingId) return;
+    const token = $("meta[name='_csrf']").attr('content');
+    const header = $("meta[name='_csrf_header']").attr('content') || 'X-CSRF-TOKEN';
+
+    document.getElementById('deleteSpinner').classList.remove('hidden');
+    document.getElementById('confirmDeleteBtn').disabled = true;
+
+    $.ajax({
+      url: '/course/deleteCourse/' + encodeURIComponent(deletingId),
+      type: 'DELETE',
+      headers: { [header]: token },
+      success: function () {
+        const row = document.querySelector(`[data-id="${deletingId}"]`);
+        closeDelete();
+        showToast('Course removed', 'success');
+        if (row) {
+          row.classList.add('row-exit');
+          setTimeout(() => {
+            courses = courses.filter(c => c.courseId !== deletingId);
+            render();
+          }, 180);
+        } else {
+          courses = courses.filter(c => c.courseId !== deletingId);
+          render();
+        }
+      },
+      error: function (err) {
+        console.error('Delete error:', err);
+        showToast('Could not delete this course', 'error');
+      },
+      complete: function () {
+        document.getElementById('deleteSpinner').classList.add('hidden');
+        document.getElementById('confirmDeleteBtn').disabled = false;
+      }
+    });
+  });
+
+  // Toast
+  let toastTimer;
+  function showToast(msg, kind) {
+    const toast = document.getElementById('toast');
+    const colors = kind === 'error' ? 'bg-hr text-white' : 'bg-ink text-white';
+    toast.className = `toast-in fixed bottom-6 left-1/2 z-50 text-[12.5px] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 ${colors}`;
+    toast.innerHTML = kind === 'error'
+      ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg><span>${escapeHtml(msg)}</span>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg><span>${escapeHtml(msg)}</span>`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add('hidden'), 2200);
+  }
+
+  getCourses();
+</script>
+</body>
+</html>

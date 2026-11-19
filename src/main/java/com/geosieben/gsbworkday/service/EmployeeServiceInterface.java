@@ -12,7 +12,7 @@ import java.util.Map;
 public interface EmployeeServiceInterface {
 
 
-    public ResponseEntity<Map<String,String>> addEmployee(EmployeeRequestDto dto);
+    public ResponseEntity<Map<String,String>> addEmployee(EmployeeRequestDto dto,String filepath);
     public List<EmployeeResponseDto> fetchEmployees();
     public StatsDto getStats();
 }

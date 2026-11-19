@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Allotment Reports</title>
+
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- DataTables Core CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
+    <style>
+        /* Modern DataTables Custom Overrides */
+        table.dataTable.no-footer {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding-top: 0.75rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.35rem 0.75rem !important;
+            border-radius: 0.375rem !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            color: #475569 !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+        }
+        .dataTables_wrapper .dataTables_info {
+            font-size: 0.75rem;
+            color: #64748b;
+            padding-top: 0.75rem;
+        }
+    </style>
+</head>
+    <head th:replace="includes/header :: header"></head>
+
+<body>
+
+    <div class="max-w-[100%]">
+        
+        <!-- Header Bar -->
+        <header class="bg-gradient-to-r from-slate-900 via-slate-800 to-brand-900 rounded-2xl p-4 sm:px-6 shadow-md shadow-slate-900/10 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="history.back()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150 active:scale-95 border border-white/10">
+                    <i class="fas fa-arrow-left text-[11px]"></i>
+                    <span>Back</span>
+                </button>
+                <div class="h-4 w-px bg-white/20"></div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-tight leading-none" id="dynamicHeader">Performance Analytics</h1>
+                    <p class="text-[11px] text-slate-300 font-medium mt-1">Resource allocation and allotment oversight</p>
+                </div>
+            </div>
+            
+            <div id="buttonContainer" class="flex items-center gap-2"></div>
+        </header>
+
+        <!-- Charts Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Project Hours Chart -->
+            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-brand-600"></span>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600">Hour Contribution</h2>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-medium">By Project</span>
+                </div>
+                <div class="relative h-56 w-full">
+                    <canvas id="projectHoursChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Type Mix Chart -->
+            <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600">Type Mix</h2>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-medium">Distribution</span>
+                </div>
+                <div class="relative h-56 w-full">
+                    <canvas id="projectTypeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Card Section -->
+        <section class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <!-- Filter Bar -->
+            <div class="p-4 sm:px-6 bg-slate-50/60 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Reporting Month</label>
+                        <select id="monthFilter" class="bg-white text-xs font-medium text-slate-700 rounded-lg border border-slate-300 py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-sm transition">
+                            <option value="all">Full History</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Fiscal Window</label>
+                        <select id="fyFilter" class="bg-white text-xs font-medium text-slate-700 rounded-lg border border-slate-300 py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-sm transition">
+                            <option value="all">All FYs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-xs text-slate-400 font-medium">
+                    <span id="activeRecordCount" class="font-semibold text-slate-700">0</span> records loaded
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto p-4 sm:p-6">
+                <table class="w-full text-left border-collapse" id="dataTable">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-[11px] font-bold tracking-wider text-slate-400 uppercase bg-slate-50/50">
+                            <th class="py-3 px-3 text-center w-10">#</th> 
+                            <th class="py-3 px-3">Month</th> 
+                            <th class="py-3 px-3">Client</th>
+                            <th class="py-3 px-3">Project</th>
+                            <th class="py-3 px-3">Allotment</th>
+                            <th class="py-3 px-3">Lead</th>
+                            <th class="py-3 px-3">Type</th>
+                            <th class="py-3 px-3 text-center">Status</th>
+                            <th class="py-3 px-3 text-right">Hours Booked</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <script>
+            $(document).ready(function() {
+                Chart.register(ChartDataLabels);
+
+                // Replaced PHP tags: calculate current date (YYYY-MM-DD) and formatted month (e.g., "Nov-2026")
+                const now = new Date();
+                const currentDay = now.toISOString().split('T')[0];
+
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const defaultMonth = `${monthNames[now.getMonth()]}-${now.getFullYear()}`;
+
+                let projectHoursChart, projectTypeChart;
+                const palette = ['#2563eb', '#0284c7', '#059669', '#d97706', '#dc2626', '#4f46e5', '#db2777'];
+
+                function initAnalytics(data) {
+                    const ctxPie = document.getElementById('projectHoursChart').getContext('2d');
+                    const ctxDoughnut = document.getElementById('projectTypeChart').getContext('2d');
+
+                    const hoursMap = {};
+                    const typeMap = {};
+                    
+                    data.forEach(item => {
+                        const label = item.projectname || 'Unassigned';
+                        hoursMap[label] = (hoursMap[label] || 0) + parseFloat(item.hours || 0);
+                        const type = item.projectType || 'General';
+                        typeMap[type] = (typeMap[type] || 0) + 1;
+                    });
+
+                    if(projectHoursChart) projectHoursChart.destroy();
+                    if(projectTypeChart) projectTypeChart.destroy();
+
+                    projectHoursChart = new Chart(ctxPie, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(hoursMap),
+                            datasets: [{
+                                data: Object.values(hoursMap),
+                                backgroundColor: palette,
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { 
+                                    position: 'right', 
+                                    labels: { 
+                                        boxWidth: 8, 
+                                        usePointStyle: true,
+                                        font: { size: 11, family: 'Inter', weight: '500' }, 
+                                        padding: 10 
+                                    } 
+                                },
+                                datalabels: {
+                                    color: '#fff',
+                                    font: { weight: '700', size: 10, family: 'Inter' },
+                                    formatter: (value, ctx) => {
+                                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        let pct = ((value * 100) / (sum || 1)).toFixed(0);
+                                        return pct > 8 ? `${pct}%` : '';
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    projectTypeChart = new Chart(ctxDoughnut, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(typeMap),
+                            datasets: [{
+                                data: Object.values(typeMap),
+                                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'],
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                cutout: '72%'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { 
+                                    position: 'bottom', 
+                                    labels: { 
+                                        boxWidth: 8, 
+                                        usePointStyle: true, 
+                                        font: { size: 11, family: 'Inter', weight: '500' } 
+                                    } 
+                                },
+                                datalabels: { display: false }
+                            }
+                        }
+                    });
+                }
+
+                function getFYFromMonthString(monthStr) {
+                    if (!monthStr) return null;
+                    const parts = monthStr.split('-');
+                    if (parts.length !== 2) return null;
+                    const monthIdx = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11 }[parts[0]];
+                    const year = parseInt(parts[1], 10);
+                    return (monthIdx >= 3) ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+                }
+
+                let table = $('#dataTable').DataTable({ 
+                    dom: 'rt<"flex flex-wrap items-center justify-between gap-4 mt-4 px-2"ip>',
+                    buttons: [{
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-file-excel mr-2"></i>Export Excel',
+                        className: '!inline-flex !items-center !px-3.5 !py-1.5 !rounded-lg !bg-emerald-600 hover:!bg-emerald-500 !text-white !text-xs !font-semibold !shadow-sm !transition-all duration-150 active:!scale-95 !border-0',
+                        title: () => "Report_" + currentDay
+                    }],
+                    ajax: {
+                        url: '/admin/reports/getAllotmentReport',
+                        type: 'GET',
+                        dataSrc: (json) => { 
+                            populateFilters(json); 
+                            $('#activeRecordCount').text(json.length);
+                            return json; 
+                        }
+                    },
+                    columns: [
+                        { data: null, className: 'text-center font-semibold text-slate-400 py-2.5 px-3' },
+                        { data: 'month', render: d => `<span class="font-medium text-slate-500">${d}</span>` },
+                        { data: 'clientId', render: d => `<span class="font-semibold text-slate-700">${d}</span>` },
+                        { data: 'projectName', render: d => `<span class="font-bold text-slate-900">${d}</span>` },
+                        { data: 'allotmentName', render: d => `<span class="text-slate-600 font-medium">${d}</span>` },
+                        { data: 'projectLead', render: d => `<span class="text-slate-700">${d}</span>` },
+                        { 
+                            data: 'projectType', 
+                            render: d => `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">${d || 'Standard'}</span>`
+                        },
+                        { 
+                            data: 'projectStatus', 
+                            className: 'text-center', 
+                            render: d => {
+                                const isDone = (d || '').toLowerCase() === 'active' || (d || '').toLowerCase() === 'completed';
+                                return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                                    isDone 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }">${d}</span>`;
+                            }
+                        },
+                        { 
+                            data: 'hours', 
+                            className: 'text-right font-bold text-brand-600 bg-brand-50/40 px-3 py-2.5' 
+                        }
+                    ],
+                    pageLength: 25,
+                    createdRow: function(row) {
+                        $(row).addClass('hover:bg-slate-50/80 transition-colors duration-150');
+                    },
+                    initComplete: function() {
+                        table.buttons().container().appendTo('#buttonContainer');
+                        
+                        // Check if current month exists in options; default to it or "all"
+                        if ($('#monthFilter option[value="' + defaultMonth + '"]').length > 0) {
+                            $('#monthFilter').val(defaultMonth).trigger('change');
+                        } else {
+                            $('#monthFilter').val('all').trigger('change');
+                        }
+                    }
+                });
+
+                function populateFilters(data) {
+                    let months = new Set();
+                    let fys = new Set();
+
+                    data.forEach(row => {
+                        if (row.month) {
+                            months.add(row.month);
+                            let fy = getFYFromMonthString(row.month);
+                            if (fy) fys.add(fy);
+                        }
+                    });
+
+                    const $mSel = $('#monthFilter');
+                    Array.from(months).sort().forEach(m => $mSel.append(`<option value="${m}">${m}</option>`));
+
+                    const $fSel = $('#fyFilter');
+                    Array.from(fys).sort().reverse().forEach(f => $fSel.append(`<option value="${f}">${f}</option>`));
+                }
+
+                $('#monthFilter, #fyFilter').on('change', function() {
+                    const mVal = $('#monthFilter').val();
+                    if (mVal === 'all') {
+                        table.column(1).search('').draw();
+                    } else {
+                        table.column(1).search('^' + mVal + '$', true, false).draw();
+                    }
+                    const filteredData = table.rows({ search: 'applied' }).data().toArray();
+                    $('#activeRecordCount').text(filteredData.length);
+                    initAnalytics(filteredData);
+                });
+
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    let selectedFY = $('#fyFilter').val();
+                    if (selectedFY === 'all') return true;
+                    return getFYFromMonthString(data[1]) === selectedFY;
+                });
+
+                table.on('draw.dt', function () {
+                    let info = table.page.info();
+                    table.column(0, {search:'applied'}).nodes().each((cell, i) => cell.innerHTML = i + 1 + info.start);
+                });
+            });
+        </script>
+</body>
+</html>

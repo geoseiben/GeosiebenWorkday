@@ -1,22 +1,19 @@
 package com.geosieben.gsbworkday.service;
 
+import com.geosieben.gsbworkday.repository.BookedHoursRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.geosieben.gsbworkday.addon.AddonServ;
-import com.geosieben.gsbworkday.controller.AdminController;
-import com.geosieben.gsbworkday.controller.AuthController;
 import com.geosieben.gsbworkday.dto.AllotmentRequestDto;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
 import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
@@ -42,35 +39,33 @@ import jakarta.servlet.http.HttpSession;
 @Service
 public class ProjectService implements ProjectInterface{
 
-    private final AuthController authController;
-
-    private final EmployeeService employeeService;
-
-    private final AdminController adminController;
-@Autowired
+private final BookedHoursRepository bookedHoursRepository;
 private ClientRepository clientRepository;
-@Autowired 
 private ProjectcategoryRepository projectcategoryRepository;
-@Autowired
 private AdminActivitiesRepository adminActivitiesRepository;
-@Autowired
 private BasicInfoRepository basicInfoRepository;
-@Autowired
 private HttpSession httpSession;
-@Autowired 
 private RootProjectRepository rootProjectRepository;
-@Autowired
 private ProjectRepository projectRepository;
-@Autowired
 private AllocationRepository allocationRepository;
-@Autowired
 private TlTargetHoursRepository tlTargetHoursRepository;
 
-    ProjectService(AdminController adminController, EmployeeService employeeService, AuthController authController) {
-        this.adminController = adminController;
-        this.employeeService = employeeService;
-        this.authController = authController;
-    }
+
+    public ProjectService(ClientRepository clientRepository, ProjectcategoryRepository projectcategoryRepository,
+    AdminActivitiesRepository adminActivitiesRepository, BasicInfoRepository basicInfoRepository,
+    HttpSession httpSession, RootProjectRepository rootProjectRepository, ProjectRepository projectRepository,
+    AllocationRepository allocationRepository, TlTargetHoursRepository tlTargetHoursRepository, BookedHoursRepository bookedHoursRepository) {
+  this.clientRepository = clientRepository;
+  this.projectcategoryRepository = projectcategoryRepository;
+  this.adminActivitiesRepository = adminActivitiesRepository;
+  this.basicInfoRepository = basicInfoRepository;
+  this.httpSession = httpSession;
+  this.rootProjectRepository = rootProjectRepository;
+  this.projectRepository = projectRepository;
+  this.allocationRepository = allocationRepository;
+  this.tlTargetHoursRepository = tlTargetHoursRepository;
+  this.bookedHoursRepository = bookedHoursRepository;
+}
     @Transactional
     public ResponseEntity<Map<String,String>> logNewProject(ProjectRequest request) {
       Map<String,String> response=new HashMap<>();
@@ -79,32 +74,31 @@ private TlTargetHoursRepository tlTargetHoursRepository;
         String eid=(String) httpSession.getAttribute("eid");
         EmployeeBasicInfo addedBy=(EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(eid);
         EmployeeBasicInfo projectLead=(EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(request.getProjectLeadId());
-        String pilotName=request.getProjectName();
       if(request.getProjectType().equals("Pilot")){
         RootProject existingRoot=rootProjectRepository.findPilotProjectsByClientId(request.getClientId());
         if(existingRoot==null){
         RootProject root=addRootProject(request,projectCategories,client,projectLead,addedBy);
         Project project =addProject( request, root, client);
-        ProjectAllocation allocation=addAllocation(request, projectLead, addedBy,project);
+        addAllocation(request, projectLead, addedBy,project);
         response.put("status", "success");
          response.put("message", "Pilot Added Successfully");
         }else{
           Project existiProject=projectRepository.findProjectByRootid(existingRoot.getProjId());
           if(existiProject!=null){
     
-        ProjectAllocation allocation=addAllocation(request, projectLead, addedBy,existiProject);
+        addAllocation(request, projectLead, addedBy,existiProject);
                 response.put("status", "success");
          response.put("message", "Pilot Added Successfully");
           }else{
               Project project =addProject( request, existingRoot, client);
-        ProjectAllocation allocation=addAllocation(request, projectLead, addedBy,project);
+       addAllocation(request, projectLead, addedBy,project);
          response.put("status", "success");
          response.put("message", "Pilot Added Successfully");
           }
         }
       }
       else if(request.getProjectType().equals("Project")){
-       RootProject root=addRootProject(request,projectCategories,client,projectLead,addedBy);
+      addRootProject(request,projectCategories,client,projectLead,addedBy);
                response.put("status", "success");
          response.put("message", "Project Added Successfully");
       }
@@ -147,7 +141,6 @@ return ResponseEntity.ok(response);
                     EmployeeBasicInfo projectLead=(EmployeeBasicInfo)basicInfoRepository.findEmployeeBasicInfoByEID(request.getProjectLeadId());
                     String eid=(String) httpSession.getAttribute("eid");
                     EmployeeBasicInfo addedBy=(EmployeeBasicInfo) basicInfoRepository.findEmployeeBasicInfoByEID(eid);  
-                    String pname=request.getPilotName()==null?request.getProjectName():request.getPilotName();
                             project.setAllotmentName(request.getProjectName());
                             project.setRootProject(rootProject);
                             project.setTotalHours(request.getHours());
@@ -180,7 +173,6 @@ return ResponseEntity.ok(response);
                 }
                 @Override
                 public List<RootProject> getRootProjectByClient(int clientid) {
-                 Clients client=(Clients) clientRepository.findById(clientid).orElse(null);
                  return rootProjectRepository.findProjectsByClientId(clientid);
 
                 }
@@ -209,6 +201,7 @@ return ResponseEntity.ok(response);
                   project.setFilePath(request.getFilePath());
                   project.setStarDate(request.getStartDate());
                   project.setEndDate(request.getDeadline());
+                  project.setIsHoursFixed(request.getIsHoursFixed());
                   projectRepository.save(project);
                   LocalDate date=LocalDate.now();
                   TeamLeadTargetHours existingHours=tlTargetHoursRepository.findLeadTargetHoursForCurrentMonth(AddonServ.monthYearFormatter(date),Integer.parseInt(AddonServ.monthNumExtract(date)),Integer.parseInt(AddonServ.yearExtract(date)),request.getProjectLeadId());
@@ -296,7 +289,8 @@ public ResponseEntity<Map<String, String>> updateAllotment(UpdateAllotmentDto dt
         ProjectAllocation qcTask = allocationRepository.getQcTask(
             allotment.getFeederAlloted(), 
             allotment.getProject().getPid(), 
-            "QC"
+            "QC",
+            allotment.getQcAssinee().getEID()
         );
 
         if (qcTask != null) {
@@ -338,6 +332,40 @@ public ResponseEntity<Map<String, String>> updateAllotment(UpdateAllotmentDto dt
     response.put("status", "success");
     response.put("message", "Updated successfully");
     return ResponseEntity.ok(response);
+}
+
+ public ResponseEntity<Map<String, String>> reOpenTask(int allotmentid){
+      Map<String, String> response = new HashMap<>();
+
+    ProjectAllocation allocation=allocationRepository.findById(allotmentid).orElse(null);
+    if(allocation!=null){
+      ProjectAllocation qcTask=allocationRepository.getQcTask(
+        allocation.getFeederAlloted(),
+        allocation.getProject().getPid(),
+        allocation.getType(),
+        allocation.getQcAssinee()!=null?allocation.getQcAssinee().getEID():null);
+        if(qcTask!=null){
+          deleteBookedHours(qcTask.getAllotmentid());
+          allocationRepository.deleteById(qcTask.getAllotmentid());
+        }
+      deleteBookedHours(allocation.getAllotmentid());
+      allocation.setStatus(1);
+      allocation.setQcAllotted(0);
+      allocation.setQcCompletionDate(null);
+      allocation.setCompletionDate(null);
+      allocation.setIsDelivered(0);
+      allocationRepository.save(allocation);
+      response.put("status", "error");
+      response.put("message", "Task Reopened");
+    }
+    else{
+    response.put("status", "error");
+    response.put("message", "Task not Found");
+    }
+  return null;
+ }
+public void deleteBookedHours(int allotmentid){
+   bookedHoursRepository.deleteHoursByAllotmentId(allotmentid);
 }
             
 }

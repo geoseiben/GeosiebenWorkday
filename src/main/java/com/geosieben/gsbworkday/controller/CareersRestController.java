@@ -3,9 +3,6 @@ package com.geosieben.gsbworkday.controller;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,10 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequestMapping("/admin/careers")
 @RestController
 public class CareersRestController {
-    @Autowired
     private CandidateService candidateService;
-    @Autowired
     private CandidiateRepository candidiateRepository;
+    
 @PostMapping("/addCandidate")
     public ResponseEntity<Map<String,String>> addCandidate(
             @ModelAttribute Candidate candidate, 
@@ -38,6 +34,10 @@ public class CareersRestController {
             return  candidateService.saveCandidate(candidate, resume);
             
     }
+    public CareersRestController(CandidateService candidateService, CandidiateRepository candidiateRepository) {
+    this.candidateService = candidateService;
+    this.candidiateRepository = candidiateRepository;
+}
     @GetMapping("/getCandidates")
     public  List<CandidateAssessmentDTO>  getResponse() { 
 
@@ -47,10 +47,6 @@ return candidiateRepository.findAllCandidateAssessments();    }
 public ResponseEntity<Map<String, String>> update(@RequestBody Map<String, Object> data) {
      return candidateService.updateHiring(data);
 }
-
-    
-
-
 
 }
  

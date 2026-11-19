@@ -5,12 +5,12 @@ import com.geosieben.gsbworkday.entity.BookedHours;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
 import com.geosieben.gsbworkday.entity.ProjectAllocation;
 import com.geosieben.gsbworkday.repository.AllocationRepository;
-import com.geosieben.gsbworkday.repository.BankInfoRepository;
 import com.geosieben.gsbworkday.repository.BasicInfoRepository;
-import com.geosieben.gsbworkday.repository.BookerHoursRepository;
+import com.geosieben.gsbworkday.repository.BookedHoursRepository;
 
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,22 +21,22 @@ import java.util.List;
 @Service
 public class TrackerService {
 
-    private final BankInfoRepository bankInfoRepository;
 
-    @Autowired
     private AllocationRepository repository;
-    @Autowired 
-    BookerHoursRepository bookerHoursRepository;
-    @Autowired
+    BookedHoursRepository bookerHoursRepository;
     private BasicInfoRepository basicInfoRepository;
 
+ 
 
-    TrackerService(BankInfoRepository bankInfoRepository) {
-        this.bankInfoRepository = bankInfoRepository;
+    public TrackerService(AllocationRepository repository,
+            BookedHoursRepository bookerHoursRepository, BasicInfoRepository basicInfoRepository) {
+        this.repository = repository;
+        this.bookerHoursRepository = bookerHoursRepository;
+        this.basicInfoRepository = basicInfoRepository;
     }
 
     @Transactional
-    public ProjectAllocation handleAction(int id, String action, String employeeId,String percentage) {
+    public ProjectAllocation handleAction(int id, String action, @NonNull String employeeId,String percentage) {
         ProjectAllocation task = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task ID " + id + " not found"));
 
@@ -74,66 +74,16 @@ public class TrackerService {
     /**
      * Logic for Pausing a task
      */
-    private ProjectAllocation pauseTask(ProjectAllocation task, long nowMs,String percentage,String eid) {
+    private ProjectAllocation pauseTask(ProjectAllocation task, long nowMs,String percentage,@NonNull String eid) {
         if (Boolean.TRUE.equals(task.getIsRunning())) {
             updateElapsedTime(task, nowMs);
         }
-        int percent=Integer.parseInt(percentage);
-        BigDecimal hours=((BigDecimal) (task.getType().equals("Prod")?task.getHrsAssigned():task.getQcHrs()));
-        double parsedHours=hours.doubleValue();
-        if(percent>0){
-            BookedHours current=(BookedHours) bookerHoursRepository.findbydateAndAllotmentforToday(eid, task.getAllotmentid());
-            if(current!=null){
-                int  percentageExisting=current.getCompletionPercentage();
-                double bookebalHours=(((parsedHours/100)*(percent-percentageExisting)))+current.getHoursBooked().doubleValue();
-                current.setCompletionPercentage(percent);
-                current.setHoursBooked(BigDecimal.valueOf(bookebalHours));
-                current.setUpdatedOn(LocalDateTime.now());
-                bookerHoursRepository.save(current);
-            }
-            else{
-
-                 BookedHours existingHours=bookerHoursRepository.findbyAndAllotmentforBookedSoFar(eid, task.getAllotmentid());
-                 if(existingHours==null){
-                    BookedHours newHours=new BookedHours();
-                    newHours.setCompletionPercentage(percent);
-                    double bookebalHours=(((parsedHours/100)*(percent)));
-                    newHours.setDate(LocalDate.now());
-                    newHours.setHoursBooked(BigDecimal.valueOf( bookebalHours));
-                    newHours.setProjectAllocation(task);
-                    newHours.setEmployeeBasicInfo((EmployeeBasicInfo)basicInfoRepository.getReferenceById(eid));
-                    newHours.setType(task.getType());
-                    bookerHoursRepository.save(newHours);
-                 }
-                 else {
-                    BookedHours lastHoubsBooked=(BookedHours) bookerHoursRepository.findbyAndAllotmentforBookedSoFar(eid, task.getAllotmentid());
-                int  percentageExisting=lastHoubsBooked.getCompletionPercentage();
-                double bookebalHours=(((parsedHours/100)*(percent-percentageExisting)))+lastHoubsBooked.getHoursBooked().doubleValue();
-                BookedHours todaysHours= new BookedHours();
-                todaysHours.setDate(LocalDate.now());
-                todaysHours.setEmployeeBasicInfo(lastHoubsBooked.getEmployeeBasicInfo());
-                todaysHours.setType(lastHoubsBooked.getType());
-                todaysHours.setCompletionPercentage(percent);
-                todaysHours.setHoursBooked(BigDecimal.valueOf(bookebalHours));
-                todaysHours.setUpdatedOn(LocalDateTime.now());
-                todaysHours.setProjectAllocation(task);
-                bookerHoursRepository.save(todaysHours);
-                 }
-
-            }
-        }
-        int pauseStatus = 1; // Default: Prod Paused
-        if (task.getStatus() != null && task.getStatus() == 9) {
-            pauseStatus = 8; // Rework Paused
-        } else if ("QC".equalsIgnoreCase(task.getType())) {
-            pauseStatus = 4; // QC Paused
-        }
+              int pauseStatus = updateHours(task, Integer.parseInt(percentage), eid);
 
         task.setIsRunning(false);
         task.setStartTime(null);
         task.setStatus(pauseStatus);
         task.setPausedOn(LocalDateTime.now());
-        
         return repository.save(task);
     }
 
@@ -152,7 +102,7 @@ public class TrackerService {
 
         int newStatus;
         int qcTrigger = 0;
-
+var update=updateHours(task, 100,task.getType().equals("Prod")?task.getAllottedTo().getEID():task.getQcAssinee().getEID());
         if (task.getStatus() != null && task.getStatus() == 9) {
             newStatus = 10; // Rework Completed
         } else if ("Prod".equalsIgnoreCase(task.getType()) || "Pilot".equalsIgnoreCase(task.getType())) {
@@ -236,5 +186,59 @@ public class TrackerService {
 
     public ProjectAllocation handleTaskToggle(int id, String string) {
         throw new UnsupportedOperationException("Unimplemented method 'handleTaskToggle'");
+    }
+
+    public int updateHours( ProjectAllocation task,int percentage,String eid){
+              int pauseStatus = 1;
+        int percent=percentage;
+        BigDecimal hours=((BigDecimal) (task.getType().equals("Prod")?task.getHrsAssigned():task.getQcHrs()));
+        double parsedHours=hours.doubleValue();
+        if(percent>0){
+            BookedHours current=(BookedHours) bookerHoursRepository.findbydateAndAllotmentforToday(eid, task.getAllotmentid());
+            if(current!=null){
+                int  percentageExisting=current.getCompletionPercentage();
+                double bookebalHours=(((parsedHours/100)*(percent-percentageExisting)))+current.getHoursBooked().doubleValue();
+                current.setCompletionPercentage(percent);
+                current.setHoursBooked(BigDecimal.valueOf(bookebalHours));
+                current.setUpdatedOn(LocalDateTime.now());
+                bookerHoursRepository.save(current);
+            }
+            else{
+
+                 BookedHours existingHours=bookerHoursRepository.findbyAndAllotmentforBookedSoFar(eid, task.getAllotmentid());
+                 if(existingHours==null){
+                    BookedHours newHours=new BookedHours();
+                    newHours.setCompletionPercentage(percent);
+                    double bookebalHours=(((parsedHours/100)*(percent)));
+                    newHours.setDate(LocalDate.now());
+                    newHours.setHoursBooked(BigDecimal.valueOf( bookebalHours));
+                    newHours.setProjectAllocation(task);
+                    newHours.setEmployeeBasicInfo((EmployeeBasicInfo)basicInfoRepository.getReferenceById(eid));
+                    newHours.setType(task.getType());
+                    bookerHoursRepository.save(newHours);
+                 }
+                 else {
+                    int  percentageExisting=existingHours.getCompletionPercentage();
+                    double bookebalHours=(((parsedHours/100)*(percent-percentageExisting)));
+                    BookedHours todaysHours= new BookedHours();
+                    todaysHours.setDate(LocalDate.now());
+                    todaysHours.setEmployeeBasicInfo(existingHours.getEmployeeBasicInfo());
+                    todaysHours.setType(existingHours.getType());
+                    todaysHours.setCompletionPercentage(percent);
+                    todaysHours.setHoursBooked(BigDecimal.valueOf(bookebalHours));
+                    todaysHours.setUpdatedOn(LocalDateTime.now());
+                    todaysHours.setProjectAllocation(task);
+                    bookerHoursRepository.save(todaysHours);
+                    }
+
+            }
+        }
+   // Default: Prod Paused
+        if (task.getStatus() != null && task.getStatus() == 9) {
+            pauseStatus = 8; // Rework Paused
+        } else if ("QC".equalsIgnoreCase(task.getType())) {
+            pauseStatus = 4; // QC Paused
+        }
+return pauseStatus;
     }
 }

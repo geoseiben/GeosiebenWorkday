@@ -1,5 +1,6 @@
 package com.geosieben.gsbworkday.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,7 +16,7 @@ public class SeparationDocs {
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private int docId;
 private String document;
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="SeparationId")
 private Separation separation;
 public int getDocId() {

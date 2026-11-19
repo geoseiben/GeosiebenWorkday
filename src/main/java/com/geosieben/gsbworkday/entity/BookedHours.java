@@ -3,6 +3,8 @@ package com.geosieben.gsbworkday.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,10 +20,10 @@ public class BookedHours {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="EID")
 private EmployeeBasicInfo employeeBasicInfo;
-@ManyToOne
+@ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="allotmentid")
 private ProjectAllocation projectAllocation;
 private LocalDate date;

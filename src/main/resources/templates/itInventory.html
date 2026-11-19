@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Inventory</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.5/css/responsive.bootstrap5.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4338ca;
+            --primary-dark: #3730a3;
+            --primary-light: #eef2ff;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --surface: #f9fafb;
+            --white: #ffffff;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+            --gray: #6b7280;
+            --gray-bg: #f3f4f6;
+            --amber: #d97706;
+            --amber-bg: #fffbeb;
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            margin: 0;
+        }
+
+        /* ── Layout ── */
+        .page-wrap {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .page-title i { color: var(--primary); font-size: 18px; }
+        .page-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        .btn-add-asset {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.15s;
+        }
+        .btn-add-asset:hover { background: var(--primary-dark); }
+
+        /* ── Stat Cards ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .stat-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .stat-icon.total  { background: var(--primary-light); color: var(--primary); }
+        .stat-icon.idle   { background: var(--green-bg); color: var(--green); }
+        .stat-icon.assigned { background: var(--red-bg); color: var(--red); }
+        .stat-icon.inactive { background: var(--gray-bg); color: var(--gray); }
+        .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+        .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+
+        /* ── Charts ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2cap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .chart-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+        }
+        .chart-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .chart-canvas-wrap { position: relative; height: 160px; }
+
+        /* ── Main card ── */
+        .main-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+        }
+
+        /* ── Toolbar ── */
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .toolbar-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        .search-box {
+            position: relative;
+        }
+        .search-box i {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 11px;
+            pointer-events: none;
+        }
+        .search-box input {
+            padding: 5px 8px 5px 26px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-family: inherit;
+            width: 200px;
+            outline: none;
+            background: var(--surface);
+            color: var(--text);
+        }
+        .search-box input:focus { border-color: var(--primary); background: #fff; }
+
+        .filter-select {
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus { border-color: var(--primary); }
+
+        .toolbar-right { display: flex; gap: 6px; }
+
+        .btn-sm-icon {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-sm-icon:hover { background: #fff; color: var(--text); border-color: #d1d5db; }
+
+        /* ── Table ── */
+        .tbl-wrap {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        thead th {
+            background: var(--surface);
+            padding: 5px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            user-select: none;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        thead th.sortable { cursor: pointer; }
+        thead th.sortable:hover { color: var(--text); }
+        thead th .sort-ico { margin-left: 2px; opacity: 0.4; font-size: 9px; }
+        thead th.sorted .sort-ico { opacity: 1; color: var(--primary); }
+
+        tbody tr { border-bottom: 1px solid var(--border); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+
+        td {
+            padding: 4px 8px;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            line-height: 1.3;
+        }
+        td.mono { font-family: 'Courier New', monospace; font-size: 10.5px; color: var(--text-muted); }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 6px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .badge-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+        .badge.idle    { background: var(--green-bg); color: var(--green); }
+        .badge.assigned { background: var(--red-bg); color: var(--red); }
+        .badge.inactive { background: var(--gray-bg); color: var(--gray); }
+        .badge-dot.idle    { background: var(--green); }
+        .badge-dot.assigned { background: var(--red); }
+        .badge-dot.inactive { background: var(--gray); }
+
+        /* ── Action buttons ── */
+        .action-btns { display: flex; align-items: center; gap: 2px; }
+        .ic-btn {
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .ic-btn:hover { background: var(--surface); color: var(--text); }
+        .ic-btn.assign:hover { background: var(--green-bg); color: var(--green); border-color: #6ee7b7; }
+        .ic-btn.clone:hover  { background: var(--primary-light); color: var(--primary); border-color: #c7d2fe; }
+        .ic-btn.edit:hover   { background: var(--amber-bg); color: var(--amber); border-color: #fcd34d; }
+        .ic-btn.dispose:hover { background: var(--red-bg); color: var(--red); border-color: #fca5a5; }
+
+        /* ── Pagination ── */
+        .pager {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pager-info { font-size: 11px; color: var(--text-muted); }
+        .pager-btns { display: flex; gap: 3px; }
+        .pg-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .pg-btn:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+        .pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+        .pg-btn:disabled { opacity: 0.35; cursor: default; }
+
+        .empty-row td {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1060;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-overlay.open { display: flex; }
+
+        .custom-modal-box {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            width: 520px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn { from { opacity:0; transform: scale(0.96) translateY(8px); } to { opacity:1; transform: none; } }
+
+        .modal-hd {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-hd-left { display: flex; align-items: center; gap: 10px; }
+        .modal-hd-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+        }
+        .modal-hd-icon.danger { background: var(--red-bg); color: var(--red); }
+        .modal-hd-icon.success { background: var(--green-bg); color: var(--green); }
+        .modal-title { font-size: 14px; font-weight: 600; }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px;
+            transition: color 0.15s;
+        }
+        .modal-close-btn:hover { color: var(--text); }
+
+        .modal-bd { padding: 16px 20px; }
+        .modal-ft {
+            padding: 12px 20px 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* form */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-lbl {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .form-ctrl {
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-ctrl:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67,56,202,0.1);
+            background: #fff;
+        }
+        .form-error { font-size: 11px; color: var(--red); margin-top: 2px; display: none; }
+        .form-error.show { display: block; }
+
+        /* buttons */
+        .btn-cancel {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-cancel:hover { background: var(--surface); color: var(--text); }
+        .btn-action {
+            padding: 7px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-action:hover { background: var(--primary-dark); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-action.danger { background: var(--red); }
+        .btn-action.danger:hover { background: #b91c1c; }
+        .btn-action.success { background: var(--green); }
+        .btn-action.success:hover { background: #047857; }
+
+        /* alert inside modal */
+        .info-strip {
+            background: var(--primary-light);
+            border: 1px solid #c7d2fe;
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: 12px;
+            color: var(--primary-dark);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .danger-strip {
+            background: var(--red-bg);
+            border: 1px solid #fca5a5;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-size: 12px;
+            color: #7f1d1d;
+            line-height: 1.6;
+        }
+        .danger-strip strong { color: var(--red); }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: var(--text);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            animation: slideUp 0.2s ease;
+        }
+        #toast.show { display: flex; }
+        @keyframes slideUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        #toast i { font-size: 14px; }
+        #toast.success i { color: #6ee7b7; }
+        #toast.error i { color: #fca5a5; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: repeat(2,1fr); }
+            .charts-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<head th:replace="includes/header :: header"></head>
+<body>
+
+<div class="page-wrap">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <div class="page-title">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                IT Asset Inventory
+            </div>
+            <div class="page-subtitle" id="headerDate"></div>
+        </div>
+        <button class="btn-add-asset" id="add-asset-btn">
+            <i class="fa-solid fa-plus"></i> Add New Asset
+        </button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon total"><i class="fa-solid fa-layer-group"></i></div>
+            <div>
+                <div class="stat-label">Total Assets</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon idle"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+                <div class="stat-label">Idle</div>
+                <div class="stat-value" id="statIdle">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon assigned"><i class="fa-solid fa-user-check"></i></div>
+            <div>
+                <div class="stat-label">Assigned</div>
+                <div class="stat-value" id="statAssigned">0</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon inactive"><i class="fa-solid fa-circle-xmark"></i></div>
+            <div>
+                <div class="stat-label">Inactive</div>
+                <div class="stat-value" id="statInactive">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-title">Status Distribution</div>
+            <div class="chart-canvas-wrap"><canvas id="chartStatus"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Assets by Category</div>
+            <div class="chart-canvas-wrap"><canvas id="chartCategory"></canvas></div>
+        </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="main-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="search" id="searchInput" placeholder="Search assets…">
+                </div>
+                <select class="filter-select" id="catFilter">
+                    <option value="">All Categories</option>
+                    <option>Accessories</option><option>Desktops</option>
+                   <option>Emitter</option>
+                    <option>Goggles</option><option>Headphones</option><option>Hubs</option>
+                    <option>Keyboards</option><option>Laptops</option><option>Monitors</option>
+                    <option>Mouse</option><option>Printers And Scanners</option>
+                   <option>Projectors</option><option>Routers</option>
+                    <option>Smartphones</option><option>Servers</option><option>Switches</option>
+                    <option>Storage devices</option>
+                </select>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="0">Idle</option>
+                    <option value="1">Assigned</option>
+                    <option value="2">Inactive</option>
+                </select>
+                <select class="filter-select" id="pageSize">
+                    <option value="25">25 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                    <option value="9999">All</option>
+                </select>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn-sm-icon" id="exportBtn">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="tbl-wrap">
+            <table id="assetTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-col="assetId" style="width:68px">
+                            Asset ID <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th class="sortable" data-col="assetName" style="width:145px">
+                            Asset Name <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th class="sortable" data-col="model" style="width:120px">
+                            Model <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th class="sortable" data-col="category" style="width:120px">
+                            Category <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th class="sortable" data-col="vendor" style="width:85px">
+                            Vendor <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th style="width:115px">Serial No.</th>
+                        <th class="sortable" data-col="status" style="width:78px">
+                            Status <i class="fa-solid fa-sort sort-ico"></i>
+                        </th>
+                        <th style="width:82px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tablebody"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pager">
+            <span class="pager-info" id="pagerInfo"></span>
+            <div class="pager-btns" id="pagerBtns"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ MODAL ════════════ -->
+<div class="modal-overlay" id="mainModal">
+    <div class="custom-modal-box">
+        <div class="modal-hd">
+            <div class="modal-hd-left">
+                <div class="modal-hd-icon" id="mIcon"><i id="mIconI" class="fa-solid fa-desktop"></i></div>
+                <span class="modal-title" id="mTitle">Modal</span>
+            </div>
+            <button class="modal-close-btn" id="mClose">&times;</button>
+        </div>
+        <div class="modal-bd" id="mBody"></div>
+        <div class="modal-ft">
+            <button class="btn-cancel" id="mCancelBtn">Cancel</button>
+            <button class="btn-action" id="mActionBtn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg"></span></div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<!-- ════════════ SCRIPTS ════════════ -->
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+<script>
+$(function () {
+
+    /* ─── State ─── */
+    let assetData = [];
+    let filtered  = [];
+    let nextId    = 1;
+    let sortCol   = 'assetId', sortDir = 1;
+    let page      = 1, perPage = 25;
+
+    /* ─── Date header ─── */
+    document.getElementById('headerDate').textContent =
+        'As on ' + new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+
+    /* ─── Charts ─── */
+    const CHART_COLORS = ['#4338ca','#059669','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#65a30d','#ea580c','#0f766e'];
+
+    let chartStatus, chartCategory;
+
+    function buildCharts() {
+        const statusCounts = [0,1,2].map(s => assetData.filter(a => a.status === s).length);
+
+        // Category counts
+        const catMap = {};
+        assetData.forEach(a => { catMap[a.category] = (catMap[a.category]||0)+1; });
+        const catLabels = Object.keys(catMap).sort((a,b) => catMap[b]-catMap[a]).slice(0,8);
+        const catVals   = catLabels.map(c => catMap[c]);
+
+
+
+        const baseOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, family: 'Inter' }, padding: 8 } } }
+        };
+
+        if (chartStatus) chartStatus.destroy();
+        chartStatus = new Chart(document.getElementById('chartStatus'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Idle','Assigned','Inactive'],
+                datasets: [{ data: statusCounts, backgroundColor: ['#059669','#dc2626','#9ca3af'], borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: { ...baseOpts, cutout: '65%' }
+        });
+
+        if (chartCategory) chartCategory.destroy();
+        chartCategory = new Chart(document.getElementById('chartCategory'), {
+            type: 'bar',
+            data: {
+                labels: catLabels,
+                datasets: [{ data: catVals, backgroundColor: '#4338ca', borderRadius: 4, borderSkipped: false }]
+            },
+            options: {
+                ...baseOpts,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { font: { size: 9, family: 'Inter' }, maxRotation: 30 }, grid: { display: false } },
+                    y: { ticks: { font: { size: 10, family: 'Inter' }, stepSize: 1 }, grid: { color: '#f3f4f6' } }
+                }
+            }
+        });
+
+
+    }
+
+    /* ─── Stats ─── */
+    function updateStats() {
+        $('#statTotal').text(assetData.length);
+        $('#statIdle').text(assetData.filter(a=>a.status===0).length);
+        $('#statAssigned').text(assetData.filter(a=>a.status===1).length);
+        $('#statInactive').text(assetData.filter(a=>a.status===2).length);
+    }
+
+    /* ─── Status helpers ─── */
+    function statusInfo(s) {
+        if (s===0) return { cls:'idle',    label:'Idle' };
+        if (s===1) return { cls:'assigned', label:'Assigned' };
+        return { cls:'inactive', label:'Inactive' };
+    }
+
+    /* ─── Filter + render ─── */
+    function applyFilters() {
+        const q   = $('#searchInput').val().toLowerCase();
+        const cat = $('#catFilter').val();
+        const st  = $('#statusFilter').val();
+        filtered = assetData.filter(a => {
+            const mQ  = !q || [a.assetId,a.assetName,a.model,a.vendor,a.serialNo].some(v=>(v||'').toLowerCase().includes(q));
+            const mC  = !cat || a.category === cat;
+            const mS  = st === '' || a.status === parseInt(st);
+            return mQ && mC && mS;
+        });
+        page = 1;
+        renderTable();
+    }
+
+    function sortBy(col) {
+        if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+        applyFilters();
+    }
+
+    function renderTable() {
+        // Sort
+        filtered.sort((a,b) => {
+            const av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
+            if (typeof av === 'number') return (av - bv) * sortDir;
+            return String(av).localeCompare(String(bv)) * sortDir;
+        });
+
+        // Sort icons
+        document.querySelectorAll('thead th.sortable').forEach(th => {
+            th.classList.remove('sorted');
+            const ico = th.querySelector('.sort-ico');
+            ico.className = 'fa-solid fa-sort sort-ico';
+            if (th.dataset.col === sortCol) {
+                th.classList.add('sorted');
+                ico.className = `fa-solid fa-sort-${sortDir===1?'up':'down'} sort-ico`;
+            }
+        });
+
+        const total  = filtered.length;
+        const pages  = Math.max(1, Math.ceil(total / perPage));
+        if (page > pages) page = pages;
+        const slice  = filtered.slice((page-1)*perPage, page*perPage);
+
+        const tbody = $('#tablebody');
+        if (!slice.length) {
+            tbody.html(`<tr class="empty-row"><td colspan="8">
+                <i class="fa-solid fa-database" style="font-size:22px;display:block;margin-bottom:6px;opacity:.3"></i>
+                No assets found
+            </td></tr>`);
+        } else {
+            tbody.html(slice.map(a => {
+                const si = statusInfo(a.status);
+                const canAssign = a.category === 'Laptops' && a.status === 0;
+                return `<tr>
+                    <td class="mono">${a.assetId||''}</td>
+                    <td title="${a.assetName||''}">${a.assetName||''}</td>
+                    <td title="${a.model||''}">${a.model||''}</td>
+                    <td title="${a.category||''}">${a.category||''}</td>
+                    <td title="${a.vendor||''}">${a.vendor||''}</td>
+                    <td class="mono" title="${a.serialNo||''}">${a.serialNo||''}</td>
+                    <td><span class="badge ${si.cls}"><span class="badge-dot ${si.cls}"></span>${si.label}</span></td>
+                    <td>
+                        <div class="action-btns">
+                            ${canAssign ? `<button class="ic-btn assign assign-btn" data-id="${a.id}" title="Assign"><i class="fa-solid fa-user-plus"></i></button>` : ''}
+                            <button class="ic-btn clone clone-btn" data-id="${a.id}" title="Clone"><i class="fa-solid fa-clone"></i></button>
+                            <button class="ic-btn edit edit-btn" data-id="${a.id}" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="ic-btn dispose dispose-btn" data-id="${a.id}" title="Dispose"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join(''));
+        }
+
+        // Pager info
+        $('#pagerInfo').text(total
+            ? `Showing ${(page-1)*perPage+1}–${Math.min(page*perPage,total)} of ${total} assets`
+            : '0 assets');
+
+        // Pager buttons
+        let btns = `<button class="pg-btn" id="pgPrev" ${page<=1?'disabled':''}>‹</button>`;
+        for (let i=1; i<=pages; i++) {
+            if (pages <= 7 || i===1 || i===pages || Math.abs(i-page)<=1) {
+                btns += `<button class="pg-btn ${i===page?'active':''}" data-pg="${i}">${i}</button>`;
+            } else if (Math.abs(i-page)===2) {
+                btns += `<span style="padding:3px 4px;font-size:11px;color:#9ca3af">…</span>`;
+            }
+        }
+        btns += `<button class="pg-btn" id="pgNext" ${page>=pages?'disabled':''}>›</button>`;
+        $('#pagerBtns').html(btns);
+    }
+
+    // Pager click delegation
+    $('#pagerBtns').on('click', '.pg-btn', function() {
+        const pg = $(this).data('pg');
+        if (pg) { page = pg; renderTable(); return; }
+        if (this.id === 'pgPrev' && page > 1)  { page--; renderTable(); }
+        if (this.id === 'pgNext') { page++; renderTable(); }
+    });
+
+    // Sort header clicks
+    document.querySelectorAll('thead th.sortable').forEach(th => {
+        th.addEventListener('click', () => sortBy(th.dataset.col));
+    });
+
+    // Filters
+    $('#searchInput').on('input', applyFilters);
+    $('#catFilter, #statusFilter').on('change', applyFilters);
+    $('#pageSize').on('change', function() { perPage = parseInt(this.value); page = 1; renderTable(); });
+
+    /* ─── Toast ─── */
+    function toast(msg, type='success') {
+        const el = document.getElementById('toast');
+        const ico = el.querySelector('i');
+        el.className = `show ${type}`;
+        ico.className = type==='success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark';
+        document.getElementById('toastMsg').textContent = msg;
+        setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    /* ─── Modal helpers ─── */
+    function openModal({ title, icon, iconClass='', body, actionText='Save', actionClass='', onAction, showCancel=true }) {
+        $('#mTitle').text(title);
+        $('#mIconI').attr('class', `fa-solid ${icon}`);
+        $('#mIcon').attr('class', `modal-hd-icon ${iconClass}`);
+        $('#mBody').html(body);
+        $('#mActionBtn').text(actionText).attr('class', `btn-action ${actionClass}`).prop('disabled', false);
+        $('#mCancelBtn').toggle(showCancel);
+        $('#mActionBtn').off('click').on('click', onAction);
+        $('#mainModal').addClass('open');
+    }
+    function closeModal() { $('#mainModal').removeClass('open'); }
+
+    $('#mClose, #mCancelBtn').on('click', closeModal);
+    $('#mainModal').on('click', function(e) { if (e.target === this) closeModal(); });
+
+    /* ──────────────────────────────────
+       ORIGINAL BACKEND CALLS (unchanged)
+    ────────────────────────────────── */
+
+    /* ── fetchdata ── */
+    function fetchdata() {
+        $.ajax({
+            url: '/it/getAssets',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                console.log("Fetched Asset Data:", response);
+                if (response && Array.isArray(response)) {
+                    assetData = response.map(item => ({
+                        id: item.assetid,
+                        assetId: item.assetid || item.assetId,
+                        assetName: item.assetName,
+                        model: item.model,
+                        category: item.category,
+                        vendor: item.vendor,
+                        serialNo: item.serialNo,
+                        purchaseDate: item.purchasedOn,
+                        warrantyDate: item.warrantyExpiry,
+                        status: parseInt(item.status)
+                    }));
+                    nextId = assetData.length > 0 ? Math.max(...assetData.map(a => a.id)) + 1 : 1;
+                }
+                updateStats();
+                buildCharts();
+                applyFilters();
+            },
+            error: function(err) {
+                toast('Failed to fetch asset data from server.', 'error');
+                console.log(err);
+                applyFilters();
+            }
+        });
+    }
+
+    /* ── openAssetModal ── */
+    function openAssetModal(mode, rowData = null) {
+        let title = 'Add New Asset', icon = 'fa-plus-circle', actionText = 'Add';
+        let assetIdValue='', assetNameValue='', modelValue='', categoryValue='', vendorValue='', serialNoValue='';
+
+        if (rowData) {
+            assetIdValue    = rowData.assetId    || '';
+            assetNameValue  = rowData.assetName  || '';
+            modelValue      = rowData.model      || '';
+            categoryValue   = rowData.category   || '';
+            vendorValue     = rowData.vendor     || '';
+            serialNoValue   = rowData.serialNo   || '';
+        }
+        if (mode === 'edit')  { title = 'Edit Asset';  icon = 'fa-pen-to-square'; actionText = 'Update'; }
+        if (mode === 'clone') { title = 'Clone Asset'; icon = 'fa-clone';          actionText = 'Add'; assetIdValue=''; serialNoValue=''; }
+
+        const CATS = ['Accessories','Cabinets','Desktops','HDDs / SSDs','Display Cables','Emitter','Goggles','Headphones',
+            'Hubs','Keyboards','Laptops','Monitors','Mouse','Power Cables','Printers And Scanners','Processors',
+            'Projectors','Routers','Smartphones','Servers','Switches','Storage devices','Video Cables'];
+
+        const formHtml = `
+            <form id="assetForm">
+                <div class="form-row">
+                    ${mode === 'edit' ? `
+                    <div class="form-group">
+                        <label class="form-lbl"><i class="fa-solid fa-tag"></i> Asset ID</label>
+                        <input type="text" class="form-ctrl" id="assetId" value="${assetIdValue}" readonly>
+                    </div>` : ''}
+                    <div class="form-group ${mode==='edit'?'':''}">
+                        <label class="form-lbl"><i class="fa-solid fa-boxes-stacked"></i> Asset Name</label>
+                        <input type="text" class="form-ctrl" id="assetName" value="${assetNameValue}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-lbl"><i class="fa-solid fa-laptop-code"></i> Model</label>
+                        <input type="text" class="form-ctrl" id="model" value="${modelValue}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-lbl"><i class="fa-solid fa-sitemap"></i> Category</label>
+                        <select class="form-ctrl" id="category" required>
+                            ${CATS.map(c=>`<option value="${c}" ${categoryValue===c?'selected':''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-lbl"><i class="fa-solid fa-handshake"></i> Vendor</label>
+                        <input type="text" class="form-ctrl" id="vendor" value="${vendorValue}" required>
+                    </div>
+                    <div class="form-group form-full">
+                        <label class="form-lbl"><i class="fa-solid fa-barcode"></i> Serial No.</label>
+                        <input type="text" class="form-ctrl" id="serialNo" value="${serialNoValue}" required
+                               placeholder="${mode==='clone'?'Enter new serial number':''}">
+                        <div class="form-error" id="serialNoFeedback">Serial number already in use.</div>
+                    </div>
+                </div>
+            </form>`;
+
+        openModal({
+            title, icon,
+            body: formHtml,
+            actionText,
+            onAction: function() {
+                if (!$('#assetForm')[0].checkValidity()) { $('#assetForm')[0].reportValidity(); return; }
+
+                const data = {
+                    assetName: $('#assetName').val(),
+                    model:     $('#model').val(),
+                    category:  $('#category').val(),
+                    vendor:    $('#vendor').val(),
+                    serialNo:  $('#serialNo').val(),
+                };
+                const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+
+                if (mode === 'add' || mode === 'clone') {
+
+                    $.ajax({
+                        url: '/it/saveAsset',
+                        type: 'POST',
+                        data: {  ...data },
+                        headers: { 'X-CSRF-Token': csrfToken },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                const newAsset = {
+                                    id: nextId++,
+                                    assetId: response.assetId,
+                                    assetName: data.assetName,
+                                    model: data.model,
+                                    category: data.category,
+                                    vendor: data.vendor,
+                                    serialNo: data.serialNo,
+                                    purchaseDate: data.purchasedOn,
+                                    warrantyDate: data.warrantyExpiry,
+                                    status: 0
+                                };
+                                assetData.push(newAsset);
+                                closeModal();
+                                updateStats(); buildCharts(); applyFilters();
+                                toast(`Asset added: ${newAsset.assetId}`);
+                            } else {
+                                toast('Failed to add asset: ' + (response.message||'Unknown error'), 'error');
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            toast('Failed to communicate with the server.', 'error');
+                            console.error("AJAX Error:", textStatus, errorThrown);
+                        }
+                    });
+
+                } else if (mode === 'edit') {
+                    const asset = assetData.find(a => a.id == rowData.id);
+                    if (asset) {
+                        Object.assign(asset, data);
+                        $.ajax({
+                            url: '/it/updateAsset',
+                            type: 'POST',
+                            headers: { 'X-CSRF-Token': csrfToken },
+                            data: { assetId: rowData.assetId, ...data },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    closeModal();
+                                    updateStats(); buildCharts(); applyFilters();
+                                    toast('Asset updated successfully.');
+                                } else {
+                                    toast('Failed to update asset: ' + (response.message||'Unknown error'), 'error');
+                                }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                toast('Failed to communicate with the server.', 'error');
+                                console.error("AJAX Error:", textStatus, errorThrown);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        /* Serial No validation — original logic unchanged */
+        $('#serialNo').on('blur', function() {
+            const serialNo = $(this).val();
+            if (!serialNo) return;
+            $.ajax({
+              url: '/it/validateSerialNo', 
+                type: 'GET',
+                data: { action: 'checkSerialNo', serialNo: serialNo },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.assetid && (mode === 'add' || response.assetid !== assetIdValue)) {
+                        $('#mActionBtn').prop('disabled', true).addClass('opacity-50');
+                        $('#serialNoFeedback').addClass('show').text(`Serial number already assigned to Asset ID: ${response.assetid}`);
+                    } else {
+                        $('#mActionBtn').prop('disabled', false).removeClass('opacity-50');
+                        $('#serialNoFeedback').removeClass('show');
+                    }
+                }
+            });
+        });
+    }
+
+    /* ── openAssignModal ── */
+    function openAssignModal(rowData) {
+        const formHtml = `
+            <div class="info-strip">
+                <i class="fa-solid fa-circle-info"></i>
+                Assigning: <strong>${rowData.assetName}</strong> &mdash; ${rowData.assetId}
+            </div>
+            <form id="assignForm">
+                <div class="form-group" style="margin-bottom:12px">
+                    <label class="form-lbl"><i class="fa-solid fa-user"></i> Employee Name</label>
+                    <select class="form-ctrl" id="employeeName" required>
+                        <option value="" selected disabled>Select Employee</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-lbl"><i class="fa-solid fa-comment-dots"></i> Assignment Remarks</label>
+                    <input type="text" class="form-ctrl" id="remarks" placeholder="Department, project…" required>
+                </div>
+            </form>`;
+
+        openModal({
+            title: `Assign: ${rowData.assetName}`,
+            icon: 'fa-user-plus',
+            iconClass: 'success',
+            body: formHtml,
+            actionText: 'Assign',
+            actionClass: 'success',
+            onAction: function() {
+                if (!$('#assignForm')[0].checkValidity()) { $('#assignForm')[0].reportValidity(); return; }
+                const employeeId       = $('#employeeName').val();
+                const employeeFullName = $('#employeeName option:selected').text();
+                const remarks          = $('#remarks').val();
+                const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+
+                $.ajax({
+                    url: '/it/assignAsset',
+                    type: 'POST',
+                    data: { assetId: rowData.assetId, employeeId, remarks },
+                    headers:{'X-CSRF-Token':csrfToken},
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const asset = assetData.find(a => a.id == rowData.id);
+                            if (asset) {
+                                asset.status     = 1;
+                                asset.assignedTo = employeeFullName;
+                                asset.location   = remarks;
+                            }
+                            closeModal();
+                            updateStats(); buildCharts(); applyFilters();
+                            toast(`${rowData.assetName} assigned to ${employeeFullName}.`);
+                        } else {
+                            toast('Failed to assign asset: ' + (response.message||'Unknown error'), 'error');
+                        }
+                    },
+                    error: function(err) {
+                        toast('Failed to communicate with the server.', 'error');
+                        console.error("Assignment AJAX Error:", err);
+                    }
+                });
+            }
+        });
+
+        /* getAssinee — original function name and logic unchanged */
+        getAssinee();
+    }
+
+    function getAssinee() {
+        $.ajax({
+            url: '/it/getAssignee',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log(data);
+                const select = document.getElementById("employeeName");
+                data.forEach(member => {
+                    const option = document.createElement("option");
+                    option.value = member.eid;
+                    option.textContent = member.firstName+' '+member.lastName;
+                    select.appendChild(option);
+                });
+            },
+            error: function() {
+                console.error("Failed to fetch employee list.");
+            }
+        });
+    }
+
+    /* ── Dispose ── */
+    function disposeAsset(asset) {
+        openModal({
+            title: 'Dispose Asset',
+            icon: 'fa-triangle-exclamation',
+            iconClass: 'danger',
+            body: `<div class="danger-strip">
+                Are you sure you want to permanently dispose of<br>
+                <strong>${asset.assetName}</strong> (${asset.assetId})?<br>
+                This action <strong>cannot be undone</strong>.
+            </div>`,
+            actionText: 'Dispose',
+            actionClass: 'danger',
+            onAction: function() {
+                $.ajax({
+                    url: 'api/itApi.php',
+                    type: 'POST',
+                    data: { action: 'disposeAsset', assetId: asset.assetId },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            assetData = assetData.filter(a => a.id != asset.id);
+                            closeModal();
+                            updateStats(); buildCharts(); applyFilters();
+                            toast('Asset disposed successfully.');
+                        } else {
+                            toast('Failed to dispose asset.', 'error');
+                        }
+                    }
+                });
+                /* client-side fallback (original) */
+                assetData = assetData.filter(a => a.id != asset.id);
+                closeModal();
+                updateStats(); buildCharts(); applyFilters();
+                toast('Asset disposed.');
+            }
+        });
+    }
+
+    /* ─── Table event delegation ─── */
+    $('#assetTable').on('click', '.assign-btn', function() {
+        const asset = assetData.find(a => a.id == $(this).data('id'));
+        if (asset) openAssignModal(asset);
+    });
+    $('#assetTable').on('click', '.clone-btn', function() {
+        const asset = assetData.find(a => a.id == $(this).data('id'));
+        if (asset) openAssetModal('clone', asset);
+    });
+    $('#assetTable').on('click', '.edit-btn', function() {
+        const asset = assetData.find(a => a.id == $(this).data('id'));
+        if (asset) openAssetModal('edit', asset);
+    });
+    $('#assetTable').on('click', '.dispose-btn', function() {
+        const asset = assetData.find(a => a.id == $(this).data('id'));
+        if (asset) disposeAsset(asset);
+    });
+
+    /* Add button */
+    $('#add-asset-btn').on('click', function() { openAssetModal('add'); });
+
+    /* ─── Export Excel (CSV) ─── */
+    $('#exportBtn').on('click', function() {
+        const hdr = 'Asset ID,Asset Name,Model,Category,Vendor,Serial No,Status';
+        const rows = filtered.map(a => [
+            a.assetId, a.assetName, a.model, a.category, a.vendor, a.serialNo,
+            statusInfo(a.status).label
+        ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+        const blob = new Blob([[hdr,...rows].join('\r\n')], {type:'text/csv'});
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = `IT_Inventory_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    /* ─── Boot ─── */
+    fetchdata();
+});
+</script>
+</body>
+</html>

@@ -21,13 +21,17 @@ public class EmployeeJoiningInfo {
     @OneToOne(cascade = CascadeType.MERGE)    @MapsId
     @JoinColumn(name = "EID")
     private EmployeeBasicInfo employeeBasicInfo;
+    @ManyToOne
+    @JoinColumn(name="reportingManager")
+    private EmployeeBasicInfo reportingManager;
 
-    public EmployeeJoiningInfo(String status, LocalDate dateOfJoining, LocalDate confirmationDate, String workmail, EmployeeBasicInfo employeeBasicInfo) {
+    public EmployeeJoiningInfo(String status, LocalDate dateOfJoining, LocalDate confirmationDate, String workmail, EmployeeBasicInfo employeeBasicInfo,EmployeeBasicInfo reportingManager) {
         this.status = status;
         this.dateOfJoining = dateOfJoining;
         this.confirmationDate = confirmationDate;
         this.workmail = workmail;
         this.employeeBasicInfo = employeeBasicInfo;
+        this.reportingManager=reportingManager;
     }
 
     public EmployeeJoiningInfo() {
@@ -73,4 +77,21 @@ public class EmployeeJoiningInfo {
     public void setEmployeeBasicInfo(EmployeeBasicInfo employeeBasicInfo) {
         this.employeeBasicInfo = employeeBasicInfo;
     }
+
+    public String getEID() {
+        return EID;
+    }
+
+    public void setEID(String eID) {
+        EID = eID;
+    }
+
+    public EmployeeBasicInfo getReportingManager() {
+        return reportingManager;
+    }
+
+    public void setReportingManager(EmployeeBasicInfo reportingManager) {
+        this.reportingManager = reportingManager;
+    }
+    
 }

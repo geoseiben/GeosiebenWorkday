@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compensatory Off Tracking Grid</title>
+
+<!-- Bootstrap 5.3 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<!-- DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+    :root {
+        --brand-indigo: #4338ca;
+        --brand-indigo-light: #6366f1;
+        --brand-indigo-dark: #312e81;
+        --brand-blue: #2563eb;
+        --brand-green: #059669;
+        --brand-amber: #d97706;
+        --brand-red: #e11d48;
+        --surface: #ffffff;
+        --surface-muted: #f8f9fd;
+        --border: #e6e8f0;
+        --text-dark: #1e1b3a;
+        --text-medium: #64748b;
+        --shadow-soft: 0 1px 2px rgba(30, 27, 58, 0.04), 0 10px 28px -14px rgba(30, 27, 58, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background-color: #f4f6fb;
+        background-image:
+            radial-gradient(circle at 6% 0%, rgba(99, 102, 241, 0.10), transparent 40%),
+            radial-gradient(circle at 94% 6%, rgba(5, 150, 105, 0.07), transparent 38%);
+        background-attachment: fixed;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-dark);
+    }
+
+    /* --- Page header --- */
+    .dash-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .dash-header .eyebrow {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brand-indigo);
+        margin-bottom: 0.15rem;
+        display: block;
+    }
+    .dash-header h1 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        margin: 0;
+        color: var(--text-dark);
+    }
+    .dash-header p {
+        margin: 0.1rem 0 0;
+        color: var(--text-medium);
+        font-size: 0.82rem;
+    }
+    .dash-header .header-icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
+        color: #fff;
+        font-size: 1.1rem;
+        box-shadow: 0 8px 16px -8px rgba(67, 56, 202, 0.55);
+        margin-right: 0.65rem;
+    }
+    .dash-header .title-group {
+        display: flex;
+        align-items: center;
+    }
+
+    /* --- KPI stat cards --- */
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 0.85rem;
+        box-shadow: var(--shadow-soft);
+        padding: 0.7rem 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: transform 150ms ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+    }
+    .stat-icon {
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .stat-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        margin-top: 0.1rem;
+    }
+    .stat-total::before { background: linear-gradient(180deg, var(--brand-indigo-light), var(--brand-indigo)); }
+    .stat-total .stat-icon { background: rgba(67, 56, 202, 0.1); color: var(--brand-indigo); }
+    .stat-available::before { background: var(--brand-amber); }
+    .stat-available .stat-icon { background: rgba(217, 119, 6, 0.1); color: var(--brand-amber); }
+    .stat-utilized::before { background: var(--brand-green); }
+    .stat-utilized .stat-icon { background: rgba(5, 150, 105, 0.1); color: var(--brand-green); }
+    .stat-pending::before { background: var(--brand-red); }
+    .stat-pending .stat-icon { background: rgba(225, 29, 72, 0.1); color: var(--brand-red); }
+
+    /* --- Trend chart card --- */
+    .chart-card .card-body { padding: 0.9rem 1.1rem; }
+    .chart-card h2 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    .chart-legend-note {
+        font-size: 0.72rem;
+        color: var(--text-medium);
+    }
+
+    /* --- Card --- */
+    .card {
+        border: none;
+        border-radius: 0.95rem;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        border-bottom: none;
+        position: relative;
+    }
+
+    .card-header::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #ffffff80, transparent);
+    }
+
+    .card-body { background-color: var(--surface); }
+
+    /* --- Filter / action bar --- */
+    .filter-bar {
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        border-radius: 0.85rem;
+        padding: 1rem 1.1rem;
+    }
+    .filter-bar .form-label {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+    }
+    .filter-bar input {
+        border-radius: 0.6rem;
+        border: 1px solid var(--border);
+        box-shadow: none;
+        background-color: var(--surface);
+    }
+    .filter-bar input:focus {
+        border-color: var(--brand-indigo);
+        box-shadow: 0 0 0 0.2rem rgba(67, 56, 202, 0.15);
+    }
+    #exportButtons .dt-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
+        border: none;
+        box-shadow: 0 8px 18px -8px rgba(67, 56, 202, 0.55);
+    }
+    .btn-primary:hover {
+        filter: brightness(1.06);
+        box-shadow: 0 10px 22px -8px rgba(67, 56, 202, 0.6);
+    }
+
+    /* --- Table --- */
+    .table {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    table.dataTable thead th {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-medium);
+        background-color: var(--surface-muted) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+    table.dataTable.table-striped > tbody > tr.odd > * {
+        box-shadow: none;
+        background-color: #fbfbfe;
+    }
+    table.dataTable tbody td {
+        font-size: 0.88rem;
+        vertical-align: middle;
+    }
+
+    table.dataTable tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    table.dataTable tbody tr:hover {
+        background: #f4f7ff;
+        box-shadow: inset 0 0 0 1px #d8e0fb;
+    }
+
+    .employee-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .employee-avatar {
+        width: 1.9rem;
+        height: 1.9rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .badge-status {
+        padding: 0.4em 0.85em;
+        border-radius: 0.6rem;
+        font-size: 0.75em;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+    }
+    .badge-status::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
+    .bg-approved { background-color: rgba(5, 150, 105, 0.1); color: #0f5132; }
+    .bg-pending { background-color: rgba(217, 119, 6, 0.1); color: #7a4c00; }
+    .bg-rejected { background-color: rgba(225, 29, 72, 0.1); color: #842029; }
+
+    /* Export Buttons */
+    .dt-buttons .btn {
+        border-radius: 0.6rem;
+        font-weight: 500;
+        margin-right: 0.4rem;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .dt-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .excel-btn {
+        background-color: #217346 !important;
+        border: none;
+        color: white !important;
+    }
+    .pdf-btn {
+        background-color: #d93025 !important;
+        color: #fff !important;
+        border: none;
+    }
+    .print-btn {
+        background-color: #5b77d1 !important;
+        color: #fff !important;
+        border: none;
+    }
+
+    /* DataTables pagination / info restyle */
+    div.dataTables_wrapper div.dataTables_info,
+    div.dataTables_wrapper div.dataTables_length label,
+    div.dataTables_wrapper div.dataTables_filter label {
+        color: var(--text-medium);
+        font-size: 0.85rem;
+    }
+    div.dataTables_wrapper div.dataTables_paginate .page-link {
+        border-radius: 0.5rem;
+        margin-left: 0.2rem;
+        border: 1px solid var(--border);
+        color: var(--text-medium);
+    }
+    div.dataTables_wrapper div.dataTables_paginate .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
+        border-color: transparent;
+    }
+
+    .loading-row td {
+        position: relative;
+        overflow: hidden;
+        height: 40px;
+    }
+
+    .loading-row td::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 200%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 1.6s infinite;
+    }
+
+    @keyframes shimmer {
+        100% { left: 100%; }
+    }
+
+    /* --- Modal polish --- */
+    .modal-content { border-radius: 1.1rem; }
+    .modal-header.bg-primary {
+        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo)) !important;
+    }
+</style>
+<head th:replace="includes/header :: header"></head>
+
+</head>
+
+<body>
+<div class="container-fluid py-4 px-3 px-lg-5">
+
+    <!-- Dashboard Header -->
+    <div class="dash-header">
+        <div class="title-group">
+            <span class="header-icon"><i class="bi bi-calendar2-week"></i></span>
+            <div>
+                <span class="eyebrow">Admin &middot; Attendance</span>
+                <h1>Comp-Off Tracking Dashboard</h1>
+                <p>Review, log, and export compensatory-off activity across the team.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card stat-total">
+                <span class="stat-icon"><i class="bi bi-collection"></i></span>
+                <div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card stat-available">
+                <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
+                <div>
+                    <div class="stat-value" id="statAvailable">0</div>
+                    <div class="stat-label">Available</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card stat-utilized">
+                <span class="stat-icon"><i class="bi bi-check-circle"></i></span>
+                <div>
+                    <div class="stat-value" id="statUtilized">0</div>
+                    <div class="stat-label">Utilized</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card stat-pending">
+                <span class="stat-icon"><i class="bi bi-exclamation-circle"></i></span>
+                <div>
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header text-center py-4">
+            <h2 class="h5 mb-0">
+                <i class="bi bi-table me-2"></i> All Comp-Off Records
+            </h2>
+        </div>
+        <div class="card-body p-4">
+
+            <!-- Filter, Add Button, and Export Bar (MODIFIED) -->
+            <div class="row filter-bar align-items-center mb-4 mx-0">
+                <div class="col-md-4">
+                    <label for="monthFilter" class="form-label fw-semibold text-secondary">
+                        <i class="bi bi-funnel me-1"></i>Filter by Month
+                    </label>
+                    <input type="month" id="monthFilter" class="form-control">
+                </div>
+                <!-- ADDED BUTTON HERE -->
+                <div class="col-md-8 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center">
+                    <button type="button" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addCompOffModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Comp-Off
+                    </button>
+                    <div id="exportButtons"></div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-responsive">
+                <table id="enhancedDataTable" class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee Name</th>
+                            <th class="text-center">Worked Date</th>
+                            <th class="text-center">Comp-off Date</th>
+                            <th>Approved By</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr class="loading-row">
+                            <td colspan="5" class="text-center text-muted py-3">Loading records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Comp-Off Modal (NEW) -->
+<div class="modal fade" id="addCompOffModal" tabindex="-1" aria-labelledby="addCompOffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+                <h5 class="modal-title" id="addCompOffModalLabel">
+                    <i class="bi bi-calendar-plus me-2"></i> Log New Comp-Off
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addCompOffForm">
+                    <!-- NEW EMPLOYEE SELECT INPUT -->
+                    <div class="mb-3">
+                        <label for="employeeId" class="form-label fw-semibold">
+                            <i class="bi bi-person-circle me-1"></i> Employee (Required)
+                        </label>
+                        <!-- Select dropdown will be populated by JS -->
+                        <select class="form-select" id="employeeId" name="employeeId" required>
+                            <!-- Options populated via JS -->
+                        </select>
+                        <div class="form-text text-muted">Select the employee receiving the Comp-Off.</div>
+                    </div>
+                    <!-- END NEW EMPLOYEE SELECT INPUT -->
+
+                    <div class="mb-3">
+                        <label for="workedDate" class="form-label fw-semibold">
+                            <i class="bi bi-calendar-date me-1"></i> Comp-Off Date (Required)
+                        </label>    
+                        <input type="date" class="form-control" id="workedDate" name="workedDate" required>
+                        <div class="form-text text-muted">Select the date the employee worked extra hours.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="adminRemark" class="form-label fw-semibold">
+                            <i class="bi bi-chat-left-text me-1"></i> Admin Remark/Reason (Optional)
+                        </label>
+                        <textarea class="form-control" id="adminRemark" name="adminRemark" rows="3" placeholder="e.g., Critical system deployment, holiday coverage..."></textarea>
+                    </div>
+
+                    <div id="formMessage" class="alert alert-info d-none" role="alert"></div>
+
+                    <div class="d-grid">
+                        <button type="submit" id="submitButton" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Submit Comp-Off
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function () {
+
+    // Initialize DataTable
+    let table = $('#enhancedDataTable').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: true,
+        data: [],
+        columns: [
+            {
+                data: 'employeeName',
+                render: function (data, type) {
+                    if (type !== 'display') return data;
+                    const initials = (data || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    return `<div class="employee-cell"><span class="employee-avatar">${initials}</span><span>${data || ''}</span></div>`;
+                }
+            },
+            { data: 'workedDate', className: 'text-center' },
+            { data: 'compOffDate', className: 'text-center' },
+            { data: 'approvedBy' },
+            {
+                data: null,
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let statusText = '';
+                    let badgeClass = '';
+                    // Assuming 'compOffDate' is null/empty if not yet taken
+                    if (row.compOffDate && row.workedDate) {
+                        statusText = 'Utilized'; badgeClass = 'bg-approved';
+                    } else if (row.workedDate && row.compOffDate==null) {
+                        statusText = 'Available'; badgeClass = 'bg-pending';
+                    } else if( row.workedDate == null &&row.compOffDate){
+                        statusText = 'Pending'; badgeClass = 'bg-rejected';
+                    }
+                    return `<span class="badge-status ${badgeClass}">${statusText}</span>`;
+                },
+            },
+        ],
+    });
+
+    // Export Buttons with Icons
+    new $.fn.dataTable.Buttons(table, {
+        buttons: [
+            { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel', className: 'btn excel-btn btn-sm', exportOptions: { rows: ':visible' }},
+            { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF', className: 'btn pdf-btn btn-sm', exportOptions: { rows: ':visible' }},
+            { extend: 'print', text: '<i class="bi bi-printer me-1"></i> Print', className: 'btn print-btn btn-sm', exportOptions: { rows: ':visible' }}
+        ]
+    });
+    table.buttons().container().appendTo('#exportButtons');
+
+    const formMessage = $('#formMessage');
+    const submitButton = $('#submitButton');
+
+    // --- KPI Stat Cards (purely presentational, derived from the same table data) ---
+    function updateStats(data) {
+        let total = 0, available = 0, utilized = 0, pending = 0;
+        (data || []).forEach(function (row) {
+            total++;
+            if (row.compOffDate && row.workedDate) {
+                utilized++;
+            } else if (row.workedDate && row.compOffDate == null) {
+                available++;
+            } else if (row.workedDate == null && row.compOffDate) {
+                pending++;
+            }
+        });
+        $('#statTotal').text(total);
+        $('#statAvailable').text(available);
+        $('#statUtilized').text(utilized);
+        $('#statPending').text(pending);
+    }
+
+    // --- Employee Data Simulation (Replace with actual API fetch) ---
+    let employees = [];
+
+    // Function to populate employee dropdown
+    function populateEmployeeDropdown() {
+         $.ajax({
+            url: '/admin/getemployees',
+            type: 'GET',
+            dataType: 'json',
+            data:{getMembers:'action'},
+            success: function (data) {
+                const select = $('#employeeId');
+        select.empty();
+        select.append('<option value="" disabled selected>Select an Employee</option>');
+        data.forEach(employee => {
+            select.append(`<option value="${employee.eid}">${employee.name} (${employee.eid})</option>`);
+        });
+            },
+            error: function () {
+               
+            }
+        });
+
+    }
+    
+    // Populate dropdown when the modal is shown
+    const addCompOffModal = document.getElementById('addCompOffModal');
+    if (addCompOffModal) {
+        // Use jQuery for event binding since it's used elsewhere
+        $('#addCompOffModal').on('show.bs.modal', function () {
+            populateEmployeeDropdown();
+        });
+    }
+
+    // --- Data Fetching and Comp-Off Submission Logic ---
+
+    function showMessage(message, type = 'info') {
+        formMessage.removeClass('d-none alert-info alert-success alert-danger').addClass(`alert-${type}`).text(message).focus();
+    }
+
+    function resetFormAndModal() {
+        $('#addCompOffForm')[0].reset();
+        formMessage.addClass('d-none').text('');
+        submitButton.prop('disabled', false).html('<i class="bi bi-box-arrow-in-right me-2"></i> Submit Comp-Off');
+        // Hide the modal after a successful submission
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addCompOffModal'));
+            if (modal) modal.hide();
+        }, 1500); 
+    }
+
+    // Handle Form Submission
+    $('#addCompOffForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const formData = {
+            employeeId: $('#employeeId').val(), // Capture selected employee ID
+            compOffDate: $('#workedDate').val(),
+            adminRemark: $('#adminRemark').val(),
+        };
+        // Check for both Employee ID and Worked Date
+        if (!formData.compOffDate || !formData.employeeId) {
+            showMessage("Please select both a valid Employee and 'Date Worked'.", 'danger');
+            return;
+        }
+
+        submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Adding...');
+       // showMessage("Processing request...", 'info');
+    const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+    console.log(formData);
+        $.ajax({
+            url: '/admin/addCompOff',
+            type: 'POST',
+            headers:{'X-CSRF-TOKEN':csrfToken},
+            dataType: 'json',
+            data: formData,
+            success: function (response) {
+                Swal.fire({
+                    title: "Drag me!",
+                    icon: "success",
+                    text:'Comp-Off Record added',
+                    draggable: true
+                    }).then(()=>{
+                     submitButton.prop('disabled', false).html('<span ></span> Submit Comp-Off');
+
+                        document.getElementById('addCompOffForm').reset();
+                    })
+            },
+            error: function (err) {
+            }
+        });
+    });
+
+    // Fetch and populate data
+    function fetchData() {
+        $.ajax({
+            url: '/admin/getCoHistory',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log(data);
+                // Assuming data is an array of objects
+                if (Array.isArray(data) && data.length > 0) {
+                    table.clear().rows.add(data).draw();
+                    updateStats(data);
+                } else {
+                    table.clear().draw();
+                    $('#tableBody').html(`<tr><td colspan="5" class="text-center text-muted py-3">No records found</td></tr>`);
+                    updateStats([]);
+                }
+            },
+            error: function (err) {
+                 console.log(err);
+                $('#tableBody').html(`<tr><td colspan="5" class="text-center text-danger py-3">⚠️ Error loading data. Check console for details.</td></tr>`);
+                updateStats([]);
+            }
+        });
+    }
+
+    // Month filter logic
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, rowData) {
+        const selectedMonth = $('#monthFilter').val();
+        if (!selectedMonth) return true;
+        
+        // DataTables rows use the data object when filtering
+        const rowWorkedDate = rowData.workedDate;
+        const rowCompOffDate = rowData.compOffDate;
+
+        const [year, month] = selectedMonth.split('-').map(Number);
+        
+        let workedMatch = false;
+        if (rowWorkedDate) {
+            const workedDate = new Date(rowWorkedDate);
+            if (workedDate.getFullYear() === year && workedDate.getMonth() + 1 === month) {
+                workedMatch = true;
+            }
+        }
+        
+        let compOffMatch = false;
+        if (rowCompOffDate) {
+            const compOffDate = new Date(rowCompOffDate);
+            if (compOffDate.getFullYear() === year && compOffDate.getMonth() + 1 === month) {
+                compOffMatch = true;
+            }
+        }
+
+        return workedMatch || compOffMatch;
+    });
+
+    $('#monthFilter').on('change', function () {
+        table.draw();
+    });
+
+    // Initial data load
+    fetchData();
+});
+</script>
+</body>
+</html>

@@ -13,9 +13,9 @@
         .input-focus-effect { @apply transition-all duration-200 border-slate-200 hover:border-indigo-600 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5 outline-none bg-white/50 text-sm; }
     </style>
 </head>
+<head th:replace="includes/header :: header"></head>
 
 <body >
-    <div th:replace="includes/header :: header"></div>
 
     <div class="glass-card w-full max-w-7xl mx-auto border border-white/60 relative overflow-hidden shadow-xl rounded-2xl">
         <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 via-violet-500 to-fuchsia-500"></div>
