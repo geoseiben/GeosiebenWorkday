@@ -9,10 +9,11 @@
 
     <title>Separation Management | Admin Portal</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -23,125 +24,324 @@
                         display: ['"Plus Jakarta Sans"', 'sans-serif']
                     },
                     keyframes: {
-                        rowIn: { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
-                        shimmer: { '0%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0 50%' } },
-                        bump: { '0%': { transform: 'scale(1)' }, '40%': { transform: 'scale(1.25)' }, '100%': { transform: 'scale(1)' } }
+                        rowIn: {
+                            '0%': { opacity: 0, transform: 'translateY(4px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' }
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '100% 50%' },
+                            '100%': { backgroundPosition: '0 50%' }
+                        }
                     },
                     animation: {
-                        rowIn: 'rowIn 0.35s ease forwards',
-                        shimmer: 'shimmer 1.4s ease infinite',
-                        bump: 'bump 0.3s ease'
+                        rowIn: 'rowIn 0.22s ease forwards',
+                        shimmer: 'shimmer 1.4s ease infinite'
                     }
                 }
             }
         }
     </script>
 
-    <!--
-        Reusable component classes (status pills, icon buttons, avatar, skeleton
-        bar, the DataTables search/pagination controls DataTables itself
-        generates with fixed class names) are defined here with @apply so the
-        JS below can keep referencing them by name while every declaration is
-        still pure Tailwind utilities underneath.
-    -->
     <style type="text/tailwindcss">
-        @layer base {
-            body { @apply bg-slate-50 text-slate-900 font-sans; }
-            h2 { @apply font-display; }
+        /* Custom subtle scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full hover:bg-slate-300; }
+
+        /* Minimal DataTables runtime overrides */
+        .dataTables_wrapper .dataTables_filter input {
+            @apply text-xs rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-1.5 pl-8 text-slate-700 placeholder-slate-400 transition w-56 focus:w-64 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15;
         }
-        @layer components {
-            .glass-card { @apply bg-white border border-slate-200 shadow-sm rounded-xl; }
-
-            .status-pill { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase border transition-transform duration-150 hover:scale-[1.04]; }
-            .status-pill i { @apply text-[10px]; }
-            .pill-pending   { @apply bg-orange-50 text-orange-800 border-orange-100; }
-            .pill-approved  { @apply bg-emerald-50 text-emerald-800 border-emerald-100; }
-            .pill-rejected  { @apply bg-red-50 text-red-800 border-red-100; }
-            .pill-completed { @apply bg-indigo-50 text-indigo-800 border-indigo-100; }
-            .pill-withdrawn { @apply bg-slate-100 text-slate-600 border-slate-200; }
-
-            .remarks-input { @apply text-[13px] rounded-md border border-slate-300 px-2 py-1.5 w-full transition-shadow duration-150 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 disabled:bg-slate-100 disabled:cursor-not-allowed; }
-
-            .btn-icon { @apply w-8 h-8 inline-flex items-center justify-center rounded-md border-0 text-[13px] transition-transform duration-150 active:scale-90 hover:-translate-y-0.5; }
-            .btn-approve  { @apply bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white; }
-            .btn-reject   { @apply bg-red-50 text-red-600 hover:bg-red-600 hover:text-white; }
-            .btn-withdraw { @apply bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white; }
-            .btn-complete { @apply bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white; }
-            .btn-view     { @apply bg-violet-50 text-indigo-500 hover:bg-indigo-500 hover:text-white; }
-
-            .emp-avatar { @apply w-9 h-9 rounded-full object-cover border-2 border-white ring-1 ring-slate-200 transition-transform duration-200 flex-shrink-0; }
-            .emp-cell { @apply flex items-center gap-2.5; }
-            tr:hover .emp-avatar { @apply scale-[1.08] ring-indigo-500; }
-
-            .skeleton-bar { @apply h-3 rounded bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:400%_100%] animate-shimmer; }
-
-            /* DataTables generates these elements/classnames itself at runtime */
-            .dataTables_wrapper .dataTables_filter input {
-                @apply text-[13px] rounded-md border border-slate-300 px-3 py-1.5 ml-2 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15;
-            }
-            .dataTables_wrapper .dataTables_filter label { @apply text-[13px] text-slate-500 font-medium; }
-            .dataTables_wrapper .dataTables_length select {
-                @apply text-[13px] rounded-md border border-slate-300 px-2 py-1 mx-1 focus:outline-none focus:border-indigo-500;
-            }
-            .dataTables_wrapper .dataTables_length label { @apply text-[13px] text-slate-500 font-medium; }
-            .dataTables_wrapper .dataTables_info { @apply text-[13px] text-slate-500; }
-            .dataTables_wrapper .dataTables_paginate { @apply flex items-center gap-1; }
-            .dataTables_wrapper .dataTables_paginate .paginate_button {
-                @apply text-[13px] px-2.5 py-1 rounded-md border border-transparent text-slate-600 cursor-pointer;
-            }
-            .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-                @apply bg-indigo-500 text-white border-indigo-500;
-            }
-            .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-                @apply text-slate-300 cursor-not-allowed;
-            }
-            .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
-                @apply bg-slate-100;
-            }
+        .dataTables_wrapper .dataTables_length select {
+            @apply text-xs rounded-md border border-slate-200 bg-white px-2 py-1 mx-1 text-slate-700 font-medium focus:outline-none focus:border-indigo-500;
+        }
+        .dataTables_wrapper .dataTables_info {
+            @apply text-[11px] font-medium text-slate-500;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            @apply flex items-center gap-1;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            @apply text-[11px] font-semibold px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-600 cursor-pointer transition hover:bg-slate-50;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            @apply bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20 hover:bg-indigo-700;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            @apply opacity-40 cursor-not-allowed hover:bg-white;
         }
     </style>
 </head>
+
 <head th:replace="includes/header :: header"></head>
-<body>
-<div class="max-w-full px-4 py-6">
-    <div class="glass-card overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
-            <h2 class="font-bold text-slate-800 m-0 text-xl">
-                Separation Requests
-                <span id="queueCount" class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-sm font-semibold ml-2 transition-transform duration-200">0</span>
-            </h2>
+
+<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+<!-- Top Subtle Gradient Accent Bar -->
+<div class="h-1 w-full bg-gradient-to-r from-indigo-600 via-violet-500 to-emerald-500"></div>
+
+<div class="max-w-[98%] mx-auto px-4 sm:px-6 py-4 space-y-4">
+
+    <!-- Header & Period Controls -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+                <i class="fas fa-user-minus text-xs"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-display text-lg font-extrabold tracking-tight text-slate-900 leading-none">
+                        Separation Management
+                    </h1>
+                    <span id="queueCount" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/15">
+                        0
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">
+                    Offboarding queue, notice-period tracking, and monthly attrition analytics
+                </p>
+            </div>
         </div>
 
+        <!-- Unified Period & Analytics Toolbar -->
+        <div class="flex flex-wrap items-center gap-2 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/90 shadow-sm">
+            <div class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 pl-1">
+                <i class="far fa-calendar-alt text-indigo-600"></i>
+                <span>Period:</span>
+            </div>
+
+            <select id="monthFieldSelector" onchange="applyAllFilters()"
+                    class="text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-700 hover:border-slate-300 focus:outline-none focus:border-indigo-500">
+                <option value="resignationDate">Resignation Month</option>
+                <option value="lastWorkingDay">LWD Month</option>
+            </select>
+
+            <select id="monthDropdown" onchange="syncMonthInput(this.value)"
+                    class="text-xs font-semibold rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 min-w-[135px] hover:border-slate-300 focus:outline-none focus:border-indigo-500">
+                <option value="all">All Months</option>
+            </select>
+
+            <input type="month" id="monthPicker" onchange="syncMonthDropdown(this.value)"
+                   class="text-xs font-semibold rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 hover:border-slate-300 focus:outline-none focus:border-indigo-500"
+                   title="Jump to specific Month" />
+
+            <button id="resetFiltersBtn" onclick="resetFilters()"
+                    class="hidden inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition">
+                <i class="fas fa-xmark"></i> Reset
+            </button>
+
+            <div class="h-4 w-px bg-slate-200 mx-0.5 hidden sm:block"></div>
+
+            <button onclick="toggleCharts()" id="toggleChartsBtn"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 rounded-lg transition">
+                <i class="fas fa-chart-area"></i>
+                <span id="toggleChartsLabel">Hide Analytics</span>
+            </button>
+
+            <button onclick="fetchData()" id="refreshBtn"
+                    class="inline-flex items-center justify-center w-7 h-7 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition active:scale-90"
+                    title="Reload Queue">
+                <i class="fas fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Compact Insight Strip (4 High-Signal KPI Metrics) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white rounded-xl border border-slate-200/90 px-3.5 py-2.5 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total in Period</div>
+                <div class="mt-0.5 flex items-baseline gap-2">
+                    <span id="kpi-total" class="text-xl font-display font-extrabold text-slate-800">0</span>
+                    <span id="kpi-period-tag" class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">All Months</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i class="fas fa-users-slash text-xs"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200/90 px-3.5 py-2.5 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Action Required</div>
+                <div class="mt-0.5 flex items-baseline gap-2">
+                    <span id="kpi-pending" class="text-xl font-display font-extrabold text-slate-800">0</span>
+                    <span class="text-[11px] font-medium text-slate-400">awaiting review</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i class="fas fa-clock text-xs"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200/90 px-3.5 py-2.5 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Serving Notice</div>
+                <div class="mt-0.5 flex items-baseline gap-2">
+                    <span id="kpi-serving" class="text-xl font-display font-extrabold text-slate-800">0</span>
+                    <span id="kpi-exiting-soon" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">0 within 7d</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i class="fas fa-calendar-day text-xs"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200/90 px-3.5 py-2.5 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Offboarded / Closed</div>
+                <div class="mt-0.5 flex items-baseline gap-2">
+                    <span id="kpi-completed" class="text-xl font-display font-extrabold text-slate-800">0</span>
+                    <span id="kpi-avg-notice" class="text-[11px] font-medium text-slate-400">Avg notice: --</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i class="fas fa-flag-checkered text-xs"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collapsible Analytics Section -->
+    <div id="chartsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3.5 transition-all">
+        <!-- Monthly Separation Trend Chart (2/3 Width) -->
+        <div class="lg:col-span-2 bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="font-display text-xs font-bold uppercase tracking-wider text-slate-700">Monthly Separation Trend</h2>
+                    <span class="text-[10px] text-slate-400">(Click bar to filter month)</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-500">
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Total</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Approved / Completed</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Pending</span>
+                </div>
+            </div>
+            <div class="relative h-44 w-full">
+                <canvas id="monthlyTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Separation Breakdown Doughnut (1/3 Width) -->
+        <div class="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
+                <h2 class="font-display text-xs font-bold uppercase tracking-wider text-slate-700">By Type</h2>
+                <span id="breakdownSubtitle" class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">All Months</span>
+            </div>
+            <div class="relative h-40 w-full flex items-center justify-center">
+                <canvas id="typeBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card with Integrated Segmented Status Tabs -->
+    <div class="bg-white border border-slate-200/90 rounded-xl shadow-sm overflow-hidden">
+
+        <!-- Segmented Status Filter Bar (0: Pending, 1: Approved, 2: Rejected, 3: Completed, 4: Withdrawn) -->
+        <div class="px-3 pt-2.5 pb-2 bg-slate-50/70 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1 bg-slate-200/60 p-1 rounded-lg">
+                <button onclick="filterByStatus('all')" data-filter="all"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 bg-white text-indigo-700 shadow-sm">
+                    <span>All</span>
+                    <span id="tab-count-all" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">0</span>
+                </button>
+
+                <button onclick="filterByStatus(0)" data-filter="0"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Pending</span>
+                    <span id="tab-count-0" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100/80 text-amber-800">0</span>
+                </button>
+
+                <button onclick="filterByStatus(1)" data-filter="1"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Approved</span>
+                    <span id="tab-count-1" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100/80 text-emerald-800">0</span>
+                </button>
+
+                <button onclick="filterByStatus(2)" data-filter="2"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span>Rejected</span>
+                    <span id="tab-count-2" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-100/80 text-rose-800">0</span>
+                </button>
+
+                <button onclick="filterByStatus(3)" data-filter="3"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    <span>Completed</span>
+                    <span id="tab-count-3" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-100/80 text-indigo-800">0</span>
+                </button>
+
+                <button onclick="filterByStatus(4)" data-filter="4"
+                        class="status-tab px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Withdrawn</span>
+                    <span id="tab-count-4" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">0</span>
+                </button>
+            </div>
+
+            <div class="text-[11px] text-slate-400 hidden xl:flex items-center gap-1.5">
+                <i class="fas fa-circle-info text-slate-300"></i>
+                <span>Click any employee row to preview full resignation notes</span>
+            </div>
+        </div>
+
+        <!-- Table Wrapper -->
         <div class="overflow-x-auto">
             <table id="enhancedDataTable" class="w-full align-middle border-collapse">
-                <thead>
-                    <tr>
-                        <th class="w-[50px] bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">#</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Employee</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Type/Reason</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Resigned</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">LWD</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Status</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-left">Admin Remarks</th>
-                        <th class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide px-3 py-3 border-b-2 border-slate-200 text-center">Actions</th>
+                <thead class="sticky top-0 z-10">
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="w-9 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">#</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Employee</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Type & Reason</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Resigned</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Last Working Day</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Status</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 min-w-[190px]">Admin Remarks</th>
+                        <th class="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
-                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
-                    <tr class="skeleton-row"><td colspan="8" class="px-3 py-3.5"><div class="skeleton-bar"></div></td></tr>
+                <tbody id="tableBody" class="divide-y divide-slate-100 text-xs">
+                    <tr><td colspan="8" class="px-3 py-2.5"><div class="h-3 rounded bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:400%_100%] animate-shimmer"></div></td></tr>
+                    <tr><td colspan="8" class="px-3 py-2.5"><div class="h-3 rounded bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:400%_100%] animate-shimmer"></div></td></tr>
+                    <tr><td colspan="8" class="px-3 py-2.5"><div class="h-3 rounded bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:400%_100%] animate-shimmer"></div></td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<!-- Quick-Preview Slide-Over Drawer -->
+<div id="quickDrawerBackdrop" onclick="closeQuickDrawer()"
+     class="fixed inset-0 bg-slate-900/30 backdrop-blur-[1px] z-40 hidden transition-opacity"></div>
+
+<aside id="quickDrawer"
+       class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl border-l border-slate-200 z-50 transform translate-x-full transition-transform duration-250 ease-out flex flex-col">
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+            <h3 class="font-display text-sm font-bold text-slate-800">Separation Request Summary</h3>
+        </div>
+        <button onclick="closeQuickDrawer()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 flex items-center justify-center transition">
+            <i class="fas fa-xmark text-sm"></i>
+        </button>
+    </div>
+    <div id="quickDrawerBody" class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+        <!-- Populated dynamically -->
+    </div>
+    <div id="quickDrawerFooter" class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+        <!-- Populated dynamically -->
+    </div>
+</aside>
+
 <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 
 <script>
-    // Status map: 0 Pending, 1 Approved, 2 Rejected, 3 Completed, 4 Withdrawn
+    // Status mapping: 0 Pending, 1 Approved, 2 Rejected, 3 Completed, 4 Withdrawn
     const STATUS = {
         PENDING: 0,
         APPROVED: 1,
@@ -150,19 +350,347 @@
         WITHDRAWN: 4
     };
 
-    $(document).ready(function() {
+    let dataTableInstance = null;
+    let cachedRequests = [];
+    let activeStatusFilter = 'all';
+    let activeMonthFilter = 'all';
+    let trendChartInstance = null;
+    let breakdownChartInstance = null;
+
+    $(document).ready(function () {
         fetchData();
     });
 
     function fetchData() {
+        const $icon = $('#refreshBtn i');
+        $icon.addClass('fa-spin');
+
         $.ajax({
             url: '/admin/separtion/getRequests',
             type: 'GET',
-            success: function(res) {
-                renderTable(res);
-                const count = res ? res.length : 0;
-                $('#queueCount').text(count).addClass('animate-bump');
-                setTimeout(() => $('#queueCount').removeClass('animate-bump'), 300);
+            success: function (res) {
+                cachedRequests = res || [];
+                populateMonthDropdown(cachedRequests);
+                applyAllFilters();
+            },
+            error: function () {
+                Swal.fire('Error', 'Unable to load separation requests.', 'error');
+            },
+            complete: function () {
+                setTimeout(() => $icon.removeClass('fa-spin'), 300);
+            }
+        });
+    }
+
+    function extractYearMonth(dateStr) {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return null;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function formatYearMonthLabel(ym) {
+        if (!ym || ym === 'all') return 'All Months';
+        const [year, month] = ym.split('-');
+        return new Date(Number(year), Number(month) - 1, 1)
+            .toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    function populateMonthDropdown(data) {
+        const monthSet = new Set();
+        data.forEach(item => {
+            const resYm = extractYearMonth(item.resignationDate);
+            const lwdYm = extractYearMonth(item.lastWorkingDay);
+            if (resYm) monthSet.add(resYm);
+            if (lwdYm) monthSet.add(lwdYm);
+        });
+
+        const sortedMonths = Array.from(monthSet).sort().reverse();
+        const $dropdown = $('#monthDropdown');
+        const currentVal = $dropdown.val() || 'all';
+
+        $dropdown.empty().append('<option value="all">All Months</option>');
+        sortedMonths.forEach(ym => {
+            $dropdown.append(`<option value="${ym}">${formatYearMonthLabel(ym)}</option>`);
+        });
+
+        if (sortedMonths.includes(currentVal)) {
+            $dropdown.val(currentVal);
+        }
+    }
+
+    function syncMonthInput(val) {
+        activeMonthFilter = val;
+        $('#monthPicker').val(val === 'all' ? '' : val);
+        applyAllFilters();
+    }
+
+    function syncMonthDropdown(val) {
+        activeMonthFilter = val || 'all';
+        const $dropdown = $('#monthDropdown');
+        if (val && $dropdown.find(`option[value="${val}"]`).length === 0) {
+            $dropdown.append(`<option value="${val}">${formatYearMonthLabel(val)}</option>`);
+        }
+        $dropdown.val(activeMonthFilter);
+        applyAllFilters();
+    }
+
+    function filterByStatus(statusVal) {
+        activeStatusFilter = statusVal;
+        $('.status-tab')
+            .removeClass('bg-white text-indigo-700 shadow-sm')
+            .addClass('text-slate-600 hover:text-slate-900');
+
+        $(`.status-tab[data-filter="${statusVal}"]`)
+            .removeClass('text-slate-600 hover:text-slate-900')
+            .addClass('bg-white text-indigo-700 shadow-sm');
+
+        applyAllFilters();
+    }
+
+    function resetFilters() {
+        activeStatusFilter = 'all';
+        activeMonthFilter = 'all';
+        $('#monthDropdown').val('all');
+        $('#monthPicker').val('');
+        $('#monthFieldSelector').val('resignationDate');
+        filterByStatus('all');
+    }
+
+    function applyAllFilters() {
+        const dateField = $('#monthFieldSelector').val();
+
+        const monthFiltered = cachedRequests.filter(item => {
+            if (activeMonthFilter === 'all') return true;
+            return extractYearMonth(item[dateField]) === activeMonthFilter;
+        });
+
+        const fullyFiltered = monthFiltered.filter(item => {
+            if (activeStatusFilter === 'all') return true;
+            return parseInt(item.status) === Number(activeStatusFilter);
+        });
+
+        const hasActiveFilter = activeMonthFilter !== 'all' || activeStatusFilter !== 'all';
+        $('#resetFiltersBtn').toggleClass('hidden', !hasActiveFilter);
+
+        updateInsightsAndTabs(monthFiltered);
+        renderTable(fullyFiltered);
+        renderCharts(cachedRequests, monthFiltered, dateField);
+    }
+
+    function updateInsightsAndTabs(monthData) {
+        const pending = monthData.filter(r => parseInt(r.status) === STATUS.PENDING);
+        const approved = monthData.filter(r => parseInt(r.status) === STATUS.APPROVED);
+        const rejected = monthData.filter(r => parseInt(r.status) === STATUS.REJECTED);
+        const completed = monthData.filter(r => parseInt(r.status) === STATUS.COMPLETED);
+        const withdrawn = monthData.filter(r => parseInt(r.status) === STATUS.WITHDRAWN);
+
+        // Update tab badges
+        $('#queueCount').text(monthData.length);
+        $('#tab-count-all').text(monthData.length);
+        $('#tab-count-0').text(pending.length);
+        $('#tab-count-1').text(approved.length);
+        $('#tab-count-2').text(rejected.length);
+        $('#tab-count-3').text(completed.length);
+        $('#tab-count-4').text(withdrawn.length);
+
+        // Update KPI strip
+        $('#kpi-total').text(monthData.length);
+        $('#kpi-period-tag').text(formatYearMonthLabel(activeMonthFilter));
+        $('#kpi-pending').text(pending.length);
+        $('#kpi-serving').text(approved.length);
+        $('#kpi-completed').text(completed.length);
+
+        // Calculate exits within 7 days for Approved employees
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const exitingSoon = approved.filter(r => {
+            if (!r.lastWorkingDay) return false;
+            const lwd = new Date(r.lastWorkingDay);
+            lwd.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((lwd - today) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays <= 7;
+        }).length;
+        $('#kpi-exiting-soon').text(`${exitingSoon} within 7d`);
+
+        // Calculate average notice period in days
+        let totalNoticeDays = 0;
+        let validNoticeCount = 0;
+        monthData.forEach(r => {
+            if (r.resignationDate && r.lastWorkingDay) {
+                const start = new Date(r.resignationDate);
+                const end = new Date(r.lastWorkingDay);
+                if (!isNaN(start) && !isNaN(end) && end >= start) {
+                    totalNoticeDays += Math.round((end - start) / (1000 * 60 * 60 * 24));
+                    validNoticeCount++;
+                }
+            }
+        });
+        const avgNotice = validNoticeCount > 0 ? `${Math.round(totalNoticeDays / validNoticeCount)}d` : '--';
+        $('#kpi-avg-notice').text(`Avg notice: ${avgNotice}`);
+    }
+
+    function toggleCharts() {
+        const $section = $('#chartsSection');
+        const isHidden = $section.hasClass('hidden');
+        $section.toggleClass('hidden');
+        $('#toggleChartsLabel').text(isHidden ? 'Hide Analytics' : 'Show Analytics');
+    }
+
+    function renderCharts(allData, filteredData, dateField) {
+        const monthlyMap = {};
+        allData.forEach(item => {
+            const ym = extractYearMonth(item[dateField]);
+            if (!ym) return;
+            if (!monthlyMap[ym]) {
+                monthlyMap[ym] = { total: 0, approvedOrDone: 0, pending: 0 };
+            }
+            const st = parseInt(item.status);
+            monthlyMap[ym].total += 1;
+            if (st === STATUS.APPROVED || st === STATUS.COMPLETED) {
+                monthlyMap[ym].approvedOrDone += 1;
+            } else if (st === STATUS.PENDING) {
+                monthlyMap[ym].pending += 1;
+            }
+        });
+
+        const sortedKeys = Object.keys(monthlyMap).sort();
+        const labels = sortedKeys.map(formatYearMonthLabel);
+        const totalSeries = sortedKeys.map(k => monthlyMap[k].total);
+        const approvedSeries = sortedKeys.map(k => monthlyMap[k].approvedOrDone);
+        const pendingSeries = sortedKeys.map(k => monthlyMap[k].pending);
+
+        const barColors = sortedKeys.map(k =>
+            activeMonthFilter === k ? 'rgba(79, 70, 229, 0.92)' : 'rgba(99, 102, 241, 0.2)'
+        );
+        const barBorders = sortedKeys.map(k =>
+            activeMonthFilter === k ? '#4338ca' : '#6366f1'
+        );
+
+        const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+
+        trendChartInstance = new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Total Requests',
+                        data: totalSeries,
+                        backgroundColor: barColors,
+                        borderColor: barBorders,
+                        borderWidth: 1.5,
+                        borderRadius: 5,
+                        barPercentage: 0.48
+                    },
+                    {
+                        type: 'line',
+                        label: 'Approved / Completed',
+                        data: approvedSeries,
+                        borderColor: '#10b981',
+                        backgroundColor: '#10b981',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        pointRadius: 3.5,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        type: 'line',
+                        label: 'Pending',
+                        data: pendingSeries,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        borderDash: [4, 4],
+                        borderWidth: 1.8,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 4.5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                onClick: (_, elements) => {
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const clickedYm = sortedKeys[idx];
+                        syncMonthInput(activeMonthFilter === clickedYm ? 'all' : clickedYm);
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#0f172a',
+                        padding: 8,
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0, font: { size: 10, family: 'Inter' }, color: '#64748b' },
+                        grid: { color: '#f1f5f9' }
+                    }
+                }
+            }
+        });
+
+        $('#breakdownSubtitle').text(formatYearMonthLabel(activeMonthFilter));
+        const typeCounts = {};
+        filteredData.forEach(item => {
+            const type = (item.separationType || 'Unspecified').trim();
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+
+        const typeLabels = Object.keys(typeCounts);
+        const typeValues = Object.values(typeCounts);
+        const palette = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
+
+        const breakdownCtx = document.getElementById('typeBreakdownChart').getContext('2d');
+        if (breakdownChartInstance) breakdownChartInstance.destroy();
+
+        breakdownChartInstance = new Chart(breakdownCtx, {
+            type: 'doughnut',
+            data: {
+                labels: typeLabels.length ? typeLabels : ['No Data'],
+                datasets: [{
+                    data: typeValues.length ? typeValues : [1],
+                    backgroundColor: typeValues.length ? palette.slice(0, typeLabels.length) : ['#e2e8f0'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 8,
+                            padding: 8,
+                            font: { size: 10, family: 'Inter', weight: '500' },
+                            color: '#475569'
+                        }
+                    },
+                    tooltip: {
+                        enabled: typeValues.length > 0,
+                        backgroundColor: '#0f172a',
+                        padding: 8,
+                        cornerRadius: 6
+                    }
+                }
             }
         });
     }
@@ -170,7 +698,36 @@
     function formatDate(dateStr) {
         if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function toInputDate(dateStr) {
+        if (!dateStr) return new Date().toISOString().split('T')[0];
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().split('T')[0];
+    }
+
+    function lwdCountdownBadge(dateStr, status) {
+        if (!dateStr || status !== STATUS.APPROVED) return '';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const lwd = new Date(dateStr);
+        if (isNaN(lwd.getTime())) return '';
+        lwd.setHours(0, 0, 0, 0);
+
+        const diff = Math.round((lwd - today) / (1000 * 60 * 60 * 24));
+        if (diff < 0) {
+            return `<span class="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-700" title="Past LWD - ready to mark completed">${Math.abs(diff)}d overdue</span>`;
+        }
+        if (diff === 0) {
+            return `<span class="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">Today</span>`;
+        }
+        if (diff <= 7) {
+            return `<span class="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">${diff}d left</span>`;
+        }
+        return `<span class="ml-1.5 text-[10px] font-medium text-slate-400">${diff}d</span>`;
     }
 
     function initials(first, last) {
@@ -183,41 +740,61 @@
         return `https://ui-avatars.com/api/?name=${name}&background=6366f1&color=fff&bold=true&size=64`;
     }
 
-    function statusMeta(status) {
-        switch (status) {
-            case STATUS.PENDING:   return { pill: 'pill-pending',   icon: 'fa-hourglass-half', label: 'Pending' };
-            case STATUS.APPROVED:  return { pill: 'pill-approved',  icon: 'fa-check',          label: 'Approved' };
-            case STATUS.REJECTED:  return { pill: 'pill-rejected',  icon: 'fa-xmark',          label: 'Rejected' };
-            case STATUS.COMPLETED: return { pill: 'pill-completed', icon: 'fa-flag-checkered', label: 'Completed' };
-            case STATUS.WITHDRAWN: return { pill: 'pill-withdrawn', icon: 'fa-rotate-left',    label: 'Withdrawn' };
-            default:                return { pill: 'pill-pending',   icon: 'fa-circle-question', label: 'Unknown' };
-        }
+    function statusBadge(status) {
+        const styles = {
+            [STATUS.PENDING]:   { cls: 'bg-amber-50 text-amber-700 ring-amber-600/20',     icon: 'fa-hourglass-half', label: 'Pending' },
+            [STATUS.APPROVED]:  { cls: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20', icon: 'fa-check-circle',   label: 'Approved' },
+            [STATUS.REJECTED]:  { cls: 'bg-rose-50 text-rose-700 ring-rose-600/20',       icon: 'fa-circle-xmark',   label: 'Rejected' },
+            [STATUS.COMPLETED]: { cls: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20', icon: 'fa-flag-checkered', label: 'Completed' },
+            [STATUS.WITHDRAWN]: { cls: 'bg-slate-100 text-slate-600 ring-slate-500/20',    icon: 'fa-rotate-left',    label: 'Withdrawn' }
+        };
+        const s = styles[status] || { cls: 'bg-slate-100 text-slate-600 ring-slate-500/20', icon: 'fa-circle-question', label: 'Unknown' };
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ring-1 ring-inset ${s.cls}">
+                    <i class="fas ${s.icon} text-[9px]"></i>${s.label}
+                </span>`;
     }
 
     function buildActionButtons(item, status) {
+        const encodedLwd = encodeURIComponent(item.lastWorkingDay || '');
+        const encodedName = encodeURIComponent(`${item.firstName || ''} ${item.lastName || ''}`.trim());
+
         let buttons = `
-            <a href="/admin/separation/view?separationid=${encodeURIComponent(item.separationid)}" class="btn-icon btn-view" title="View Details">
-                <i class="fas fa-eye"></i>
+            <button type="button" onclick="openQuickDrawer(${item.separationid})"
+                    class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition active:scale-90"
+                    title="Quick Summary">
+                <i class="fas fa-sliders text-[11px]"></i>
+            </button>
+            <a href="/admin/separation/view?separationid=${encodeURIComponent(item.separationid)}"
+               class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-indigo-50/80 text-indigo-600 hover:bg-indigo-600 hover:text-white transition active:scale-90"
+               title="Open Full Details Page">
+                <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
             </a>`;
 
         if (status === STATUS.PENDING) {
             buttons += `
-                <button onclick="handleUpdate('approve', ${item.separationid})" class="btn-icon btn-approve" title="Approve">
-                    <i class="fas fa-check"></i>
+                <button type="button" onclick="handleUpdate('approve', ${item.separationid}, '${encodedLwd}', '${encodedName}')"
+                        class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-600/20 hover:bg-emerald-600 hover:text-white transition active:scale-90"
+                        title="Approve & Confirm LWD">
+                    <i class="fas fa-check text-[11px]"></i>
                 </button>
-                <button onclick="handleUpdate('reject', ${item.separationid})" class="btn-icon btn-reject" title="Reject">
-                    <i class="fas fa-times"></i>
+                <button type="button" onclick="handleUpdate('reject', ${item.separationid})"
+                        class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-600/20 hover:bg-rose-600 hover:text-white transition active:scale-90"
+                        title="Reject Request">
+                    <i class="fas fa-times text-[11px]"></i>
                 </button>`;
         } else if (status === STATUS.APPROVED) {
             buttons += `
-                <button onclick="handleUpdate('complete', ${item.separationid})" class="btn-icon btn-complete" title="Mark Completed">
-                    <i class="fas fa-flag-checkered"></i>
+                <button type="button" onclick="handleUpdate('complete', ${item.separationid})"
+                        class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-600 hover:text-white transition active:scale-90"
+                        title="Mark Offboarding Completed">
+                    <i class="fas fa-flag-checkered text-[11px]"></i>
                 </button>
-                <button onclick="handleUpdate('withdraw', ${item.separationid})" class="btn-icon btn-withdraw" title="Withdraw Approval">
-                    <i class="fas fa-rotate-left"></i>
+                <button type="button" onclick="handleUpdate('withdraw', ${item.separationid})"
+                        class="w-7 h-7 inline-flex items-center justify-center rounded-md bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-600 hover:text-white transition active:scale-90"
+                        title="Withdraw Approval">
+                    <i class="fas fa-rotate-left text-[11px]"></i>
                 </button>`;
         }
-        // Rejected, Completed, Withdrawn: view only (terminal states)
 
         return buttons;
     }
@@ -231,43 +808,66 @@
         $tbody.empty();
 
         data.forEach((item, index) => {
-            console.log(item);
             const status = parseInt(item.status);
-            const meta = statusMeta(status);
-            const statusPill = `<span class="status-pill ${meta.pill}"><i class="fas ${meta.icon}"></i>${meta.label}</span>`;
-            const actionButtons = buildActionButtons(item, status);
             const isEditable = status === STATUS.PENDING;
+            const imgSrc = item.image ? `../${item.image}` : avatarUrl(item);
 
             const $row = $(`
-                <tr data-id="${item.separationid}" class="opacity-0 animate-rowIn hover:bg-slate-50 transition-colors" style="animation-delay: ${Math.min(index * 30, 300)}ms">
-                    <td class="px-3 py-2.5 border-t border-slate-100 text-slate-400 font-medium">${index + 1}</td>
-                    <td class="px-3 py-2.5 border-t border-slate-100">
-                        <div class="emp-cell">
-                            <img class="emp-avatar" src="${item.image?'../'+item.image:avatarUrl(item)}" alt="${initials(item.firstName, item.lastName)}"
-                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(initials(item.firstName, item.lastName))}&background=94a3b8&color=fff';">
-                            <div>
-                                <div class="font-semibold text-slate-700">${item.firstName} ${item.lastName}</div>
-                                <div class="text-xs text-slate-400">ID: ${item.eid}</div>
+                <tr data-id="${item.separationid}"
+                    class="group opacity-0 animate-rowIn hover:bg-indigo-50/40 transition-colors"
+                    style="animation-delay: ${Math.min(index * 18, 180)}ms">
+                    <td class="px-3 py-1.5 text-[11px] font-semibold text-slate-400">${index + 1}</td>
+
+                    <td class="px-3 py-1.5 whitespace-nowrap cursor-pointer" onclick="openQuickDrawer(${item.separationid})">
+                        <div class="flex items-center gap-2.5">
+                            <img class="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200 group-hover:ring-indigo-500 transition flex-shrink-0"
+                                 src="${imgSrc}"
+                                 alt="${initials(item.firstName, item.lastName)}"
+                                 onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(initials(item.firstName, item.lastName))}&background=6366f1&color=fff';">
+                            <div class="leading-tight">
+                                <div class="font-semibold text-slate-800 text-xs group-hover:text-indigo-700 transition-colors">${item.firstName} ${item.lastName}</div>
+                                <div class="text-[10px] font-medium text-slate-400">EMP #${item.eid}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-3 py-2.5 border-t border-slate-100">
-                        <div class="font-medium text-slate-600 text-[13px]">${item.separationType}</div>
-                        <div class="truncate text-slate-400 text-xs max-w-[150px]">${item.reasonforLeaving}</div>
+
+                    <td class="px-3 py-1.5 cursor-pointer" onclick="openQuickDrawer(${item.separationid})">
+                        <div class="font-semibold text-slate-700 text-xs leading-tight">${item.separationType || 'Resignation'}</div>
+                        <div class="text-[11px] text-slate-400 truncate max-w-[190px] leading-tight" title="${item.reasonforLeaving || ''}">
+                            ${item.reasonforLeaving || 'No reason specified'}
+                        </div>
                     </td>
-                    <td class="px-3 py-2.5 border-t border-slate-100 text-[13px]">${formatDate(item.resignationDate)}</td>
-                    <td class="px-3 py-2.5 border-t border-slate-100 font-bold text-indigo-600 text-[13px]">${formatDate(item.lastWorkingDay)}</td>
-                    <td class="px-3 py-2.5 border-t border-slate-100">${statusPill}</td>
-                    <td class="px-3 py-2.5 border-t border-slate-100">
-                        <input type="text" id="remarks-${item.separationid}"
-                               class="remarks-input"
-                               placeholder="Admin notes..."
+
+                    <td class="px-3 py-1.5 text-[11px] font-medium text-slate-600 whitespace-nowrap">
+                        ${formatDate(item.resignationDate)}
+                    </td>
+
+                    <td class="px-3 py-1.5 whitespace-nowrap">
+                        <div class="inline-flex items-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50/80 text-indigo-700 text-[11px] font-bold">
+                                <i class="far fa-calendar-check text-[10px]"></i>
+                                ${formatDate(item.lastWorkingDay)}
+                            </span>
+                            ${lwdCountdownBadge(item.lastWorkingDay, status)}
+                        </div>
+                    </td>
+
+                    <td class="px-3 py-1.5 whitespace-nowrap">
+                        ${statusBadge(status)}
+                    </td>
+
+                    <td class="px-3 py-1.5">
+                        <input type="text"
+                               id="remarks-${item.separationid}"
+                               class="w-full text-xs rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-700 placeholder-slate-400 transition focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 disabled:bg-slate-100/70 disabled:text-slate-500 disabled:cursor-not-allowed"
+                               placeholder="${isEditable ? 'Add admin notes...' : 'No remarks'}"
                                value="${item.adminRemarks || ''}"
                                ${!isEditable ? 'disabled' : ''}>
                     </td>
-                    <td class="px-3 py-2.5 border-t border-slate-100 text-center">
-                        <div class="flex justify-center gap-2">
-                            ${actionButtons}
+
+                    <td class="px-3 py-1.5 text-center whitespace-nowrap">
+                        <div class="inline-flex items-center justify-center gap-1">
+                            ${buildActionButtons(item, status)}
                         </div>
                     </td>
                 </tr>
@@ -276,45 +876,205 @@
             $tbody.append($row);
         });
 
-        $('#enhancedDataTable').DataTable({
-            pageLength: 10,
-            dom: '<"p-3 flex justify-between items-center"f>rt<"p-3 flex justify-between items-center"ip>',
-            language: { search: "", searchPlaceholder: "Search requests..." }
+        dataTableInstance = $('#enhancedDataTable').DataTable({
+            pageLength: 15,
+            lengthMenu: [10, 15, 25, 50],
+            dom: '<"px-3 py-2 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2"<"text-xs font-medium text-slate-500"l>f>rt<"px-3 py-2 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2"ip>',
+            language: {
+                search: "",
+                searchPlaceholder: "Search employee, ID, reason...",
+                lengthMenu: "Show _MENU_",
+                emptyTable: "No separation requests match the selected period/status filter."
+            }
         });
+
+        $('.dataTables_filter').addClass('relative').find('label').addClass('relative flex items-center')
+            .prepend('<i class="fas fa-search text-slate-400 text-[11px] absolute left-2.5 pointer-events-none"></i>');
     }
 
-    async function handleUpdate(action, id) {
+    // Slide-Over Quick Summary Drawer
+    function openQuickDrawer(separationId) {
+        const item = cachedRequests.find(r => Number(r.separationid) === Number(separationId));
+        if (!item) return;
+
+        const status = parseInt(item.status);
+        const imgSrc = item.image ? `../${item.image}` : avatarUrl(item);
+        const encodedLwd = encodeURIComponent(item.lastWorkingDay || '');
+        const encodedName = encodeURIComponent(`${item.firstName || ''} ${item.lastName || ''}`.trim());
+
+        $('#quickDrawerBody').html(`
+            <div class="flex items-center gap-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <img class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                     src="${imgSrc}"
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(initials(item.firstName, item.lastName))}&background=6366f1&color=fff';">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <h4 class="font-display text-sm font-bold text-slate-900 truncate">${item.firstName} ${item.lastName}</h4>
+                        ${statusBadge(status)}
+                    </div>
+                    <p class="text-[11px] font-medium text-slate-500 mt-0.5">Employee ID: #${item.eid}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="p-3 rounded-xl border border-slate-200/80 bg-white">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Resignation Date</div>
+                    <div class="mt-1 font-semibold text-slate-800">${formatDate(item.resignationDate)}</div>
+                </div>
+                <div class="p-3 rounded-xl border border-indigo-100 bg-indigo-50/40">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Last Working Day</div>
+                    <div class="mt-1 font-bold text-indigo-700">${formatDate(item.lastWorkingDay)}</div>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Separation Type</div>
+                <div class="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/70 font-semibold text-slate-700">
+                    ${item.separationType || 'Resignation'}
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reason for Leaving</div>
+                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70 text-slate-600 leading-relaxed whitespace-pre-line">
+                    ${item.reasonforLeaving || 'No detailed reason provided.'}
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Admin Remarks</div>
+                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70 text-slate-600">
+                    ${item.adminRemarks || 'No admin remarks recorded yet.'}
+                </div>
+            </div>
+        `);
+
+        let footerButtons = `
+            <a href="/admin/separation/view?separationid=${encodeURIComponent(item.separationid)}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition">
+                <i class="fas fa-up-right-from-square text-[10px]"></i> Full Page
+            </a>
+            <div class="flex items-center gap-1.5">`;
+
+        if (status === STATUS.PENDING) {
+            footerButtons += `
+                <button onclick="closeQuickDrawer(); handleUpdate('reject', ${item.separationid})"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-600 hover:text-white transition">
+                    Reject
+                </button>
+                <button onclick="closeQuickDrawer(); handleUpdate('approve', ${item.separationid}, '${encodedLwd}', '${encodedName}')"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition">
+                    Approve & Set LWD
+                </button>`;
+        } else if (status === STATUS.APPROVED) {
+            footerButtons += `
+                <button onclick="closeQuickDrawer(); handleUpdate('withdraw', ${item.separationid})"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-600 hover:text-white transition">
+                    Withdraw
+                </button>
+                <button onclick="closeQuickDrawer(); handleUpdate('complete', ${item.separationid})"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition">
+                    Mark Completed
+                </button>`;
+        }
+        footerButtons += `</div>`;
+
+        $('#quickDrawerFooter').html(footerButtons);
+        $('#quickDrawerBackdrop').removeClass('hidden');
+        $('#quickDrawer').removeClass('translate-x-full');
+    }
+
+    function closeQuickDrawer() {
+        $('#quickDrawer').addClass('translate-x-full');
+        $('#quickDrawerBackdrop').addClass('hidden');
+    }
+
+    async function handleUpdate(action, id, encodedLwd = '', encodedName = '') {
         const remarks = $(`#remarks-${id}`).val();
+        let confirmedLwd = '';
 
         if (action === 'reject' && (!remarks || !remarks.trim())) {
-            return Swal.fire('Note Required', 'Please provide a reason for rejection.', 'warning');
+            $(`#remarks-${id}`).focus();
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Remarks Required',
+                text: 'Please enter a reason for rejection in the Admin Remarks field before rejecting.',
+                confirmButtonColor: '#4f46e5'
+            });
         }
 
-        const actionCopy = {
-            approve: 'approve',
-            reject: 'reject',
-            withdraw: 'withdraw approval for',
-            complete: 'mark as completed'
-        }[action] || action;
+        if (action === 'approve') {
+            const defaultLwd = toInputDate(decodeURIComponent(encodedLwd));
+            const empName = decodeURIComponent(encodedName) || 'this employee';
 
-        const confirm = await Swal.fire({
-            title: `Are you sure?`,
-            text: `You are about to ${actionCopy} this request.`,
-            icon: action === 'withdraw' ? 'warning' : 'question',
-            showCancelButton: true,
-            confirmButtonColor: action === 'approve' ? '#059669'
-                : action === 'withdraw' ? '#ea580c'
-                : action === 'complete' ? '#4f46e5'
-                : '#dc2626'
-        });
+            const { isConfirmed, value } = await Swal.fire({
+                title: 'Approve Separation Request',
+                html: `
+                    <div class="text-left space-y-3 pt-1">
+                        <p class="text-sm text-slate-600">
+                            Confirm or update the final <strong>Last Working Day (LWD)</strong> for <span class="font-semibold text-slate-800">${empName}</span>:
+                        </p>
+                        <div>
+                            <label for="swal-lwd-input" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                                Last Working Day (LWD) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" id="swal-lwd-input" value="${defaultLwd}"
+                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Confirm & Approve',
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
+                preConfirm: () => {
+                    const lwdVal = document.getElementById('swal-lwd-input').value;
+                    if (!lwdVal) {
+                        Swal.showValidationMessage('Please select a valid Last Working Day.');
+                        return false;
+                    }
+                    return lwdVal;
+                }
+            });
 
-        if (!confirm.isConfirmed) return;
+            if (!isConfirmed) return;
+            confirmedLwd = value;
+        } else {
+            const actionCopy = {
+                reject: 'reject',
+                complete: 'mark as completed',
+                withdraw: 'withdraw approval for'
+            }[action] || action;
+
+            const confirm = await Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to ${actionCopy} this separation request.`,
+                icon: action === 'withdraw' ? 'warning' : 'question',
+                showCancelButton: true,
+                confirmButtonColor: action === 'withdraw' ? '#ea580c'
+                    : action === 'complete' ? '#4f46e5'
+                    : '#dc2626',
+                cancelButtonColor: '#64748b'
+            });
+
+            if (!confirm.isConfirmed) return;
+        }
 
         const $row = $(`tr[data-id="${id}"]`);
-        $row.css({ transition: 'opacity 0.2s ease', opacity: 0.5 });
+        $row.css({ transition: 'opacity 0.2s ease', opacity: 0.45 });
 
         const csrfToken = document.querySelector('meta[name="_csrf"]').content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        const payload = new URLSearchParams({
+            action,
+            id,
+            remarks: remarks || ''
+        });
+        if (action === 'approve' && confirmedLwd) {
+            payload.append('lwd', confirmedLwd);
+        }
 
         try {
             const response = await fetch('/admin/separtion/updateStatus', {
@@ -323,19 +1083,27 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                     [csrfHeader]: csrfToken
                 },
-                body: new URLSearchParams({ action, id, remarks: remarks || '' })
+                body: payload
             });
 
             const res = await response.json();
             if (res.status === 'success') {
-                Swal.fire({ icon: 'success', title: 'Updated!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                Swal.fire({
+                    icon: 'success',
+                    title: action === 'approve' ? `Approved (LWD: ${formatDate(confirmedLwd)})` : 'Status Updated!',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
                 fetchData();
             } else {
                 $row.css('opacity', 1);
+                Swal.fire('Update Failed', res.message || 'Could not update request.', 'error');
             }
         } catch (e) {
             $row.css('opacity', 1);
-            Swal.fire('Error', 'Something went wrong', 'error');
+            Swal.fire('Error', 'Something went wrong while communicating with the server.', 'error');
         }
     }
 </script>

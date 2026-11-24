@@ -1,475 +1,399 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="_csrf" th:content="${_csrf.token}" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compensatory Off Tracking Grid</title>
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<title>Compensatory Off Tracking</title>
 
-<!-- Bootstrap 5.3 -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css"/>
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- DataTables Core & Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css"/>
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Inter', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    brand: {
+                        50: '#eef2ff',
+                        100: '#e0e7ff',
+                        500: '#6366f1',
+                        600: '#4f46e5',
+                        700: '#4338ca',
+                        900: '#312e81',
+                    }
+                }
+            }
+        }
+    }
+</script>
 
 <style>
-    :root {
-        --brand-indigo: #4338ca;
-        --brand-indigo-light: #6366f1;
-        --brand-indigo-dark: #312e81;
-        --brand-blue: #2563eb;
-        --brand-green: #059669;
-        --brand-amber: #d97706;
-        --brand-red: #e11d48;
-        --surface: #ffffff;
-        --surface-muted: #f8f9fd;
-        --border: #e6e8f0;
-        --text-dark: #1e1b3a;
-        --text-medium: #64748b;
-        --shadow-soft: 0 1px 2px rgba(30, 27, 58, 0.04), 0 10px 28px -14px rgba(30, 27, 58, 0.16);
-    }
-
-    * { box-sizing: border-box; }
-
     body {
-        background-color: #f4f6fb;
+        font-family: 'Inter', system-ui, sans-serif;
+        background-color: #f8fafc;
         background-image:
-            radial-gradient(circle at 6% 0%, rgba(99, 102, 241, 0.10), transparent 40%),
-            radial-gradient(circle at 94% 6%, rgba(5, 150, 105, 0.07), transparent 38%);
+            radial-gradient(circle at 6% 0%, rgba(99, 102, 241, 0.07), transparent 40%),
+            radial-gradient(circle at 94% 6%, rgba(16, 185, 129, 0.05), transparent 38%);
         background-attachment: fixed;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: var(--text-dark);
     }
 
-    /* --- Page header --- */
-    .dash-header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
+    /* Ultra-Compact DataTables Tailwind Overrides */
+    .dt-container .dt-search input,
+    .dt-container .dt-length select {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.4rem;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        color: #1e293b;
+        outline: none;
+        transition: all 0.15s ease;
     }
-    .dash-header .eyebrow {
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--brand-indigo);
-        margin-bottom: 0.15rem;
-        display: block;
+    .dt-container .dt-search input:focus,
+    .dt-container .dt-length select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
     }
-    .dash-header h1 {
-        font-size: 1.3rem;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-        margin: 0;
-        color: var(--text-dark);
+    .dt-container .dt-length,
+    .dt-container .dt-search,
+    .dt-container .dt-info {
+        font-size: 0.75rem;
+        color: #64748b;
     }
-    .dash-header p {
-        margin: 0.1rem 0 0;
-        color: var(--text-medium);
-        font-size: 0.82rem;
+    .dt-container .dt-layout-row {
+        margin: 0.35rem 0 !important;
     }
-    .dash-header .header-icon {
-        width: 2.4rem;
-        height: 2.4rem;
-        border-radius: 0.8rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
-        color: #fff;
-        font-size: 1.1rem;
-        box-shadow: 0 8px 16px -8px rgba(67, 56, 202, 0.55);
-        margin-right: 0.65rem;
+    .dt-container .dt-paging .dt-paging-button {
+        border-radius: 0.375rem !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #475569 !important;
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.5rem !important;
+        margin-left: 0.2rem !important;
+        transition: all 0.15s ease;
     }
-    .dash-header .title-group {
-        display: flex;
-        align-items: center;
+    .dt-container .dt-paging .dt-paging-button:hover:not(.disabled) {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
     }
-
-    /* --- KPI stat cards --- */
-    .stat-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 0.85rem;
-        box-shadow: var(--shadow-soft);
-        padding: 0.7rem 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-        transition: transform 150ms ease;
-    }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        left: 0; top: 0; bottom: 0;
-        width: 3px;
-    }
-    .stat-icon {
-        width: 2.1rem;
-        height: 2.1rem;
-        border-radius: 0.65rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-    .stat-value {
-        font-size: 1.15rem;
-        font-weight: 800;
-        line-height: 1.1;
-        font-variant-numeric: tabular-nums;
-    }
-    .stat-label {
-        font-size: 0.7rem;
-        color: var(--text-medium);
+    .dt-container .dt-paging .dt-paging-button.current {
+        background: linear-gradient(135deg, #6366f1, #4338ca) !important;
+        color: #ffffff !important;
+        border-color: transparent !important;
         font-weight: 600;
-        margin-top: 0.1rem;
     }
-    .stat-total::before { background: linear-gradient(180deg, var(--brand-indigo-light), var(--brand-indigo)); }
-    .stat-total .stat-icon { background: rgba(67, 56, 202, 0.1); color: var(--brand-indigo); }
-    .stat-available::before { background: var(--brand-amber); }
-    .stat-available .stat-icon { background: rgba(217, 119, 6, 0.1); color: var(--brand-amber); }
-    .stat-utilized::before { background: var(--brand-green); }
-    .stat-utilized .stat-icon { background: rgba(5, 150, 105, 0.1); color: var(--brand-green); }
-    .stat-pending::before { background: var(--brand-red); }
-    .stat-pending .stat-icon { background: rgba(225, 29, 72, 0.1); color: var(--brand-red); }
-
-    /* --- Trend chart card --- */
-    .chart-card .card-body { padding: 0.9rem 1.1rem; }
-    .chart-card h2 {
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: var(--text-dark);
-    }
-    .chart-legend-note {
-        font-size: 0.72rem;
-        color: var(--text-medium);
+    .dt-container .dt-paging .dt-paging-button.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
     }
 
-    /* --- Card --- */
-    .card {
-        border: none;
-        border-radius: 0.95rem;
-        box-shadow: var(--shadow-soft);
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
-        color: #fff;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-        font-weight: 600;
-        letter-spacing: 0.4px;
-        border-bottom: none;
-        position: relative;
-    }
-
-    .card-header::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #ffffff80, transparent);
-    }
-
-    .card-body { background-color: var(--surface); }
-
-    /* --- Filter / action bar --- */
-    .filter-bar {
-        background: var(--surface-muted);
-        border: 1px solid var(--border);
-        border-radius: 0.85rem;
-        padding: 1rem 1.1rem;
-    }
-    .filter-bar .form-label {
-        font-size: 0.8rem;
-        color: var(--text-medium);
-    }
-    .filter-bar input {
-        border-radius: 0.6rem;
-        border: 1px solid var(--border);
-        box-shadow: none;
-        background-color: var(--surface);
-    }
-    .filter-bar input:focus {
-        border-color: var(--brand-indigo);
-        box-shadow: 0 0 0 0.2rem rgba(67, 56, 202, 0.15);
-    }
-    #exportButtons .dt-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-
-    .btn-primary {
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
-        border: none;
-        box-shadow: 0 8px 18px -8px rgba(67, 56, 202, 0.55);
-    }
-    .btn-primary:hover {
-        filter: brightness(1.06);
-        box-shadow: 0 10px 22px -8px rgba(67, 56, 202, 0.6);
-    }
-
-    /* --- Table --- */
-    .table {
-        border-radius: 0.5rem;
-        overflow: hidden;
-        margin-bottom: 0;
+    /* High-Density Table Styling */
+    table.dataTable {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
     }
     table.dataTable thead th {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
+        background-color: #f8fafc !important;
+        color: #475569 !important;
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
         text-transform: uppercase;
-        color: var(--text-medium);
-        background-color: var(--surface-muted) !important;
-        border-bottom: 1px solid var(--border) !important;
-    }
-    table.dataTable.table-striped > tbody > tr.odd > * {
-        box-shadow: none;
-        background-color: #fbfbfe;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 0.6rem !important;
+        border-top: 1px solid #e2e8f0 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        text-align: left !important;
+        white-space: nowrap;
     }
     table.dataTable tbody td {
-        font-size: 0.88rem;
+        padding: 0.32rem 0.6rem !important;
+        font-size: 0.78rem;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9 !important;
+        text-align: left !important;
         vertical-align: middle;
+        line-height: 1.25;
     }
-
-    table.dataTable tbody tr {
-        transition: all 0.2s ease;
+    table.dataTable tbody tr:nth-child(even) {
+        background-color: #fcfdfe;
     }
-
     table.dataTable tbody tr:hover {
-        background: #f4f7ff;
-        box-shadow: inset 0 0 0 1px #d8e0fb;
+        background-color: #eef2ff !important;
     }
 
-    .employee-cell {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+    /* Compact DataTables Export Buttons */
+    #exportButtons .dt-buttons {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
     }
-    .employee-avatar {
-        width: 1.9rem;
-        height: 1.9rem;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .badge-status {
-        padding: 0.4em 0.85em;
-        border-radius: 0.6rem;
-        font-size: 0.75em;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
+    #exportButtons .dt-button {
         display: inline-flex;
         align-items: center;
-        gap: 0.35em;
+        gap: 0.25rem;
+        border: none !important;
+        border-radius: 0.4rem !important;
+        padding: 0.28rem 0.6rem !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+        transition: transform 0.15s ease, filter 0.15s ease;
+        margin: 0 !important;
     }
-    .badge-status::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        border-radius: 999px;
-        background: currentColor;
+    #exportButtons .dt-button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
     }
+    #exportButtons .excel-btn { background: #15803d !important; }
+    #exportButtons .pdf-btn   { background: #dc2626 !important; }
+    #exportButtons .print-btn { background: #4f46e5 !important; }
 
-    .bg-approved { background-color: rgba(5, 150, 105, 0.1); color: #0f5132; }
-    .bg-pending { background-color: rgba(217, 119, 6, 0.1); color: #7a4c00; }
-    .bg-rejected { background-color: rgba(225, 29, 72, 0.1); color: #842029; }
-
-    /* Export Buttons */
-    .dt-buttons .btn {
-        border-radius: 0.6rem;
-        font-weight: 500;
-        margin-right: 0.4rem;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease;
+    /* Shimmer loading */
+    .shimmer-bar {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
     }
-
-    .dt-buttons .btn:hover {
-        transform: translateY(-2px);
-    }
-
-    .excel-btn {
-        background-color: #217346 !important;
-        border: none;
-        color: white !important;
-    }
-    .pdf-btn {
-        background-color: #d93025 !important;
-        color: #fff !important;
-        border: none;
-    }
-    .print-btn {
-        background-color: #5b77d1 !important;
-        color: #fff !important;
-        border: none;
-    }
-
-    /* DataTables pagination / info restyle */
-    div.dataTables_wrapper div.dataTables_info,
-    div.dataTables_wrapper div.dataTables_length label,
-    div.dataTables_wrapper div.dataTables_filter label {
-        color: var(--text-medium);
-        font-size: 0.85rem;
-    }
-    div.dataTables_wrapper div.dataTables_paginate .page-link {
-        border-radius: 0.5rem;
-        margin-left: 0.2rem;
-        border: 1px solid var(--border);
-        color: var(--text-medium);
-    }
-    div.dataTables_wrapper div.dataTables_paginate .page-item.active .page-link {
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo));
-        border-color: transparent;
-    }
-
-    .loading-row td {
-        position: relative;
-        overflow: hidden;
-        height: 40px;
-    }
-
-    .loading-row td::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 200%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        animation: shimmer 1.6s infinite;
-    }
-
     @keyframes shimmer {
-        100% { left: 100%; }
-    }
-
-    /* --- Modal polish --- */
-    .modal-content { border-radius: 1.1rem; }
-    .modal-header.bg-primary {
-        background: linear-gradient(135deg, var(--brand-indigo-light), var(--brand-indigo)) !important;
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 </style>
-<head th:replace="includes/header :: header"></head>
-
+<th:block th:replace="~{includes/header :: header}"></th:block>
 </head>
 
-<body>
-<div class="container-fluid py-4 px-3 px-lg-5">
+<body class="text-slate-800 antialiased">
 
-    <!-- Dashboard Header -->
-    <div class="dash-header">
-        <div class="title-group">
-            <span class="header-icon"><i class="bi bi-calendar2-week"></i></span>
+<div class="max-w-[99%] mx-auto px-3 sm:px-5 py-3.5">
+
+    <!-- Compact Page Header -->
+    <div class="flex flex-wrap items-center justify-between gap-2.5 mb-3">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center shadow-sm shrink-0">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+            </div>
             <div>
-                <span class="eyebrow">Admin &middot; Attendance</span>
-                <h1>Comp-Off Tracking Dashboard</h1>
-                <p>Review, log, and export compensatory-off activity across the team.</p>
+                <h1 class="text-base font-extrabold tracking-tight text-slate-900 leading-tight">Comp-Off Tracking Dashboard</h1>
+                <p class="text-[11px] text-slate-500">Track earned Sunday/holiday credits, advance comp-offs, and clearance status.</p>
+            </div>
+        </div>
+
+        <button type="button" id="openModalBtn"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            Log Comp-Off / Credit
+        </button>
+    </div>
+
+    <!-- Compact KPI Stat Strip (Clickable to quick-filter) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+        <!-- Total -->
+        <button type="button" data-filter-status="ALL" class="kpi-card text-left relative overflow-hidden bg-white border border-slate-200/90 rounded-lg px-3 py-2 shadow-2xs flex items-center gap-2.5 transition-all hover:border-indigo-300 cursor-pointer">
+            <span class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></span>
+            <div class="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="min-w-0 flex-1 flex items-baseline justify-between gap-2">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-700 leading-tight">Total Records</div>
+                    <div class="text-[10px] text-slate-400 truncate">Filtered view</div>
+                </div>
+                <div id="statTotal" class="text-base font-extrabold text-slate-900 tabular-nums">0</div>
+            </div>
+        </button>
+
+        <!-- Available (Worked Date present, CompOff Date null) -->
+        <button type="button" data-filter-status="Available" class="kpi-card text-left relative overflow-hidden bg-white border border-slate-200/90 rounded-lg px-3 py-2 shadow-2xs flex items-center gap-2.5 transition-all hover:border-amber-300 cursor-pointer">
+            <span class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500"></span>
+            <div class="w-7 h-7 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="award" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="min-w-0 flex-1 flex items-baseline justify-between gap-2">
+                <div>
+                    <div class="text-[11px] font-bold text-amber-700 leading-tight">Available Credit</div>
+                    <div class="text-[10px] text-slate-400 truncate">Claim anytime</div>
+                </div>
+                <div id="statAvailable" class="text-base font-extrabold text-slate-900 tabular-nums">0</div>
+            </div>
+        </button>
+
+        <!-- Pending (CompOff Date present, Worked Date null) -->
+        <button type="button" data-filter-status="Pending" class="kpi-card text-left relative overflow-hidden bg-white border border-slate-200/90 rounded-lg px-3 py-2 shadow-2xs flex items-center gap-2.5 transition-all hover:border-rose-300 cursor-pointer">
+            <span class="absolute left-0 top-0 bottom-0 w-1 bg-rose-600"></span>
+            <div class="w-7 h-7 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <i data-lucide="clock-alert" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="min-w-0 flex-1 flex items-baseline justify-between gap-2">
+                <div>
+                    <div class="text-[11px] font-bold text-rose-700 leading-tight">Pending Work-Back</div>
+                    <div class="text-[10px] text-slate-400 truncate">Must work day</div>
+                </div>
+                <div id="statPending" class="text-base font-extrabold text-slate-900 tabular-nums">0</div>
+            </div>
+        </button>
+
+        <!-- Cleared (Both Dates present) -->
+        <button type="button" data-filter-status="Cleared" class="kpi-card text-left relative overflow-hidden bg-white border border-slate-200/90 rounded-lg px-3 py-2 shadow-2xs flex items-center gap-2.5 transition-all hover:border-emerald-300 cursor-pointer">
+            <span class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600"></span>
+            <div class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="min-w-0 flex-1 flex items-baseline justify-between gap-2">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-700 leading-tight">Cleared</div>
+                    <div class="text-[10px] text-slate-400 truncate">Reconciled</div>
+                </div>
+                <div id="statUtilized" class="text-base font-extrabold text-slate-900 tabular-nums">0</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- Compact Analytics Strip -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 mb-3">
+        <!-- Status Distribution -->
+        <div class="lg:col-span-4 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
+                <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Status Distribution</h3>
+                <span class="text-[10px] text-slate-400">Filtered View</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative h-28 w-28 shrink-0">
+                    <canvas id="statusDoughnutChart"></canvas>
+                </div>
+                <div class="flex-1 space-y-1.5 text-[11px]">
+                    <div class="flex items-center justify-between bg-amber-50/80 border border-amber-100 rounded px-2 py-1">
+                        <span class="font-semibold text-amber-800 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Available
+                        </span>
+                        <span class="text-[10px] text-amber-700">Claim anytime</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-rose-50/80 border border-rose-100 rounded px-2 py-1">
+                        <span class="font-semibold text-rose-800 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span> Pending
+                        </span>
+                        <span class="text-[10px] text-rose-700">Needs work day</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-emerald-50/80 border border-emerald-100 rounded px-2 py-1">
+                        <span class="font-semibold text-emerald-800 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Cleared
+                        </span>
+                        <span class="text-[10px] text-emerald-700">Balanced</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Open Comp-Off Balances -->
+        <div class="lg:col-span-8 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex flex-col justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <div>
+                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Employee Open Comp-Off Balances</h3>
+                </div>
+                <div class="flex items-center gap-3 text-[10px]">
+                    <span class="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                        <span class="w-2 h-2 rounded-xs bg-amber-500 inline-block"></span> Available Credit (Worked Only)
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                        <span class="w-2 h-2 rounded-xs bg-rose-500 inline-block"></span> Pending Work-Back (Comp-Off Only)
+                    </span>
+                </div>
+            </div>
+            <div class="relative h-32 w-full">
+                <canvas id="employeeBalanceChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- KPI Stat Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="stat-card stat-total">
-                <span class="stat-icon"><i class="bi bi-collection"></i></span>
-                <div>
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">Total Records</div>
-                </div>
+    <!-- Compact Main Ledger Card -->
+    <div class="bg-white border border-slate-200/90 rounded-xl shadow-2xs overflow-hidden">
+        <!-- Slim Header + Inline Filters -->
+        <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-white">
+                <i data-lucide="table-2" class="w-3.5 h-3.5 text-indigo-200"></i>
+                <h2 class="text-xs font-bold tracking-wide uppercase">Comp-Off Ledger</h2>
             </div>
+            <span id="activeFilterBadge" class="text-[10px] font-semibold text-indigo-100 bg-white/15 px-2 py-0.5 rounded-full">
+                Showing Filtered View
+            </span>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card stat-available">
-                <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
-                <div>
-                    <div class="stat-value" id="statAvailable">0</div>
-                    <div class="stat-label">Available</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card stat-utilized">
-                <span class="stat-icon"><i class="bi bi-check-circle"></i></span>
-                <div>
-                    <div class="stat-value" id="statUtilized">0</div>
-                    <div class="stat-label">Utilized</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card stat-pending">
-                <span class="stat-icon"><i class="bi bi-exclamation-circle"></i></span>
-                <div>
-                    <div class="stat-value" id="statPending">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="card">
-        <div class="card-header text-center py-4">
-            <h2 class="h5 mb-0">
-                <i class="bi bi-table me-2"></i> All Comp-Off Records
-            </h2>
-        </div>
-        <div class="card-body p-4">
+        <div class="p-3">
+            <!-- Single-Row Compact Filter & Export Bar -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-2 mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Month Filter -->
+                    <div class="flex items-center gap-1.5">
+                        <label for="monthFilter" class="text-[11px] font-semibold text-slate-600">Month:</label>
+                        <input type="month" id="monthFilter"
+                            class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 focus:border-indigo-600 outline-none">
+                    </div>
 
-            <!-- Filter, Add Button, and Export Bar (MODIFIED) -->
-            <div class="row filter-bar align-items-center mb-4 mx-0">
-                <div class="col-md-4">
-                    <label for="monthFilter" class="form-label fw-semibold text-secondary">
-                        <i class="bi bi-funnel me-1"></i>Filter by Month
-                    </label>
-                    <input type="month" id="monthFilter" class="form-control">
-                </div>
-                <!-- ADDED BUTTON HERE -->
-                <div class="col-md-8 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center">
-                    <button type="button" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addCompOffModal">
-                        <i class="bi bi-plus-circle me-1"></i> Add Comp-Off
+                    <!-- Status Filter -->
+                    <div class="flex items-center gap-1.5">
+                        <label for="statusFilter" class="text-[11px] font-semibold text-slate-600">Status:</label>
+                        <select id="statusFilter"
+                            class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 focus:border-indigo-600 outline-none">
+                            <option value="ALL">All Statuses</option>
+                            <option value="Available">Available (Claim Anytime)</option>
+                            <option value="Pending">Pending (Needs Work)</option>
+                            <option value="Cleared">Cleared (Reconciled)</option>
+                        </select>
+                    </div>
+
+                    <!-- Reset Filters -->
+                    <button type="button" id="resetFiltersBtn"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        Reset
                     </button>
+                </div>
+
+                <!-- Export Controls -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Export:</span>
                     <div id="exportButtons"></div>
                 </div>
             </div>
 
-            <!-- Data Table -->
-            <div class="table-responsive">
-                <table id="enhancedDataTable" class="table table-striped table-hover align-middle">
-                    <thead class="table-light">
+            <!-- Compact Data Table -->
+            <div class="overflow-x-auto">
+                <table id="enhancedDataTable" class="w-full text-left">
+                    <thead>
                         <tr>
                             <th>Employee Name</th>
-                            <th class="text-center">Worked Date</th>
-                            <th class="text-center">Comp-off Date</th>
+                            <th>Worked Date</th>
+                            <th>Comp-Off Date</th>
+                            <th>Status</th>
+                            <th>Rule / Next Action</th>
                             <th>Approved By</th>
-                            <th class="text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr class="loading-row">
-                            <td colspan="5" class="text-center text-muted py-3">Loading records...</td>
+                        <tr>
+                            <td colspan="6" class="py-3">
+                                <div class="h-4 w-full rounded shimmer-bar"></div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -478,140 +402,419 @@
     </div>
 </div>
 
-<!-- Add Comp-Off Modal (NEW) -->
-<div class="modal fade" id="addCompOffModal" tabindex="-1" aria-labelledby="addCompOffModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-                <h5 class="modal-title" id="addCompOffModalLabel">
-                    <i class="bi bi-calendar-plus me-2"></i> Log New Comp-Off
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Add / Log Comp-Off Modal -->
+<div id="addCompOffModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity" aria-labelledby="addCompOffModalLabel" role="dialog" aria-modal="true">
+    <div id="modalPanel" class="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all scale-95 opacity-0">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-3 flex items-center justify-between text-white">
+            <div class="flex items-center gap-2">
+                <i data-lucide="calendar-plus" class="w-4 h-4 text-indigo-200"></i>
+                <h3 id="addCompOffModalLabel" class="text-xs font-bold uppercase tracking-wide">Log Comp-Off Entry</h3>
             </div>
-            <div class="modal-body p-4">
-                <form id="addCompOffForm">
-                    <!-- NEW EMPLOYEE SELECT INPUT -->
-                    <div class="mb-3">
-                        <label for="employeeId" class="form-label fw-semibold">
-                            <i class="bi bi-person-circle me-1"></i> Employee (Required)
-                        </label>
-                        <!-- Select dropdown will be populated by JS -->
-                        <select class="form-select" id="employeeId" name="employeeId" required>
-                            <!-- Options populated via JS -->
-                        </select>
-                        <div class="form-text text-muted">Select the employee receiving the Comp-Off.</div>
-                    </div>
-                    <!-- END NEW EMPLOYEE SELECT INPUT -->
-
-                    <div class="mb-3">
-                        <label for="workedDate" class="form-label fw-semibold">
-                            <i class="bi bi-calendar-date me-1"></i> Comp-Off Date (Required)
-                        </label>    
-                        <input type="date" class="form-control" id="workedDate" name="workedDate" required>
-                        <div class="form-text text-muted">Select the date the employee worked extra hours.</div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="adminRemark" class="form-label fw-semibold">
-                            <i class="bi bi-chat-left-text me-1"></i> Admin Remark/Reason (Optional)
-                        </label>
-                        <textarea class="form-control" id="adminRemark" name="adminRemark" rows="3" placeholder="e.g., Critical system deployment, holiday coverage..."></textarea>
-                    </div>
-
-                    <div id="formMessage" class="alert alert-info d-none" role="alert"></div>
-
-                    <div class="d-grid">
-                        <button type="submit" id="submitButton" class="btn btn-primary btn-lg rounded-pill shadow-sm">
-                            <i class="bi bi-box-arrow-in-right me-2"></i> Submit Comp-Off
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <button type="button" id="closeModalBtn" class="text-indigo-100 hover:text-white rounded-md p-1 hover:bg-white/10 transition cursor-pointer" aria-label="Close">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
+
+        <!-- Modal Body -->
+        <form id="addCompOffForm" class="p-4 space-y-3">
+            <!-- Entry Scenario Switcher -->
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Entry Type <span class="text-rose-500">*</span></label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="entryType" value="EARNED" class="peer sr-only" checked>
+                        <div class="p-2 rounded-lg border border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50/70 transition">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Worked Extra Day
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Worked Sunday/holiday. Claim off anytime.</p>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="entryType" value="ADVANCE" class="peer sr-only">
+                        <div class="p-2 rounded-lg border border-slate-200 peer-checked:border-rose-500 peer-checked:bg-rose-50/70 transition">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                Advance Comp-Off
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Granted leave. Must work another day.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label for="employeeId" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Employee <span class="text-rose-500">*</span>
+                </label>
+                <select id="employeeId" name="employeeId" required
+                    class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 outline-none">
+                </select>
+            </div>
+
+            <div>
+                <label for="entryDate" id="entryDateLabel" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                    <span>Worked Date (Sunday / Holiday)</span> <span class="text-rose-500">*</span>
+                </label>
+                <input type="date" id="entryDate" name="entryDate" required
+                    class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 outline-none">
+                <p id="entryDateHint" class="mt-0.5 text-[10px] text-slate-400">Leaves Comp-Off Date blank until the employee claims their leave.</p>
+            </div>
+
+            <div>
+                <label for="adminRemark" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Admin Remark <span class="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <textarea id="adminRemark" name="adminRemark" rows="2" placeholder="e.g., Sunday deployment coverage, urgent personal leave..."
+                    class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 outline-none"></textarea>
+            </div>
+
+            <div id="formMessage" class="hidden rounded-lg px-2.5 py-1.5 text-xs font-medium" role="alert"></div>
+
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button type="button" id="cancelModalBtn"
+                    class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" id="submitButton"
+                    class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs cursor-pointer">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    Save Record
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- Messenger Fragment -->
 <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
+<script th:inline="none">
 $(document).ready(function () {
+    lucide.createIcons();
+
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content") || 'X-CSRF-TOKEN';
+
+    // Default to current month (YYYY-MM)
+    const now = new Date();
+    const defaultMonthVal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    $('#monthFilter').val(defaultMonthVal);
+
+    function hasValue(val) {
+        return val !== null && val !== undefined && String(val).trim() !== '' && String(val) !== '0000-00-00';
+    }
+
+    function resolveStatus(row) {
+        const hasWorked = hasValue(row.workedDate);
+        const hasCompOff = hasValue(row.compOffDate);
+
+        if (hasWorked && hasCompOff) return 'Cleared';
+        if (hasWorked && !hasCompOff) return 'Available';
+        if (!hasWorked && hasCompOff) return 'Pending';
+        return 'Pending';
+    }
+
+    function resolveScenarioNote(row) {
+        const status = resolveStatus(row);
+        if (status === 'Available') return 'Earned Comp-Off • Claim anytime';
+        if (status === 'Pending') return 'Advance Comp-Off • Needs work day';
+        return 'Comp-Off • Cleared';
+    }
+
+    function getFormattedCurrentDate() {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2, '0')}-${MONTH_NAMES[d.getMonth()]}-${d.getFullYear()}`;
+    }
+
+    function getReportTitle() {
+        const selectedMonth = $('#monthFilter').val();
+        const selectedStatus = $('#statusFilter').val();
+        const asOnDate = getFormattedCurrentDate();
+        const statusPrefix = (selectedStatus && selectedStatus !== 'ALL') ? `${selectedStatus} ` : '';
+
+        if (selectedMonth) {
+            const [year, month] = selectedMonth.split('-').map(Number);
+            return `${statusPrefix}Compensatory off Report for the month ${MONTH_NAMES[month - 1]}-${year} as on ${asOnDate}`;
+        }
+        return `${statusPrefix}Compensatory off Report as on ${asOnDate}`;
+    }
+
+    function updateFilterBadge() {
+        const selectedMonth = $('#monthFilter').val();
+        const selectedStatus = $('#statusFilter').val();
+        const parts = [];
+
+        if (selectedMonth) {
+            const [y, m] = selectedMonth.split('-').map(Number);
+            parts.push(`${MONTH_NAMES[m - 1]} ${y}`);
+        } else {
+            parts.push('All Months');
+        }
+        parts.push(selectedStatus === 'ALL' ? 'All Statuses' : selectedStatus);
+        $('#activeFilterBadge').text(parts.join(' • '));
+    }
+
+    // Initialize Compact Charts
+    let statusChart = null;
+    let employeeChart = null;
+
+    function initCharts() {
+        const doughnutCtx = document.getElementById('statusDoughnutChart').getContext('2d');
+        statusChart = new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Pending', 'Cleared'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#f59e0b', '#e11d48', '#10b981'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '64%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.label}: ${ctx.raw}`
+                        }
+                    }
+                }
+            }
+        });
+
+        const barCtx = document.getElementById('employeeBalanceChart').getContext('2d');
+        employeeChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Available Credit',
+                        data: [],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 3,
+                        barPercentage: 0.65
+                    },
+                    {
+                        label: 'Pending Work-Back',
+                        data: [],
+                        backgroundColor: '#e11d48',
+                        borderRadius: 3,
+                        barPercentage: 0.65
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 10 } },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: { font: { size: 10, weight: '600' }, color: '#334155' },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    initCharts();
+
+    function updateCharts(rows) {
+        let available = 0, pending = 0, cleared = 0;
+        const empMap = {};
+
+        (rows || []).forEach(row => {
+            const st = resolveStatus(row);
+            const name = row.employeeName || 'Unknown';
+
+            if (!empMap[name]) {
+                empMap[name] = { available: 0, pending: 0, totalOpen: 0 };
+            }
+
+            if (st === 'Available') {
+                available++;
+                empMap[name].available++;
+                empMap[name].totalOpen++;
+            } else if (st === 'Pending') {
+                pending++;
+                empMap[name].pending++;
+                empMap[name].totalOpen++;
+            } else {
+                cleared++;
+            }
+        });
+
+        if (statusChart) {
+            statusChart.data.datasets[0].data = [available, pending, cleared];
+            statusChart.update();
+        }
+
+        if (employeeChart) {
+            const sortedEmps = Object.entries(empMap)
+                .filter(([, counts]) => counts.totalOpen > 0)
+                .sort((a, b) => b[1].totalOpen - a[1].totalOpen)
+                .slice(0, 5);
+
+            if (sortedEmps.length === 0) {
+                employeeChart.data.labels = ['No Open Balances'];
+                employeeChart.data.datasets[0].data = [0];
+                employeeChart.data.datasets[1].data = [0];
+            } else {
+                employeeChart.data.labels = sortedEmps.map(([name]) => name);
+                employeeChart.data.datasets[0].data = sortedEmps.map(([, c]) => c.available);
+                employeeChart.data.datasets[1].data = sortedEmps.map(([, c]) => c.pending);
+            }
+            employeeChart.update();
+        }
+    }
 
     // Initialize DataTable
     let table = $('#enhancedDataTable').DataTable({
         paging: true,
+        pageLength: 100,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
         searching: true,
         ordering: true,
         info: true,
-        responsive: true,
         data: [],
         columns: [
             {
                 data: 'employeeName',
-                render: function (data, type) {
-                    if (type !== 'display') return data;
+                render: (data, type) => {
+                    if (type !== 'display') return data || '';
                     const initials = (data || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                    return `<div class="employee-cell"><span class="employee-avatar">${initials}</span><span>${data || ''}</span></div>`;
+                    return `<div class="inline-flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center justify-center shrink-0">${initials}</span>
+                                <span class="font-semibold text-slate-900">${data || '-'}</span>
+                            </div>`;
                 }
             },
-            { data: 'workedDate', className: 'text-center' },
-            { data: 'compOffDate', className: 'text-center' },
-            { data: 'approvedBy' },
+            {
+                data: 'workedDate',
+                render: (data) => hasValue(data)
+                    ? `<span class="tabular-nums font-medium text-slate-800">${data}</span>`
+                    : `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-600">Not Worked</span>`
+            },
+            {
+                data: 'compOffDate',
+                render: (data) => hasValue(data)
+                    ? `<span class="tabular-nums font-medium text-slate-800">${data}</span>`
+                    : `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700">Unclaimed</span>`
+            },
             {
                 data: null,
-                className: 'text-center',
                 render: function (data, type, row) {
-                    let statusText = '';
-                    let badgeClass = '';
-                    // Assuming 'compOffDate' is null/empty if not yet taken
-                    if (row.compOffDate && row.workedDate) {
-                        statusText = 'Utilized'; badgeClass = 'bg-approved';
-                    } else if (row.workedDate && row.compOffDate==null) {
-                        statusText = 'Available'; badgeClass = 'bg-pending';
-                    } else if( row.workedDate == null &&row.compOffDate){
-                        statusText = 'Pending'; badgeClass = 'bg-rejected';
+                    const statusText = resolveStatus(row);
+                    if (type === 'export' || type === 'filter' || type === 'sort') return statusText;
+
+                    if (statusText === 'Cleared') {
+                        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Cleared
+                                </span>`;
                     }
-                    return `<span class="badge-status ${badgeClass}">${statusText}</span>`;
-                },
+                    if (statusText === 'Available') {
+                        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Available
+                                </span>`;
+                    }
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Pending
+                            </span>`;
+                }
             },
+            {
+                data: null,
+                render: function (data, type, row) {
+                    const note = resolveScenarioNote(row);
+                    if (type === 'export') return note;
+                    const status = resolveStatus(row);
+                    const textColor = status === 'Available' ? 'text-amber-700' : (status === 'Pending' ? 'text-rose-700' : 'text-slate-500');
+                    return `<span class="text-[11px] font-medium ${textColor}">${note}</span>`;
+                }
+            },
+            {
+                data: 'approvedBy',
+                render: (data) => hasValue(data) ? `<span class="text-slate-700">${data}</span>` : `<span class="text-slate-400">—</span>`
+            }
         ],
+        drawCallback: function () {
+            const filteredRows = this.api().rows({ search: 'applied' }).data().toArray();
+            updateStats(filteredRows);
+            updateCharts(filteredRows);
+            updateFilterBadge();
+        }
     });
 
-    // Export Buttons with Icons
+    // Export Buttons
     new $.fn.dataTable.Buttons(table, {
         buttons: [
-            { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel', className: 'btn excel-btn btn-sm', exportOptions: { rows: ':visible' }},
-            { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF', className: 'btn pdf-btn btn-sm', exportOptions: { rows: ':visible' }},
-            { extend: 'print', text: '<i class="bi bi-printer me-1"></i> Print', className: 'btn print-btn btn-sm', exportOptions: { rows: ':visible' }}
+            {
+                extend: 'excelHtml5',
+                text: 'Excel',
+                className: 'excel-btn',
+                title: () => getReportTitle(),
+                filename: () => getReportTitle(),
+                exportOptions: { search: 'applied', orthogonal: 'export' }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: 'PDF',
+                className: 'pdf-btn',
+                title: () => getReportTitle(),
+                filename: () => getReportTitle(),
+                exportOptions: { search: 'applied', orthogonal: 'export' }
+            },
+            {
+                extend: 'print',
+                text: 'Print',
+                className: 'print-btn',
+                title: () => getReportTitle(),
+                exportOptions: { search: 'applied', orthogonal: 'export' }
+            }
         ]
     });
     table.buttons().container().appendTo('#exportButtons');
 
-    const formMessage = $('#formMessage');
-    const submitButton = $('#submitButton');
-
-    // --- KPI Stat Cards (purely presentational, derived from the same table data) ---
-    function updateStats(data) {
+    // Update KPI Stat Cards
+    function updateStats(rows) {
         let total = 0, available = 0, utilized = 0, pending = 0;
-        (data || []).forEach(function (row) {
+        (rows || []).forEach(row => {
             total++;
-            if (row.compOffDate && row.workedDate) {
-                utilized++;
-            } else if (row.workedDate && row.compOffDate == null) {
-                available++;
-            } else if (row.workedDate == null && row.compOffDate) {
-                pending++;
-            }
+            const status = resolveStatus(row);
+            if (status === 'Cleared') utilized++;
+            else if (status === 'Available') available++;
+            else if (status === 'Pending') pending++;
         });
         $('#statTotal').text(total);
         $('#statAvailable').text(available);
@@ -619,100 +822,167 @@ $(document).ready(function () {
         $('#statPending').text(pending);
     }
 
-    // --- Employee Data Simulation (Replace with actual API fetch) ---
-    let employees = [];
+    // Combined Month + Status Filter
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, rowData) {
+        if (settings.nTable.id !== 'enhancedDataTable') return true;
 
-    // Function to populate employee dropdown
+        const selectedMonth = $('#monthFilter').val();
+        const selectedStatus = $('#statusFilter').val();
+
+        if (selectedStatus && selectedStatus !== 'ALL') {
+            if (resolveStatus(rowData) !== selectedStatus) return false;
+        }
+
+        if (selectedMonth) {
+            const [year, month] = selectedMonth.split('-').map(Number);
+            let workedMatch = false;
+            let compOffMatch = false;
+
+            if (hasValue(rowData.workedDate)) {
+                const wd = new Date(rowData.workedDate);
+                if (wd.getFullYear() === year && wd.getMonth() + 1 === month) workedMatch = true;
+            }
+            if (hasValue(rowData.compOffDate)) {
+                const cd = new Date(rowData.compOffDate);
+                if (cd.getFullYear() === year && cd.getMonth() + 1 === month) compOffMatch = true;
+            }
+            if (!workedMatch && !compOffMatch) return false;
+        }
+
+        return true;
+    });
+
+    $('#monthFilter, #statusFilter').on('change', () => table.draw());
+
+    $('.kpi-card').on('click', function () {
+        const targetStatus = $(this).data('filter-status');
+        $('#statusFilter').val(targetStatus).trigger('change');
+    });
+
+    $('#resetFiltersBtn').on('click', function () {
+        $('#monthFilter').val('');
+        $('#statusFilter').val('ALL');
+        table.search('').draw();
+    });
+
+    // Entry Type Toggle in Log Modal
+    $('input[name="entryType"]').on('change', function () {
+        if ($(this).val() === 'EARNED') {
+            $('#entryDateLabel span:first').text('Worked Date (Sunday / Holiday)');
+            $('#entryDateHint').text('Leaves Comp-Off Date blank so the employee can claim it anytime.');
+        } else {
+            $('#entryDateLabel span:first').text('Comp-Off Leave Date Granted');
+            $('#entryDateHint').text('Leaves Worked Date blank; employee must work another day to clear it.');
+        }
+    });
+
+    // Add Comp-Off Modal Controls
+    const $modal = $('#addCompOffModal');
+    const $modalPanel = $('#modalPanel');
+
+    function openModal() {
+        populateEmployeeDropdown();
+        $modal.removeClass('hidden').addClass('flex');
+        setTimeout(() => $modalPanel.removeClass('scale-95 opacity-0').addClass('scale-100 opacity-100'), 10);
+    }
+
+    function closeModal() {
+        $modalPanel.removeClass('scale-100 opacity-100').addClass('scale-95 opacity-0');
+        setTimeout(() => {
+            $modal.removeClass('flex').addClass('hidden');
+            $('#formMessage').addClass('hidden');
+        }, 150);
+    }
+
+    $('#openModalBtn').on('click', openModal);
+    $('#closeModalBtn, #cancelModalBtn').on('click', closeModal);
+    $modal.on('click', function (e) { if (e.target === this) closeModal(); });
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$modal.hasClass('hidden')) closeModal();
+    });
+
+    // Populate Employee Dropdown (Spring Boot endpoint)
     function populateEmployeeDropdown() {
-         $.ajax({
+        $.ajax({
             url: '/admin/getemployees',
             type: 'GET',
             dataType: 'json',
-            data:{getMembers:'action'},
-            success: function (data) {
+                        success: function (data) {
                 const select = $('#employeeId');
-        select.empty();
-        select.append('<option value="" disabled selected>Select an Employee</option>');
-        data.forEach(employee => {
-            select.append(`<option value="${employee.eid}">${employee.name} (${employee.eid})</option>`);
-        });
+                select.empty().append('<option value="" disabled selected>Select an Employee</option>');
+                (data || []).forEach(employee => {
+                    select.append(`<option value="${employee.eid}">${employee.name} (${employee.eid})</option>`);
+                });
             },
-            error: function () {
-               
+            error: function (err) {
+                console.error('Error fetching employees:', err);
             }
         });
-
-    }
-    
-    // Populate dropdown when the modal is shown
-    const addCompOffModal = document.getElementById('addCompOffModal');
-    if (addCompOffModal) {
-        // Use jQuery for event binding since it's used elsewhere
-        $('#addCompOffModal').on('show.bs.modal', function () {
-            populateEmployeeDropdown();
-        });
     }
 
-    // --- Data Fetching and Comp-Off Submission Logic ---
-
-    function showMessage(message, type = 'info') {
-        formMessage.removeClass('d-none alert-info alert-success alert-danger').addClass(`alert-${type}`).text(message).focus();
-    }
-
-    function resetFormAndModal() {
-        $('#addCompOffForm')[0].reset();
-        formMessage.addClass('d-none').text('');
-        submitButton.prop('disabled', false).html('<i class="bi bi-box-arrow-in-right me-2"></i> Submit Comp-Off');
-        // Hide the modal after a successful submission
-        setTimeout(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addCompOffModal'));
-            if (modal) modal.hide();
-        }, 1500); 
-    }
-
-    // Handle Form Submission
+    // Handle Add Comp-Off Form Submission (Spring Boot endpoint with CSRF)
     $('#addCompOffForm').on('submit', function (e) {
         e.preventDefault();
 
-        const formData = {
-            employeeId: $('#employeeId').val(), // Capture selected employee ID
-            compOffDate: $('#workedDate').val(),
-            adminRemark: $('#adminRemark').val(),
-        };
-        // Check for both Employee ID and Worked Date
-        if (!formData.compOffDate || !formData.employeeId) {
-            showMessage("Please select both a valid Employee and 'Date Worked'.", 'danger');
+        const entryType = $('input[name="entryType"]:checked').val();
+        const selectedDate = $('#entryDate').val();
+        const employeeId = $('#employeeId').val();
+
+        if (!selectedDate || !employeeId) {
+            $('#formMessage').removeClass('hidden').addClass('bg-rose-50 text-rose-700 border border-rose-200')
+                .text('Please select both an Employee and a valid Date.');
             return;
         }
 
-        submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Adding...');
-       // showMessage("Processing request...", 'info');
-    const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
-    console.log(formData);
+        const formData = {
+            entryType: entryType,
+            employeeId: employeeId,
+            compOffDate: selectedDate,
+            workedDate: entryType === 'EARNED' ? selectedDate : null,
+            grantedCompOffDate: entryType === 'ADVANCE' ? selectedDate : null,
+            adminRemark: $('#adminRemark').val()
+        };
+
+        const submitButton = $('#submitButton');
+        submitButton.prop('disabled', true).html('<span class="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin"></span> Saving...');
+
+        const headers = {};
+        if (csrfToken) {
+            headers[csrfHeader] = csrfToken;
+        }
+
         $.ajax({
             url: '/admin/addCompOff',
             type: 'POST',
-            headers:{'X-CSRF-TOKEN':csrfToken},
+            headers: headers,
             dataType: 'json',
             data: formData,
-            success: function (response) {
+            success: function () {
                 Swal.fire({
-                    title: "Drag me!",
-                    icon: "success",
-                    text:'Comp-Off Record added',
-                    draggable: true
-                    }).then(()=>{
-                     submitButton.prop('disabled', false).html('<span ></span> Submit Comp-Off');
-
-                        document.getElementById('addCompOffForm').reset();
-                    })
+                    title: 'Saved!',
+                    icon: 'success',
+                    text: 'Comp-Off record added successfully.'
+                }).then(() => {
+                    submitButton.prop('disabled', false).html('<i data-lucide="check" class="w-3.5 h-3.5"></i> Save Record');
+                    lucide.createIcons();
+                    document.getElementById('addCompOffForm').reset();
+                    $('input[name="entryType"][value="EARNED"]').trigger('change');
+                    closeModal();
+                    fetchData();
+                });
             },
             error: function (err) {
+                console.error('Error adding Comp-Off:', err);
+                submitButton.prop('disabled', false).html('<i data-lucide="check" class="w-3.5 h-3.5"></i> Save Record');
+                lucide.createIcons();
+                $('#formMessage').removeClass('hidden').addClass('bg-rose-50 text-rose-700 border border-rose-200')
+                    .text('Failed to save Comp-Off record. Please try again.');
             }
         });
     });
 
-    // Fetch and populate data
+    // Fetch Data (Spring Boot endpoint)
     function fetchData() {
         $.ajax({
             url: '/admin/getCoHistory',
@@ -720,59 +990,23 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (data) {
                 console.log(data);
-                // Assuming data is an array of objects
                 if (Array.isArray(data) && data.length > 0) {
                     table.clear().rows.add(data).draw();
-                    updateStats(data);
                 } else {
                     table.clear().draw();
-                    $('#tableBody').html(`<tr><td colspan="5" class="text-center text-muted py-3">No records found</td></tr>`);
                     updateStats([]);
+                    updateCharts([]);
                 }
             },
             error: function (err) {
-                 console.log(err);
-                $('#tableBody').html(`<tr><td colspan="5" class="text-center text-danger py-3">⚠️ Error loading data. Check console for details.</td></tr>`);
+                console.error('Error loading Comp-Off history:', err);
+                $('#tableBody').html(`<tr><td colspan="6" class="py-3 text-xs font-medium text-rose-600">Error loading data. Check console for details.</td></tr>`);
                 updateStats([]);
+                updateCharts([]);
             }
         });
     }
 
-    // Month filter logic
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex, rowData) {
-        const selectedMonth = $('#monthFilter').val();
-        if (!selectedMonth) return true;
-        
-        // DataTables rows use the data object when filtering
-        const rowWorkedDate = rowData.workedDate;
-        const rowCompOffDate = rowData.compOffDate;
-
-        const [year, month] = selectedMonth.split('-').map(Number);
-        
-        let workedMatch = false;
-        if (rowWorkedDate) {
-            const workedDate = new Date(rowWorkedDate);
-            if (workedDate.getFullYear() === year && workedDate.getMonth() + 1 === month) {
-                workedMatch = true;
-            }
-        }
-        
-        let compOffMatch = false;
-        if (rowCompOffDate) {
-            const compOffDate = new Date(rowCompOffDate);
-            if (compOffDate.getFullYear() === year && compOffDate.getMonth() + 1 === month) {
-                compOffMatch = true;
-            }
-        }
-
-        return workedMatch || compOffMatch;
-    });
-
-    $('#monthFilter').on('change', function () {
-        table.draw();
-    });
-
-    // Initial data load
     fetchData();
 });
 </script>

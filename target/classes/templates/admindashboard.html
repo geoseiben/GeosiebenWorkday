@@ -31,473 +31,273 @@
                             700: '#1034A6',
                             800: '#0d2575',
                         }
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-50%)' }
+                        }
                     }
                 }
             }
         }
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
-    <head th:replace="~{includes/header :: header}"></head>
+    <style>
+        .quick-scroll::-webkit-scrollbar { height: 3px; width: 3px; }
+        .quick-scroll::-webkit-scrollbar-track { background: transparent; }
+        .quick-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .quick-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 antialiased font-sans min-h-screen selection:bg-brand-500 selection:text-white">
-    <div class="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6">
+<body class="bg-slate-50 text-slate-900 antialiased font-sans min-h-screen selection:bg-brand-700 selection:text-white text-xs">
+    <!-- Preserved Navbar/Header Fragment -->
+    <div th:replace="~{includes/header :: header}"></div>
 
-        <!-- ================= TOP APP BAR ================= -->
-        <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-700 to-sky-500 flex items-center justify-center text-white shadow-md shadow-brand-700/20 flex-shrink-0">
-                    <i class="fa-solid fa-shapes text-xl"></i>
+    <div class="max-w-[98%] mx-auto px-2.5 sm:px-4 lg:px-6 py-2.5 space-y-2.5">
+
+        <!-- ================= ULTRA-COMPACT TOP APP BAR ================= -->
+        <header class="hidden flex flex-wrap items-center justify-between gap-2 bg-white border border-slate-200/80 rounded-lg px-3 py-2 shadow-sm">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-700 to-sky-500 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                    <i class="fa-solid fa-shapes text-xs"></i>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900" id="greetingText">Welcome back</h1>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-                            Production v4.0
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-0.5">Velocity Corporate Ecosystem &bull; Real-time Operations Console</p>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-slate-900" id="greetingText">Welcome back</h1>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>v4.0
+                    </span>
+                    <span class="hidden md:inline text-[11px] text-slate-400">&bull; Resource &amp; Operations Console</span>
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2.5">
-                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 border border-slate-200 text-xs font-semibold text-slate-600">
+            <div class="flex items-center gap-1.5">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100/80 border border-slate-200 text-[10.5px] font-semibold text-slate-600">
                     <i class="fa-regular fa-calendar text-slate-400"></i>
                     <span id="todayDate">&mdash;</span>
                 </div>
-                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-xs font-bold text-emerald-700">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    Core Engines Active
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50/80 border border-emerald-200/60 text-[10.5px] font-bold text-emerald-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active
                 </div>
             </div>
         </header>
 
-        <!-- ================= LIVE ANNOUNCEMENT TICKER ================= -->
-        <div class="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center h-12">
-            <div class="absolute left-0 top-0 bottom-0 z-20 px-4 bg-white/95 backdrop-blur border-r border-slate-100 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-brand-700 shadow-[4px_0_12px_rgba(0,0,0,0.02)]">
-                <i class="fa-solid fa-bolt text-brand-600 animate-bounce"></i>
-                <span class="hidden sm:inline">Operational Pulse</span>
+        <!-- ================= SLIM ANNOUNCEMENT TICKER ================= -->
+        <div class="hidden relative overflow-hidden bg-white border border-slate-200/80 rounded-lg shadow-sm flex items-center h-7">
+            <div class="absolute left-0 top-0 bottom-0 z-20 px-2.5 bg-white/95 backdrop-blur border-r border-slate-100 flex items-center gap-1 font-bold text-[9.5px] uppercase tracking-wider text-brand-700">
+                <i class="fa-solid fa-bolt text-amber-500"></i>
+                <span class="hidden sm:inline">Pulse</span>
             </div>
-            <div class="overflow-hidden w-full pl-28 sm:pl-48">
-                <div class="inline-flex whitespace-nowrap animate-[marquee_45s_linear_infinite] hover:[animation-play-state:paused] py-2" id="celebrationTicker">
-                    <!-- Dynamic updates populated via JS -->
+            <div class="overflow-hidden w-full pl-14 sm:pl-20">
+                <div class="inline-flex whitespace-nowrap animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused]" id="celebrationTicker">
+                    <!-- Populated via JS -->
                 </div>
             </div>
         </div>
 
-        <!-- ================= STATS SECTION: ALL 6 VERTICALS ================= -->
-        <section sec:authorize="hasAnyAuthority('admin','hr')" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        <!-- ================= 1. HIGH-DENSITY KPI TILES (JS RENDERED) ================= -->
+        <section sec:authorize="hasAnyAuthority('admin','hr')" id="kpiTilesGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+            <!-- Populated dynamically via JS renderKpiTiles() -->
+        </section>
+
+        <!-- ================= 2. QUICK ACCESS SINGLE-ROW BUTTON BAR ================= -->
+        <section class="bg-white border border-slate-200/80 rounded-lg px-3 py-2 shadow-sm">
+            <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-bolt text-amber-500 text-[11px]"></i>
+                    <h2 class="text-[11px] font-extrabold text-slate-900 tracking-tight uppercase">Quick Access</h2>
+                </div>
+                <button id="open-modal-btn" type="button" sec:authorize="hasAnyAuthority('admin','hr')" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-brand-700 hover:bg-brand-600 text-white text-[10px] font-bold transition-colors cursor-pointer">
+                    <i class="fa-solid fa-plus text-[9px]"></i> New Project
+                </button>
+            </div>
+            <div id="quickAccessRow" class="flex items-stretch gap-1.5 overflow-x-auto pb-0.5 quick-scroll">
+                <!-- Populated dynamically via JS renderQuickAccessButtons() -->
+            </div>
+        </section>
+
+        <!-- ================= 3. COMPACT HOURS & CAPACITY ANALYTICS ================= -->
+        <section sec:authorize="hasAnyAuthority('admin','hr')" class="grid grid-cols-1 lg:grid-cols-12 gap-2.5">
             
-            <!-- 1. Workforce -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-brand-500/40 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">Workforce</span>
-                    <span class="w-7 h-7 rounded-lg bg-blue-50 text-brand-700 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-users"></i>
-                    </span>
+            <!-- Section A: Employees Booked Hours vs Target Hours (4 Cols) -->
+            <div class="lg:col-span-4 bg-white border border-slate-200/80 rounded-lg p-2.5 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-[11px] font-bold text-slate-900 uppercase tracking-wide">Employees: Booked vs Target</h3>
+                        <p class="text-[10px] text-slate-400">Weekly hours per contributor</p>
+                    </div>
+                    <div class="flex items-center gap-1 text-[9.5px] font-bold">
+                        <span class="px-1 py-0.5 rounded bg-emerald-50 text-emerald-700">&ge;100%</span>
+                        <span class="px-1 py-0.5 rounded bg-brand-50 text-brand-700">90%</span>
+                        <span class="px-1 py-0.5 rounded bg-amber-50 text-amber-700">&lt;90%</span>
+                    </div>
                 </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="activeEmployees">--</div>
-                <div id="active" class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"></div>
+                <div id="empHoursProgressList" class="space-y-1.5 mt-2 max-h-44 overflow-y-auto pr-1 quick-scroll">
+                    <!-- Populated dynamically via JS renderEmployeeHours() -->
+                </div>
             </div>
 
-            <!-- 2. Leaves -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-amber-400/50 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">Pending Leaves</span>
-                    <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-regular fa-calendar-xmark"></i>
-                    </span>
+            <!-- Section B: Team Lead Target vs Booked Hours (4 Cols) -->
+            <div class="lg:col-span-4 bg-white border border-slate-200/80 rounded-lg p-2.5 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-[11px] font-bold text-slate-900 uppercase tracking-wide">Team Lead: Target vs Booked</h3>
+                        <p class="text-[10px] text-slate-400">Pod-level cumulative hours</p>
+                    </div>
+                    <span class="text-[9.5px] font-bold text-brand-700 bg-brand-50 px-1.5 py-0.5 rounded">Current Week</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="pendingLeaves">--</div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 mt-1">
-                    <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Action required
-                </span>
+                <div id="leadHoursProgressList" class="space-y-1.5 mt-2 max-h-44 overflow-y-auto pr-1 quick-scroll">
+                    <!-- Populated dynamically via JS renderTeamLeadHours() -->
+                </div>
             </div>
 
-            <!-- 3. IT Tickets -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-indigo-400/50 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">IT Tickets</span>
-                    <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-headset"></i>
-                    </span>
+            <!-- Section C: Booked vs Available Hours Trend (4 Cols) -->
+            <div class="lg:col-span-4 bg-white border border-slate-200/80 rounded-lg p-2.5 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-[11px] font-bold text-slate-900 uppercase tracking-wide">Booked vs Avail Trend</h3>
+                        <p class="text-[10px] text-slate-400">6-Week capacity bandwidth</p>
+                    </div>
+                    <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700">Hrs</span>
                 </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="pendingIT">--</div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 mt-1">
-                    <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Open Incidents
-                </span>
-            </div>
-
-            <!-- 4. Hiring & Talent Pipeline -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-emerald-400/50 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">Hiring Pipeline</span>
-                    <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </span>
+                <div class="relative w-full h-44 mt-2">
+                    <canvas id="bookedVsAvailChart"></canvas>
                 </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="openPositions">--</div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 mt-1" id="candidatesActive">
-                    -- candidates active
-                </span>
-            </div>
-
-            <!-- 5. Separation / Attrition -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-400/50 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">Attrition (YTD)</span>
-                    <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </span>
-                </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="seperatedEmployees">--</div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 mt-1" id="attritionRateTrend">
-                    <i class="fa-solid fa-arrow-trend-down text-[9px]"></i> --% rate
-                </span>
-            </div>
-
-            <!-- 6. Delivery & Performance -->
-            <div class="group relative bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-purple-400/50 transition-all duration-200">
-                <div class="flex items-center justify-between text-slate-500 mb-2">
-                    <span class="text-xs font-semibold tracking-wide">Active Projects</span>
-                    <span class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-diagram-project"></i>
-                    </span>
-                </div>
-                <div class="text-2xl font-black text-slate-900 tracking-tight" id="activeProjects">--</div>
-                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-1" id="projectsOnTrack">
-                    -- on schedule
-                </span>
             </div>
 
         </section>
 
-        <!-- ================= LIVE METRICS SUITE ================= -->
-        <section sec:authorize="hasAnyAuthority('admin','hr')" class="space-y-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-base font-bold text-slate-900">Enterprise Visual Analytics</h2>
-                    <p class="text-xs text-slate-500">Aggregated live feeds across resource nodes</p>
-                </div>
-            </div>
-
-            <!-- Charts Row 1: 4 Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                <!-- Attendance Dynamics -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Attendance 8W Trend</h3>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Weekly</span>
-                    </div>
-                    <div class="relative w-full h-36">
-                        <canvas id="attendanceChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Department Density -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Headcount Density</h3>
-                        <i class="fa-solid fa-chart-pie text-slate-400 text-xs"></i>
-                    </div>
-                    <div class="relative w-full h-36">
-                        <canvas id="deptChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Leave Distribution -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">Leave Distribution</h3>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Qtr</span>
-                    </div>
-                    <div class="relative w-full h-36">
-                        <canvas id="leaveTypeChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- IT Ticket SLA Status -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase">IT Incident Queue</h3>
-                        <i class="fa-solid fa-ticket-simple text-slate-400 text-xs"></i>
-                    </div>
-                    <div class="relative w-full h-36">
-                        <canvas id="itStatusChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Row 2: 2 Column Layout (Delivery & Performance) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                
-                <!-- Financial Execution: Project Budget vs Actual -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm lg:col-span-2">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Project Budget vs. Actual Burn</h3>
-                            <p class="text-xs text-slate-500">Allocated capital vs. real expenditure per deliverable</p>
-                        </div>
-                        <div class="flex items-center gap-3 text-xs font-semibold text-slate-600">
-                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-brand-700"></span>Budget</span>
-                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span>Actual</span>
-                        </div>
-                    </div>
-                    <div class="relative w-full h-52">
-                        <canvas id="budgetChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Performance Benchmarks -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-bold text-slate-900 tracking-tight">KPI Department Targets</h3>
-                        <i class="fa-solid fa-bullseye text-brand-700 text-xs"></i>
-                    </div>
-                    <div id="perfCompare" class="space-y-3 flex-1 flex flex-col justify-center">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= ACTIONS & ACTIVITY CONSOLE ================= -->
-        <section class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <!-- ================= 4. COMPACT WORKSPACE: PENDING LEAVES & LIVE LOG ================= -->
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-2.5">
             
-            <!-- Left Console: Quick Command Grid & Notices (8 Cols) -->
-            <div class="xl:col-span-8 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-base font-bold text-slate-900">Operational Actions</h2>
-                    <span class="text-xs text-slate-500">Direct Navigation Shortlinks</span>
-                </div>
-
-                <!-- Action Tiles Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    
-                    <a href="/leaves/apply" class="group bg-white border border-slate-200/80 hover:border-brand-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-brand-700 group-hover:scale-110 group-hover:bg-brand-700 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-calendar-plus text-base"></i>
+            <!-- Left & Center Console (8 Cols): Compact Pending Leaves Table -->
+            <div class="xl:col-span-8">
+                <div id="pending-leaves-section" sec:authorize="hasAnyAuthority('admin','hr')" class="bg-white border border-slate-200/80 rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
+                    <div class="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            <h2 class="text-[11px] font-bold text-slate-900 uppercase tracking-wide">Pending Leave Requests</h2>
+                            <span id="pendingLeavePill" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">0</span>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Apply Leave</p>
-                            <span class="text-[10px] text-slate-500">Time off request</span>
-                        </div>
-                    </a>
-
-                    <a href="/myTasks" class="group bg-white border border-slate-200/80 hover:border-emerald-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="relative w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-fingerprint text-base"></i>
-                            <span id="clock-status-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900" id="clock-status-text">Attendance</p>
-                            <span class="text-[10px] text-slate-500">Clock & shifts</span>
-                        </div>
-                    </a>
-
-                    <button sec:authorize="hasAnyAuthority('admin','hr')" id="open-modal-btn" type="button" class="group bg-white border border-slate-200/80 hover:border-indigo-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
-                        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-diagram-project text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Log Project</p>
-                            <span class="text-[10px] text-slate-500">Create deliverable</span>
-                        </div>
-                    </button>
-
-                    <a sec:authorize="hasAnyAuthority('admin')" href="/admin/addemployee" class="group bg-white border border-slate-200/80 hover:border-purple-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-user-plus text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Onboarding</p>
-                            <span class="text-[10px] text-slate-500">Add candidate</span>
-                        </div>
-                    </a>
-
-                    <a href="/performance" class="group bg-white border border-slate-200/80 hover:border-amber-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-award text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">KPI & Reviews</p>
-                            <span class="text-[10px] text-slate-500">Quarterly marks</span>
-                        </div>
-                    </a>
-
-                    <a href="/separtion/resign" class="group bg-white border border-slate-200/80 hover:border-rose-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-person-walking-dashed-line-arrow-right text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Separation</p>
-                            <span class="text-[10px] text-slate-500">Resignation / Exit</span>
-                        </div>
-                    </a>
-
-                    <a sec:authorize="hasAnyAuthority('admin','hr')" href="/admin/generateLetters" class="group bg-white border border-slate-200/80 hover:border-cyan-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-cyan-50 text-cyan-600 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-file-signature text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Letters</p>
-                            <span class="text-[10px] text-slate-500">Templates & dispatch</span>
-                        </div>
-                    </a>
-
-                    <a sec:authorize="hasAnyAuthority('admin','hr')" href="/admin/resourceManager" class="group bg-white border border-slate-200/80 hover:border-teal-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                        <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 group-hover:scale-110 group-hover:bg-teal-600 group-hover:text-white transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-network-wired text-base"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-900">Resources</p>
-                            <span class="text-[10px] text-slate-500">Hardware & Access</span>
-                        </div>
-                    </a>
-
-                </div>
-
-                <!-- Strategic Advisory Card -->
-                <div class="bg-gradient-to-r from-brand-700 to-brand-800 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                            <i class="fa-solid fa-bell-concierge text-white"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-brand-100">Performance Assessment Windows Open</h4>
-                            <p class="text-xs text-white/80 mt-0.5">Mid-Year reviews are now officially live. Coordinate ratings with Leads before the 28th.</p>
-                        </div>
+                        <a href="/leaves/manage" class="text-[10.5px] font-bold text-brand-700 hover:underline">Manage All &rarr;</a>
                     </div>
-                    <a href="/performance" class="px-4 py-2 rounded-xl bg-white text-brand-800 hover:bg-brand-50 text-xs font-bold whitespace-nowrap shadow-sm transition-colors">Complete Forms &rarr;</a>
-                </div>
 
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-[9.5px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/40">
+                                    <th class="py-1.5 px-3">Employee</th>
+                                    <th class="py-1.5 px-2.5">Type</th>
+                                    <th class="py-1.5 px-2.5">Duration</th>
+                                    <th class="py-1.5 px-2.5">Days</th>
+                                    <th class="py-1.5 px-2.5 hidden sm:table-cell">Reason</th>
+                                    <th class="py-1.5 px-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingLeavesTableBody" class="divide-y divide-slate-100 text-[11px]">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Right Feed: Real-time Live Log & Deadlines (4 Cols) -->
-            <div class="xl:col-span-4 space-y-4">
-                
-                <!-- Live Event Stream -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Live Audit Activity</h3>
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <!-- Right Feed (4 Cols): Live Audit Log -->
+            <div class="xl:col-span-4">
+                <div class="bg-white border border-slate-200/80 rounded-lg p-2.5 shadow-sm h-full flex flex-col">
+                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                        <h3 class="text-[11px] font-bold text-slate-900 uppercase tracking-wide">Live Audit Activity</h3>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                     </div>
-                    <div id="activityFeed" class="divide-y divide-slate-100 max-h-56 overflow-y-auto space-y-2 mt-2 pr-1">
+                    <div id="activityFeed" class="divide-y divide-slate-100 max-h-52 overflow-y-auto mt-1 pr-1 flex-1 quick-scroll">
                         <!-- Populated by JS -->
                     </div>
                 </div>
-
-                <!-- Top Ranked Contributors -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Top KPI Performers</h3>
-                        <span class="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full">Quarterly</span>
-                    </div>
-                    <div id="topPerformers" class="space-y-3 mt-3">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Deadlines -->
-                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Upcoming Milestones</h3>
-                        <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
-                    </div>
-                    <div id="upcomingDeadlines" class="space-y-2.5 mt-3">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
             </div>
 
         </section>
 
     </div>
 
-    <!-- ================= ADD PROJECT MODAL ================= -->
-    <div id="add-project-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
+    <!-- ================= COMPACT ADD PROJECT MODAL ================= -->
+    <div id="add-project-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 transition-all duration-200">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
             
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center text-xs font-bold">
+            <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-md bg-brand-50 text-brand-700 flex items-center justify-center text-[11px] font-bold">
                         <i class="fa-solid fa-plus"></i>
                     </div>
-                    <h3 class="font-bold text-sm text-slate-900">Initiate Project / Pilot</h3>
+                    <h3 class="font-bold text-xs text-slate-900">Initiate Project / Allotment</h3>
                 </div>
-                <button type="button" id="cancel-add-project-icon" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-sm"></i>
+                <button type="button" id="cancel-add-project-icon" class="w-6 h-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form id="add-project-form" class="p-6 space-y-4">
+            <form id="add-project-form" class="p-4 space-y-2.5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Project Name</label>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Project Name</label>
                     <input type="text" name="projectName" required placeholder="e.g. Geodetic Cloud Platform 3.0"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                           class="w-full px-2.5 py-1.5 rounded-md border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Deliverable Type</label>
-                        <select id="project-type" name="projectType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Deliverable Type</label>
+                        <select id="project-type" name="projectType" class="w-full px-2.5 py-1.5 rounded-md border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
                             <option value="Project">Standard Project</option>
-                            <option value="Pilot">R&D Pilot</option>
+                            <option value="Pilot">R&amp;D Pilot</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Department Category</label>
-                        <select id="category" name="categoryId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Department Category</label>
+                        <select id="category" name="categoryId" required class="w-full px-2.5 py-1.5 rounded-md border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
                             <option value="">Select Category</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Designated Lead</label>
-                        <select id="project-lead" name="projectLeadId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Designated Lead</label>
+                        <select id="project-lead" name="projectLeadId" required class="w-full px-2.5 py-1.5 rounded-md border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
                             <option value="">Select Lead</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Client Stakeholder</label>
-                        <select id="associated-client" name="clientId" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Client Stakeholder</label>
+                        <select id="associated-client" name="clientId" required class="w-full px-2.5 py-1.5 rounded-md border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700 transition">
                             <option value="">Select Client</option>
                         </select>
                     </div>
                 </div>
 
-                <div id="pilot-fields" class="hidden grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div id="pilot-fields" class="hidden grid grid-cols-2 gap-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-md">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Start Date</label>
-                        <input type="date" name="startDate" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Start Date</label>
+                        <input type="date" name="startDate" class="w-full px-2 py-1 rounded border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Target End</label>
-                        <input type="date" name="deadline" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Target End</label>
+                        <input type="date" name="deadline" class="w-full px-2 py-1 rounded border border-slate-200 text-xs focus:ring-1 focus:ring-brand-700">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Estimated Hours</label>
-                        <input type="text" name="hours" placeholder="40.0" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs">
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Estimated Hours</label>
+                        <input type="text" name="hours" placeholder="40.0" class="w-full px-2 py-1 rounded border border-slate-200 text-xs">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Repository Path</label>
-                        <input type="text" name="filepath" placeholder="https://git..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs">
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Repository Path</label>
+                        <input type="text" name="filepath" placeholder="https://git..." class="w-full px-2 py-1 rounded border border-slate-200 text-xs">
                     </div>
                 </div>
 
                 <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
 
-                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" id="cancel-add-project" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition">Cancel</button>
-                    <button type="submit" id="submit-btn" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-brand-700 hover:bg-brand-600 text-white shadow-md shadow-brand-700/20 transition-all">
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" id="cancel-add-project" class="px-3 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition">Cancel</button>
+                    <button type="submit" id="submit-btn" class="px-3.5 py-1.5 rounded-md text-xs font-bold bg-brand-700 hover:bg-brand-600 text-white shadow-sm transition-all">
                         Register Project
                     </button>
                 </div>
@@ -508,354 +308,467 @@
     <!-- Messenger fragment integration preserved -->
     <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
-    <!-- Scripts -->
+    <!-- Core Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        if (typeof window.Chart === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"><\/script>');
+        }
+    </script>
     <script th:src="@{/js/script.js}" type="text/javascript"></script>
 
     <script th:inline="javascript">
-        /* Chart.js Configuration Setup */
-        if (window.Chart) {
-            Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
-            Chart.defaults.font.size = 10.5;
-            Chart.defaults.color = '#64748b';
-            Chart.defaults.plugins.legend.display = false;
-        }
-
-        const PALETTE = ['#1034A6', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#94a3b8'];
         const CHARTS = {};
-
         function makeChart(canvasId, config) {
+            if (typeof window.Chart === 'undefined') return null;
             if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
             const ctx = document.getElementById(canvasId);
             if (!ctx) return null;
-            CHARTS[canvasId] = new Chart(ctx, config);
+            CHARTS[canvasId] = new window.Chart(ctx, config);
             return CHARTS[canvasId];
         }
+getData();
+        function getData(){
+            $.ajax({
+                url:'/admin/reports/getCurrentMonthTargetData',
+                type:'GET',
+                dataType:'JSON',
+                success:(res)=>{
+                    console.log(res);
+                },
+                error:(err)=>{
+                    console.log(err);
+                }
+            })
+        }
 
-        /* Enterprise Mock Data Backup */
-        const MOCK = {
+        /* ================= CENTRALIZED MOCK DATA STORE ================= */
+        const MOCK_DATA = {
             stats: {
-                pendingLeaves: 7,
+                activeAllotments: 34,
+                allotmentCapacityPct: 89,
+                activeProjects: 16,
                 pendingIT: 4,
+                criticalTickets: 1,
+                bookedHours: 1420,
+                availableHours: 1600,
                 activeEmployees: 86,
                 activeMale: 54,
                 activeFemale: 32,
-                openPositions: 9,
-                activeCandidates: 28,
-                separated: 5,
-                attritionRatePct: 3.8,
-                avgAttendancePct: 94.2,
-                attendanceDeltaPct: 2.1,
-                activeProjects: 16,
-                projectsOnTrack: 13
+                pendingLeaves: 5,
+                targetAttainmentPct: 93.4
             },
-            departments: {
-                labels: ['Engineering', 'Spatial GIS', 'Operations', 'Quality Assurance', 'Sales'],
-                values: [38, 22, 14, 8, 4]
-            },
-            attendance: {
-                labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8'],
-                values: [92, 91, 94, 93, 95, 94, 96, 94]
-            },
-            leaveTypes: {
-                labels: ['Casual', 'Privilege', 'Sick', 'Comp-Off'],
-                values: [42, 28, 20, 10]
-            },
-            itTickets: {
-                labels: ['New', 'In-Progress', 'Escalated', 'Resolved'],
-                values: [4, 7, 2, 29]
-            },
-            budget: {
-                labels: ['GIS Migration', 'Survey Automation', 'HR Cloud', 'API Gateway', 'Infra Tuning'],
-                budget: [14.0, 9.5, 6.0, 11.0, 5.5],
-                actual: [12.8, 10.2, 5.1, 10.9, 4.8]
-            },
-            teamPerformance: [
-                { name: 'Core GIS Engineering', value: 92, target: 85, color: '#1034A6' },
-                { name: 'Data Pipeline QA', value: 88, target: 80, color: '#22c55e' },
-                { name: 'Survey Ground Ops', value: 81, target: 85, color: '#f59e0b' },
-                { name: 'HR Shared Services', value: 95, target: 90, color: '#8b5cf6' }
+            quickAccessButtons: [
+                { label: 'Resource Manager', href: '/admin/resourceManager', icon: 'fa-users-gear', iconColor: 'text-blue-600', labelColor: 'text-slate-700' },
+                { label: 'Active Projects', href: '/admin/activeProjects', icon: 'fa-sitemap', iconColor: 'text-purple-600', labelColor: 'text-purple-700' },
+                { label: 'Active Allotments', href: '/admin/activeAllotments', icon: 'fa-diagram-project', iconColor: 'text-emerald-600', labelColor: 'text-slate-700' },
+                { label: 'Leaves', href: '/leaves/manage', icon: 'fa-plane-departure', iconColor: 'text-rose-500', labelColor: 'text-slate-700' },
+                { label: 'Target vs Booked', href: '/admin/targetVsBooked', icon: 'fa-clipboard-user', iconColor: 'text-indigo-600', labelColor: 'text-slate-700' },
+                { label: 'Update Hours', href: '/admin/updateHours', icon: 'fa-clock-rotate-left', iconColor: 'text-cyan-600', labelColor: 'text-slate-700' },
+                { label: 'Allotments Created', href: '/admin/allotmentsCreated', icon: 'fa-share-nodes', iconColor: 'text-violet-600', labelColor: 'text-slate-700' },
+                { label: 'Invoice', href: '/admin/invoice', icon: 'fa-file-invoice-dollar', iconColor: 'text-emerald-600', labelColor: 'text-slate-700' },
+                { label: 'Month-Wise Hours', href: '/admin/monthWiseHours', icon: 'fa-user-clock', iconColor: 'text-sky-500', labelColor: 'text-slate-700' },
+                { label: 'Employee-Wise Hours', href: '/admin/employeeWiseHours', icon: 'fa-user-check', iconColor: 'text-lime-600', labelColor: 'text-slate-700' },
+                { label: 'Project-Wise Hours', href: '/admin/projectWiseHours', icon: 'fa-business-time', iconColor: 'text-blue-600', labelColor: 'text-blue-600' },
+                { label: 'Booked Hours(Employee)', href: '/admin/bookedHoursEmployee', icon: 'fa-history', iconColor: 'text-purple-500', labelColor: 'text-slate-700' },
+                { label: 'Booked Hours(Allotment)', href: '/admin/bookedHoursAllotment', icon: 'fa-clock', iconColor: 'text-amber-500', labelColor: 'text-slate-700' },
+                { label: 'Extra Hours', href: '/admin/extraHours', icon: 'fa-plus', iconColor: 'text-emerald-600', labelColor: 'text-slate-700' }
             ],
-            activity: [
-                { icon: 'fa-rocket', bg: 'bg-blue-50', color: 'text-brand-700', title: 'New Drone Fleet Mapping Logged', detail: 'Project ID: #782 - Geospatial', time: '2 hours ago' },
-                { icon: 'fa-calendar-check', bg: 'bg-emerald-50', color: 'text-emerald-600', title: 'Casual Leave Approved', detail: 'Pavana C A - 2 Days', time: '4 hours ago' },
-                { icon: 'fa-user-check', bg: 'bg-purple-50', color: 'text-purple-600', title: 'Candidate Clearance Sent', detail: 'DevOps Lead - Offer Issued', time: 'Yesterday' },
-                { icon: 'fa-shield-halved', bg: 'bg-amber-50', color: 'text-amber-600', title: 'SOC-2 Compliance Audit Passed', detail: 'Infra Systems Verified', time: '2 days ago' }
+            employeeHours: [
+                { name: 'Sneha Kulkarni', role: 'Photogrammetry', booked: 44, target: 40 },
+                { name: 'Ananya Rao', role: 'Backend Java', booked: 42, target: 40 },
+                { name: 'Meera Verma', role: 'Spatial GIS', booked: 41, target: 40 },
+                { name: 'Pooja Nair', role: 'QA / QC', booked: 40, target: 40 },
+                { name: 'Karthik Iyer', role: 'LiDAR Ops', booked: 39, target: 40 },
+                { name: 'Arjun Deshmukh', role: 'BIM Modeling', booked: 38, target: 40 },
+                { name: 'Rohan Menon', role: 'Utility Mapping', booked: 35, target: 40 }
             ],
-            topPerformers: [
-                { name: 'Ananya Rao', role: 'Staff Backend Lead', score: 98, initials: 'AR', color: 'bg-brand-700' },
-                { name: 'Karthik Iyer', role: 'Photogrammetry Lead', score: 94, initials: 'KI', color: 'bg-emerald-600' },
-                { name: 'Divyashree NK', role: 'Finance Controller', score: 93, initials: 'DN', color: 'bg-purple-600' }
+            teamLeads: [
+                { lead: 'Karthik Iyer', pod: 'Photogrammetry (7)', booked: 285, target: 280 },
+                { lead: 'Ananya Rao', pod: 'Backend Engineering (8)', booked: 312, target: 320 },
+                { lead: 'Manoj Kulkarni', pod: 'Utility Mapping (6)', booked: 253, target: 260 },
+                { lead: 'Deepa Nair', pod: 'QA / QC Ops (6)', booked: 230, target: 240 },
+                { lead: 'Suresh Gowda', pod: 'LiDAR / GIS (9)', booked: 315, target: 360 }
             ],
-            deadlines: [
-                { name: 'LiDAR Feature Extraction Deliverable', due: 'In 2 days', urgency: 'urgent' },
-                { name: 'Quarterly HR Performance Review Sign-off', due: 'In 4 days', urgency: 'soon' },
-                { name: 'Client Cloud Portal UAT Deployment', due: 'In 10 days', urgency: 'normal' }
-            ]
+            bookedVsAvailableTrend: {
+                labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+                booked: [1340, 1380, 1410, 1395, 1445, 1420],
+                available: [1560, 1560, 1600, 1600, 1600, 1600]
+            },
+            pendingLeavesList: [
+                { id: 101, empName: 'Pavana C A', role: 'GIS Analyst', type: 'Casual Leave', dates: 'Nov 21 - Nov 22', days: '2.0', reason: 'Family function in Mysuru' },
+                { id: 102, empName: 'Rohan Kulkarni', role: 'Java Developer', type: 'Privilege Leave', dates: 'Nov 25 - Nov 28', days: '4.0', reason: 'Personal travel' },
+                { id: 103, empName: 'Sneha Hegde', role: 'QA Engineer', type: 'Sick Leave', dates: 'Nov 20', days: '1.0', reason: 'Dental appointment' },
+                { id: 104, empName: 'Darshan Gowda', role: 'LiDAR Tech', type: 'Comp-Off', dates: 'Nov 24', days: '1.0', reason: 'Weekend client delivery offset' },
+                { id: 105, empName: 'Nandini Bhat', role: 'BIM Modeler', type: 'Casual Leave', dates: 'Nov 27', days: '0.5', reason: 'Half-day personal work' }
+            ],
+            activity: [ 
+                { icon: 'fa-clock', bg: 'bg-blue-50', color: 'text-brand-700', title: 'Allotment #782 Hours Logged', detail: 'LiDAR Extraction - +38.5 hrs booked', time: '25m ago' },
+                { icon: 'fa-calendar-check', bg: 'bg-emerald-50', color: 'text-emerald-600', title: 'Comp-Off Leave Approved', detail: 'Karthik Iyer - 1.0 Day', time: '2h ago' },
+                { icon: 'fa-headset', bg: 'bg-indigo-50', color: 'text-indigo-600', title: 'IT Ticket #IT-409 Opened', detail: 'Workstation GPU driver update', time: '4h ago' },
+                { icon: 'fa-layer-group', bg: 'bg-purple-50', color: 'text-purple-600', title: 'New Allotment Assigned', detail: '3D City Modeling - 4 Resources', time: '1d ago' },
+                { icon: 'fa-file-circle-check', bg: 'bg-cyan-50', color: 'text-cyan-600', title: 'Timesheet Batch Verified', detail: 'Photogrammetry Pod - 285h approved', time: '1d ago' }
+            ],
+            tickerEvents: [
+                { name: 'Allotment Utilization', type: '89% Active Bandwidth', icon: 'fa-layer-group', color: 'text-brand-700' },
+                { name: 'Divyashree NK', type: 'Q3 Financial Sign-off Complete', icon: 'fa-medal', color: 'text-amber-500' },
+                { name: 'Photogrammetry 4.0', type: 'Production Deploy Complete', icon: 'fa-rocket', color: 'text-emerald-600' },
+                { name: 'Timesheet Cutoff', type: 'Friday 6:00 PM IST', icon: 'fa-clock', color: 'text-purple-600' }
+            ],
+            modalDropdowns: {
+                categories: [
+                    { categoryId: 1, catagoryShortname: 'GIS & Spatial' },
+                    { categoryId: 2, catagoryShortname: 'LiDAR / MLS' },
+                    { categoryId: 3, catagoryShortname: 'Photogrammetry' },
+                    { categoryId: 4, catagoryShortname: 'Enterprise Software' }
+                ],
+                leads: [
+                    { eid: 'EMP01', name: 'Ananya Rao' },
+                    { eid: 'EMP02', name: 'Karthik Iyer' },
+                    { eid: 'EMP03', name: 'Suresh Gowda' },
+                    { eid: 'EMP04', name: 'Deepa Nair' }
+                ],
+                clients: [
+                    { cid: 'CL01', clientId: 'GeoSpatial Corp EU' },
+                    { cid: 'CL02', clientId: 'Metro Infrastructure Ltd' },
+                    { cid: 'CL03', clientId: 'Nordic Utility Grid' }
+                ]
+            }
         };
 
-        /* Stats Renderers */
-        function renderTopStats(s) {
-            if (s.pendingLeaves != null) $('#pendingLeaves').text(s.pendingLeaves);
-            if (s.pendingIT != null) $('#pendingIT').text(s.pendingIT);
-            if (s.activeEmployees != null) $('#activeEmployees').text(s.activeEmployees);
-            if (s.activeMale != null && s.activeFemale != null) {
-                $('#active').html(`<span>Male: ${s.activeMale}</span> &bull; <span>Female: ${s.activeFemale}</span>`);
-            }
-            if (s.openPositions != null) $('#openPositions').text(s.openPositions + ' Roles');
-            if (s.activeCandidates != null) $('#candidatesActive').text(`${s.activeCandidates} active candidates`);
-            if (s.separated != null) $('#seperatedEmployees').text(s.separated);
-            if (s.attritionRatePct != null) $('#attritionRateTrend').html(`<i class="fa-solid fa-arrow-trend-down text-[9px]"></i> ${s.attritionRatePct}% annualized`);
-            if (s.activeProjects != null) $('#activeProjects').text(s.activeProjects);
-            if (s.projectsOnTrack != null) $('#projectsOnTrack').text(`${s.projectsOnTrack} on schedule`);
+        /* ================= REUSABLE COMPACT PROGRESS ROW BUILDER ================= */
+        function buildProgressRow(title, subtitle, booked, target) {
+            const pct = target > 0 ? Math.round((booked / target) * 100) : 0;
+            const barWidth = Math.min(100, pct);
+            const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 90 ? 'bg-brand-700' : 'bg-amber-500';
+            const badgeStyle = pct >= 100
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
+                : pct >= 90
+                    ? 'bg-brand-50 text-brand-700 border-brand-200/70'
+                    : 'bg-amber-50 text-amber-700 border-amber-200/70';
+
+            return `
+                <div class="group">
+                    <div class="flex items-center justify-between text-[10.5px] mb-0.5">
+                        <div class="flex items-center gap-1 min-w-0">
+                            <span class="font-bold text-slate-800 truncate">${title}</span>
+                            ${subtitle ? `<span class="text-[9.5px] text-slate-400 hidden sm:inline truncate">&bull; ${subtitle}</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <span class="font-semibold text-slate-600">${booked}h<span class="text-slate-400">/${target}h</span></span>
+                            <span class="px-1 rounded border text-[9.5px] font-extrabold ${badgeStyle}">${pct}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width: ${barWidth}%"></div>
+                    </div>
+                </div>
+            `;
         }
 
+        /* ================= 1. RENDER COMPACT KPI TILES VIA JS ================= */
+        function renderKpiTiles(s) {
+            const container = document.getElementById('kpiTilesGrid');
+            if (!container) return;
+
+            const ratioPct = Math.min(100, Math.round((s.bookedHours / s.availableHours) * 100));
+
+            const tiles = [
+                {
+                    title: 'Active Allotments',
+                    icon: 'fa-layer-group',
+                    iconBg: 'bg-blue-50 text-brand-700',
+                    hoverBorder: 'hover:border-brand-700/40',
+                    mainValue: s.activeAllotments,
+                    badge: `<span class="text-[9.5px] font-bold text-brand-700 bg-brand-50 px-1.5 py-0.2 rounded">${s.allotmentCapacityPct}% alloc</span>`,
+                    footer: `<p class="text-[9.5px] text-slate-400 mt-0.5 truncate">Across ${s.activeProjects} active projects</p>`
+                },
+                {
+                    title: 'Active IT Tickets',
+                    icon: 'fa-headset',
+                    iconBg: 'bg-indigo-50 text-indigo-600',
+                    hoverBorder: 'hover:border-indigo-400/50',
+                    mainValue: s.pendingIT,
+                    badge: `<span class="text-[9.5px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded">${s.criticalTickets} urgent</span>`,
+                    footer: `<p class="text-[9.5px] text-slate-400 mt-0.5 truncate">SLA compliance: 96.4%</p>`
+                },
+                {
+                    title: 'Booked / Avail Hrs',
+                    icon: 'fa-stopwatch',
+                    iconBg: 'bg-emerald-50 text-emerald-600',
+                    hoverBorder: 'hover:border-emerald-400/50',
+                    mainValue: `${s.bookedHours.toLocaleString()}h`,
+                    subValue: `/ ${s.availableHours.toLocaleString()}h`,
+                    footer: `
+                        <div class="w-full h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: ${ratioPct}%"></div>
+                        </div>`
+                },
+                {
+                    title: 'Active HRD',
+                    icon: 'fa-users',
+                    iconBg: 'bg-sky-50 text-sky-600',
+                    hoverBorder: 'hover:border-sky-400/50',
+                    mainValue: s.activeEmployees,
+                    badge: `<span class="text-[9.5px] font-semibold text-slate-500">${s.activeMale}M &bull; ${s.activeFemale}F</span>`,
+                    footer: `<p class="text-[9.5px] text-emerald-600 font-semibold mt-0.5 truncate">94.2% present today</p>`
+                },
+                {
+                    title: 'Pending Leaves',
+                    icon: 'fa-regular fa-calendar-xmark',
+                    iconBg: 'bg-amber-50 text-amber-600',
+                    hoverBorder: 'hover:border-amber-400/50',
+                    mainValue: `<span id="tilePendingLeavesVal">${s.pendingLeaves}</span>`,
+                    badge: `<a href="#pending-leaves-section" class="text-[9.5px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.2 rounded transition">Review &darr;</a>`,
+                    footer: `<p class="text-[9.5px] text-slate-400 mt-0.5 truncate">Awaiting approval</p>`
+                },
+                {
+                    title: 'Target Attainment',
+                    icon: 'fa-bullseye',
+                    iconBg: 'bg-purple-50 text-purple-600',
+                    hoverBorder: 'hover:border-purple-400/50',
+                    mainValue: `${s.targetAttainmentPct}%`,
+                    badge: `<span class="text-[9.5px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.2 rounded">On Track</span>`,
+                    footer: `<p class="text-[9.5px] text-slate-400 mt-0.5 truncate">Weekly pod benchmark</p>`
+                }
+            ];
+
+            container.innerHTML = tiles.map(t => `
+                <div class="group bg-white border border-slate-200/80 rounded-lg p-2.5 shadow-sm ${t.hoverBorder} transition-all">
+                    <div class="flex items-center justify-between text-slate-500 mb-0.5">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">${t.title}</span>
+                        <span class="w-5 h-5 rounded ${t.iconBg} flex items-center justify-center text-[10px] flex-shrink-0">
+                            <i class="${t.icon.startsWith('fa-regular') ? t.icon : 'fa-solid ' + t.icon}"></i>
+                        </span>
+                    </div>
+                    <div class="flex items-baseline ${t.subValue ? 'gap-1' : 'justify-between'}">
+                        <span class="text-lg font-extrabold text-slate-900 leading-tight">${t.mainValue}</span>
+                        ${t.subValue ? `<span class="text-[11px] font-semibold text-slate-400">${t.subValue}</span>` : (t.badge || '')}
+                    </div>
+                    ${t.footer}
+                </div>
+            `).join('');
+        }
+
+        /* ================= 2. RENDER ULTRA-COMPACT QUICK ACCESS ROW ================= */
+        function renderQuickAccessButtons() {
+            const row = document.getElementById('quickAccessRow');
+            if (!row) return;
+
+            row.innerHTML = MOCK_DATA.quickAccessButtons.map(btn => `
+                <a href="${btn.href}"
+                   class="group flex-1 min-w-[84px] bg-slate-50/90 hover:bg-white border border-slate-200/60 hover:border-brand-700/40 rounded-md px-2 py-1.5 flex flex-col items-center justify-center text-center gap-1 transition-all duration-150 hover:shadow-sm">
+                    <i class="fa-solid ${btn.icon} ${btn.iconColor} text-xs group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[10px] font-bold ${btn.labelColor} whitespace-nowrap leading-none">${btn.label}</span>
+                </a>
+            `).join('');
+        }
+
+        /* ================= 3. FETCH STATS WITH MOCK FALLBACK ================= */
         function fetchAdminStats() {
-            renderTopStats(MOCK.stats);
+            renderKpiTiles(MOCK_DATA.stats);
             $.ajax({
                 url: '/admin/stats',
                 type: 'GET',
                 dataType: 'json',
                 success: function (r) {
-                    renderTopStats({
-                        pendingLeaves: r.pendingLeaves,
-                        pendingIT: r.pendingtickets,
-                        activeEmployees: r.totalActiveEmployees,
-                        activeMale: r.activeMale,
-                        activeFemale: r.activeFemale,
-                        separated: r.totalSeparated,
-                        attritionRatePct: r.attritionRatePct || MOCK.stats.attritionRatePct,
-                        activeProjects: r.activeProjects || MOCK.stats.activeProjects,
-                        projectsOnTrack: r.projectsOnTrack || MOCK.stats.projectsOnTrack,
-                        openPositions: r.openPositions || MOCK.stats.openPositions,
-                        activeCandidates: r.activeCandidates || MOCK.stats.activeCandidates
-                    });
+                    const merged = {
+                        activeAllotments: r.activeAllotments ?? MOCK_DATA.stats.activeAllotments,
+                        allotmentCapacityPct: r.allotmentCapacityPct ?? MOCK_DATA.stats.allotmentCapacityPct,
+                        activeProjects: r.activeProjects ?? MOCK_DATA.stats.activeProjects,
+                        pendingIT: r.pendingtickets ?? MOCK_DATA.stats.pendingIT,
+                        criticalTickets: r.criticalTickets ?? MOCK_DATA.stats.criticalTickets,
+                        bookedHours: r.bookedHours ?? MOCK_DATA.stats.bookedHours,
+                        availableHours: r.availableHours ?? MOCK_DATA.stats.availableHours,
+                        activeEmployees: r.totalActiveEmployees ?? MOCK_DATA.stats.activeEmployees,
+                        activeMale: r.activeMale ?? MOCK_DATA.stats.activeMale,
+                        activeFemale: r.activeFemale ?? MOCK_DATA.stats.activeFemale,
+                        pendingLeaves: r.pendingLeaves ?? MOCK_DATA.stats.pendingLeaves,
+                        targetAttainmentPct: r.targetAttainmentPct ?? MOCK_DATA.stats.targetAttainmentPct
+                    };
+                    renderKpiTiles(merged);
                 },
-                error: function () { /* Retains MOCK seamlessly */ }
+                error: function () { /* Retains MOCK_DATA seamlessly */ }
             });
         }
 
-        /* Chart Initializations */
+        /* ================= 4. RENDER EMPLOYEES & TEAM LEADS PROGRESS BARS ================= */
+        function renderEmployeeHours() {
+            const container = document.getElementById('empHoursProgressList');
+            if (!container) return;
+            container.innerHTML = MOCK_DATA.employeeHours
+                .map(emp => buildProgressRow(emp.name, emp.role, emp.booked, emp.target))
+                .join('');
+        }
+
+        function renderTeamLeadHours() {
+            const container = document.getElementById('leadHoursProgressList');
+            if (!container) return;
+            container.innerHTML = MOCK_DATA.teamLeads
+                .map(tl => buildProgressRow(tl.lead, tl.pod, tl.booked, tl.target))
+                .join('');
+        }
+
+        /* ================= 5. CHARTS INITIALIZATION ================= */
         function initCharts() {
-            // 1. Attendance Chart
-            makeChart('attendanceChart', {
+            if (typeof window.Chart === 'undefined') {
+                console.warn('Chart.js failed to load; skipping chart rendering.');
+                return;
+            }
+
+            window.Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+            window.Chart.defaults.font.size = 9.5;
+            window.Chart.defaults.color = '#64748b';
+            window.Chart.defaults.plugins.legend.display = false;
+
+            makeChart('bookedVsAvailChart', {
                 type: 'line',
                 data: {
-                    labels: MOCK.attendance.labels,
-                    datasets: [{
-                        data: MOCK.attendance.values,
-                        borderColor: '#1034A6',
-                        backgroundColor: 'rgba(16, 52, 166, 0.06)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#1034A6'
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { min: 70, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            // 2. Department Density
-            makeChart('deptChart', {
-                type: 'doughnut',
-                data: {
-                    labels: MOCK.departments.labels,
-                    datasets: [{
-                        data: MOCK.departments.values,
-                        backgroundColor: PALETTE,
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    cutout: '68%',
-                    maintainAspectRatio: false,
-                    plugins: { tooltip: { boxPadding: 6 } }
-                }
-            });
-
-            // 3. Leave Distribution
-            makeChart('leaveTypeChart', {
-                type: 'pie',
-                data: {
-                    labels: MOCK.leaveTypes.labels,
-                    datasets: [{
-                        data: MOCK.leaveTypes.values,
-                        backgroundColor: ['#1034A6', '#22c55e', '#f59e0b', '#ec4899'],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { tooltip: { boxPadding: 6 } }
-                }
-            });
-
-            // 4. IT Incident Chart
-            makeChart('itStatusChart', {
-                type: 'bar',
-                data: {
-                    labels: MOCK.itTickets.labels,
-                    datasets: [{
-                        data: MOCK.itTickets.values,
-                        backgroundColor: ['#ef4444', '#f59e0b', '#6366f1', '#22c55e'],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            // 5. Budget vs Actual
-            makeChart('budgetChart', {
-                type: 'bar',
-                data: {
-                    labels: MOCK.budget.labels,
+                    labels: MOCK_DATA.bookedVsAvailableTrend.labels,
                     datasets: [
-                        { label: 'Budget ($k)', data: MOCK.budget.budget, backgroundColor: '#1034A6', borderRadius: 6 },
-                        { label: 'Actual ($k)', data: MOCK.budget.actual, backgroundColor: '#f59e0b', borderRadius: 6 }
+                        {
+                            label: 'Available',
+                            data: MOCK_DATA.bookedVsAvailableTrend.available,
+                            borderColor: '#94a3b8',
+                            borderDash: [3, 3],
+                            borderWidth: 1.5,
+                            tension: 0.3,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Booked',
+                            data: MOCK_DATA.bookedVsAvailableTrend.booked,
+                            borderColor: '#1034A6',
+                            backgroundColor: 'rgba(16, 52, 166, 0.08)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 2.5,
+                            pointBackgroundColor: '#1034A6'
+                        }
                     ]
                 },
                 options: {
                     maintainAspectRatio: false,
+                    plugins: { tooltip: { mode: 'index', intersect: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        y: { min: 1100, grid: { color: '#f1f5f9' } },
                         x: { grid: { display: false } }
                     }
                 }
             });
+        }
 
-            // 6. Benchmark targets
-            const perfEl = document.getElementById('perfCompare');
-            if (perfEl) {
-                perfEl.innerHTML = MOCK.teamPerformance.map(t => `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs font-semibold">
-                            <span class="text-slate-700">${t.name}</span>
-                            <span class="${t.value >= t.target ? 'text-emerald-600' : 'text-amber-600'} font-bold">${t.value}% / ${t.target}%</span>
-                        </div>
-                        <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden relative">
-                            <div class="h-full rounded-full" style="width: ${t.value}%; background-color: ${t.color}"></div>
-                        </div>
-                    </div>
-                `).join('');
+        /* ================= 6. COMPACT PENDING LEAVES TABLE ================= */
+        function renderPendingLeaves(leaves) {
+            const tbody = document.getElementById('pendingLeavesTableBody');
+            const pill = document.getElementById('pendingLeavePill');
+            if (pill) pill.textContent = leaves.length;
+            if (!tbody) return;
+
+            if (!leaves || leaves.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-5 text-center text-[11px] text-slate-400">All pending leave requests have been processed.</td></tr>`;
+                return;
+            }
+
+            const badgeMap = {
+                'Casual Leave': 'bg-blue-50 text-brand-700 border-blue-200/70',
+                'Privilege Leave': 'bg-purple-50 text-purple-700 border-purple-200/70',
+                'Sick Leave': 'bg-rose-50 text-rose-700 border-rose-200/70',
+                'Comp-Off': 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
+            };
+
+            tbody.innerHTML = leaves.map(l => {
+                const badge = badgeMap[l.type] || 'bg-slate-100 text-slate-700 border-slate-200';
+                return `
+                    <tr id="leave-row-${l.id}" class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-1.5 px-3">
+                            <span class="font-bold text-slate-900">${l.empName}</span>
+                            <span class="text-[9.5px] text-slate-400 ml-1 hidden md:inline">(${l.role})</span>
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                            <span class="inline-flex px-1.5 py-0.2 rounded text-[9.5px] font-bold border ${badge}">${l.type}</span>
+                        </td>
+                        <td class="py-1.5 px-2.5 font-medium text-slate-700 whitespace-nowrap">${l.dates}</td>
+                        <td class="py-1.5 px-2.5 font-extrabold text-slate-900">${l.days}d</td>
+                        <td class="py-1.5 px-2.5 text-slate-500 max-w-[170px] truncate hidden sm:table-cell" title="${l.reason}">${l.reason}</td>
+                        <td class="py-1.5 px-3 text-right whitespace-nowrap">
+                            <button onclick="handleLeaveAction(${l.id}, 'approve')" class="px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white text-[9.5px] font-bold transition mr-0.5" title="Approve">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                            <button onclick="handleLeaveAction(${l.id}, 'reject')" class="px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white text-[9.5px] font-bold transition" title="Reject">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function handleLeaveAction(id, action) {
+            const target = MOCK_DATA.pendingLeavesList.find(item => item.id === id);
+            const row = document.getElementById(`leave-row-${id}`);
+            if (row) {
+                row.style.opacity = '0.35';
+                setTimeout(() => {
+                    MOCK_DATA.pendingLeavesList = MOCK_DATA.pendingLeavesList.filter(item => item.id !== id);
+                    MOCK_DATA.stats.pendingLeaves = MOCK_DATA.pendingLeavesList.length;
+                    renderPendingLeaves(MOCK_DATA.pendingLeavesList);
+                    $('#tilePendingLeavesVal').text(MOCK_DATA.stats.pendingLeaves);
+
+                    if (target) {
+                        MOCK_DATA.activity.unshift({
+                            icon: action === 'approve' ? 'fa-calendar-check' : 'fa-calendar-xmark',
+                            bg: action === 'approve' ? 'bg-emerald-50' : 'bg-rose-50',
+                            color: action === 'approve' ? 'text-emerald-600' : 'text-rose-600',
+                            title: `Leave ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+                            detail: `${target.empName} - ${target.days}d (${target.type})`,
+                            time: 'Now'
+                        });
+                        renderActivityFeed(MOCK_DATA.activity);
+                    }
+                }, 160);
             }
         }
 
-        /* Clock-In Indicator Toggle */
-        function updateClockInVisuals(isActive) {
-            const dot = document.getElementById('clock-status-dot');
-            const text = document.getElementById('clock-status-text');
-            if (isActive) {
-                dot.classList.remove('hidden');
-                text.innerText = 'Clocked In';
-                text.classList.add('text-emerald-700');
-            } else {
-                dot.classList.add('hidden');
-                text.innerText = 'Attendance';
-                text.classList.remove('text-emerald-700');
-            }
-        }
-
-        /* Feeds Renderers */
+        /* ================= 7. COMPACT ACTIVITY FEED & TICKER ================= */
         function renderActivityFeed(items) {
             const el = document.getElementById('activityFeed');
             if (!el) return;
             el.innerHTML = items.map(a => `
-                <div class="flex items-start gap-3 py-1.5">
-                    <div class="w-7 h-7 rounded-lg ${a.bg} ${a.color} flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                <div class="flex items-start gap-2 py-1.5">
+                    <div class="w-5 h-5 rounded ${a.bg} ${a.color} flex items-center justify-center text-[9px] flex-shrink-0 mt-0.5">
                         <i class="fa-solid ${a.icon}"></i>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="text-xs font-bold text-slate-800 leading-tight">${a.title}</p>
-                        <p class="text-[11px] text-slate-500 truncate">${a.detail}</p>
-                        <span class="text-[10px] text-slate-400 font-medium">${a.time}</span>
+                        <p class="text-[10.5px] font-bold text-slate-800 leading-tight truncate">${a.title}</p>
+                        <p class="text-[9.5px] text-slate-500 truncate">${a.detail}</p>
                     </div>
+                    <span class="text-[9px] text-slate-400 font-medium whitespace-nowrap">${a.time}</span>
                 </div>
             `).join('');
-        }
-
-        function renderTopPerformers(items) {
-            const el = document.getElementById('topPerformers');
-            if (!el) return;
-            el.innerHTML = items.map((p, i) => `
-                <div class="flex items-center gap-3">
-                    <span class="w-5 text-xs font-bold text-slate-400">#${i + 1}</span>
-                    <div class="w-8 h-8 rounded-full ${p.color} text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm">
-                        ${p.initials}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-bold text-slate-800 truncate">${p.name}</p>
-                        <p class="text-[10px] text-slate-500 truncate">${p.role}</p>
-                    </div>
-                    <span class="text-xs font-black text-emerald-600">${p.score}%</span>
-                </div>
-            `).join('');
-        }
-
-        function renderDeadlines(items) {
-            const el = document.getElementById('upcomingDeadlines');
-            if (!el) return;
-            el.innerHTML = items.map(d => {
-                const badgeClass = d.urgency === 'urgent' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-700 border-slate-200';
-                return `
-                    <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-                        <p class="text-xs font-medium text-slate-800 truncate">${d.name}</p>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border ${badgeClass} whitespace-nowrap">${d.due}</span>
-                    </div>
-                `;
-            }).join('');
         }
 
         function populateCelebrations() {
             const ticker = document.getElementById('celebrationTicker');
             if (!ticker) return;
-            const events = [
-                { name: 'Sarah Jenkins', type: 'Birthday Today', icon: 'fa-cake-candles', color: 'text-brand-700' },
-                { name: 'David Chen', type: '5th Work Anniversary', icon: 'fa-medal', color: 'text-amber-500' },
-                { name: 'Photogrammetry 4.0 Launch', type: 'Production Deploy Complete', icon: 'fa-rocket', color: 'text-emerald-600' },
-                { name: 'Q3 Townhall', type: 'Friday at 4:00 PM', icon: 'fa-bullhorn', color: 'text-purple-600' }
-            ];
-            const html = events.map(e => `
-                <div class="inline-flex items-center gap-2 px-6 border-r border-slate-200 text-xs">
+            const html = MOCK_DATA.tickerEvents.map(e => `
+                <div class="inline-flex items-center gap-1 px-4 border-r border-slate-200 text-[10.5px]">
                     <i class="fa-solid ${e.icon} ${e.color}"></i>
-                    <span class="font-bold text-slate-900">${e.name}</span>
-                    <span class="text-slate-500 font-medium">(${e.type})</span>
+                    <span class="font-bold text-slate-900">${e.name}:</span>
+                    <span class="text-slate-500 font-medium">${e.type}</span>
                 </div>
             `).join('');
             ticker.innerHTML = html + html;
         }
 
-        /* Modal Toggle */
+        /* ================= 8. MODAL HELPERS ================= */
         const toggleModal = show => {
             const m = $('#add-project-modal');
             show ? m.removeClass('hidden').addClass('flex') : m.addClass('hidden').removeClass('flex');
             if (!show) { $('#add-project-form')[0].reset(); $('#pilot-fields').addClass('hidden'); }
         };
-
-        /* Form Selects Population */
-        function projectNeeds() {
-            $.ajax({
-                url: '/admin/getprojectrequired', type: 'GET', dataType: 'json',
-                success: function (r) {
-                    populateSelect('category', r[1], 'categoryId', 'catagoryShortname');
-                    populateSelect('project-lead', r[0], 'eid', 'name');
-                    populateSelect('associated-client', r[2], 'cid', 'clientId');
-                }
-            });
-        }
 
         function populateSelect(id, items, valKey, textKey) {
             const s = document.getElementById(id);
@@ -869,31 +782,39 @@
             });
         }
 
-        /* Document Initialization */
+        function projectNeeds() {
+            populateSelect('category', MOCK_DATA.modalDropdowns.categories, 'categoryId', 'catagoryShortname');
+            populateSelect('project-lead', MOCK_DATA.modalDropdowns.leads, 'eid', 'name');
+            populateSelect('associated-client', MOCK_DATA.modalDropdowns.clients, 'cid', 'clientId');
+
+            $.ajax({
+                url: '/admin/getprojectrequired', type: 'GET', dataType: 'json',
+                success: function (r) {
+                    if (r && r[1]) populateSelect('category', r[1], 'categoryId', 'catagoryShortname');
+                    if (r && r[0]) populateSelect('project-lead', r[0], 'eid', 'name');
+                    if (r && r[2]) populateSelect('associated-client', r[2], 'cid', 'clientId');
+                }
+            });
+        }
+
+        /* ================= DOCUMENT READY ================= */
         $(document).ready(function () {
-            // Update Greet & Date
             const h = new Date().getHours();
             const user = /*[[${username}]]*/ 'Team Member';
             const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
             $('#greetingText').text(`${greeting}, ${user}`);
             $('#todayDate').text(new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }));
 
-            // Initial calls
             fetchAdminStats();
+            renderQuickAccessButtons();
+            renderEmployeeHours();
+            renderTeamLeadHours();
             initCharts();
+            renderPendingLeaves(MOCK_DATA.pendingLeavesList);
+            renderActivityFeed(MOCK_DATA.activity);
             populateCelebrations();
-            renderActivityFeed(MOCK.activity);
-            renderTopPerformers(MOCK.topPerformers);
-            renderDeadlines(MOCK.deadlines);
             projectNeeds();
 
-            // Check running assignments for clock-in visual
-            $.ajax({
-                url: '/getRunningAllotments', type: 'GET', dataType: 'json',
-                success: function (r) { updateClockInVisuals(r !== null); }
-            });
-
-            // Modal Events
             $('#open-modal-btn').on('click', () => toggleModal(true));
             $('#cancel-add-project, #cancel-add-project-icon').on('click', () => toggleModal(false));
 
@@ -901,7 +822,6 @@
                 this.value === 'Pilot' ? $('#pilot-fields').removeClass('hidden') : $('#pilot-fields').addClass('hidden');
             });
 
-            // Project Form Submission
             $('#add-project-form').on('submit', function (e) {
                 e.preventDefault();
                 const $btn = $('#submit-btn');

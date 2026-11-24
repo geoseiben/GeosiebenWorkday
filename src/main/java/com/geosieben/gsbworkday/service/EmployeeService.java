@@ -3,14 +3,19 @@ package com.geosieben.gsbworkday.service;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.geosieben.gsbworkday.addon.AddonServ;
 import com.geosieben.gsbworkday.dto.ActiveAllotments;
+import com.geosieben.gsbworkday.dto.AssignedTaskProjection;
 import com.geosieben.gsbworkday.dto.AvailableUsers;
+import com.geosieben.gsbworkday.dto.EmployeeAttendanceProjection;
+import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
 import com.geosieben.gsbworkday.dto.EmployeeRequestDto;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
+import com.geosieben.gsbworkday.dto.EmployeeStatsProjection;
 import com.geosieben.gsbworkday.dto.LeaveAvailedDto;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProj;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProjMonth;
 import com.geosieben.gsbworkday.dto.ResourceDto;
 import com.geosieben.gsbworkday.dto.ResourceRespnseDto;
+import com.geosieben.gsbworkday.dto.SeparatedEmployeeProjection;
 import com.geosieben.gsbworkday.dto.SkillsResponse;
 import com.geosieben.gsbworkday.dto.StatsDto;
 import com.geosieben.gsbworkday.entity.*;
@@ -52,6 +57,8 @@ public class EmployeeService implements EmployeeServiceInterface {
     private final EmployeeTargetHoursRepository employeeTargetHoursRepository;
     private final LeaveRepository leaveRepository;
     private final DocumentRequestRepository documentRequestRepository;
+    private final BookedHoursRepository bookedHoursRepository;
+    private final AllocationRepository allocationRepository;
     @JsonFormat(pattern = "MMM-yyyy")
     private  LocalDate currentDate=LocalDate.now();
 
@@ -63,7 +70,7 @@ public class EmployeeService implements EmployeeServiceInterface {
             ImageRepository imageRepository, SkillsRepository skillsRepository, ProjectRepository projectRepository,
             IdCardIssueRepository idCardIssueRepository, HttpSession httpSession,
             EmployeeTargetHoursRepository employeeTargetHoursRepository, LeaveRepository leaveRepository,
-            DocumentRequestRepository documentRequestRepository) {
+            DocumentRequestRepository documentRequestRepository,BookedHoursRepository bookedHoursRepository,AllocationRepository allocationRepository) {
         this.separationRepository = separationRepository;
         this.departmentRepository = departmentRepository;
         this.basicInfoRepository = basicInfoRepository;
@@ -82,6 +89,8 @@ public class EmployeeService implements EmployeeServiceInterface {
         this.employeeTargetHoursRepository = employeeTargetHoursRepository;
         this.leaveRepository = leaveRepository;
         this.documentRequestRepository = documentRequestRepository;
+        this.bookedHoursRepository=bookedHoursRepository;
+        this.allocationRepository=allocationRepository;
     }
 
 
@@ -317,6 +326,24 @@ return response;
     public  List<DocuRequestProjection> getDocumentProjections(){
         return documentRequestRepository.getMyDocRequestProjections((String) httpSession.getAttribute("eid"));
     }
+
+   public List<SeparatedEmployeeProjection> getSeparatedProjections(){
+        return basicInfoRepository.findSeparatedEmployees();
+    }
+public  EmployeeStatsProjection getEmployeeStatsProjection(){
+    return basicInfoRepository.getEmployeeStats((String) httpSession.getAttribute("eid"));
+
+}
+public  List<EmployeeAttendanceProjection> getEmployeeAttendanceService(){
+    return bookedHoursRepository.getEmployeeAttendanceProjections((String) httpSession.getAttribute("eid"));
+}
+public List<AssignedTaskProjection> getAssignedTasksProjectionService(){
+   return  allocationRepository.getAssignedTasks((String) httpSession.getAttribute("eid"));
+}
+
+public  EmployeeReportProjection getEmployeeReportByEidService(String eid){
+    return basicInfoRepository.getEmployeeReportByEid(eid);
+}
 }
 
 

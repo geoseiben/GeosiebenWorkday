@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HRD | Warnings History</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        colors: {
+          brand: '#1034A6',
+          brandSoft: '#EEF2FF',
+        }
+      }
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js';
+      s.onload = () => {
+        if (typeof warnings !== 'undefined' && warnings.length) {
+          renderDonut();
+          renderBar();
+        }
+      };
+      document.head.appendChild(s);
+    }
+  });
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  ::-webkit-scrollbar { height: 6px; width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+</style>
+</head>
+<head th:replace="includes/header :: header"></head>
+<body class="bg-[#F3F4F8] text-slate-800 font-sans text-[12px] leading-snug antialiased">
+
+<div class="max-w-full mx-auto px-4 py-3 space-y-2.5">
+
+  <!-- Top Header + Stat Strip -->
+  <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-[#1034A6]/10 text-[#1034A6] flex items-center justify-center shrink-0">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm font-bold text-slate-900 tracking-tight">Warning History</h1>
+          <span id="asOfDate" class="text-[11px] text-slate-500 font-medium">As on —</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="statRow" class="flex flex-wrap items-center gap-1.5"></div>
+  </div>
+
+  <!-- Analytics Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+    <div class="bg-white border border-slate-200/80 rounded-lg px-3.5 py-2.5 shadow-2xs">
+      <p class="text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Warnings by Type</p>
+      <div id="donutWrap" class="flex items-center gap-4">
+        <div class="relative shrink-0 w-[90px] h-[90px]">
+          <canvas id="donutChart" width="90" height="90"></canvas>
+        </div>
+        <div id="donutLegend" class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-1 flex-1 min-w-0"></div>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200/80 rounded-lg px-3.5 py-2.5 shadow-2xs">
+      <p class="text-[10.5px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Warnings by Month</p>
+      <div class="h-[90px]">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Data Table Card -->
+  <div class="bg-white border border-slate-200/80 rounded-lg overflow-hidden shadow-2xs">
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-slate-200/80 bg-slate-50/50">
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input id="searchInput" type="text" placeholder="Search name, ID…"
+          class="pl-7 pr-2.5 py-1 text-[11.5px] bg-white border border-slate-200 rounded-md w-48 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15 transition" />
+      </div>
+
+      <select id="typeFilter"
+        class="px-2.5 py-1 text-[11.5px] bg-white border border-slate-200 rounded-md text-slate-600 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15 transition">
+        <option value="">All types</option>
+      </select>
+
+      <select id="monthFilter"
+        class="px-2.5 py-1 text-[11.5px] bg-white border border-slate-200 rounded-md text-slate-600 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15 transition">
+        <option value="">All months</option>
+      </select>
+
+      <select id="pageSizeSelect"
+        class="px-2.5 py-1 text-[11.5px] bg-white border border-slate-200 rounded-md text-slate-600 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15 transition">
+        <option value="10">10 / page</option>
+        <option value="25">25 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100" selected>100 / page</option>
+      </select>
+
+      <div class="flex-1"></div>
+
+      <button id="addWarningBtn" type="button"
+        class="hidden items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-md bg-[#1034A6] hover:bg-[#0d2a8a] text-white transition shadow-2xs">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Issue Warning
+      </button>
+
+      <button id="exportBtn" type="button"
+        class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l3 3 3-3M12 12v6"/>
+        </svg>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="py-10 text-center">
+      <div class="inline-block w-4 h-4 border-2 border-[#1034A6] border-t-transparent rounded-full animate-spin mb-1.5"></div>
+      <p class="text-xs font-medium text-slate-500">Loading warnings…</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden py-10 text-center px-6">
+      <p class="text-xs font-semibold text-red-600">Couldn't load warnings</p>
+      <p class="text-[11px] mt-0.5 text-slate-500" id="errorDetail">Something went wrong contacting the server.</p>
+      <button id="retryBtn" type="button"
+        class="mt-2.5 text-[11px] font-medium px-3 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition">
+        Retry
+      </button>
+    </div>
+
+    <!-- Compact Table -->
+    <div class="overflow-x-auto hidden" id="tableWrap">
+      <table class="w-full border-collapse min-w-[880px] text-left">
+        <thead>
+          <tr class="font-mono text-[10px] uppercase tracking-wider text-slate-400 bg-slate-50/90 border-b border-slate-200/80 select-none">
+            <th data-sort="id" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">ID<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="employee" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Employee<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="reportingManager" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Manager<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="warningType" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Type<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="issuedOn" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Issued On<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="issuedMonth" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Month<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th data-sort="issuedBy" class="py-1.5 px-2.5 whitespace-nowrap cursor-pointer hover:text-slate-700">Issued By<span class="ico ml-1 opacity-40 text-[9px]">↕</span></th>
+            <th class="py-1.5 px-2.5 whitespace-nowrap">Remarks</th>
+            <th class="py-1.5 px-2.5 w-9 text-center"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden py-10 text-center">
+      <p class="text-xs font-semibold text-slate-800">No warnings match that search</p>
+      <p class="text-[11px] mt-0.5 text-slate-500">Try a different name or ID, or clear the active filters.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div id="paginationBar" class="flex flex-col sm:flex-row items-center justify-between gap-2 px-3 py-2 border-t border-slate-200/80 bg-slate-50/40">
+      <p class="text-[11px] text-slate-500" id="rangeLabel"></p>
+      <div id="pageNumbers" class="flex items-center gap-1"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Issue Warning Modal -->
+<div id="warningModal" class="fixed inset-0 bg-slate-900/45 backdrop-blur-[1px] hidden items-center justify-center z-50 p-3">
+  <form id="warningForm" class="bg-white rounded-xl w-full max-w-[440px] max-h-[92vh] overflow-auto shadow-2xl border border-slate-200" autocomplete="off" novalidate>
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div>
+        <h2 class="text-[13px] font-bold text-slate-900">Issue Warning</h2>
+        <p class="text-[10.5px] text-slate-500">In-Complete Working Hours</p>
+      </div>
+      <button type="button" id="modalCloseBtn" title="Close"
+        class="w-6 h-6 inline-flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="px-4 py-3 grid grid-cols-2 gap-x-3 gap-y-2.5">
+      <div class="col-span-2">
+        <label for="fEmployee" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Employee Name / ID</label>
+        <input id="fEmployee" type="text" placeholder="e.g. EMP-1024"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15" />
+      </div>
+
+      <div class="col-span-2">
+        <label for="fDate" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Warning Date</label>
+        <input id="fDate" type="date"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15" />
+      </div>
+
+      <div>
+        <label for="fLogin" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Login Time</label>
+        <input id="fLogin" type="time"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15" />
+      </div>
+
+      <div>
+        <label for="fLogout" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Logout Time</label>
+        <input id="fLogout" type="time"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15" />
+      </div>
+
+      <div>
+        <label for="fBreak" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Break Time (HH:MM)</label>
+        <input id="fBreak" type="time" value="00:00"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15" />
+      </div>
+
+      <div>
+        <label for="fWorking" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Working Hours (auto)</label>
+        <input id="fWorking" type="text" readonly placeholder="--:--"
+          class="w-full px-2.5 py-1.5 text-[11.5px] font-mono font-semibold bg-slate-100 border border-slate-200 rounded-md text-slate-700 outline-none" />
+      </div>
+
+      <div class="col-span-2">
+        <label for="fRemarks" class="block text-[10.5px] font-semibold text-slate-600 mb-1">Remarks</label>
+        <textarea id="fRemarks" rows="2" placeholder="Optional"
+          class="w-full px-2.5 py-1.5 text-[11.5px] border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-[#1034A6]/15"></textarea>
+      </div>
+
+      <p id="formError" class="col-span-2 text-[11px] text-red-600 hidden"></p>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 bg-slate-50/60">
+      <button type="button" id="modalCancelBtn"
+        class="px-3.5 py-1.5 text-[11.5px] font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 rounded-md transition">
+        Cancel
+      </button>
+      <button type="submit" id="modalSubmitBtn" disabled
+        class="px-3.5 py-1.5 text-[11.5px] font-semibold bg-[#1034A6] hover:bg-[#0d2a8a] text-white rounded-md transition disabled:opacity-45 disabled:cursor-not-allowed">
+        Issue warning
+      </button>
+    </div>
+  </form>
+</div>
+
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script>
+  let warnings = [];
+
+  const WH_TYPE = 'In-Complete Working Hours';
+  const LEGACY_WH_TYPES = ['working hours', 'break time violation', 'break time voilation'];
+  const TIMECARD_TYPES = new Set([WH_TYPE, 'Early Logout', 'Late Login']);
+
+  function normalizeType(t) {
+    const raw = String(t ?? '').trim();
+    const low = raw.toLowerCase();
+    if (LEGACY_WH_TYPES.includes(low) || low === 'in-complete working hours') return WH_TYPE;
+    if (low === 'early logout') return 'Early Logout';
+    if (low === 'late login') return 'Late Login';
+    return raw;
+  }
+
+  function esc(v) {
+    return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function toMinutes(t) {
+    if (!t) return null;
+    const m = String(t).match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    return Number(m[1]) * 60 + Number(m[2]);
+  }
+
+  function fmtMinutes(mins) {
+    const h = Math.floor(mins / 60), m = Math.round(mins % 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  function fmtHours(v) {
+    if (v === null || v === undefined || v === '') return null;
+    const s = String(v).trim();
+    if (s.includes(':')) {
+      const mins = toMinutes(s);
+      return mins === null ? s : fmtMinutes(mins);
+    }
+    const n = Number(s);
+    if (isNaN(n)) return s;
+    return fmtMinutes(Math.round(n * 60));
+  }
+
+  function fmtClock(v) {
+    if (v === null || v === undefined || v === '') return null;
+    const mins = toMinutes(v);
+    return mins === null ? String(v) : fmtMinutes(mins);
+  }
+
+  async function loadWarnings() {
+    const loadingEl = document.getElementById('loadingState');
+    const errorEl = document.getElementById('errorState');
+    const tableWrap = document.getElementById('tableWrap');
+    const paginationBar = document.getElementById('paginationBar');
+
+    loadingEl.classList.remove('hidden');
+    errorEl.classList.add('hidden');
+    tableWrap.classList.add('hidden');
+    paginationBar.classList.add('hidden');
+
+    try {
+      const res = await fetch('/admin/getWarningHistory', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
+      const json = await res.json();
+      const rows = Array.isArray(json) ? json : (json.data || json.rows || []);
+      warnings = rows.map(normalizeWarning);
+      state.page = 1;
+
+      loadingEl.classList.add('hidden');
+      tableWrap.classList.remove('hidden');
+
+      renderStats();
+      renderDonut();
+      renderBar();
+      populateFilters();
+      renderTable();
+    } catch (err) {
+      console.error('Failed to load warnings:', err);
+      loadingEl.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+      document.getElementById('errorDetail').textContent = err.message || 'Something went wrong contacting the server.';
+    }
+  }
+
+  function normalizeWarning(w) {
+    return {
+      id: w.id ?? w.ID,
+      employee: w.employee ?? w.employeeName,
+      issuedTo: w.issuedTo ?? w.issued_to,
+      reportingManager: w.reportingManager,
+      issuedBy: w.issuedBy ?? w.issued_by,
+      issuedByCode: w.issuedByCode ?? w.issuedBy ?? w.issued_by,
+      issuedMonth: w.issuedMonth ?? w.issued_month,
+      issuedOn: w.issuedOn ?? w.issued_on,
+      warningType: normalizeType(w.warningType ?? w.warning_type),
+      warningDate: w.warningDate ?? w.warning_date,
+      remarks: w.remarks ?? w.remark ?? null,
+      loginTime: w.loginTime ?? w.login_time ?? null,
+      logoutTime: w.logoutTime ?? w.logout_time ?? null,
+      workingHours: w.workingHours ?? w.working_hours ?? null,
+      breakHours: w.breakHours ?? w.break_hours ?? null
+    };
+  }
+
+  const typeStyle = {
+    "Excess Leaves":             { text: "text-amber-700",   bg: "bg-amber-50",   dot: "bg-amber-600",   panel: "bg-amber-50/70",   hex: "#D97706", icon: "M12 6v6l4 2" },
+    "Performance Issue":         { text: "text-red-700",     bg: "bg-red-50",     dot: "bg-red-600",     panel: "bg-red-50/70",     hex: "#DC2626", icon: "M12 9v4M12 17h.01" },
+    "Mobile Usage":              { text: "text-violet-700",  bg: "bg-violet-50",  dot: "bg-violet-600",  panel: "bg-violet-50/70",  hex: "#7C3AED", icon: "M7 4h10v16H7zM10 18h4" },
+    "In-Complete Working Hours": { text: "text-teal-700",    bg: "bg-teal-50",    dot: "bg-teal-600",    panel: "bg-teal-50/70",    hex: "#0D9488", icon: "M12 6v6l4 2" },
+    "Early Logout":              { text: "text-rose-700",    bg: "bg-rose-50",    dot: "bg-rose-600",    panel: "bg-rose-50/70",    hex: "#E11D48", icon: "M16 17l-4-4V7" },
+    "Late Login":                { text: "text-orange-700",  bg: "bg-orange-50",  dot: "bg-orange-600",  panel: "bg-orange-50/70",  hex: "#EA580C", icon: "M8 7l4 4v6" },
+    "Loss Of Pay":               { text: "text-amber-700",   bg: "bg-amber-50",   dot: "bg-amber-600",   panel: "bg-amber-50/70",   hex: "#D97706", icon: "M8 7l4 4v6" }
+  };
+  const fallbackStyle = { text: "text-slate-700", bg: "bg-slate-100", dot: "bg-slate-500", panel: "bg-slate-50", hex: "#64748B", icon: "M12 6v6l4 2" };
+  const styleFor = t => typeStyle[t] || fallbackStyle;
+
+  const state = { sortKey: 'issuedOn', sortDir: 'desc', page: 1, pageSize: 100 };
+
+  function fmtDateTime(s) {
+    const d = new Date(String(s).replace(" ", "T"));
+    if (isNaN(d)) return s;
+    return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  document.getElementById('asOfDate').textContent = 'As on ' + new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  function renderStats() {
+    const total = warnings.length;
+    const byType = {};
+    warnings.forEach(w => byType[w.warningType] = (byType[w.warningType] || 0) + 1);
+    const topTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+    const cards = [
+      { label: "Total", value: total, hex: "#1034A6", bg: "bg-[#1034A6]/10", text: "text-[#1034A6]",
+        icon: `<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>` },
+      ...topTypes.map(([type, count]) => {
+        const s = styleFor(type);
+        return { label: type, value: count, hex: s.hex, bg: s.bg, text: s.text,
+          icon: `<circle cx="12" cy="12" r="9"/><path d="${s.icon}"/>` };
+      })
+    ];
+
+    document.getElementById('statRow').innerHTML = cards.map(c => `
+      <div class="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-0.5 rounded-full text-[11px] max-w-[200px] ${c.bg}" title="${esc(c.label)}: ${c.value}">
+        <span class="w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center shrink-0 shadow-2xs">
+          <svg width="11" height="11" fill="none" stroke="${c.hex}" stroke-width="2.2" viewBox="0 0 24 24">${c.icon}</svg>
+        </span>
+        <span class="truncate text-slate-600">${esc(c.label)}</span>
+        <b class="font-bold ${c.text}">${c.value}</b>
+      </div>
+    `).join('');
+  }
+
+  let donutChartInstance = null;
+  let barChartInstance = null;
+
+  function renderDonut() {
+    const wrap = document.getElementById('donutWrap');
+    if (typeof Chart === 'undefined') {
+      wrap.innerHTML = '<p class="text-[11px] text-slate-400">Chart library unavailable — table data still loaded below.</p>';
+      return;
+    }
+    const byType = {};
+    warnings.forEach(w => byType[w.warningType] = (byType[w.warningType] || 0) + 1);
+    const labels = Object.keys(byType);
+    const data = Object.values(byType);
+    const colors = labels.map(l => styleFor(l).hex);
+
+    if (donutChartInstance) donutChartInstance.destroy();
+    donutChartInstance = new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+      options: {
+        cutout: '66%',
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        responsive: false
+      }
+    });
+
+    document.getElementById('donutLegend').innerHTML = labels.map((l, i) => `
+      <div class="flex items-center gap-1.5 text-[11px] min-w-0">
+        <span class="w-2 h-2 rounded-full shrink-0" style="background:${colors[i]};"></span>
+        <span class="truncate text-slate-600">${esc(l)}</span>
+        <span class="font-mono ml-auto font-semibold text-slate-800">${data[i]}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderBar() {
+    const barCanvas = document.getElementById('barChart');
+    if (typeof Chart === 'undefined') {
+      barCanvas.parentElement.innerHTML = '<p class="text-[11px] flex items-center justify-center h-full text-slate-400">Chart library unavailable — table data still loaded below.</p>';
+      return;
+    }
+    const byMonth = {};
+    warnings.forEach(w => byMonth[w.issuedMonth] = (byMonth[w.issuedMonth] || 0) + 1);
+    const labels = [...new Set(warnings.map(w => w.issuedMonth))].sort((a, b) => new Date('01-' + a) - new Date('01-' + b));
+    const data = labels.map(m => byMonth[m]);
+
+    if (barChartInstance) barChartInstance.destroy();
+    barChartInstance = new Chart(barCanvas, {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: '#1034A6', borderRadius: 4, maxBarThickness: 28 }] },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748B' } },
+          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 }, color: '#64748B', padding: 2 }, grid: { color: '#F1F5F9' } }
+        },
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  function populateFilters() {
+    const typeSel = document.getElementById('typeFilter');
+    const monthSel = document.getElementById('monthFilter');
+    typeSel.innerHTML = '<option value="">All types</option>';
+    monthSel.innerHTML = '<option value="">All months</option>';
+
+    [...new Set(warnings.map(w => w.warningType))].forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      typeSel.appendChild(opt);
+    });
+
+    const now = new Date();
+    let currentMonthValue = '';
+
+    [...new Set(warnings.map(w => w.issuedMonth))].forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      monthSel.appendChild(opt);
+
+      const d = new Date('01-' + m);
+      if (!isNaN(d) && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        currentMonthValue = m;
+      }
+    });
+
+    if (currentMonthValue) monthSel.value = currentMonthValue;
+  }
+
+  function getFiltered() {
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const typeF = document.getElementById('typeFilter').value;
+    const monthF = document.getElementById('monthFilter').value;
+    return warnings.filter(w => {
+      const matchesSearch = !search || [w.employee, w.issuedTo, w.issuedBy, w.issuedByCode, String(w.id)]
+        .some(v => String(v).toLowerCase().includes(search));
+      const matchesType = !typeF || w.warningType === typeF;
+      const matchesMonth = !monthF || w.issuedMonth === monthF;
+      return matchesSearch && matchesType && matchesMonth;
+    });
+  }
+
+  function getSorted(list) {
+    const { sortKey, sortDir } = state;
+    return [...list].sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === 'issuedOn') { av = new Date(String(av).replace(' ', 'T')); bv = new Date(String(bv).replace(' ', 'T')); }
+      if (sortKey === 'id') { av = Number(av); bv = Number(bv); }
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      const key = th.dataset.sort;
+      const active = key === state.sortKey;
+      th.classList.toggle('text-slate-900', active);
+      const ico = th.querySelector('.ico');
+      ico.classList.toggle('opacity-100', active);
+      ico.classList.toggle('text-[#1034A6]', active);
+      ico.classList.toggle('opacity-40', !active);
+      ico.textContent = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
+    });
+  }
+
+  const EYE_ICON = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+  function renderTable() {
+    const body = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
+    const paginationBar = document.getElementById('paginationBar');
+
+    const sorted = getSorted(getFiltered());
+
+    if (sorted.length === 0) {
+      body.innerHTML = '';
+      empty.classList.remove('hidden');
+      paginationBar.classList.add('hidden');
+      updateSortHeaders();
+      return;
+    }
+    empty.classList.add('hidden');
+    paginationBar.classList.remove('hidden');
+
+    const totalPages = Math.max(1, Math.ceil(sorted.length / state.pageSize));
+    if (state.page > totalPages) state.page = totalPages;
+    const startIdx = (state.page - 1) * state.pageSize;
+    const pageRows = sorted.slice(startIdx, startIdx + state.pageSize);
+
+    body.innerHTML = pageRows.map(w => {
+      const s = styleFor(w.warningType);
+      const rowId = `row-${w.id}`;
+      const remarks = (w.remarks === null || w.remarks === undefined || w.remarks === '') ? '—' : esc(w.remarks);
+      const isTimecard = TIMECARD_TYPES.has(w.warningType);
+
+      return `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="py-1.5 px-2.5 whitespace-nowrap font-mono text-slate-400">${esc(w.id)}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap font-semibold text-[#A5501F]">${esc(w.employee)}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap text-slate-600">${esc(w.reportingManager ?? '—')}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${s.bg} ${s.text}">
+              <span class="w-1.5 h-1.5 rounded-full ${s.dot}"></span>${esc(w.warningType)}
+            </span>
+          </td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap text-slate-800">${esc(fmtDateTime(w.issuedOn))}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap text-slate-500">${esc(w.issuedMonth)}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap text-slate-600">${esc(w.issuedBy)}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap max-w-[210px] truncate text-slate-500" title="${remarks}">${remarks}</td>
+          <td class="py-1.5 px-2.5 whitespace-nowrap text-center">
+            <button type="button" id="btn-${rowId}" onclick="toggleRow('${rowId}')" title="View details"
+              class="w-6 h-6 inline-flex items-center justify-center rounded-md text-slate-400 hover:bg-[#1034A6]/10 hover:text-[#1034A6] transition">
+              ${EYE_ICON}
+            </button>
+          </td>
+        </tr>
+        <tr id="${rowId}" class="hidden">
+          <td colspan="9" class="p-0">
+            <div class="px-4 py-2 flex flex-wrap items-center gap-1.5 ${s.panel} border-t border-slate-200/60">
+              <span class="font-mono text-[10px] font-semibold uppercase tracking-wider mr-1 ${s.text}">
+                ${isTimecard ? 'Date & Time' : 'Details'}
+              </span>
+              ${detailChipsFor(w, s)}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const rangeLabel = document.getElementById('rangeLabel');
+    const endIdx = Math.min(startIdx + state.pageSize, sorted.length);
+    rangeLabel.textContent = `${startIdx + 1}–${endIdx} of ${sorted.length} warnings`;
+
+    const pageNumbers = document.getElementById('pageNumbers');
+    const baseBtn = 'min-w-[24px] h-6 px-1.5 rounded font-mono text-[10.5px] border transition';
+    let btns = `<button type="button" class="${baseBtn} border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40" ${state.page === 1 ? 'disabled' : ''} onclick="goToPage(${state.page - 1})">‹</button>`;
+    for (let p = 1; p <= totalPages; p++) {
+      if (totalPages > 7 && p !== 1 && p !== totalPages && Math.abs(p - state.page) > 1) {
+        if (p === 2 || p === totalPages - 1) btns += `<span class="text-[11px] px-0.5 text-slate-400">…</span>`;
+        continue;
+      }
+      const activeCls = p === state.page
+        ? 'bg-[#1034A6] text-white border-[#1034A6] font-semibold'
+        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+      btns += `<button type="button" class="${baseBtn} ${activeCls}" onclick="goToPage(${p})">${p}</button>`;
+    }
+    btns += `<button type="button" class="${baseBtn} border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40" ${state.page === totalPages ? 'disabled' : ''} onclick="goToPage(${state.page + 1})">›</button>`;
+    pageNumbers.innerHTML = btns;
+
+    updateSortHeaders();
+  }
+
+  function detailChip(label, value, s) {
+    const display = (value === null || value === undefined || value === '') ? '—' : esc(value);
+    return `
+      <div class="inline-flex items-baseline gap-1.5 px-2.5 py-0.5 rounded-md bg-white border border-slate-200/80 text-[11px] shadow-2xs">
+        <span class="text-slate-400 text-[10px]">${label}</span>
+        <b class="font-mono font-semibold ${s.text}">${display}</b>
+      </div>
+    `;
+  }
+
+  function detailChipsFor(w, s) {
+    if (w.warningType === 'Early Logout') {
+      return detailChip('Date', w.warningDate, s)
+        + detailChip('Logout', fmtClock(w.logoutTime), s)
+        + (w.remarks ? detailChip('Remarks', w.remarks, s) : '');
+    }
+    if (w.warningType === 'Late Login') {
+      return detailChip('Date', w.warningDate, s)
+        + detailChip('Login', fmtClock(w.loginTime), s)
+        + (w.remarks ? detailChip('Remarks', w.remarks, s) : '');
+    }
+    if (w.warningType === WH_TYPE) {
+      return detailChip('Date', w.warningDate, s)
+        + detailChip('Login', fmtClock(w.loginTime), s)
+        + detailChip('Logout', fmtClock(w.logoutTime), s)
+        + detailChip('Working hrs', fmtHours(w.workingHours), s)
+        + detailChip('Break hrs', fmtHours(w.breakHours), s);
+    }
+    return detailChip('Warning Date', w.warningDate, s)
+      + detailChip('Employee ID', w.issuedTo, s)
+      + detailChip('Remarks', w.remarks, s);
+  }
+
+  function toggleRow(rowId) {
+    const row = document.getElementById(rowId);
+    const btn = document.getElementById('btn-' + rowId);
+    if (!row) return;
+    const isHidden = row.classList.toggle('hidden');
+    if (btn) {
+      btn.classList.toggle('bg-[#1034A6]/10', !isHidden);
+      btn.classList.toggle('text-[#1034A6]', !isHidden);
+    }
+  }
+
+  function goToPage(p) { state.page = p; renderTable(); }
+
+  document.getElementById('searchInput').addEventListener('input', () => { state.page = 1; renderTable(); });
+  document.getElementById('typeFilter').addEventListener('change', () => { state.page = 1; renderTable(); });
+  document.getElementById('monthFilter').addEventListener('change', () => { state.page = 1; renderTable(); });
+  document.getElementById('pageSizeSelect').addEventListener('change', (e) => { state.pageSize = Number(e.target.value); state.page = 1; renderTable(); });
+
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (state.sortKey === key) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      else { state.sortKey = key; state.sortDir = 'asc'; }
+      state.page = 1;
+      renderTable();
+    });
+  });
+
+  function exportCSV() {
+    const rows = getSorted(getFiltered());
+    const headers = ['id', 'employee', 'reportingManager', 'issuedTo', 'warningType', 'issuedOn', 'issuedMonth', 'issuedBy', 'issuedByCode', 'remarks', 'warningDate', 'loginTime', 'logoutTime', 'workingHours', 'breakHours'];
+    const lines = [headers.join(',')];
+    rows.forEach(w => {
+      lines.push(headers.map(h => {
+        let v = w[h];
+        if (h === 'workingHours' || h === 'breakHours') v = fmtHours(v);
+        if (h === 'loginTime' || h === 'logoutTime') v = fmtClock(v);
+        return `"${String(v ?? '').replace(/"/g, '""')}"`;
+      }).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `warnings-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+  document.getElementById('retryBtn').addEventListener('click', loadWarnings);
+
+  // ---- Modal Logic ----
+  const modal = document.getElementById('warningModal');
+  const form = document.getElementById('warningForm');
+  const fEmployee = document.getElementById('fEmployee');
+  const fDate = document.getElementById('fDate');
+  const fLogin = document.getElementById('fLogin');
+  const fLogout = document.getElementById('fLogout');
+  const fBreak = document.getElementById('fBreak');
+  const fWorking = document.getElementById('fWorking');
+  const fRemarks = document.getElementById('fRemarks');
+  const formError = document.getElementById('formError');
+  const submitBtn = document.getElementById('modalSubmitBtn');
+
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function calcWorking() {
+    const login = toMinutes(fLogin.value);
+    const logout = toMinutes(fLogout.value);
+    const brk = toMinutes(fBreak.value) || 0;
+    formError.classList.add('hidden');
+
+    if (login === null || logout === null) {
+      fWorking.value = '';
+      return null;
+    }
+    let span = logout - login;
+    if (span < 0) span += 24 * 60;
+    const work = span - brk;
+    if (work < 0) {
+      fWorking.value = '';
+      formError.textContent = 'Break time is longer than the time between login and logout.';
+      formError.classList.remove('hidden');
+      return null;
+    }
+    fWorking.value = fmtMinutes(work);
+    return work;
+  }
+
+  function validateForm() {
+    const work = calcWorking();
+    const ok = fEmployee.value.trim() !== '' && fDate.value !== '' && work !== null;
+    submitBtn.disabled = !ok;
+    return ok;
+  }
+
+  function openModal() {
+    form.reset();
+    fDate.value = todayISO();
+    fBreak.value = '00:00';
+    fWorking.value = '';
+    formError.classList.add('hidden');
+    submitBtn.disabled = true;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    fEmployee.focus();
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  [fEmployee, fDate, fLogin, fLogout, fBreak].forEach(el => {
+    el.addEventListener('input', validateForm);
+    el.addEventListener('change', validateForm);
+  });
+
+  document.getElementById('addWarningBtn').addEventListener('click', openModal);
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+    try {
+      const work = calcWorking();
+      const res = await fetch('/admin/getWarningHistory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'saveWarning',
+          employee: fEmployee.value.trim(),
+          warningType: WH_TYPE,
+          warningDate: fDate.value,
+          loginTime: fLogin.value,
+          logoutTime: fLogout.value,
+          breakHours: fBreak.value || '00:00',
+          workingHours: fmtMinutes(work),
+          workingMinutes: String(work),
+          remarks: fRemarks.value.trim()
+        })
+      });
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      const json = await res.json().catch(() => ({}));
+      if (json && json.success === false) throw new Error(json.message || 'Could not save the warning.');
+
+      closeModal();
+      loadWarnings();
+    } catch (err) {
+      formError.textContent = err.message || 'Could not save the warning.';
+      formError.classList.remove('hidden');
+    } finally {
+      submitBtn.textContent = 'Issue warning';
+      validateForm();
+    }
+  });
+
+  loadWarnings();
+</script>
+
+</body>
+</html>

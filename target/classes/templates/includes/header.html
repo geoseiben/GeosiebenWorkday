@@ -1,5 +1,6 @@
 <header th:fragment="header"
-        class="g7-header bg-white/95 backdrop-blur-md text-[#1B2030] sticky top-0 z-[1000] border-b border-[#DCE3F0] shadow-[0_1px_0_rgba(16,20,38,.04),0_8px_24px_-16px_rgba(16,20,38,.22)] select-none"
+        id="g7MainHeader"
+        class="g7-header bg-white/95 backdrop-blur-md text-[#1B2030] sticky top-0 z-[1000] shadow-[0_1px_0_rgba(16,20,38,.04),0_8px_24px_-16px_rgba(16,20,38,.22)] select-none transition-shadow duration-300"
         style="font-family: 'Inter', system-ui, -apple-system, sans-serif;">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8,8 +9,38 @@
     <style>
         @keyframes g7-headerIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes g7-livePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,.45); } 50% { box-shadow: 0 0 0 4px rgba(22,163,74,0); } }
+        @keyframes g7-barShimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
         .g7-header { animation: g7-headerIn .35s cubic-bezier(.22,.9,.32,1) both; }
+        .g7-header.is-scrolled {
+            box-shadow: 0 4px 20px -6px rgba(16, 20, 38, 0.14);
+        }
+
+        /* 4px Scroll-Reactive Gradient Bottom Border */
+        .g7-scroll-track {
+            position: relative;
+            width: 100%;
+            height: 4px;
+            background: #DCE3F0;
+            overflow: hidden;
+        }
+        .g7-scroll-bar {
+            height: 100%;
+            width: 100%;
+            transform-origin: left center;
+            transform: scaleX(0);
+            will-change: transform, background;
+            background: linear-gradient(90deg, #0055FF 0%, #2563EB 45%, #0EA5E9 80%, #10B981 100%);
+            background-size: 200% 100%;
+            transition: transform 0.08s linear;
+        }
+        .g7-scroll-bar.is-active {
+            animation: g7-barShimmer 4s ease infinite;
+        }
 
         /* Active top-level nav pill */
         .g7-navbtn.is-active {
@@ -20,7 +51,7 @@
         .g7-navbtn.is-active::after {
             content: "";
             position: absolute;
-            bottom: -11px;
+            bottom: -12px;
             left: 50%;
             transform: translateX(-50%);
             width: 18px;
@@ -90,10 +121,10 @@
 
         .g7-live { animation: g7-livePulse 2.6s ease-in-out infinite; }
 
-        /* Fixed Mobile Drawer Overlay */
+        /* Fixed Mobile Drawer Overlay (adjusted for 3.5rem bar + 4px border) */
         .g7-mobilenav {
             position: fixed;
-            top: 3.5rem;
+            top: calc(3.5rem + 4px);
             left: 0;
             right: 0;
             max-height: 0;
@@ -104,7 +135,7 @@
             z-index: 999;
         }
         .g7-mobilenav.is-open {
-            max-height: calc(100dvh - 3.5rem);
+            max-height: calc(100dvh - 3.5rem - 4px);
             opacity: 1;
             visibility: visible;
             overflow-y: auto;
@@ -114,7 +145,7 @@
         /* Backdrop behind mobile drawer */
         .g7-backdrop {
             position: fixed;
-            inset: 3.5rem 0 0 0;
+            inset: calc(3.5rem + 4px) 0 0 0;
             background: rgba(16, 20, 38, 0.38);
             backdrop-filter: blur(3px);
             opacity: 0;
@@ -147,7 +178,7 @@
         .g7-signout:hover::before { transform: scaleX(1); }
 
         @media (prefers-reduced-motion: reduce) {
-            .g7-header, .g7-dd, .g7-dd a, .g7-dd button, .g7-subdd, .g7-live, .g7-mobilenav, .g7-mbody, .g7-backdrop {
+            .g7-header, .g7-dd, .g7-dd a, .g7-dd button, .g7-subdd, .g7-live, .g7-mobilenav, .g7-mbody, .g7-backdrop, .g7-scroll-bar {
                 animation: none !important; transition: none !important;
             }
             .g7-dd, .g7-subdd { transform: none !important; }
@@ -204,8 +235,7 @@
                             <svg class="w-3 h-3 opacity-55 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[230px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
-                            <a href="/requestDocuments" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Request Document</a>
-                            <a href="/admin/hrQueries" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
+                            <a href="/hrQueries" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
                                 <span>HR Queries</span>
                                 <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
                             </a>
@@ -215,7 +245,6 @@
                             </a>
                             <a href="/admin/warningHistory" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
                                 <span>Warning History</span>
-                                <span class="text-[9.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]">WIP</span>
                             </a>
                             <a href="/admin/separtion/manage" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Separation</a>
                             <a href="/admin/yep" class="g7-link flex items-center justify-between px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">
@@ -248,6 +277,7 @@
                             <a href="/leaves/apply" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Apply Leave</a>
                             <a sec:authorize="hasAnyAuthority('admin')" href="/admin/pendingLeaves" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Leave Requests</a>
                             <a sec:authorize="hasAnyAuthority('admin')" href="/admin/approvedLeaves" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Approved Leaves</a>
+                            <a sec:authorize="hasAnyAuthority('admin')" href="/admin/leaveCalender" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Calender</a>
                         </div>
                     </div>
 
@@ -359,6 +389,9 @@
                         <div class="g7-dd invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 absolute top-full left-0 min-w-[185px] bg-white border border-[#DCE3F0] rounded-xl shadow-[0_14px_30px_-10px_rgba(18,23,43,.18)] p-1.5 z-40">
                             <a href="/admin/reports/targetHours" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Target Hours</a>
                             <a href="/admin/reports/allotmentReport" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Allotments</a>
+                            <a href="/admin/reports/projectReport" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Projects</a>
+                            <a href="/admin/reports/consolidatedReport" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Consolidated</a>    
+                             <a href="/admin/reports/dayWiseProjectHours" class="g7-link block px-2.5 py-2 text-[13px] text-[#5A6175] hover:text-[#1B2030] hover:bg-[#EEF4FF] rounded-lg no-underline">Monthly</a> 
                         </div>
                     </div>
 
@@ -477,6 +510,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- 4px Scroll-Reactive Color-Shifting Bottom Border -->
+    <div class="g7-scroll-track" aria-hidden="true">
+        <div id="g7ScrollProgressBar" class="g7-scroll-bar"></div>
     </div>
 
     <!-- Backdrop for Mobile Drawer -->
@@ -705,7 +743,7 @@
                 </div>
 
                 <!-- Reports -->
-                <div sec:authorize="hasAnyAuthority('user','admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
+                <div sec:authorize="hasAnyAuthority('hr','admin')" class="g7-mgroup rounded-xl bg-white border border-[#E5ECF7] transition-all">
                     <button type="button" onclick="g7ToggleSection(this)" class="w-full flex items-center justify-between px-3.5 py-2.5 text-[13.5px] font-semibold text-[#1B2030]">
                         <span class="flex items-center gap-2.5">
                             <span class="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0055FF] flex items-center justify-center shrink-0">
@@ -719,6 +757,7 @@
                         <div class="px-3.5 pb-2.5 pt-1 space-y-1 text-[13px] border-t border-[#F0F4FA]">
                             <a href="/admin/reports/targetHours" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Target Hours</a>
                             <a href="/admin/reports/allotmentReport" class="g7-link block py-1.5 px-2.5 text-[#5A6175] hover:text-[#0055FF] hover:bg-[#F5F8FF] rounded-lg no-underline">Allotments</a>
+
                         </div>
                     </div>
                 </div>
@@ -789,8 +828,64 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="none">
         (function () {
+            /* 4px Scroll-Reactive Color-Shifting Border */
+            const headerEl = document.getElementById('g7MainHeader');
+            const progressBar = document.getElementById('g7ScrollProgressBar');
+            let ticking = false;
+
+            function lerpColor(c1, c2, t) {
+                const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+                const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+                const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            // Brand color stops: Royal Blue (#0055FF) -> Electric Indigo (#4F46E5) -> Sky Cyan (#0EA5E9) -> Emerald (#10B981)
+            const colorStops = [
+                [0, 85, 255],
+                [79, 70, 229],
+                [14, 165, 233],
+                [16, 185, 129]
+            ];
+
+            function getDynamicGradient(ratio) {
+                const scaled = ratio * (colorStops.length - 1);
+                const idx = Math.min(Math.floor(scaled), colorStops.length - 2);
+                const localT = scaled - idx;
+                const leadColor = lerpColor(colorStops[idx], colorStops[idx + 1], localT);
+                const tailColor = lerpColor(colorStops[0], colorStops[idx], 0.5);
+                return `linear-gradient(90deg, #0055FF 0%, ${tailColor} 45%, ${leadColor} 100%)`;
+            }
+
+            function updateScrollBorder() {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const ratio = docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
+
+                if (headerEl) {
+                    headerEl.classList.toggle('is-scrolled', scrollTop > 8);
+                }
+
+                if (progressBar) {
+                    progressBar.style.transform = `scaleX(${ratio})`;
+                    progressBar.style.background = getDynamicGradient(ratio);
+                    progressBar.classList.toggle('is-active', ratio > 0.01);
+                }
+                ticking = false;
+            }
+
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateScrollBorder);
+                    ticking = true;
+                }
+            }, { passive: true });
+            window.addEventListener('resize', updateScrollBorder, { passive: true });
+            updateScrollBorder();
+
+            /* Mobile & Dropdown Controls */
             window.g7ToggleMobileNav = function () {
                 const panel = document.getElementById('g7MobileNav');
                 const backdrop = document.getElementById('g7MobileBackdrop');

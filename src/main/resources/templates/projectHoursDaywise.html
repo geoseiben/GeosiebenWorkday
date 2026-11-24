@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Day-Wise Hours | gsbWorkday</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#1034A6',
+                            dark: '#0b2578',
+                            light: '#eef2ff',
+                            border: '#c7d2fe'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { font-family: 'Inter', sans-serif; }
+        .mono-font { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+        /* Custom sleek scrollbars */
+        .table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-wrapper::-webkit-scrollbar-track { background: #f8fafc; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #1034A6; }
+
+        .table-wrapper {
+            position: relative;
+            overflow: auto;
+            flex: 1 1 auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.625rem;
+            background: #ffffff;
+            box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+        }
+
+        .modern-table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        .modern-table thead th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            z-index: 30;
+            padding: 5px 3px;
+            border-bottom: 1px solid #cbd5e1;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.04em;
+            height: 34px;
+        }
+
+        /* Distinct Sticky Column Offsets */
+        .sticky-slno      { position: sticky; left: 0px;   width: 38px;  z-index: 41; background: inherit; border-right: 1px solid #f1f5f9; text-align: center; }
+        .sticky-client    { position: sticky; left: 38px;  width: 112px; z-index: 40; background: inherit; border-right: 1px solid #f1f5f9; padding: 0 7px !important; }
+        .sticky-project   { position: sticky; left: 150px; width: 140px; z-index: 40; background: inherit; border-right: 1px solid #f1f5f9; padding: 0 7px !important; }
+        .sticky-allotment { position: sticky; left: 290px; width: 185px; z-index: 40; background: inherit; border-right: 1px solid #f1f5f9; padding: 0 7px !important; }
+        .sticky-carried   {
+            position: sticky; left: 475px; width: 62px; z-index: 39; background: inherit;
+            border-right: 1px solid #cbd5e1;
+            box-shadow: 3px 0 6px -3px rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+
+        thead th.sticky-slno,
+        thead th.sticky-client,
+        thead th.sticky-project,
+        thead th.sticky-allotment,
+        thead th.sticky-carried {
+            z-index: 50 !important;
+            background: #f8fafc !important;
+        }
+
+        /* Sticky Right Total Column */
+        .sticky-total {
+            position: sticky;
+            right: 0;
+            width: 68px;
+            z-index: 35;
+            background: #f8fafc;
+            border-left: 1px solid #cbd5e1;
+            box-shadow: -3px 0 6px -3px rgba(15, 23, 42, 0.07);
+        }
+        thead th.sticky-total {
+            z-index: 50 !important;
+            background: #1034A6 !important;
+            color: #ffffff !important;
+        }
+
+        /* Compact Row Striping & Hover */
+        tbody tr { background-color: #ffffff; }
+        tbody tr:nth-child(even) { background-color: #fafbfc; }
+        tbody tr:hover { background-color: #eef2ff !important; }
+        tbody tr:hover td.sticky-total { background-color: #e0e7ff !important; }
+
+        /* Grand Total Footer */
+        tfoot tr.grand-total-row td {
+            position: sticky;
+            bottom: 0;
+            z-index: 35;
+            background: #0f172a !important;
+            border-top: 1.5px solid #334155;
+            height: 31px;
+        }
+        tfoot tr.grand-total-row td.sticky-slno,
+        tfoot tr.grand-total-row td.sticky-client,
+        tfoot tr.grand-total-row td.sticky-carried {
+            z-index: 45 !important;
+        }
+        tfoot tr.grand-total-row td.sticky-total {
+            z-index: 46 !important;
+            background: #1034A6 !important;
+        }
+
+        .modern-table td { padding: 2px 2px; font-size: 0.7rem; height: 28px; }
+
+        /* Weekends & Today Column */
+        .weekend-header { background: #fff1f2 !important; color: #e11d48 !important; }
+        .weekend-cell   { background-color: rgba(255, 241, 242, 0.42); }
+        .today-header   { background: #eef2ff !important; color: #1034A6 !important; box-shadow: inset 0 2px 0 #1034A6; }
+        .today-cell     { background-color: rgba(238, 242, 255, 0.55); }
+
+        /* Hour Badges */
+        .hour-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 17px; padding: 0 3px; border-radius: 4px;
+            font-weight: 600; font-size: 0.63rem; line-height: 1;
+        }
+        .badge-high { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-mid  { background: #eef2ff; color: #1034A6; border: 1px solid #c7d2fe; }
+        .badge-low  { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+        .badge-gt-high { background: #064e3b; color: #6ee7b7; border: 1px solid #065f46; }
+        .badge-gt-mid  { background: #1e3a8a; color: #bfdbfe; border: 1px solid #2563eb; }
+
+        .loader { border-top-color: #1034A6; animation: spinner 0.75s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="bg-slate-100/70 text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
+
+    <main class="w-full h-full flex flex-col py-3 px-3 sm:px-5 gap-2.5">
+        <!-- Compact Top Header & Toolbar -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-2xs shrink-0">
+            <!-- Title & Breadcrumb -->
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5">
+                        <span>Admin Reports</span>
+                        <span>/</span>
+                        <span class="text-brand">Project Hours</span>
+                    </div>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">Project Day-Wise Hours</h1>
+                </div>
+            </div>
+
+            <!-- KPIs + Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Inline KPI Strip -->
+                <div class="hidden xl:flex items-center gap-3 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200/80 text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        <span class="text-slate-500 font-medium">Allotments:</span>
+                        <span id="statProjects" class="font-bold text-slate-800 mono-font">0</span>
+                    </div>
+                    <span class="text-slate-200">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span class="text-slate-500 font-medium">Carried:</span>
+                        <span id="statCarried" class="font-bold text-slate-700 mono-font">0.0h</span>
+                    </div>
+                    <span class="text-slate-200">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+                        <span class="text-slate-500 font-medium">Booked:</span>
+                        <span id="statTotal" class="font-bold text-brand mono-font">0.0h</span>
+                    </div>
+                </div>
+
+                <!-- Client Filter Dropdown -->
+                <select id="filterClient" onchange="renderTable(rawData)"
+                        class="bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer outline-none max-w-[150px] truncate transition-colors">
+                    <option value="">All Clients</option>
+                </select>
+
+                <!-- Search Input -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" id="projectSearch" placeholder="Search project or allotment..."
+                           class="pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 focus:border-brand focus:bg-white rounded-lg text-xs font-medium text-slate-700 placeholder:text-slate-400 outline-none w-44 sm:w-52 transition-all">
+                    <button id="clearSearchBtn" type="button" onclick="clearSearch()" class="hidden absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <!-- Month Selector -->
+                <select id="filterMonth" onchange="fetchData()"
+                        class="bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 cursor-pointer outline-none transition-colors">
+                </select>
+
+                <!-- Refresh Button -->
+                <button onclick="fetchData()" title="Refresh Data"
+                        class="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-brand rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </button>
+
+                <!-- Export Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white rounded-lg text-xs font-semibold transition-all shadow-2xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>Export</span>
+                        <svg class="w-3 h-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="absolute right-0 pt-1 w-36 hidden group-hover:block z-[100]">
+                        <div class="bg-white border border-slate-200 rounded-xl shadow-lg p-1 overflow-hidden">
+                            <button onclick="exportToCSV()" class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-brand-light hover:text-brand rounded-lg transition-colors">
+                                <span>Export CSV</span>
+                                <span class="text-[10px] text-slate-400 font-mono">.csv</span>
+                            </button>
+                            <button onclick="exportToExcel()" class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-brand-light hover:text-brand rounded-lg transition-colors">
+                                <span>Export Excel</span>
+                                <span class="text-[10px] text-emerald-600 font-mono">.xlsx</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-slate-500 shrink-0">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-[#dcfce7] border border-[#bbf7d0]"></span> ≥ 8h Full Day</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-[#eef2ff] border border-[#c7d2fe]"></span> &lt; 8h Partial</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-[#fff1f2] border border-[#fecdd3]"></span> Sunday / 2nd &amp; Last Sat</span>
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-amber-100 border border-amber-300"></span> Exceeds Carried Hrs</span>
+            </div>
+            <div class="sm:hidden font-semibold text-slate-600 mono-font">
+                Total: <span id="statTotalMobile" class="text-brand">0.0h</span>
+            </div>
+        </div>
+
+        <!-- Main Report Table -->
+        <div id="tableContainer" class="table-wrapper">
+            <div id="loadingOverlay" class="sticky inset-0 w-full h-full bg-white/85 backdrop-blur-[1px] z-[100] flex items-center justify-center hidden">
+                <div class="flex flex-col items-center gap-2">
+                    <div class="loader ease-linear rounded-full border-2 border-slate-200 h-7 w-7"></div>
+                    <span class="text-xs font-semibold text-slate-600">Loading hours matrix...</span>
+                </div>
+            </div>
+
+            <table class="modern-table" id="reportTable">
+                <thead><tr id="tableHeader"></tr></thead>
+                <tbody id="tableBody"></tbody>
+                <tfoot><tr id="tableFooter"></tr></tfoot>
+            </table>
+        </div>
+    </main>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   Configuration & State
+═══════════════════════════════════════════════════ */
+const API_ENDPOINT = '/admin/reports/getDayWiseProjectHours';
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+let rawData           = [];
+let processedProjects = {};
+let currentDates      = [];
+let dayTotals         = {};
+let grandRowTotal     = 0;
+
+/* ═══════════════════════════════════════════════════
+   Initialize Month Dropdown ("Nov-2026")
+═══════════════════════════════════════════════════ */
+function initMonthSelector() {
+    const select = document.getElementById('filterMonth');
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    for (let offset = -12; offset <= 6; offset++) {
+        const d = new Date(currentYear, currentMonth + offset, 1);
+        const mShort = MONTHS_SHORT[d.getMonth()];
+        const year = d.getFullYear();
+
+        const opt = document.createElement('option');
+        opt.value = `${mShort}-${year}`;
+        opt.textContent = `${mShort} ${year}`;
+        if (offset === 0) opt.selected = true;
+        select.appendChild(opt);
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   Populate Client Filter Dropdown Dynamically
+═══════════════════════════════════════════════════ */
+function populateClientFilter(data) {
+    const clientSelect = document.getElementById('filterClient');
+    const previousValue = clientSelect.value;
+
+    const clients = [...new Set(
+        data.map(r => String(r.clientName || r.clientId || '').trim()).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
+
+    clientSelect.innerHTML = '<option value="">All Clients (' + clients.length + ')</option>';
+    clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        if (c === previousValue) opt.selected = true;
+        clientSelect.appendChild(opt);
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   Fetch Data from Spring Controller
+═══════════════════════════════════════════════════ */
+async function fetchData() {
+    const month   = document.getElementById('filterMonth').value;
+    const overlay = document.getElementById('loadingOverlay');
+    const tbody   = document.getElementById('tableBody');
+
+    overlay.classList.remove('hidden');
+
+    try {
+        const csrfToken  = document.querySelector("meta[name='_csrf']")?.getAttribute("content") || '';
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content") || 'X-CSRF-TOKEN';
+
+        const response = await fetch(API_ENDPOINT, {
+            method : 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept'      : 'application/json',
+                [csrfHeader]  : csrfToken
+            },
+            body: new URLSearchParams({ month: month })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        rawData = Array.isArray(result) ? result : (result.data || []);
+        populateClientFilter(rawData);
+        renderTable(rawData);
+    } catch (error) {
+        console.error('Failed to fetch project hours:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="100%" class="py-16 text-center">
+                    <div class="inline-flex flex-col items-center gap-1 text-rose-600">
+                        <span class="font-bold text-xs">Unable to load report data</span>
+                        <span class="text-[11px] text-slate-400">${escapeHtml(error.message)}</span>
+                    </div>
+                </td>
+            </tr>`;
+        updateSummaryStats(0, 0, 0);
+    } finally {
+        overlay.classList.add('hidden');
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   Helpers
+═══════════════════════════════════════════════════ */
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function getBadgeClass(val) {
+    const v = parseFloat(val);
+    if (v >= 8) return 'badge-high';
+    if (v >  0) return 'badge-mid';
+    return 'badge-low';
+}
+
+function parseLocalDate(dateStr) {
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+    return new Date(dateStr);
+}
+
+function isSameCalendarDate(d1, d2) {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+}
+
+function isRestrictedDay(dateObj) {
+    const day  = dateObj.getDay();
+    const date = dateObj.getDate();
+    if (day === 0) return true; // Sunday
+    if (day === 6) {
+        if (date >= 8 && date <= 14) return true; // 2nd Saturday
+        const nextWeek = new Date(dateObj);
+        nextWeek.setDate(dateObj.getDate() + 7);
+        if (nextWeek.getMonth() !== dateObj.getMonth()) return true; // Last Saturday
+    }
+    return false;
+}
+
+function updateSummaryStats(projectCount, carriedSum, totalBooked) {
+    document.getElementById('statProjects').textContent    = projectCount;
+    document.getElementById('statCarried').textContent     = `${carriedSum.toFixed(1)}h`;
+    document.getElementById('statTotal').textContent       = `${totalBooked.toFixed(1)}h`;
+    document.getElementById('statTotalMobile').textContent = `${totalBooked.toFixed(1)}h`;
+}
+
+function clearSearch() {
+    const input = document.getElementById('projectSearch');
+    input.value = '';
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    renderTable(rawData);
+}
+
+function getSortedProjectList() {
+    return Object.values(processedProjects).sort((a, b) =>
+        a.clientName.localeCompare(b.clientName) ||
+        a.rootProjectName.localeCompare(b.rootProjectName) ||
+        a.allotmentName.localeCompare(b.allotmentName)
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Render Table (DayWiseHoursProjection)
+═══════════════════════════════════════════════════ */
+function renderTable(data) {
+    const headerRow    = document.getElementById('tableHeader');
+    const tbody        = document.getElementById('tableBody');
+    const footerRow    = document.getElementById('tableFooter');
+    const searchTerm   = document.getElementById('projectSearch').value.trim().toLowerCase();
+    const clientFilter = document.getElementById('filterClient').value;
+    const today        = new Date();
+
+    document.getElementById('clearSearchBtn').classList.toggle('hidden', searchTerm.length === 0);
+
+    headerRow.innerHTML = '';
+    tbody.innerHTML     = '';
+    footerRow.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="100%" class="py-20 text-center font-semibold text-slate-400 text-xs">No records available for ${escapeHtml(document.getElementById('filterMonth').value)}</td></tr>`;
+        updateSummaryStats(0, 0, 0);
+        return;
+    }
+
+    processedProjects = {};
+    currentDates      = [...new Set(data.map(item => item.fullDate).filter(Boolean))].sort();
+    dayTotals         = {};
+    currentDates.forEach(d => { dayTotals[d] = 0; });
+
+    data.forEach(row => {
+        const clientName      = String(row.clientName || row.clientId || '');
+        const rootProjectName = String(row.rootProjectName || '');
+        const allotmentName   = String(row.allotmentName || '');
+        const rowKey          = row.pid !== undefined && row.pid !== null ? `pid_${row.pid}` : allotmentName;
+
+        if (clientFilter && clientName !== clientFilter) return;
+
+        if (searchTerm) {
+            const matches =
+                allotmentName.toLowerCase().includes(searchTerm) ||
+                rootProjectName.toLowerCase().includes(searchTerm) ||
+                clientName.toLowerCase().includes(searchTerm);
+            if (!matches) return;
+        }
+
+        if (!processedProjects[rowKey]) {
+            processedProjects[rowKey] = {
+                pid            : row.pid,
+                total          : 0,
+                days           : {},
+                carried        : parseFloat(row.carriedHours || 0),
+                clientId       : row.clientId,
+                clientName     : clientName,
+                allotmentName  : allotmentName,
+                rootProjectName: rootProjectName,
+                type           : String(row.type || '').trim()
+            };
+        }
+
+        const hrs = parseFloat(row.totalHoursBooked || 0);
+        if (row.fullDate) {
+            processedProjects[rowKey].days[row.fullDate] = row.conditionalHoursDisplay;
+            if (dayTotals[row.fullDate] !== undefined) {
+                dayTotals[row.fullDate] += hrs;
+            }
+        }
+        processedProjects[rowKey].total += hrs;
+    });
+
+    const projectList  = getSortedProjectList();
+    grandRowTotal      = Object.values(dayTotals).reduce((a, b) => a + b, 0);
+    const totalCarried = projectList.reduce((sum, item) => sum + item.carried, 0);
+
+    updateSummaryStats(projectList.length, totalCarried, grandRowTotal);
+
+    /* ── Header ── */
+    let headHtml = `
+        <th class="sticky-slno">SL#</th>
+        <th class="sticky-client text-left">Client</th>
+        <th class="sticky-project text-left">Project</th>
+        <th class="sticky-allotment text-left">Allotment</th>
+        <th class="sticky-carried">Carried</th>`;
+
+    currentDates.forEach(date => {
+        const d         = parseLocalDate(date);
+        const isOff     = isRestrictedDay(d);
+        const isToday   = isSameCalendarDate(d, today);
+        const dayLetter = d.toLocaleString('en-US', { weekday: 'short' }).charAt(0);
+        const thClass   = isToday ? 'today-header' : (isOff ? 'weekend-header' : '');
+
+        headHtml += `
+            <th class="${thClass} text-center w-[34px]">
+                <div class="text-[8px] opacity-70 leading-none mb-0.5">${dayLetter}</div>
+                <div class="text-[10px] font-bold mono-font leading-none">${d.getDate()}</div>
+            </th>`;
+    });
+    headHtml += `<th class="sticky-total text-center">TOTAL</th>`;
+    headerRow.innerHTML = headHtml;
+
+    /* ── Empty Filter Match ── */
+    if (projectList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${currentDates.length + 6}" class="py-16 text-center font-medium text-slate-400 text-xs">No matching allotments found</td></tr>`;
+        return;
+    }
+
+    /* ── Data Rows ── */
+    let bodyHtml = '';
+    projectList.forEach((row, index) => {
+        const isOverCarried = row.carried > 0 && row.total > row.carried;
+        const typeBadge = row.type
+            ? `<span class="shrink-0 px-1 py-0.2 rounded text-[9px] font-semibold uppercase tracking-tight bg-slate-100 text-slate-500 border border-slate-200/80">${escapeHtml(row.type)}</span>`
+            : '';
+
+        bodyHtml += `
+            <tr class="transition-colors">
+                <td class="sticky-slno border-b border-slate-100 text-slate-400 font-semibold mono-font text-[0.63rem]">${index + 1}</td>
+                <td class="sticky-client border-b border-slate-100" title="${escapeHtml(row.clientName)}">
+                    <span class="text-slate-700 font-semibold truncate block">${escapeHtml(row.clientName)}</span>
+                </td>
+                <td class="sticky-project border-b border-slate-100" title="${escapeHtml(row.rootProjectName)}">
+                    <span class="text-slate-600 font-medium truncate block">${escapeHtml(row.rootProjectName)}</span>
+                </td>
+                <td class="sticky-allotment border-b border-slate-100" title="${escapeHtml(row.allotmentName)}">
+                    <div class="flex items-center justify-between gap-1.5">
+                        <span class="text-slate-900 font-semibold truncate">${escapeHtml(row.allotmentName)}</span>
+                        ${typeBadge}
+                    </div>
+                </td>
+                <td class="sticky-carried border-b border-slate-100 text-slate-500 font-medium mono-font text-[0.66rem]">${row.carried.toFixed(1)}</td>`;
+
+        currentDates.forEach(date => {
+            const d       = parseLocalDate(date);
+            const isOff   = isRestrictedDay(d);
+            const isToday = isSameCalendarDate(d, today);
+            const tdClass = isToday ? 'today-cell' : (isOff ? 'weekend-cell' : '');
+
+            const val = row.days[date];
+            const num = parseFloat(val);
+            const displayVal = (val !== undefined && val !== null && val !== '-' && !isNaN(num) && num > 0)
+                ? `<span class="hour-badge mono-font ${getBadgeClass(num)}">${num % 1 === 0 ? num : num.toFixed(1)}</span>`
+                : `<span class="text-slate-200 text-[8px] select-none">•</span>`;
+
+            bodyHtml += `<td class="text-center border-b border-slate-100 ${tdClass}">${displayVal}</td>`;
+        });
+
+        const totalCellClass = isOverCarried
+            ? 'text-amber-700 bg-amber-50/90'
+            : 'text-slate-900';
+
+        bodyHtml += `<td class="sticky-total text-center font-bold border-b border-slate-100 mono-font text-[0.68rem] ${totalCellClass}" title="${isOverCarried ? 'Booked hours exceed carried hours' : ''}">${row.total.toFixed(1)}</td></tr>`;
+    });
+    tbody.innerHTML = bodyHtml;
+
+    /* ── Grand-Total Footer Row ── */
+    let ftHtml = `
+        <tr class="grand-total-row">
+            <td class="sticky-slno text-center"><span class="text-slate-400 text-[0.63rem] font-bold">Σ</span></td>
+            <td class="sticky-client text-left" colspan="3"><span class="text-[0.66rem] font-bold uppercase tracking-wider text-slate-200 pl-1">Grand Total (${projectList.length})</span></td>
+            <td class="sticky-carried text-center"><span class="text-[0.66rem] font-bold text-slate-300 mono-font">${totalCarried.toFixed(1)}</span></td>`;
+
+    currentDates.forEach(date => {
+        const total = dayTotals[date] || 0;
+        const displayVal = total > 0
+            ? `<span class="hour-badge mono-font ${total >= 8 ? 'badge-gt-high' : 'badge-gt-mid'}">${total % 1 === 0 ? total : total.toFixed(1)}</span>`
+            : `<span class="text-slate-600 text-[8px] select-none">•</span>`;
+        ftHtml += `<td class="text-center">${displayVal}</td>`;
+    });
+
+    ftHtml += `<td class="sticky-total text-center font-bold text-white mono-font text-[0.72rem]">${grandRowTotal % 1 === 0 ? grandRowTotal : grandRowTotal.toFixed(1)}</td></tr>`;
+    footerRow.innerHTML = ftHtml;
+}
+
+/* ═══════════════════════════════════════════════════
+   Export Helpers
+═══════════════════════════════════════════════════ */
+function getFormattedFileName(ext) {
+    const month   = document.getElementById('filterMonth').value;
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    return `${month}_hours_report_${dateStr}.${ext}`;
+}
+
+function exportToCSV() {
+    const projectList = getSortedProjectList();
+    if (projectList.length === 0) { alert('No data to export.'); return; }
+
+    const rows = [
+        ["SL#", "Client", "Project Name", "Allotment Name", "Type", "Carried Hours", ...currentDates, "Grand Total"]
+    ];
+
+    projectList.forEach((p, index) => {
+        rows.push([
+            index + 1,
+            `"${p.clientName.replace(/"/g, '""')}"`,
+            `"${p.rootProjectName.replace(/"/g, '""')}"`,
+            `"${p.allotmentName.replace(/"/g, '""')}"`,
+            `"${p.type.replace(/"/g, '""')}"`,
+            p.carried.toFixed(2),
+            ...currentDates.map(d => parseFloat(p.days[d]) || 0),
+            p.total.toFixed(2)
+        ]);
+    });
+
+    const totalCarried = projectList.reduce((sum, p) => sum + p.carried, 0);
+    rows.push([
+        "", "", "", "Grand Total", "",
+        totalCarried.toFixed(2),
+        ...currentDates.map(d => (dayTotals[d] || 0).toFixed(2)),
+        grandRowTotal.toFixed(2)
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\r\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", getFormattedFileName('csv'));
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToExcel() {
+    const projectList = getSortedProjectList();
+    if (projectList.length === 0) { alert('No data to export.'); return; }
+
+    const header = ["SL#", "Client", "Project Name", "Allotment Name", "Type", "Carried Hours", ...currentDates, "Grand Total"];
+
+    const rows = projectList.map((p, index) => [
+        index + 1,
+        p.clientName,
+        p.rootProjectName,
+        p.allotmentName,
+        p.type,
+        parseFloat(p.carried) || 0,
+        ...currentDates.map(date => parseFloat(p.days[date]) || 0),
+        parseFloat(p.total.toFixed(2))
+    ]);
+
+    const totalCarried = projectList.reduce((sum, p) => sum + p.carried, 0);
+    const gtRow = [
+        "", "", "", "Grand Total", "",
+        parseFloat(totalCarried.toFixed(2)),
+        ...currentDates.map(date => parseFloat((dayTotals[date] || 0).toFixed(2))),
+        parseFloat(grandRowTotal.toFixed(2))
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet([header, ...rows, gtRow]);
+    worksheet['!cols'] = [
+        { wch: 6 }, { wch: 20 }, { wch: 24 }, { wch: 26 }, { wch: 12 }, { wch: 13 },
+        ...currentDates.map(() => ({ wch: 11 })),
+        { wch: 13 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Hours Report");
+    XLSX.writeFile(workbook, getFormattedFileName('xlsx'));
+}
+
+/* ═══════════════════════════════════════════════════
+   Bootstrap
+═══════════════════════════════════════════════════ */
+document.getElementById('projectSearch').addEventListener('input', () => renderTable(rawData));
+document.addEventListener('DOMContentLoaded', () => {
+    initMonthSelector();
+    fetchData();
+});
+</script>
+</body>
+</html>

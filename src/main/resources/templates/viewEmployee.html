@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Profile — View & Edit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            'card': '0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.03)',
+            'card-hover': '0 10px 24px -6px rgba(15, 23, 42, 0.07), 0 4px 10px -4px rgba(15, 23, 42, 0.04)',
+            'hero': '0 8px 30px -6px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)',
+            'float': '0 18px 40px -10px rgba(15, 23, 42, 0.14)',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+      color-scheme: light;
+    }
+
+    body {
+      background-color: #f8fafc;
+      background-image:
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.045) 0px, transparent 48%),
+        radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.045) 0px, transparent 48%);
+    }
+
+    .hero-mesh {
+      background:
+        radial-gradient(circle at 12% 20%, rgba(79, 70, 229, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 86% 18%, rgba(14, 165, 233, 0.16) 0%, transparent 46%),
+        radial-gradient(circle at 52% 95%, rgba(129, 140, 248, 0.10) 0%, transparent 50%),
+        linear-gradient(125deg, #eef2ff 0%, #f0f9ff 50%, #f8fafc 100%);
+    }
+
+    .hero-grid {
+      background-size: 22px 22px;
+      background-image:
+        linear-gradient(to right, rgba(79, 70, 229, 0.055) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(79, 70, 229, 0.055) 1px, transparent 1px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .field-input {
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+      background-color: #ffffff;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in-up {
+      animation: fadeSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        font-size: 11pt;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-full {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .section-card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        margin-bottom: 14px !important;
+      }
+    }
+  </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Main Workspace -->
+  <main class="print-full mx-auto max-w-[98%] px-4 py-6 sm:px-6 lg:px-8">
+
+    <!-- Unsaved Changes Floating Banner -->
+    <div id="unsavedBanner" class="no-print mb-5 hidden animate-in-up items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-amber-50/90 to-orange-50/70 px-4 py-2.5 shadow-sm">
+      <div class="flex items-center gap-2.5 text-xs sm:text-sm">
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+          <i data-lucide="edit-3" class="h-3.5 w-3.5"></i>
+        </span>
+        <div>
+          <span class="font-semibold text-amber-950">Active Edit Session</span>
+          <span id="unsavedBannerText" class="ml-1.5 text-amber-800">Modify fields below and save to commit changes to the employee record.</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="cancelAllEdits()" class="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100/60 transition">
+          Discard
+        </button>
+        <button type="button" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition">
+          <i data-lucide="check" class="h-3.5 w-3.5"></i>
+          Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- HERO PROFILE CARD -->
+    <section class="mb-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-hero">
+      <!-- Daylight Mesh Cover Banner with Utility Actions -->
+      <div class="hero-mesh hero-grid relative h-32 sm:h-36 border-b border-slate-200/70">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/45"></div>
+
+        <!-- Top Utility Strip inside Hero Banner -->
+        <div class="hidden no-print relative z-10 flex flex-wrap items-center justify-between gap-2 px-4 pt-3.5 sm:px-7">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onclick="openAuditDrawer()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
+              title="View Change History & Audit Log"
+            >
+              <i data-lucide="history" class="h-3.5 w-3.5 text-indigo-600"></i>
+              <span>Audit Log</span>
+              <span id="auditCountBadge" class="rounded-full bg-indigo-50 px-1.5 py-0.2 text-[10px] font-bold text-indigo-700 border border-indigo-200/70">0</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="exportProfileJSON()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
+              title="Download structured JSON payload"
+            >
+              <i data-lucide="download" class="h-3.5 w-3.5 text-slate-500"></i>
+              <span>Export JSON</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="window.print()"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
+              title="Print or Save as PDF"
+            >
+              <i data-lucide="printer" class="h-3.5 w-3.5 text-slate-500"></i>
+              <span>Print</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="getData(true)"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-500 shadow-xs backdrop-blur hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/70 transition"
+              title="Reload latest record from server"
+            >
+              <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+              <span class="hidden sm:inline">Reload</span>
+            </button>
+          </div>
+
+          <span class="hidden md:inline-flex items-center gap-1.5 rounded-full border border-indigo-200/70 bg-white/85 px-3 py-1 text-[11px] font-semibold text-indigo-700 shadow-xs backdrop-blur">
+            <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+            Employee Master Record
+          </span>
+        </div>
+      </div>
+
+      <div class="px-5 pb-6 sm:px-7">
+        <div class="relative -mt-12 sm:-mt-14 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <!-- Left: Squircle Avatar + Primary Identity -->
+          <div class="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5">
+            <div class="group relative h-24 w-24 sm:h-28 sm:w-28 shrink-0">
+              <div class="h-full w-full overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-indigo-50 to-sky-100 shadow-md ring-1 ring-slate-200/80">
+                <img id="heroAvatarImg" src="" alt="Employee Avatar" class="h-full w-full object-cover" />
+              </div>
+              <label for="avatarFileInput" class="no-print absolute -bottom-1.5 -right-1.5 flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-md hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition" title="Change Profile Photo">
+                <i data-lucide="camera" class="h-3.5 w-3.5"></i>
+                <input id="avatarFileInput" type="file" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)" />
+              </label>
+            </div>
+
+            <div class="pt-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h1 id="heroFullName" class="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900"></h1>
+                <span id="heroStatusBadge"></span>
+              </div>
+
+              <p id="heroRoleLine" class="mt-1 text-xs sm:text-sm font-medium text-slate-600"></p>
+
+              <!-- Copyable Contact & ID Chips -->
+              <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
+                <button type="button" onclick="copyText(employeeData.EID, 'Employee ID')" class="group inline-flex items-center gap-1.5 rounded-lg border border-indigo-200/80 bg-indigo-50/70 px-2.5 py-1 font-mono font-semibold text-indigo-700 hover:bg-indigo-100/80 transition" title="Copy EID">
+                  <i data-lucide="hash" class="h-3 w-3 text-indigo-500"></i>
+                  <span id="heroEid"></span>
+                  <i data-lucide="copy" class="h-3 w-3 opacity-60 group-hover:opacity-100"></i>
+                </button>
+
+                <button type="button" onclick="copyText(employeeData.workmail, 'Work Email')" class="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/40 hover:text-indigo-700 transition" title="Copy Work Email">
+                  <i data-lucide="mail" class="h-3 w-3 text-slate-400 group-hover:text-indigo-500"></i>
+                  <span id="heroWorkmail"></span>
+                  <i data-lucide="copy" class="h-3 w-3 opacity-40 group-hover:opacity-100"></i>
+                </button>
+
+                <button type="button" onclick="copyText(employeeData.phone, 'Phone Number')" class="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/40 hover:text-indigo-700 transition" title="Copy Phone">
+                  <i data-lucide="phone" class="h-3 w-3 text-slate-400 group-hover:text-indigo-500"></i>
+                  <span id="heroPhone"></span>
+                  <i data-lucide="copy" class="h-3 w-3 opacity-40 group-hover:opacity-100"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Primary Edit / Save Controls -->
+          <div id="heroActionButtons" class="no-print flex flex-wrap items-center gap-2 shrink-0"></div>
+        </div>
+
+        <!-- 4-Tile KPI Summary Bar -->
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-slate-100 pt-5">
+          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
+            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
+              <span>Service Tenure</span>
+              <i data-lucide="calendar-clock" class="h-3.5 w-3.5 text-indigo-500"></i>
+            </div>
+            <p id="kpiTenure" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
+            <p id="kpiJoinedSub" class="text-[11px] text-slate-500"></p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
+            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
+              <span>Reporting Manager</span>
+              <i data-lucide="user-check" class="h-3.5 w-3.5 text-sky-600"></i>
+            </div>
+            <p id="kpiManager" class="mt-1 truncate font-display text-sm font-bold text-slate-900"></p>
+            <p id="kpiDeptSub" class="truncate text-[11px] text-slate-500"></p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
+            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
+              <span>Age & Blood Group</span>
+              <i data-lucide="heart-pulse" class="h-3.5 w-3.5 text-rose-500"></i>
+            </div>
+            <p id="kpiAgeBlood" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
+            <p id="kpiDobSub" class="text-[11px] text-slate-500"></p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
+            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
+              <span>Confirmation & Surety</span>
+              <i data-lucide="shield-check" class="h-3.5 w-3.5 text-emerald-600"></i>
+            </div>
+            <p id="kpiConfirm" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
+            <p id="kpiSuretySub" class="text-[11px] text-slate-500"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TWO-COLUMN WORKSPACE: Sticky Section Rail + 7 Section Cards -->
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+      <!-- Left Sticky Navigation Rail -->
+      <aside class="no-print w-full lg:w-64 shrink-0 lg:sticky lg:top-5 space-y-4">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-card">
+          <div class="px-2.5 pb-2 pt-1 flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Profile Sections</span>
+            <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">7</span>
+          </div>
+          <nav id="sectionNavList" class="space-y-1"></nav>
+        </div>
+
+        <!-- Profile Data Completeness Card -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-card">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-800">Profile Health</span>
+            <span id="sidebarCompletenessPct" class="font-mono text-xs font-bold text-indigo-600">0%</span>
+          </div>
+          <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div id="sidebarCompletenessBar" class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="sidebarCompletenessNote" class="mt-2 text-[11px] leading-relaxed text-slate-500"></p>
+          <div id="missingFieldsQuickList" class="mt-2.5 hidden flex-wrap gap-1"></div>
+        </div>
+      </aside>
+
+      <!-- Main Section Cards Container -->
+      <div class="w-full flex-1 min-w-0 space-y-5">
+        <div id="sectionsContainer" class="space-y-5"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- AUDIT LOG SLIDE-OVER DRAWER -->
+  <div id="auditDrawerBackdrop" class="no-print fixed inset-0 z-50 hidden bg-slate-900/25 backdrop-blur-[2px] transition-opacity" onclick="closeAuditDrawer()"></div>
+  <aside id="auditDrawer" class="no-print fixed inset-y-0 right-0 z-50 flex w-full max-w-md translate-x-full flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-out">
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50/70">
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80">
+          <i data-lucide="history" class="h-4 w-4"></i>
+        </span>
+        <div>
+          <h2 class="font-display text-sm font-bold text-slate-900">Change History & Audit Log</h2>
+          <p class="text-[11px] text-slate-500">Tracked field updates with one-click revert</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button type="button" onclick="clearAuditLog()" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:text-rose-600 hover:border-rose-200 transition">
+          Clear
+        </button>
+        <button type="button" onclick="closeAuditDrawer()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+    </div>
+    <div id="auditLogList" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+  </aside>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="no-print fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+  <script>
+    // =========================================================================
+    // 1. API CONFIG, ENDPOINTS & DTO PROJECTION MAPPERS
+    // =========================================================================
+    const AUDIT_KEY = 'emp_profile_audit_v1';
+    const urlParams = new URLSearchParams(window.location.search);
+    const eid = urlParams.get('eid');
+
+    // Section-wise backend modification endpoints
+    const SECTION_ENDPOINTS = {
+      'basic-info': '/admin/updateEmployee/basic',
+      'joining-info': '/admin/updateEmployee/joining',
+      'designation-info': '/admin/updateEmployee/designation',
+      'statutory-info': '/admin/updateEmployee/statutory',
+      'bank-info': '/admin/updateEmployee/bank',
+      'education-info': '/admin/updateEmployee/education',
+      'emergency-contact': '/admin/updateEmployee/emergency'
+    };
+
+    const DEFAULT_AVATAR =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+          <rect width="128" height="128" fill="#EEF2FF"/>
+          <circle cx="64" cy="48" r="22" fill="#818CF8"/>
+          <path d="M24 114c0-22.091 17.909-40 40-40s40 17.909 40 40" fill="#6366F1"/>
+        </svg>`
+      );
+
+    const EMPTY_EMPLOYEE = {
+      avatarUrl: DEFAULT_AVATAR,
+      // 1. Basic Info
+      EID: '',
+      firstName: '',
+      lastName: '',
+      dob: '',
+      gender: '',
+      bloodGroup: '',
+      maritalStatus: '',
+      email: '',
+      phone: '',
+      address: '',
+
+      // 2. Joining Info
+      dateOfJoining: '',
+      confirmationDate: '',
+      status: '',
+      workmail: '',
+      reportingManager: '',
+
+      // 3. Designation Info
+      designation: '',
+      department: '',
+
+      // 4. Statutory Info
+      adhar: '',
+      pan: '',
+      uan: '',
+      pfNo: '',
+      pfStartDate: '',
+      esiNo: '',
+      onSurity: 'No',
+
+      // 5. Bank Info
+      bankName: '',
+      branchName: '',
+      accountNumber: '',
+      IFSC: '',
+      paymentMode: '',
+
+      // 6. Education
+      degree: '',
+      fieldOfStudy: '',
+      college: '',
+      yearOfPassing: '',
+      gpa: '',
+
+      // 7. Emergency Contact
+      emergencyContactName: '',
+      relation: '',
+      emergencyContactNum: ''
+    };
+
+    // Maps Spring Data EmployeeReportProjection JSON -> UI employeeData keys
+    function mapProjectionToEmployeeData(dto) {
+      if (!dto) return { ...EMPTY_EMPLOYEE };
+
+      return {
+        avatarUrl: dto.image && String(dto.image).trim() !== '' ? dto.image : DEFAULT_AVATAR,
+
+        // 1. Basic Info
+        EID: dto.employeeId ?? '',
+        firstName: dto.firstName ?? '',
+        lastName: dto.lastName ?? '',
+        dob: dto.dob ? formatDisplayDate(dto.dob) : '',
+        gender: dto.gender ?? '',
+        bloodGroup: dto.bloodGroup ?? '',
+        maritalStatus: dto.meritalStatus ?? '',
+        email: dto.personalEmail ?? '',
+        phone: dto.phone ?? '',
+        address: dto.address ?? '',
+
+        // 2. Joining Info
+        dateOfJoining: dto.dateOfJoining ? formatDisplayDate(dto.dateOfJoining) : '',
+        confirmationDate: dto.confirmationDate ? formatDisplayDate(dto.confirmationDate) : '',
+        status: dto.status ?? '',
+        workmail: dto.workmail ?? '',
+        reportingManager: dto.manager ?? '',
+
+        // 3. Designation Info
+        designation: dto.designation ?? '',
+        department: dto.departmentName ?? '',
+
+        // 4. Statutory Info
+        adhar: dto.aadhar ?? '',
+        pan: dto.pan ?? '',
+        uan: dto.uan ?? '',
+        pfNo: dto.pfNo ?? '',
+        pfStartDate: dto.pfStartDate ? formatDisplayDate(dto.pfStartDate) : '',
+        esiNo: dto.esiNo ?? '',
+        onSurity: dto.onSurity ?? 'No',
+
+        // 5. Bank Info
+        bankName: dto.bankName ?? '',
+        branchName: dto.branchName ?? '',
+        accountNumber: dto.accountNumber ?? '',
+        IFSC: dto.ifsc ?? dto.IFSC ?? '',
+        paymentMode: dto.paymentMode ?? '',
+
+        // 6. Education
+        degree: dto.degree ?? '',
+        fieldOfStudy: dto.fieldOfStudy ?? '',
+        college: dto.college ?? '',
+        yearOfPassing: dto.yearOfPassing ?? '',
+        gpa: dto.gpa ?? '',
+
+        // 7. Emergency Contact
+        emergencyContactName: dto.emergencyContactName ?? '',
+        relation: dto.emergencyRelation ?? '',
+        emergencyContactNum: dto.emergencyContactNum ?? ''
+      };
+    }
+
+    // Maps UI keys back to Spring Boot DTO keys for a specific section (dates formatted as yyyy-MM-dd)
+    function buildSectionPayload(sectionId, sourceObj) {
+      const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
+      if (!sec) return {};
+
+      const keyMap = {
+        EID: 'employeeId',
+        maritalStatus: 'meritalStatus',
+        email: 'personalEmail',
+        reportingManager: 'manager',
+        department: 'departmentName',
+        adhar: 'aadhar',
+        relation: 'emergencyRelation',
+        IFSC: 'ifsc'
+      };
+
+      const payload = {
+        employeeId: employeeData.EID || eid
+      };
+
+      sec.fields.forEach(f => {
+        if (f.readonly) return;
+        const backendKey = keyMap[f.key] || f.key;
+        const raw = (sourceObj[f.key] ?? '').toString().trim();
+        payload[backendKey] = f.type === 'date' ? toInputDateValue(raw) : raw;
+      });
+
+      return payload;
+    }
+
+    // Sends AJAX modification request with optional Spring Security CSRF headers
+    function sendSectionUpdateRequest(sectionId, payload) {
+      console.log(payload);
+      const url = SECTION_ENDPOINTS[sectionId] || `/admin/updateEmployee/${encodeURIComponent(eid)}`;
+      const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+      return $.ajax({
+        url: url,
+        type: 'POST',
+        headers:{'X-CSRF-TOKEN':csrfToken},
+        dataType: 'json',
+        data: payload,
+        success:(res)=>{
+          console.log(res);
+        },
+        error:(err)=>{
+          console.log(err);
+        }
+      });
+    }
+
+    function getData(notify = false) {
+      if (!eid) {
+        showToast('Missing employee ID (?eid=...) in URL', 'error');
+        renderAll();
+        return;
+      }
+
+      $.ajax({
+        url: `/admin/getEmployee/${encodeURIComponent(eid)}`,
+        type: 'GET',
+        dataType: 'JSON',
+        success: (res) => {
+          const record = Array.isArray(res) ? res[0] : (res?.data || res);
+          employeeData = mapProjectionToEmployeeData(record);
+          editingSections.clear();
+          draftData = {};
+          fieldErrors = {};
+          renderAll();
+          if (notify) showToast('Reloaded employee record from server', 'success');
+        },
+        error: (err) => {
+          console.error('Error fetching employee details:', err);
+          showToast('Failed to load employee details from server', 'error');
+          renderAll();
+        }
+      });
+    }
+
+    // =========================================================================
+    // 2. SECTION & FIELD SCHEMA DEFINITIONS
+    // =========================================================================
+    const PROFILE_SECTIONS = [
+      {
+        id: 'basic-info',
+        number: '01',
+        title: 'Basic Info',
+        subtitle: 'Personal identity, demographics, contact channels, and residential address',
+        icon: 'user',
+        accentBg: 'bg-indigo-50',
+        accentText: 'text-indigo-600',
+        accentBorder: 'border-indigo-200/80',
+        fields: [
+          { key: 'EID', label: 'Employee ID', type: 'text', readonly: true, mono: true },
+          { key: 'firstName', label: 'First Name', type: 'text', required: true, placeholder: 'First name' },
+          { key: 'lastName', label: 'Last Name', type: 'text', required: true, placeholder: 'Last name' },
+          { key: 'dob', label: 'Date of Birth', type: 'date', required: true },
+          { key: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female', 'Non-Binary', 'Prefer not to say'] },
+          { key: 'bloodGroup', label: 'Blood Group', type: 'select', options: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] },
+          { key: 'maritalStatus', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Divorced', 'Widowed'] },
+          { key: 'email', label: 'Personal Email', type: 'email', required: true, placeholder: 'personal@example.com' },
+          { key: 'phone', label: 'Phone Number', type: 'tel', required: true, placeholder: '+91 98765 43210' },
+          { key: 'address', label: 'Residential Address', type: 'textarea', fullWidth: true, placeholder: 'Complete street address, city, state, PIN' }
+        ]
+      },
+      {
+        id: 'joining-info',
+        number: '02',
+        title: 'Joining Info',
+        subtitle: 'Onboarding dates, employment lifecycle status, official email, and reporting line',
+        icon: 'briefcase',
+        accentBg: 'bg-sky-50',
+        accentText: 'text-sky-600',
+        accentBorder: 'border-sky-200/80',
+        fields: [
+          { key: 'dateOfJoining', label: 'Date of Joining', type: 'date', required: true },
+          { key: 'confirmationDate', label: 'Confirmation Date', type: 'date' },
+          { key: 'status', label: 'Account / Active Status', type: 'select', required: true, options: ['Active', 'Probation', 'On Leave', 'Notice Period', 'Inactive'] },
+          { key: 'workmail', label: 'Work Email', type: 'email', required: true, placeholder: 'name@company.com' },
+          { key: 'reportingManager', label: 'Reporting Manager', type: 'text', required: true, placeholder: 'Manager name & title' }
+        ]
+      },
+      {
+        id: 'designation-info',
+        number: '03',
+        title: 'Designation Info',
+        subtitle: 'Current organizational role, title, and functional department',
+        icon: 'award',
+        accentBg: 'bg-violet-50',
+        accentText: 'text-violet-600',
+        accentBorder: 'border-violet-200/80',
+        fields: [
+          { key: 'designation', label: 'Designation', type: 'text', required: true, placeholder: 'e.g., Senior Software Engineer' },
+          { key: 'department', label: 'Department', type: 'select', required: true, options: ['Product Engineering', 'Human Resources', 'Finance & Accounts', 'Operations', 'Sales & Growth', 'IT Infrastructure', 'Quality Assurance', 'Design & UX'] }
+        ]
+      },
+      {
+        id: 'statutory-info',
+        number: '04',
+        title: 'Statutory Info',
+        subtitle: 'Government tax identifiers, Provident Fund (PF/UAN), ESI, and surety compliance',
+        icon: 'shield-check',
+        accentBg: 'bg-emerald-50',
+        accentText: 'text-emerald-600',
+        accentBorder: 'border-emerald-200/80',
+        fields: [
+          { key: 'adhar', label: 'Aadhaar Number', type: 'text', mono: true, placeholder: 'XXXX XXXX XXXX' },
+          { key: 'pan', label: 'PAN Number', type: 'text', mono: true, uppercase: true, placeholder: 'ABCDE1234F' },
+          { key: 'uan', label: 'UAN Number', type: 'text', mono: true, placeholder: '12-digit UAN' },
+          { key: 'pfNo', label: 'PF Number', type: 'text', mono: true, placeholder: 'Region/Office/Est/Ext/Acc' },
+          { key: 'pfStartDate', label: 'PF Start Date', type: 'date' },
+          { key: 'esiNo', label: 'ESI Number', type: 'text', mono: true, placeholder: '17-digit ESI IP number' },
+          { key: 'onSurity', label: 'On Surety', type: 'select', options: ['No', 'Yes'] }
+        ]
+      },
+      {
+        id: 'bank-info',
+        number: '05',
+        title: 'Bank Info',
+        subtitle: 'Salary disbursement bank account details, branch, IFSC, and transfer mode',
+        icon: 'landmark',
+        accentBg: 'bg-amber-50',
+        accentText: 'text-amber-600',
+        accentBorder: 'border-amber-200/80',
+        fields: [
+          { key: 'bankName', label: 'Bank Name', type: 'text', required: true, placeholder: 'e.g., HDFC Bank Ltd.' },
+          { key: 'branchName', label: 'Branch Name', type: 'text', placeholder: 'Branch location' },
+          { key: 'accountNumber', label: 'Account Number', type: 'text', required: true, mono: true, placeholder: 'Bank account number' },
+          { key: 'IFSC', label: 'IFSC Code', type: 'text', required: true, mono: true, uppercase: true, placeholder: 'HDFC0000184' },
+          { key: 'paymentMode', label: 'Payment Mode', type: 'select', options: ['NEFT / Direct Bank Transfer', 'RTGS', 'IMPS', 'Cheque'] }
+        ]
+      },
+      {
+        id: 'education-info',
+        number: '06',
+        title: 'Education',
+        subtitle: 'Highest academic qualification, specialization, institution, and passing credentials',
+        icon: 'graduation-cap',
+        accentBg: 'bg-cyan-50',
+        accentText: 'text-cyan-600',
+        accentBorder: 'border-cyan-200/80',
+        fields: [
+          { key: 'degree', label: 'Degree', type: 'select', options: ['B.E. / B.Tech', 'M.E. / M.Tech', 'BCA', 'MCA', 'B.Sc', 'M.Sc', 'BBA', 'MBA', 'B.Com', 'M.Com', 'Ph.D.', 'Diploma'] },
+          { key: 'fieldOfStudy', label: 'Field of Study', type: 'text', placeholder: 'e.g., Computer Science' },
+          { key: 'college', label: 'College / University', type: 'text', placeholder: 'Institution name' },
+          { key: 'yearOfPassing', label: 'Year of Passing', type: 'text', mono: true, placeholder: 'YYYY' },
+          { key: 'gpa', label: 'GPA / Percentage', type: 'text', mono: true, placeholder: 'e.g., 8.84 CGPA or 85%' }
+        ]
+      },
+      {
+        id: 'emergency-contact',
+        number: '07',
+        title: 'Emergency Contact',
+        subtitle: 'Primary next-of-kin contact details for urgent workplace or medical notifications',
+        icon: 'phone-call',
+        accentBg: 'bg-rose-50',
+        accentText: 'text-rose-600',
+        accentBorder: 'border-rose-200/80',
+        fields: [
+          { key: 'emergencyContactName', label: 'Contact Person Name', type: 'text', required: true, placeholder: 'Full name' },
+          { key: 'relation', label: 'Relationship', type: 'select', required: true, options: ['Spouse', 'Father', 'Mother', 'Brother', 'Sister', 'Guardian', 'Friend', 'Other'] },
+          { key: 'emergencyContactNum', label: 'Emergency Phone Number', type: 'tel', required: true, placeholder: '+91 98765 43210' }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 3. STATE MANAGEMENT
+    // =========================================================================
+    let employeeData = { ...EMPTY_EMPLOYEE };
+    let auditLogs = loadAuditLogs();
+    let editingSections = new Set();
+    let draftData = {};
+    let fieldErrors = {};
+    let activeNavId = 'basic-info';
+
+    function loadAuditLogs() {
+      try {
+        const saved = localStorage.getItem(AUDIT_KEY);
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function persistAuditLogs() {
+      try {
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
+      } catch (e) {
+        console.warn('Could not save audit logs:', e);
+      }
+    }
+
+    // =========================================================================
+    // 4. DATE PARSING, VALIDATION & FORMATTING HELPERS
+    // =========================================================================
+    const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Parses "03-Mar-2001" or ISO "2001-03-03" into a local Date object
+    function parseFlexibleDate(dateStr) {
+      if (!dateStr) return null;
+      const s = String(dateStr).trim();
+
+      // Match dd-MMM-yyyy (e.g., 03-Mar-2001)
+      const dmyMatch = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+      if (dmyMatch) {
+        const day = parseInt(dmyMatch[1], 10);
+        const monthIdx = MONTHS_SHORT.findIndex(m => m.toLowerCase() === dmyMatch[2].toLowerCase());
+        const year = parseInt(dmyMatch[3], 10);
+        if (monthIdx !== -1) {
+          const d = new Date(year, monthIdx, day);
+          return isNaN(d.getTime()) ? null : d;
+        }
+      }
+
+      // Match ISO yyyy-MM-dd
+      const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) {
+        const d = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      const fallback = new Date(s);
+      return isNaN(fallback.getTime()) ? null : fallback;
+    }
+
+    // Formats any valid date into UI display format "03-Mar-2001"
+    function formatDisplayDate(dateStr) {
+      const d = parseFlexibleDate(dateStr);
+      if (!d) return dateStr ? String(dateStr) : '—';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mmm = MONTHS_SHORT[d.getMonth()];
+      const yyyy = d.getFullYear();
+      return `${dd}-${mmm}-${yyyy}`;
+    }
+
+    // Converts "03-Mar-2001" -> "2001-03-03" for <input type="date"> AND backend JSON payload
+    function toInputDateValue(dateStr) {
+      const d = parseFlexibleDate(dateStr);
+      if (!d) return '';
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function validateField(key, rawValue) {
+      const fieldDef = PROFILE_SECTIONS.flatMap(s => s.fields).find(f => f.key === key);
+      if (fieldDef && fieldDef.readonly) return '';
+
+      const val = (rawValue ?? '').toString().trim();
+
+      const requiredKeys = [
+        'firstName', 'lastName', 'dob', 'email', 'phone',
+        'dateOfJoining', 'status', 'workmail', 'reportingManager',
+        'designation', 'department', 'bankName', 'accountNumber',
+        'IFSC', 'emergencyContactName', 'relation', 'emergencyContactNum'
+      ];
+      if (requiredKeys.includes(key) && !val) {
+        return 'This field is required';
+      }
+
+      if (!val) return '';
+
+      if (key === 'email' || key === 'workmail') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!emailRegex.test(val)) return 'Enter a valid email address';
+      }
+
+      if (key === 'phone' || key === 'emergencyContactNum') {
+        const digits = val.replace(/\D/g, '');
+        if (digits.length < 10 || digits.length > 15) return 'Enter a valid 10–15 digit phone number';
+      }
+
+      if (key === 'adhar') {
+        const digits = val.replace(/\s+/g, '');
+        if (!/^\d{12}$/.test(digits)) return 'Aadhaar must be exactly 12 digits';
+      }
+
+      if (key === 'pan') {
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val.toUpperCase())) return 'Invalid PAN format (e.g., ABCDE1234F)';
+      }
+
+      if (key === 'uan') {
+        const digits = val.replace(/\s+/g, '');
+        if (!/^\d{12}$/.test(digits)) return 'UAN must be 12 digits';
+      }
+
+      if (key === 'IFSC') {
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(val.toUpperCase())) return 'Invalid IFSC (e.g., HDFC0000184)';
+      }
+
+      if (key === 'accountNumber') {
+        if (!/^\d{9,18}$/.test(val.replace(/\s+/g, ''))) return 'Account number must be 9–18 digits';
+      }
+
+      if (key === 'yearOfPassing') {
+        const yr = parseInt(val, 10);
+        if (!/^\d{4}$/.test(val) || yr < 1960 || yr > 2032) return 'Enter a valid 4-digit year';
+      }
+
+      return '';
+    }
+
+    function autoFormatInput(key, value) {
+      if (key === 'pan' || key === 'IFSC') {
+        return value.toUpperCase();
+      }
+      if (key === 'adhar') {
+        const digits = value.replace(/\D/g, '').slice(0, 12);
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+      }
+      if (key === 'uan') {
+        return value.replace(/\D/g, '').slice(0, 12);
+      }
+      return value;
+    }
+
+    function computeAge(dobStr) {
+      const dob = parseFlexibleDate(dobStr);
+      if (!dob) return null;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      return age >= 0 ? age : null;
+    }
+
+    function computeTenure(dojStr) {
+      const start = parseFlexibleDate(dojStr);
+      if (!start) return '—';
+      const now = new Date();
+      if (start > now) return 'Upcoming';
+      let years = now.getFullYear() - start.getFullYear();
+      let months = now.getMonth() - start.getMonth();
+      if (now.getDate() < start.getDate()) months--;
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      if (years === 0 && months === 0) return 'Less than 1 mo';
+      const parts = [];
+      if (years > 0) parts.push(`${years} yr${years > 1 ? 's' : ''}`);
+      if (months > 0) parts.push(`${months} mo${months > 1 ? 's' : ''}`);
+      return parts.join(' ');
+    }
+
+    function getStatusBadgeHTML(status) {
+      const map = {
+        'Active': 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-500/20',
+        'Probation': 'bg-amber-50 text-amber-700 border-amber-200 ring-amber-500/20',
+        'On Leave': 'bg-sky-50 text-sky-700 border-sky-200 ring-sky-500/20',
+        'Notice Period': 'bg-orange-50 text-orange-700 border-orange-200 ring-orange-500/20',
+        'Inactive': 'bg-rose-50 text-rose-700 border-rose-200 ring-rose-500/20'
+      };
+      const dotMap = {
+        'Active': 'bg-emerald-500',
+        'Probation': 'bg-amber-500',
+        'On Leave': 'bg-sky-500',
+        'Notice Period': 'bg-orange-500',
+        'Inactive': 'bg-rose-500'
+      };
+      const cls = map[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+      const dot = dotMap[status] || 'bg-slate-400';
+      return `
+        <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}">
+          <span class="h-1.5 w-1.5 rounded-full ${dot}"></span>
+          ${escapeHTML(status || 'Unknown')}
+        </span>
+      `;
+    }
+
+    function escapeHTML(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // =========================================================================
+    // 5. RENDERING ENGINE
+    // =========================================================================
+    function renderAll() {
+      renderHero();
+      renderSidebarNav();
+      renderCompleteness();
+      renderSections();
+      renderAuditBadge();
+      updateUnsavedBanner();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderHero() {
+      const fullName = `${employeeData.firstName || ''} ${employeeData.lastName || ''}`.trim() || 'Loading Employee...';
+      document.getElementById('heroAvatarImg').src = employeeData.avatarUrl || DEFAULT_AVATAR;
+      document.getElementById('heroFullName').textContent = fullName;
+      document.getElementById('heroStatusBadge').innerHTML = getStatusBadgeHTML(employeeData.status);
+      document.getElementById('heroRoleLine').textContent = `${employeeData.designation || 'Role Not Assigned'}  •  ${employeeData.department || 'Department Not Assigned'}`;
+
+      document.getElementById('heroEid').textContent = employeeData.EID || eid || '—';
+      document.getElementById('heroWorkmail').textContent = employeeData.workmail || '—';
+      document.getElementById('heroPhone').textContent = employeeData.phone || '—';
+
+      // KPI Strip
+      document.getElementById('kpiTenure').textContent = computeTenure(employeeData.dateOfJoining);
+      document.getElementById('kpiJoinedSub').textContent = `Joined ${formatDisplayDate(employeeData.dateOfJoining)}`;
+
+      document.getElementById('kpiManager').textContent = employeeData.reportingManager || '—';
+      document.getElementById('kpiDeptSub').textContent = employeeData.department || '—';
+
+      const age = computeAge(employeeData.dob);
+      document.getElementById('kpiAgeBlood').textContent = `${age !== null ? age + ' Yrs' : '—'}  •  ${employeeData.bloodGroup || '—'}`;
+      document.getElementById('kpiDobSub').textContent = `DOB: ${formatDisplayDate(employeeData.dob)}`;
+
+      document.getElementById('kpiConfirm').textContent = employeeData.confirmationDate ? formatDisplayDate(employeeData.confirmationDate) : 'Pending';
+      document.getElementById('kpiSuretySub').textContent = `On Surety: ${employeeData.onSurity || 'No'}`;
+
+      // Hero Action Buttons
+      const anyEditing = editingSections.size > 0;
+      const actionWrap = document.getElementById('heroActionButtons');
+
+      if (anyEditing) {
+        actionWrap.innerHTML = `
+          <button type="button" onclick="cancelAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition">
+            <i data-lucide="x" class="h-3.5 w-3.5 text-slate-500"></i>
+            Cancel All
+          </button>
+          <button type="button" id="saveAllBtn" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition">
+            <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
+            Save All Changes
+          </button>
+        `;
+      } else {
+        actionWrap.innerHTML = `
+          <button type="button" onclick="startEditAll()" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
+            <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+            Edit Full Profile
+          </button>
+        `;
+      }
+    }
+
+    function renderSidebarNav() {
+      const list = document.getElementById('sectionNavList');
+      list.innerHTML = PROFILE_SECTIONS.map(sec => {
+        const isEditing = editingSections.has(sec.id);
+        const isActive = activeNavId === sec.id;
+        const filledCount = sec.fields.filter(f => (employeeData[f.key] ?? '').toString().trim() !== '').length;
+        const totalCount = sec.fields.length;
+
+        return `
+          <a
+            href="#${sec.id}"
+            onclick="setActiveNav('${sec.id}')"
+            class="group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition ${
+              isActive
+                ? 'bg-indigo-50/90 text-indigo-700 font-semibold'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }"
+          >
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border ${
+                isActive ? 'border-indigo-200 bg-white text-indigo-600 shadow-2xs' : 'border-slate-200/80 bg-slate-50 text-slate-500 group-hover:bg-white'
+              }">
+                <i data-lucide="${sec.icon}" class="h-3.5 w-3.5"></i>
+              </span>
+              <span class="truncate">${sec.title}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${isEditing ? '<span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" title="Editing"></span>' : ''}
+              <span class="font-mono text-[10px] ${filledCount === totalCount ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${filledCount}/${totalCount}</span>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function renderCompleteness() {
+      const allFields = PROFILE_SECTIONS.flatMap(s => s.fields.map(f => ({ ...f, sectionId: s.id })));
+      const missing = allFields.filter(f => !(employeeData[f.key] ?? '').toString().trim());
+      const filled = allFields.length - missing.length;
+      const pct = Math.round((filled / allFields.length) * 100);
+
+      document.getElementById('sidebarCompletenessPct').textContent = `${pct}%`;
+      document.getElementById('sidebarCompletenessBar').style.width = `${pct}%`;
+
+      const noteEl = document.getElementById('sidebarCompletenessNote');
+      const quickList = document.getElementById('missingFieldsQuickList');
+
+      if (missing.length === 0) {
+        noteEl.textContent = `All ${allFields.length} employee fields across 7 sections are populated.`;
+        quickList.classList.add('hidden');
+        quickList.innerHTML = '';
+      } else {
+        noteEl.textContent = `${filled} of ${allFields.length} fields completed. Click below to fill missing items:`;
+        quickList.classList.remove('hidden');
+        quickList.classList.add('flex');
+        quickList.innerHTML = missing.slice(0, 6).map(m => `
+          <button
+            type="button"
+            onclick="jumpAndEditField('${m.sectionId}', '${m.key}')"
+            class="rounded-md border border-amber-200 bg-amber-50/80 px-2 py-0.5 text-[10px] font-medium text-amber-800 hover:bg-amber-100 transition"
+          >
+            + ${escapeHTML(m.label)}
+          </button>
+        `).join('');
+      }
+    }
+
+    function renderSections() {
+      const container = document.getElementById('sectionsContainer');
+      container.innerHTML = PROFILE_SECTIONS.map(sec => {
+        const isEditing = editingSections.has(sec.id);
+
+        return `
+          <article id="${sec.id}" class="section-card scroll-mt-6 overflow-hidden rounded-2xl border ${
+            isEditing ? 'border-indigo-300 ring-2 ring-indigo-500/10' : 'border-slate-200/90'
+          } bg-white shadow-card transition-all">
+            <!-- Section Header -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3.5 sm:px-6">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${sec.accentBorder} ${sec.accentBg} ${sec.accentText}">
+                  <i data-lucide="${sec.icon}" class="h-4 w-4"></i>
+                </span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-[11px] font-bold text-slate-400">${sec.number}</span>
+                    <h2 class="font-display text-sm sm:text-base font-bold text-slate-900">${sec.title}</h2>
+                    ${isEditing ? '<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">Editing</span>' : ''}
+                  </div>
+                  <p class="truncate text-xs text-slate-500">${sec.subtitle}</p>
+                </div>
+              </div>
+
+              <!-- Section Action Buttons -->
+              <div class="no-print flex items-center gap-1.5 shrink-0">
+                ${
+                  isEditing
+                    ? `
+                      <button type="button" onclick="cancelSectionEdit('${sec.id}')" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+                        <i data-lucide="x" class="h-3.5 w-3.5"></i>
+                        Cancel
+                      </button>
+                      <button type="button" id="saveBtn_${sec.id}" onclick="saveSectionEdit('${sec.id}')" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition">
+                        <i data-lucide="check" class="h-3.5 w-3.5"></i>
+                        Save Section
+                      </button>
+                    `
+                    : `
+                      <button type="button" onclick="copySectionData('${sec.id}')" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition" title="Copy section values">
+                        <i data-lucide="copy" class="h-3.5 w-3.5 text-slate-400"></i>
+                        <span class="hidden sm:inline">Copy</span>
+                      </button>
+                      <button type="button" onclick="startSectionEdit('${sec.id}')" class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100/80 transition">
+                        <i data-lucide="edit-3" class="h-3.5 w-3.5"></i>
+                        Edit Section
+                      </button>
+                    `
+                }
+              </div>
+            </div>
+
+            <!-- Section Fields Grid -->
+            <div class="p-5 sm:p-6">
+              <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+                ${sec.fields.map(field => renderFieldCell(sec.id, field, isEditing)).join('')}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderFieldCell(sectionId, field, isEditing) {
+      const colSpanClass = field.fullWidth ? 'sm:col-span-2 xl:col-span-3' : '';
+
+      if (!isEditing) {
+        const rawVal = employeeData[field.key];
+        const hasVal = rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '';
+        let displayHTML = '';
+
+        if (!hasVal) {
+          displayHTML = `<span class="text-xs italic text-slate-400">Not provided</span>`;
+        } else if (field.key === 'status') {
+          displayHTML = getStatusBadgeHTML(rawVal);
+        } else if (field.key === 'onSurity') {
+          const isYes = rawVal === 'Yes';
+          displayHTML = `<span class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${
+            isYes ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'
+          }">${escapeHTML(rawVal)}</span>`;
+        } else if (field.type === 'date') {
+          const formatted = formatDisplayDate(rawVal);
+          let extraPill = '';
+          if (field.key === 'dob') {
+            const age = computeAge(rawVal);
+            if (age !== null) extraPill = `<span class="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">${age} yrs</span>`;
+          } else if (field.key === 'dateOfJoining') {
+            extraPill = `<span class="ml-2 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">${computeTenure(rawVal)}</span>`;
+          }
+          displayHTML = `<span class="text-sm font-semibold text-slate-800">${escapeHTML(formatted)}</span>${extraPill}`;
+        } else {
+          displayHTML = `<span class="${field.mono ? 'font-mono text-[13px]' : 'text-sm'} font-semibold text-slate-800 break-words">${escapeHTML(rawVal)}</span>`;
+        }
+
+        return `
+          <div class="${colSpanClass} group rounded-xl border border-slate-100 bg-slate-50/45 px-3.5 py-2.5 hover:border-slate-200 hover:bg-slate-50/90 transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-medium text-slate-500">${escapeHTML(field.label)}</span>
+              ${
+                hasVal
+                  ? `<button type="button" onclick="copyText(${JSON.stringify(String(rawVal))}, ${JSON.stringify(field.label)})" class="no-print opacity-0 group-hover:opacity-100 rounded p-0.5 text-slate-400 hover:text-indigo-600 transition" title="Copy ${escapeHTML(field.label)}">
+                      <i data-lucide="copy" class="h-3 w-3"></i>
+                    </button>`
+                  : ''
+              }
+            </div>
+            <div class="mt-1 flex items-center flex-wrap">
+              ${displayHTML}
+            </div>
+          </div>
+        `;
+      }
+
+      // READ-ONLY FIELD IN EDIT MODE (e.g., Employee ID)
+      if (field.readonly) {
+        const lockedVal = employeeData[field.key] ?? eid ?? '';
+        return `
+          <div class="${colSpanClass}">
+            <label for="input_${field.key}" class="mb-1 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>${escapeHTML(field.label)}</span>
+              <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                <i data-lucide="lock" class="h-2.5 w-2.5"></i>
+                Locked
+              </span>
+            </label>
+            <input
+              id="input_${field.key}"
+              type="text"
+              value="${escapeHTML(lockedVal)}"
+              readonly
+              disabled
+              class="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100/80 ${field.mono ? 'font-mono text-[13px]' : 'text-sm'} px-3 py-2 font-semibold text-slate-500 select-all"
+            />
+          </div>
+        `;
+      }
+
+      // EDIT MODE INPUT
+      const currentVal = draftData[field.key] ?? '';
+      const errorMsg = fieldErrors[field.key] || '';
+      const isValid = !errorMsg && String(currentVal).trim() !== '';
+
+      const borderClass = errorMsg
+        ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
+        : isValid
+          ? 'border-emerald-300 bg-white'
+          : 'border-slate-300 bg-white';
+
+      let controlHTML = '';
+      if (field.type === 'select') {
+        const opts = field.options || [];
+        const mergedOpts = currentVal && !opts.includes(currentVal) ? [currentVal, ...opts] : opts;
+        controlHTML = `
+          <select
+            id="input_${field.key}"
+            onchange="handleFieldInput('${field.key}', this.value)"
+            class="field-input w-full rounded-lg border ${borderClass} px-3 py-2 text-sm font-medium text-slate-800"
+          >
+            <option value="">Select ${escapeHTML(field.label)}</option>
+            ${mergedOpts.map(opt => `<option value="${escapeHTML(opt)}" ${currentVal === opt ? 'selected' : ''}>${escapeHTML(opt)}</option>`).join('')}
+          </select>
+        `;
+      } else if (field.type === 'textarea') {
+        controlHTML = `
+          <textarea
+            id="input_${field.key}"
+            rows="2"
+            placeholder="${escapeHTML(field.placeholder || '')}"
+            oninput="handleFieldInput('${field.key}', this.value)"
+            class="field-input w-full rounded-lg border ${borderClass} px-3 py-2 text-sm font-medium text-slate-800"
+          >${escapeHTML(currentVal)}</textarea>
+        `;
+      } else {
+        const inputVal = field.type === 'date' ? toInputDateValue(currentVal) : currentVal;
+        controlHTML = `
+          <div class="relative">
+            <input
+              id="input_${field.key}"
+              type="${field.type || 'text'}"
+              value="${escapeHTML(inputVal)}"
+              placeholder="${escapeHTML(field.placeholder || '')}"
+              oninput="handleFieldInput('${field.key}', this.value)"
+              class="field-input w-full rounded-lg border ${borderClass} ${field.mono ? 'font-mono text-[13px]' : 'text-sm'} px-3 py-2 pr-8 font-medium text-slate-800"
+            />
+            ${
+              isValid
+                ? `<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-emerald-500">
+                    <i data-lucide="check-circle-2" class="h-4 w-4"></i>
+                  </span>`
+                : ''
+            }
+          </div>
+        `;
+      }
+
+      return `
+        <div class="${colSpanClass}">
+          <label for="input_${field.key}" class="mb-1 flex items-center justify-between text-xs font-semibold text-slate-700">
+            <span>
+              ${escapeHTML(field.label)}
+              ${field.required ? '<span class="text-rose-500 ml-0.5">*</span>' : ''}
+            </span>
+          </label>
+          ${controlHTML}
+          <p id="err_${field.key}" class="mt-1 text-[11px] font-medium text-rose-600 ${errorMsg ? '' : 'hidden'}">${escapeHTML(errorMsg)}</p>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 6. EDITING, AJAX MODIFICATION, VALIDATION & AUDIT LOG ACTIONS
+    // =========================================================================
+    function startSectionEdit(sectionId) {
+      if (editingSections.size === 0) {
+        draftData = { ...employeeData };
+        fieldErrors = {};
+      } else {
+        const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
+        if (sec) {
+          sec.fields.forEach(f => {
+            draftData[f.key] = employeeData[f.key] ?? '';
+            delete fieldErrors[f.key];
+          });
+        }
+      }
+      editingSections.add(sectionId);
+      activeNavId = sectionId;
+      renderAll();
+    }
+
+    function startEditAll() {
+      draftData = { ...employeeData };
+      fieldErrors = {};
+      PROFILE_SECTIONS.forEach(s => editingSections.add(s.id));
+      renderAll();
+      showToast('Full profile edit mode enabled', 'info');
+    }
+
+    function cancelSectionEdit(sectionId) {
+      const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
+      if (sec) {
+        sec.fields.forEach(f => {
+          delete draftData[f.key];
+          delete fieldErrors[f.key];
+        });
+      }
+      editingSections.delete(sectionId);
+      renderAll();
+      showToast(`Discarded edits in ${sec ? sec.title : 'section'}`, 'info');
+    }
+
+    function cancelAllEdits() {
+      editingSections.clear();
+      draftData = {};
+      fieldErrors = {};
+      renderAll();
+      showToast('All unsaved changes discarded', 'info');
+    }
+
+    function handleFieldInput(key, rawValue) {
+      const fieldDef = PROFILE_SECTIONS.flatMap(s => s.fields).find(f => f.key === key);
+      if (fieldDef && fieldDef.readonly) return;
+
+      const isDateField = fieldDef && fieldDef.type === 'date';
+
+      // Store date fields in "03-Mar-2001" format for UI display while keeping <input type="date"> in YYYY-MM-DD
+      const normalizedVal = isDateField && rawValue ? formatDisplayDate(rawValue) : rawValue;
+      const formatted = autoFormatInput(key, normalizedVal);
+      draftData[key] = formatted;
+
+      const inputEl = document.getElementById(`input_${key}`);
+      if (!isDateField && inputEl && inputEl.value !== formatted) {
+        inputEl.value = formatted;
+      }
+
+      const err = validateField(key, formatted);
+      if (err) {
+        fieldErrors[key] = err;
+      } else {
+        delete fieldErrors[key];
+      }
+
+      const errEl = document.getElementById(`err_${key}`);
+      if (errEl) {
+        errEl.textContent = err;
+        errEl.classList.toggle('hidden', !err);
+      }
+      if (inputEl) {
+        inputEl.classList.toggle('border-rose-400', Boolean(err));
+        inputEl.classList.toggle('bg-rose-50/30', Boolean(err));
+        inputEl.classList.toggle('border-emerald-300', !err && String(formatted).trim() !== '');
+      }
+    }
+
+    function saveSectionEdit(sectionId) {
+      const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
+      if (!sec) return;
+
+      let hasError = false;
+      sec.fields.forEach(f => {
+        if (f.readonly) return;
+        const err = validateField(f.key, draftData[f.key]);
+        if (err) {
+          fieldErrors[f.key] = err;
+          hasError = true;
+        } else {
+          delete fieldErrors[f.key];
+        }
+      });
+
+      if (hasError) {
+        renderSections();
+        if (window.lucide) lucide.createIcons();
+        showToast(`Please fix validation errors in ${sec.title}`, 'error');
+        return;
+      }
+
+      const hasChanges = sec.fields.some(f => {
+        if (f.readonly) return false;
+        const oldVal = (employeeData[f.key] ?? '').toString().trim();
+        const newVal = (draftData[f.key] ?? '').toString().trim();
+        return oldVal !== newVal;
+      });
+
+      if (!hasChanges) {
+        editingSections.delete(sectionId);
+        renderAll();
+        showToast(`No changes made in ${sec.title}`, 'info');
+        return;
+      }
+
+      const payload = buildSectionPayload(sectionId, draftData);
+      const saveBtn = document.getElementById(`saveBtn_${sectionId}`);
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="animate-pulse">Saving...</span>`;
+      }
+
+      sendSectionUpdateRequest(sectionId, payload)
+        .done(() => {
+          let changesCount = 0;
+          sec.fields.forEach(f => {
+            if (f.readonly) return;
+            const oldVal = (employeeData[f.key] ?? '').toString().trim();
+            const newVal = (draftData[f.key] ?? '').toString().trim();
+            if (oldVal !== newVal) {
+              employeeData[f.key] = newVal;
+              recordAuditEntry(sec.title, f.key, f.label, oldVal, newVal);
+              changesCount++;
+            }
+          });
+
+          editingSections.delete(sectionId);
+          renderAll();
+          showToast(`Saved ${changesCount} update${changesCount > 1 ? 's' : ''} in ${sec.title}`, 'success');
+        })
+        .fail((xhr) => {
+          const msg = xhr.responseJSON?.message || `Failed to save ${sec.title}`;
+          showToast(msg, 'error');
+          renderSections();
+          if (window.lucide) lucide.createIcons();
+        });
+    }
+
+    function saveAllEdits() {
+      const activeSecs = PROFILE_SECTIONS.filter(s => editingSections.has(s.id));
+      let hasError = false;
+
+      activeSecs.forEach(sec => {
+        sec.fields.forEach(f => {
+          if (f.readonly) return;
+          const err = validateField(f.key, draftData[f.key]);
+          if (err) {
+            fieldErrors[f.key] = err;
+            hasError = true;
+          } else {
+            delete fieldErrors[f.key];
+          }
+        });
+      });
+
+      if (hasError) {
+        renderSections();
+        if (window.lucide) lucide.createIcons();
+        showToast('Please resolve highlighted validation errors before saving', 'error');
+        return;
+      }
+
+      const modifiedSecs = activeSecs.filter(sec =>
+        sec.fields.some(f => {
+          if (f.readonly) return false;
+          const oldVal = (employeeData[f.key] ?? '').toString().trim();
+          const newVal = (draftData[f.key] ?? '').toString().trim();
+          return oldVal !== newVal;
+        })
+      );
+
+      if (modifiedSecs.length === 0) {
+        editingSections.clear();
+        draftData = {};
+        fieldErrors = {};
+        renderAll();
+        showToast('Profile is up to date', 'info');
+        return;
+      }
+
+      const saveAllBtn = document.getElementById('saveAllBtn');
+      if (saveAllBtn) {
+        saveAllBtn.disabled = true;
+        saveAllBtn.innerHTML = `<span class="animate-pulse">Saving All...</span>`;
+      }
+
+      const requests = modifiedSecs.map(sec => {
+        const payload = buildSectionPayload(sec.id, draftData);
+        return sendSectionUpdateRequest(sec.id, payload);
+      });
+
+      $.when(...requests)
+        .done(() => {
+          let totalChanges = 0;
+          modifiedSecs.forEach(sec => {
+            sec.fields.forEach(f => {
+              if (f.readonly) return;
+              const oldVal = (employeeData[f.key] ?? '').toString().trim();
+              const newVal = (draftData[f.key] ?? '').toString().trim();
+              if (oldVal !== newVal) {
+                employeeData[f.key] = newVal;
+                recordAuditEntry(sec.title, f.key, f.label, oldVal, newVal);
+                totalChanges++;
+              }
+            });
+          });
+
+          editingSections.clear();
+          draftData = {};
+          fieldErrors = {};
+          renderAll();
+          showToast(`Saved ${totalChanges} profile update${totalChanges > 1 ? 's' : ''}`, 'success');
+        })
+        .fail((xhr) => {
+          const msg = xhr.responseJSON?.message || 'One or more sections failed to save';
+          showToast(msg, 'error');
+          renderAll();
+        });
+    }
+
+    function jumpAndEditField(sectionId, fieldKey) {
+      startSectionEdit(sectionId);
+      setTimeout(() => {
+        const card = document.getElementById(sectionId);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = document.getElementById(`input_${fieldKey}`);
+        if (input && !input.disabled) input.focus();
+      }, 60);
+    }
+
+    function setActiveNav(sectionId) {
+      activeNavId = sectionId;
+      renderSidebarNav();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function updateUnsavedBanner() {
+      const banner = document.getElementById('unsavedBanner');
+      if (editingSections.size > 0) {
+        banner.classList.remove('hidden');
+        banner.classList.add('flex');
+        document.getElementById('unsavedBannerText').textContent =
+          `Editing ${editingSections.size} section${editingSections.size > 1 ? 's' : ''}. Press Ctrl+S to save or Esc to discard.`;
+      } else {
+        banner.classList.add('hidden');
+        banner.classList.remove('flex');
+      }
+    }
+
+    // =========================================================================
+    // 7. AUDIT LOG & REVERT ENGINE
+    // =========================================================================
+    function recordAuditEntry(sectionTitle, key, label, oldVal, newVal) {
+      auditLogs.unshift({
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        timestamp: new Date().toISOString(),
+        section: sectionTitle,
+        key,
+        label,
+        oldVal: oldVal || '(empty)',
+        newVal: newVal || '(empty)'
+      });
+      if (auditLogs.length > 60) auditLogs = auditLogs.slice(0, 60);
+      persistAuditLogs();
+    }
+
+    function renderAuditBadge() {
+      document.getElementById('auditCountBadge').textContent = auditLogs.length;
+    }
+
+    function openAuditDrawer() {
+      renderAuditList();
+      document.getElementById('auditDrawerBackdrop').classList.remove('hidden');
+      document.getElementById('auditDrawer').classList.remove('translate-x-full');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAuditDrawer() {
+      document.getElementById('auditDrawerBackdrop').classList.add('hidden');
+      document.getElementById('auditDrawer').classList.add('translate-x-full');
+    }
+
+    function renderAuditList() {
+      const list = document.getElementById('auditLogList');
+      if (auditLogs.length === 0) {
+        list.innerHTML = `
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
+            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs border border-slate-200/80">
+              <i data-lucide="history" class="h-5 w-5"></i>
+            </span>
+            <p class="mt-3 text-xs font-semibold text-slate-700">No recorded edits yet</p>
+            <p class="mt-1 text-[11px] text-slate-500">Every field edit you save will appear here with timestamps and one-click revert.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = auditLogs.map(item => {
+        const dt = new Date(item.timestamp);
+        const timeStr = isNaN(dt.getTime())
+          ? ''
+          : dt.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+        return `
+          <div class="rounded-xl border border-slate-200/90 bg-slate-50/50 p-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200/70">
+                ${escapeHTML(item.section)}
+              </span>
+              <span class="font-mono text-[10px] text-slate-400">${escapeHTML(timeStr)}</span>
+            </div>
+            <p class="mt-2 text-xs font-semibold text-slate-800">
+              ${escapeHTML(item.label)}
+              <span class="ml-1 font-mono text-[10px] font-normal text-slate-400">(${escapeHTML(item.key)})</span>
+            </p>
+            <div class="mt-2 space-y-1 rounded-lg border border-slate-200/70 bg-white p-2 text-[11px]">
+              <div class="flex items-start gap-1.5 text-rose-600">
+                <span class="font-mono font-bold">-</span>
+                <span class="break-all line-through opacity-80">${escapeHTML(item.oldVal)}</span>
+              </div>
+              <div class="flex items-start gap-1.5 text-emerald-700">
+                <span class="font-mono font-bold">+</span>
+                <span class="break-all font-medium">${escapeHTML(item.newVal)}</span>
+              </div>
+            </div>
+            <div class="mt-2.5 flex justify-end">
+              <button
+                type="button"
+                onclick="revertAuditEntry('${item.id}')"
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 transition"
+              >
+                <i data-lucide="undo-2" class="h-3 w-3"></i>
+                Revert Value
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function revertAuditEntry(logId) {
+      const entry = auditLogs.find(l => l.id === logId);
+      if (!entry) return;
+      const sec = PROFILE_SECTIONS.find(s => s.title === entry.section);
+      if (!sec) return;
+
+      const restored = entry.oldVal === '(empty)' ? '' : entry.oldVal;
+      const current = (employeeData[entry.key] ?? '').toString();
+      const updatedSnapshot = { ...employeeData, [entry.key]: restored };
+      const payload = buildSectionPayload(sec.id, updatedSnapshot);
+
+      sendSectionUpdateRequest(sec.id, payload)
+        .done(() => {
+          employeeData[entry.key] = restored;
+          if (editingSections.size > 0) {
+            draftData[entry.key] = restored;
+          }
+          recordAuditEntry(entry.section, entry.key, entry.label, current, restored);
+          renderAll();
+          renderAuditList();
+          if (window.lucide) lucide.createIcons();
+          showToast(`Reverted ${entry.label}`, 'success');
+        })
+        .fail(() => {
+          showToast(`Failed to revert ${entry.label} on server`, 'error');
+        });
+    }
+
+    function clearAuditLog() {
+      auditLogs = [];
+      persistAuditLogs();
+      renderAuditBadge();
+      renderAuditList();
+      if (window.lucide) lucide.createIcons();
+      showToast('Audit log cleared', 'info');
+    }
+
+    // =========================================================================
+    // 8. AVATAR UPLOAD, EXPORT, CLIPBOARD & UTILITIES
+    // =========================================================================
+    function handleAvatarUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        employeeData.avatarUrl = e.target.result;
+        renderHero();
+        if (window.lucide) lucide.createIcons();
+        showToast('Profile photo updated', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function copyText(text, label) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`${label} copied to clipboard`, 'success');
+      }).catch(() => {
+        showToast('Unable to copy to clipboard', 'error');
+      });
+    }
+
+    function copySectionData(sectionId) {
+      const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
+      if (!sec) return;
+      const lines = sec.fields.map(f => `${f.label} (${f.key}): ${employeeData[f.key] || '—'}`);
+      copyText(`${sec.title}\n${lines.join('\n')}`, `${sec.title} details`);
+    }
+
+    function exportProfileJSON() {
+      const payload = {};
+      PROFILE_SECTIONS.forEach(sec => {
+        sec.fields.forEach(f => {
+          const raw = employeeData[f.key] ?? '';
+          payload[f.key] = f.type === 'date' ? toInputDateValue(raw) : raw;
+        });
+      });
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${employeeData.EID || 'employee'}_profile.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Exported employee profile JSON', 'success');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const styles = {
+        success: 'border-emerald-200 bg-white text-slate-800 shadow-float',
+        error: 'border-rose-200 bg-white text-slate-800 shadow-float',
+        info: 'border-slate-200 bg-white text-slate-800 shadow-float'
+      };
+      const iconMap = {
+        success: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="check" class="h-3.5 w-3.5"></i></span>',
+        error: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><i data-lucide="alert-circle" class="h-3.5 w-3.5"></i></span>',
+        info: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><i data-lucide="info" class="h-3.5 w-3.5"></i></span>'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto animate-in-up flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs font-semibold ${styles[type] || styles.info}`;
+      toast.innerHTML = `${iconMap[type] || iconMap.info}<span>${escapeHTML(message)}</span>`;
+      container.appendChild(toast);
+      if (window.lucide) lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        toast.style.transition = 'all 0.2s ease';
+        setTimeout(() => toast.remove(), 220);
+      }, 2800);
+    }
+
+    // Keyboard shortcuts: Ctrl+S / Cmd+S to save, Esc to cancel or close drawer
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        if (editingSections.size > 0) {
+          e.preventDefault();
+          saveAllEdits();
+        }
+      } else if (e.key === 'Escape') {
+        const drawer = document.getElementById('auditDrawer');
+        if (!drawer.classList.contains('translate-x-full')) {
+          closeAuditDrawer();
+        } else if (editingSections.size > 0) {
+          cancelAllEdits();
+        }
+      }
+    });
+
+    // Scroll spy for sticky left navigation
+    window.addEventListener('scroll', () => {
+      let current = PROFILE_SECTIONS[0].id;
+      for (const sec of PROFILE_SECTIONS) {
+        const el = document.getElementById(sec.id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 140) current = sec.id;
+        }
+      }
+      if (current !== activeNavId) {
+        activeNavId = current;
+        renderSidebarNav();
+        if (window.lucide) lucide.createIcons();
+      }
+    }, { passive: true });
+
+    // Initial boot once DOM & jQuery (from includes/header) are ready
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+      getData();
+    });
+  </script>
+</body>
+</html>

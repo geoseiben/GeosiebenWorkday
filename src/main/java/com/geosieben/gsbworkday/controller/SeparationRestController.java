@@ -30,7 +30,7 @@ public List<SeparationRequestsProjection> getRequests() {
 }
 
 @PostMapping("/admin/separtion/updateStatus")
-public ResponseEntity<?> updateSeparationRequest(@RequestParam String action,@RequestParam int id,@RequestParam String remarks, @RequestParam LocalDate lwd){
+public ResponseEntity<?> updateSeparationRequest(@RequestParam String action,@RequestParam int id,@RequestParam String remarks, @RequestParam(required = false) LocalDate lwd){
 
 return separationService.updateSeparationRequest(action, id, lwd,remarks);
 }

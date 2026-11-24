@@ -90,6 +90,34 @@ public String navTargetHours() {
 public String navAllotmentReport() {
     return"allotmentReport";
 }
+@GetMapping("/admin/separatedEmployees")
+public String navSeparatedEmployees() {
+    return "separatedEmployees";
+}
+
+@GetMapping("/admin/leaveCalender")
+public String navLeaveCalender() {
+    return "leaveCalender";
+}
+@GetMapping("/admin/reports/projectReport")
+public String getProjectReport() {
+    return "projectReport";
+}
+
+@GetMapping("/admin/reports/consolidatedReport")
+public String getConsolidated() {
+    return "consolidatedReport";
+}
+
+@GetMapping("/admin/reports/dayWiseProjectHours")
+public String dayWiseProjectHours() {
+    return "projectHoursDaywise";
+}
+
+@GetMapping("/admin/viewEmployee")
+public String getMethodName() {
+    return "viewEmployee";
+}
 
 
 }

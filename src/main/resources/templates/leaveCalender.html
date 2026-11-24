@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Leave Calendar</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        el: '#10b981',
+                        sl: '#f43f5e',
+                        cl: '#f59e0b',
+                        rh: '#0ea5e9',
+                        co: '#8b5cf6',
+                        'co-cleared': '#6366f1',
+                        'co-pending': '#64748b',
+                    },
+                    keyframes: {
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px) scale(0.97)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        },
+                        pulseRing: {
+                            '0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(99, 102, 241, 0.5)' },
+                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 6px rgba(99, 102, 241, 0)' },
+                            '100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(99, 102, 241, 0)' },
+                        },
+                        shimmer: {
+                            '100%': { transform: 'translateX(100%)' }
+                        }
+                    },
+                    animation: {
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-ring': 'pulseRing 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FullCalendar, FontAwesome & Fonts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/main.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* FullCalendar Structural & Micro-interaction Overrides */
+        .fc {
+            --fc-border-color: #f1f5f9;
+            --fc-button-hover-bg-color: #f8fafc;
+            --fc-today-bg-color: rgba(99, 102, 241, 0.035);
+        }
+        
+        .fc .fc-toolbar {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem !important;
+        }
+        
+        .fc .fc-toolbar-title {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #0f172a;
+            letter-spacing: -0.025em;
+        }
+        @media (min-width: 640px) {
+            .fc .fc-toolbar-title { font-size: 1.45rem; }
+        }
+
+        .fc .fc-button-primary {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 700;
+            border-radius: 0.7rem;
+            font-size: 0.78rem;
+            padding: 0.45rem 0.85rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: capitalize;
+        }
+        .fc .fc-button-primary:hover {
+            background-color: #f8fafc;
+            border-color: #6366f1;
+            color: #6366f1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+        }
+        .fc .fc-button-primary:active {
+            transform: scale(0.96);
+        }
+        .fc .fc-button-primary:not(:disabled):active,
+        .fc .fc-button-primary.fc-button-active {
+            background-color: #6366f1 !important;
+            border-color: #6366f1 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.28);
+        }
+        .fc .fc-button-primary:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* Calendar Grid Cells */
+        .fc .fc-col-header-cell-cushion {
+            color: #94a3b8;
+            font-weight: 800;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.75rem 0;
+        }
+        .fc .fc-daygrid-day {
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        .fc .fc-daygrid-day:hover {
+            background-color: rgba(248, 250, 252, 0.9);
+        }
+        .fc .fc-daygrid-day-top {
+            flex-direction: row;
+            justify-content: flex-end;
+            padding: 6px 6px 2px 0;
+        }
+        .fc .fc-daygrid-day-number {
+            font-weight: 700;
+            color: #64748b;
+            font-size: 0.78rem;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .fc .fc-daygrid-day:hover .fc-daygrid-day-number {
+            color: #6366f1;
+            background-color: #eef2ff;
+            transform: scale(1.08);
+        }
+        .fc .fc-day-today .fc-daygrid-day-number {
+            background-color: #6366f1;
+            color: #ffffff !important;
+            box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+        }
+        .fc .fc-day-sat .fc-daygrid-day-frame,
+        .fc .fc-day-sun .fc-daygrid-day-frame {
+            background-color: rgba(241, 245, 249, 0.45);
+        }
+
+        /* Active Selected Date Cell Highlight */
+        .fc-day-selected {
+            background-color: rgba(99, 102, 241, 0.06) !important;
+            box-shadow: inset 0 0 0 2px #6366f1 !important;
+            border-radius: 4px;
+        }
+        .fc-day-selected .fc-daygrid-day-number {
+            color: #4f46e5;
+            font-weight: 800;
+        }
+
+        /* Event Pills with Micro-interactions */
+        .fc-event {
+            border: none !important;
+            border-radius: 0.4rem !important;
+            padding: 3px 7px !important;
+            font-weight: 700 !important;
+            font-size: 0.71rem !important;
+            margin: 1.5px 3px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
+            cursor: pointer;
+        }
+        .fc-event:hover {
+            transform: translateY(-1px) scale(1.025);
+            z-index: 15;
+            box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.16);
+            filter: brightness(1.04);
+        }
+        .fc-event:active {
+            transform: scale(0.97);
+        }
+
+        /* Half-Day Session Visual Indicators */
+        .half-day-am {
+            border-right: 3px solid rgba(0, 0, 0, 0.25) !important;
+            width: 68% !important;
+            border-radius: 0.4rem 0 0 0.4rem !important;
+        }
+        .half-day-pm {
+            border-left: 3px solid rgba(0, 0, 0, 0.25) !important;
+            width: 68% !important;
+            margin-left: 32% !important;
+            border-radius: 0 0.4rem 0.4rem 0 !important;
+        }
+
+        /* Leave Type Colors */
+        .el { background: linear-gradient(135deg, #10b981, #059669) !important; color: #ffffff !important; }
+        .cl { background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; }
+        .sl { background: linear-gradient(135deg, #f43f5e, #e11d48) !important; color: #ffffff !important; }
+        .rh { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; color: #ffffff !important; }
+        .co { background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; color: #ffffff !important; }
+        .co-cleared { background: linear-gradient(135deg, #6366f1, #4f46e5) !important; color: #ffffff !important; }
+        .co-pending { background: linear-gradient(135deg, #64748b, #475569) !important; color: #ffffff !important; }
+
+        /* "+N more" Link & Opaque Popover */
+        .fc .fc-daygrid-more-link {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #4f46e5;
+            background-color: #eef2ff;
+            border-radius: 0.375rem;
+            padding: 2px 6px;
+            margin: 2px 3px !important;
+            display: inline-block;
+            transition: all 0.15s ease;
+        }
+        .fc .fc-daygrid-more-link:hover {
+            background-color: #4f46e5;
+            color: #ffffff;
+            transform: scale(1.04);
+        }
+        .fc-popover {
+            z-index: 9999 !important;
+            background: #ffffff !important;
+            border-radius: 1rem !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+            overflow: hidden;
+            max-width: min(300px, calc(100vw - 24px));
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fc-popover-header {
+            background: #f8fafc !important;
+            padding: 0.65rem 0.9rem !important;
+            font-weight: 800 !important;
+            font-size: 0.8rem !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+        .fc-popover-body {
+            background: #ffffff !important;
+            padding: 0.5rem !important;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        body:has(.fc-popover) .fc-daygrid-body .fc-event:hover {
+            transform: none !important;
+            z-index: 1 !important;
+        }
+
+        /* List View Responsive Polish */
+        .fc-list { border-radius: 0.75rem; overflow: hidden; border-color: #f1f5f9 !important; }
+        .fc-list-day-cushion { background-color: #f8fafc !important; font-weight: 800 !important; font-size: 0.8rem !important; }
+        .fc-list-event:hover td { background-color: #f8fafc !important; }
+
+        /* Custom Scrollbar for Roster */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Skeleton Shimmer */
+        .skeleton-box {
+            position: relative;
+            overflow: hidden;
+            background-color: #f1f5f9;
+        }
+        .skeleton-box::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-600 font-sans antialiased min-h-screen selection:bg-indigo-100 selection:text-indigo-700 pb-20 xl:pb-8"
+      style="background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 45%), radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 45%);">
+<main class="w-full max-w-[98%] mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-7">
+    
+    <!-- Top Header & Interactive Controls Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 sm:mb-6">
+        <div>
+            <div class="flex items-center gap-2.5">
+                <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Team Leave Calendar</h1>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> Live
+                </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Click any date or leave pill to inspect session details and team availability.</p>
+        </div>
+
+        <!-- Search + Leave Type Filter Pills -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <!-- Quick Employee Search -->
+            <div class="relative group">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs group-focus-within:text-indigo-500 transition-colors"></i>
+                <input type="text" id="empSearchInput" placeholder="Filter employee..." 
+                       class="w-full sm:w-48 focus:sm:w-56 pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 transition-all duration-200" />
+                <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="filterBar">
+                <button data-filter="ALL" class="filter-btn active px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition-all duration-200 active:scale-95 whitespace-nowrap cursor-pointer">
+                    All <span class="filter-count ml-1 opacity-75 text-[10px]" data-type="ALL"></span>
+                </button>
+                <button data-filter="EL" class="filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> EL
+                </button>
+                <button data-filter="CL" class="filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> CL
+                </button>
+                <button data-filter="SL" class="filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> SL
+                </button>
+                <button data-filter="RH" class="filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-sky-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-sky-500"></span> RH
+                </button>
+                <button data-filter="CO" class="filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-indigo-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> CO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Responsive Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
+        
+        <!-- Left Column: Calendar Container (8 cols on XL) -->
+        <section class="xl:col-span-8 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200/80 transition-shadow hover:shadow-md">
+            <div id="calendar"></div>
+        </section>
+
+        <!-- Right Column: Availability Inspector Panel (4 cols on XL) -->
+        <aside id="inspectorPanel" class="xl:col-span-4 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 xl:sticky xl:top-6 transition-all">
+            
+            <!-- Inspector Header -->
+            <div class="flex items-start justify-between gap-3 mb-5">
+                <div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Availability Insight</span>
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <div id="viewDate" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 font-extrabold text-xs sm:text-sm transition-all">
+                            <i class="fa-regular fa-calendar text-xs"></i>
+                            <span>Today</span>
+                        </div>
+                        <button id="jumpTodayBtn" title="Jump to Today" class="hidden px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 text-xs font-bold transition-all active:scale-95 cursor-pointer">
+                            Today
+                        </button>
+                    </div>
+                </div>
+
+                <button id="exportBtn" class="group inline-flex items-center gap-2 bg-slate-900 hover:bg-indigo-600 active:scale-95 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm hover:shadow-indigo-200 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-down group-hover:-translate-y-0.5 transition-transform"></i>
+                    <span>Export</span>
+                </button>
+            </div>
+
+            <!-- Out of Office Counter Card -->
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 border border-slate-200/80 mb-5 shadow-2xs group">
+                <div class="flex items-center gap-3.5">
+                    <div id="statIconBox" class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-base shadow-md shadow-indigo-200 shrink-0 group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <div id="leaveCount" class="text-xl font-extrabold text-slate-900 leading-tight tabular-nums">0 Members</div>
+                        <div class="text-xs font-semibold text-slate-400 mt-0.5">Out of Office</div>
+                    </div>
+                </div>
+                <div id="sessionBreakdownPill" class="hidden sm:flex flex-col items-end gap-1 text-[10px] font-bold"></div>
+            </div>
+
+            <!-- Roster List -->
+            <div id="rosterList" class="space-y-2.5 max-h-[430px] overflow-y-auto custom-scrollbar pr-0.5">
+                <!-- Initial Skeleton State -->
+                <div class="skeleton-box h-16 rounded-xl"></div>
+                <div class="skeleton-box h-16 rounded-xl"></div>
+                <div class="skeleton-box h-16 rounded-xl"></div>
+            </div>
+
+            <!-- Expand / Collapse Button -->
+            <button id="viewMoreBtn" style="display:none;" class="w-full mt-3 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50/50 hover:border-indigo-300 hover:text-indigo-600 active:scale-[0.99] text-slate-600 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"></button>
+
+            <!-- Legend Footer -->
+            <div class="mt-6 pt-5 border-t border-slate-100">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-3">Leave Type Legend</span>
+                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 gap-2.5">
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-emerald-500 shrink-0"></span> Earned (EL)
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-amber-500 shrink-0"></span> Casual (CL)
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-rose-500 shrink-0"></span> Sick (SL)
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-sky-500 shrink-0"></span> Restricted (RH)
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-indigo-500 shrink-0"></span> CO (Cleared)
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-slate-500 shrink-0"></span> CO (Pending)
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</main>
+
+<!-- Mobile Sticky Quick-Jump Bar (Visible only on < 1280px screens) -->
+<div id="mobileBottomBar" class="xl:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700/60 flex items-center justify-between transition-transform duration-300">
+    <div class="flex items-center gap-2.5 min-w-0">
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse-ring shrink-0"></span>
+        <div class="truncate">
+            <span id="mobileBarDate" class="text-xs font-extrabold text-white">Today</span>
+            <span class="mx-1.5 text-slate-500">•</span>
+            <span id="mobileBarCount" class="text-xs font-semibold text-indigo-300">0 Out</span>
+        </div>
+    </div>
+    <button id="mobileInspectBtn" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-bold text-white flex items-center gap-1.5 shrink-0 transition-all cursor-pointer">
+        <span>Inspect</span>
+        <i class="fa-solid fa-arrow-down text-[10px]"></i>
+    </button>
+</div>
+
+<!-- Leave Detail Quick Modal -->
+<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity">
+    <div id="detailModalCard" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-pop-in">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3">
+                <div id="modalAvatar" class="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold text-sm flex items-center justify-center shrink-0"></div>
+                <div>
+                    <h3 id="modalEmpName" class="text-base font-extrabold text-slate-900"></h3>
+                    <p id="modalManager" class="text-xs font-semibold text-slate-400"></p>
+                </div>
+            </div>
+            <button id="closeModalBtn" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100 mb-4 text-xs">
+            <div>
+                <span class="text-slate-400 font-bold block text-[10px] uppercase">Leave Type</span>
+                <span id="modalType" class="font-extrabold text-slate-800 mt-0.5 inline-block"></span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold block text-[10px] uppercase">Duration</span>
+                <span id="modalDays" class="font-extrabold text-slate-800 mt-0.5 inline-block"></span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold block text-[10px] uppercase">From</span>
+                <span id="modalFrom" class="font-bold text-slate-700 mt-0.5 inline-block"></span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold block text-[10px] uppercase">To</span>
+                <span id="modalTo" class="font-bold text-slate-700 mt-0.5 inline-block"></span>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <span class="text-slate-400 font-bold block text-[10px] uppercase mb-1">Reason</span>
+            <p id="modalReason" class="text-xs text-slate-600 bg-slate-50/70 p-3 rounded-xl border border-slate-100 leading-relaxed"></p>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 pt-3 border-t border-slate-100">
+            <span id="modalApprovedBy"></span>
+            <button id="modalDoneBtn" class="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 active:scale-95 transition-all cursor-pointer">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-16 xl:bottom-6 right-4 sm:right-6 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-300">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toastMsg">Exported successfully</span>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/index.global.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    const rosterList = document.getElementById('rosterList');
+    const viewMoreBtn = document.getElementById('viewMoreBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const viewDateSpan = document.querySelector('#viewDate span');
+    const jumpTodayBtn = document.getElementById('jumpTodayBtn');
+    const leaveCountText = document.getElementById('leaveCount');
+    const sessionBreakdownPill = document.getElementById('sessionBreakdownPill');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const empSearchInput = document.getElementById('empSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    
+    // Mobile bar elements
+    const mobileBarDate = document.getElementById('mobileBarDate');
+    const mobileBarCount = document.getElementById('mobileBarCount');
+    const mobileInspectBtn = document.getElementById('mobileInspectBtn');
+
+    // Modal elements
+    const detailModal = document.getElementById('detailModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const modalDoneBtn = document.getElementById('modalDoneBtn');
+
+    let allLeaves = [];
+    let currentDayData = [];
+    let activeFilter = 'ALL';
+    let searchQuery = '';
+    let isExpanded = false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    let selectedDateStr = todayStr;
+
+    // Null-safe UTC date parser
+    const toUtc = (str) => {
+        if (!str || typeof str !== 'string') return null;
+        const clean = str.split('T')[0].trim();
+        const parts = clean.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const [y, m, d] = parts;
+        return new Date(Date.UTC(y, m - 1, d));
+    };
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+        toastMsg.textContent = message;
+        toastIcon.className = isError 
+            ? 'fa-solid fa-circle-exclamation text-rose-400 text-sm' 
+            : 'fa-solid fa-circle-check text-emerald-400 text-sm';
+        toast.classList.remove('opacity-0', 'translate-y-3');
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'translate-y-3');
+        }, 2800);
+    }
+
+    function getInitials(name) {
+        return (name || '?').split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() || '?';
+    }
+
+    // Animated number counter micro-interaction
+    function animateCounter(el, targetCount) {
+        const startText = el.textContent.replace(/\D/g, '');
+        const start = parseInt(startText, 10) || 0;
+        if (start === targetCount) {
+            el.textContent = `${targetCount} Member${targetCount !== 1 ? 's' : ''}`;
+            return;
+        }
+        const duration = 260;
+        const startTime = performance.now();
+        function step(now) {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(start + (targetCount - start) * eased);
+            el.textContent = `${current} Member${current !== 1 ? 's' : ''}`;
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    // Fetch & normalize records safely
+    try {
+        const response = await fetch('/admin/leaveCalenderData');
+        const data = await response.json();
+        const rawList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        allLeaves = rawList
+            .filter(l => l && typeof l === 'object')
+            .map(l => ({
+                ...l,
+                start: l.start || l.fromdatee || l.from_date || '',
+                end: l.end || l.todatee || l.to_date || l.start || l.fromdatee || ''
+            }))
+            .filter(l => toUtc(l.start) !== null);
+    } catch (e) {
+        console.error("Data fetch failed", e);
+        allLeaves = [];
+        showToast("Unable to load leave records", true);
+    }
+
+    function getLeaveColorClass(leave) {
+        const type = (leave.leaveType || '').trim().toLowerCase();
+        if (type === 'co') {
+            const status = (leave.coStatus || '').trim().toLowerCase();
+            if (status === 'cleared') return 'co-cleared';
+            if (status === 'pending') return 'co-pending';
+            return 'co';
+        }
+        return type || 'co';
+    }
+
+    function getSessionForDay(leave, targetDateStr) {
+        const start = (leave.start || '').split('T')[0];
+        const end = (leave.end || leave.start || '').split('T')[0];
+        
+        if (start === end) {
+            if (leave.fromsession === 'Session 1' && leave.tosession === 'Session 1') return 'AM Only';
+            if (leave.fromsession === 'Session 2' && leave.tosession === 'Session 2') return 'PM Only';
+            return 'Full Day';
+        }
+        
+        if (targetDateStr === start) {
+            return leave.fromsession === 'Session 2' ? 'PM Only' : 'Full Day';
+        }
+        if (targetDateStr === end) {
+            return leave.tosession === 'Session 1' ? 'AM Only' : 'Full Day';
+        }
+        return 'Full Day';
+    }
+
+    function getFilteredLeaves() {
+        return allLeaves.filter(l => {
+            const matchesType = activeFilter === 'ALL' || (l.leaveType || '').trim().toUpperCase() === activeFilter;
+            const matchesSearch = !searchQuery || (l.employeeName || '').toLowerCase().includes(searchQuery);
+            return matchesType && matchesSearch;
+        });
+    }
+
+    function buildCalendarEvents() {
+        const events = [];
+        getFilteredLeaves().forEach(l => {
+            const startDate = toUtc(l.start);
+            if (!startDate) return;
+            const endDate = toUtc(l.end || l.start) || startDate;
+            const diffTime = Math.max(0, endDate - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const colorClass = getLeaveColorClass(l);
+
+            for (let i = 0; i <= diffDays; i++) {
+                const current = new Date(startDate);
+                current.setUTCDate(startDate.getUTCDate() + i);
+                const currentStr = current.toISOString().split('T')[0];
+                
+                const session = getSessionForDay(l, currentStr);
+                let halfDayClass = '', pre = '';
+                
+                if (session === 'AM Only') { halfDayClass = 'half-day-am'; pre = '☼ '; }
+                else if (session === 'PM Only') { halfDayClass = 'half-day-pm'; pre = '☾ '; }
+
+                events.push({
+                    title: pre + (l.employeeName || 'Unknown'),
+                    start: currentStr,
+                    end: currentStr,
+                    className: `${colorClass} ${halfDayClass}`,
+                    extendedProps: { raw: l }
+                });
+            }
+        });
+        return events;
+    }
+
+    function openLeaveModal(leave) {
+        document.getElementById('modalAvatar').textContent = getInitials(leave.employeeName);
+        document.getElementById('modalEmpName').textContent = leave.employeeName || 'Employee';
+        document.getElementById('modalManager').textContent = leave.manager ? `Reports to ${leave.manager}` : 'Team Member';
+        
+        const coTag = ((leave.leaveType || '').trim().toUpperCase() === 'CO' && leave.coStatus) ? ` (${leave.coStatus})` : '';
+        document.getElementById('modalType').textContent = `${leave.leaveType || '-'}${coTag}`;
+        document.getElementById('modalDays').textContent = `${leave.NoofDays || 1} Day${leave.NoofDays != 1 ? 's' : ''}`;
+        document.getElementById('modalFrom').textContent = `${leave.fromdatee || leave.start} (${leave.fromsession || 'Full'})`;
+        document.getElementById('modalTo').textContent = `${leave.todatee || leave.end || leave.start} (${leave.tosession || 'Full'})`;
+        document.getElementById('modalReason').textContent = leave.reason || 'No reason provided.';
+        document.getElementById('modalApprovedBy').textContent = leave.approvedBy ? `Approved by ${leave.approvedBy}` : '';
+
+        detailModal.classList.remove('hidden');
+        detailModal.classList.add('flex');
+    }
+
+    function closeLeaveModal() {
+        detailModal.classList.add('hidden');
+        detailModal.classList.remove('flex');
+    }
+
+    closeModalBtn.onclick = closeLeaveModal;
+    modalDoneBtn.onclick = closeLeaveModal;
+    detailModal.onclick = (e) => { if (e.target === detailModal) closeLeaveModal(); };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLeaveModal(); });
+
+    function renderInspector(limit = 6) {
+        const display = isExpanded ? currentDayData : currentDayData.slice(0, limit);
+        animateCounter(leaveCountText, currentDayData.length);
+        mobileBarCount.textContent = `${currentDayData.length} Out`;
+
+        // Session breakdown badges
+        if (currentDayData.length > 0) {
+            let full = 0, am = 0, pm = 0;
+            currentDayData.forEach(l => {
+                const s = getSessionForDay(l, selectedDateStr);
+                if (s === 'AM Only') am++;
+                else if (s === 'PM Only') pm++;
+                else full++;
+            });
+            const parts = [];
+            if (full) parts.push(`<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">${full} Full</span>`);
+            if (am) parts.push(`<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700">${am} AM</span>`);
+            if (pm) parts.push(`<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">${pm} PM</span>`);
+            sessionBreakdownPill.innerHTML = parts.join('');
+        } else {
+            sessionBreakdownPill.innerHTML = '';
+        }
+        
+        if (currentDayData.length === 0) {
+            rosterList.innerHTML = `
+            <div class="animate-pop-in flex flex-col items-center justify-center py-10 px-4 bg-slate-50/80 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                <div class="w-12 h-12 rounded-2xl bg-white shadow-xs flex items-center justify-center text-indigo-400 text-xl mb-3">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+                <p class="text-sm font-extrabold text-slate-700">Everyone's In!</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-[210px]">No matching leave records found for this date.</p>
+            </div>`;
+            viewMoreBtn.style.display = 'none';
+            return;
+        }
+
+        rosterList.innerHTML = display.map((l, i) => {
+            const sessionLabel = getSessionForDay(l, selectedDateStr);
+            const colorClass = getLeaveColorClass(l);
+            
+            let chipClasses = 'bg-slate-100 text-slate-600';
+            let icon = 'fa-calendar-day';
+            
+            if (sessionLabel === 'AM Only') {
+                chipClasses = 'bg-amber-50 text-amber-700 border border-amber-200/60';
+                icon = 'fa-sun';
+            } else if (sessionLabel === 'PM Only') {
+                chipClasses = 'bg-indigo-50 text-indigo-700 border border-indigo-200/60';
+                icon = 'fa-moon';
+            }
+
+            const coStatusLabel = ((l.leaveType || '').trim().toUpperCase() === 'CO' && l.coStatus) 
+                ? ` • ${l.coStatus}` 
+                : '';
+
+            return `
+            <div data-idx="${i}" class="roster-card group animate-pop-in flex items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-100 hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer" style="animation-delay: ${i * 0.04}s">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-indigo-50 text-slate-600 group-hover:text-indigo-600 font-extrabold text-xs flex items-center justify-center shrink-0 transition-colors">
+                        ${getInitials(l.employeeName)}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-bold text-slate-800 group-hover:text-indigo-700 text-sm truncate transition-colors">${l.employeeName || 'Unknown'}</p>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${chipClasses}">
+                                <i class="fa-solid ${icon}"></i> ${sessionLabel}
+                            </span>
+                            <span class="text-[11px] font-semibold text-slate-400">
+                                ${l.NoofDays || 1}d${coStatusLabel}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold text-[11px] shadow-xs ${colorClass}">
+                        ${l.leaveType || '-'}
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all"></i>
+                </div>
+            </div>`;
+        }).join('');
+
+        rosterList.querySelectorAll('.roster-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const idx = parseInt(card.dataset.idx, 10);
+                if (display[idx]) openLeaveModal(display[idx]);
+            });
+        });
+
+        viewMoreBtn.style.display = currentDayData.length > limit ? 'flex' : 'none';
+        viewMoreBtn.innerHTML = isExpanded 
+            ? `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>` 
+            : `<span>View all ${currentDayData.length} members</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
+    }
+
+    function updateSelectedDay(dateStr, scrollToInspector = false) {
+        const targetDate = toUtc(dateStr);
+        if (!targetDate) return;
+
+        selectedDateStr = dateStr;
+        const formatted = targetDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            timeZone: 'UTC'
+        });
+
+        const isToday = dateStr === todayStr;
+        viewDateSpan.textContent = isToday ? `Today, ${formatted.split(',')[0]}` : formatted;
+        mobileBarDate.textContent = isToday ? 'Today' : formatted.split(',')[0];
+        jumpTodayBtn.classList.toggle('hidden', isToday);
+
+        // Highlight selected cell in FullCalendar
+        document.querySelectorAll('.fc-day-selected').forEach(el => el.classList.remove('fc-day-selected'));
+        const cell = document.querySelector(`.fc-daygrid-day[data-date="${dateStr}"]`);
+        if (cell) cell.classList.add('fc-day-selected');
+
+        const ts = targetDate.getTime();
+        currentDayData = getFilteredLeaves().filter(l => {
+            const sDate = toUtc(l.start);
+            const eDate = toUtc(l.end || l.start) || sDate;
+            if (!sDate || !eDate) return false;
+            return ts >= sDate.getTime() && ts <= eDate.getTime();
+        });
+
+        isExpanded = false;
+        renderInspector();
+
+        if (scrollToInspector && window.innerWidth < 1280) {
+            document.getElementById('inspectorPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    const isMobile = window.innerWidth < 640;
+
+    const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+        dayMaxEvents: isMobile ? 2 : 4,
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        events: buildCalendarEvents(),
+        dateClick: (info) => {
+            updateSelectedDay(info.dateStr, false);
+        },
+        eventClick: (info) => {
+            const dateStr = info.event.startStr;
+            if (dateStr) updateSelectedDay(dateStr, false);
+            if (info.event.extendedProps && info.event.extendedProps.raw) {
+                openLeaveModal(info.event.extendedProps.raw);
+            }
+        },
+        datesSet: () => {
+            const cell = document.querySelector(`.fc-daygrid-day[data-date="${selectedDateStr}"]`);
+            if (cell) cell.classList.add('fc-day-selected');
+        }
+    });
+
+    calendar.render();
+
+    // Jump to Today button
+    jumpTodayBtn.addEventListener('click', () => {
+        calendar.today();
+        updateSelectedDay(todayStr, false);
+    });
+
+    // Mobile Bottom Bar Smooth Scroll
+    mobileInspectBtn.addEventListener('click', () => {
+        document.getElementById('inspectorPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Search Input Interaction
+    empSearchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        clearSearchBtn.classList.toggle('hidden', !searchQuery);
+        calendar.removeAllEvents();
+        calendar.addEventSource(buildCalendarEvents());
+        updateSelectedDay(selectedDateStr, false);
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        empSearchInput.value = '';
+        searchQuery = '';
+        clearSearchBtn.classList.add('hidden');
+        calendar.removeAllEvents();
+        calendar.addEventSource(buildCalendarEvents());
+        updateSelectedDay(selectedDateStr, false);
+        empSearchInput.focus();
+    });
+
+    // Filter Bar Interaction
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => {
+                b.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+                b.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+            });
+            btn.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+            btn.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+
+            activeFilter = btn.dataset.filter;
+            calendar.removeAllEvents();
+            calendar.addEventSource(buildCalendarEvents());
+            updateSelectedDay(selectedDateStr, false);
+        });
+    });
+
+    // Excel Export with Feedback Toast
+    exportBtn.onclick = () => {
+        const filteredSource = getFilteredLeaves();
+        if (filteredSource.length === 0) {
+            showToast("No records to export for current filter", true);
+            return;
+        }
+
+        const currentRefDate = calendar.getDate(); 
+        const year = currentRefDate.getFullYear();
+        const month = currentRefDate.getMonth();
+        const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
+        const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0));
+
+        const filteredLeaves = filteredSource.filter(l => {
+            const lStart = toUtc(l.start);
+            const lEnd = toUtc(l.end || l.start) || lStart;
+            if (!lStart || !lEnd) return false;
+            return (lStart <= lastDayOfMonth && lEnd >= firstDayOfMonth);
+        });
+
+        if (filteredLeaves.length === 0) {
+            showToast("No leaves found in this month", true);
+            return;
+        }
+
+        const excelData = filteredLeaves.map(l => ({
+            "Employee": l.employeeName || '',
+            "Manager": l.manager || '',
+            "Type": l.leaveType || '',
+            "CO Status": (l.leaveType || '').trim().toUpperCase() === 'CO' ? (l.coStatus || '') : '-',
+            "Reason": l.reason || '',
+            "From Date": l.fromdatee || l.start,
+            "From Session": l.fromsession || '',
+            "To Date": l.todatee || l.end || l.start,
+            "To Session": l.tosession || '',
+            "Total Days": l.NoofDays || 1,
+            "Approved By": l.approvedBy || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData, { origin: "A4" });
+        XLSX.utils.sheet_add_aoa(ws, [
+            ["Team Leave Export"],
+            [`Date Range: ${firstDayOfMonth.toLocaleDateString('en-US', { timeZone: 'UTC' })} to ${lastDayOfMonth.toLocaleDateString('en-US', { timeZone: 'UTC' })}`]
+        ], { origin: "A1" });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        XLSX.writeFile(wb, `Team_Availability_${year}_${month+1}.xlsx`);
+        showToast(`Exported ${filteredLeaves.length} record${filteredLeaves.length !== 1 ? 's' : ''}`);
+    };
+
+    viewMoreBtn.onclick = () => {
+        isExpanded = !isExpanded;
+        renderInspector();
+    };
+    
+    // Initial Load
+    updateSelectedDay(selectedDateStr, false);
+});
+</script>
+</body>
+</html>

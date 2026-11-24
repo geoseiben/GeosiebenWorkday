@@ -12,8 +12,11 @@ public interface DocumentRequestRepository extends JpaRepository<DocumentRequest
 @Query (value = "SELECT concat(e.firstname,' ',e.lastName) as requester,concat(a.firstname,' ',a.lastName) as actionBy,"+
 " date_format(d.requestedOn,'%d-%b-%Y') as requestedOn ,date_format(d.deliveryDate,'%d-%b-%Y') as requestedOn,"+
 "d.reason,d.requestedDocument,d.status,d.id,d.adminRemarks,d.documentPath "+
-"FROM documentrequests d "+
+"FROM getMyDocRequests d "+
 "LEFT JOIN employee_basic_info e on e.eid=d.requester "+
 "LEFT JOIN employee_basic_info a on a.eid=d.actionBy where d.requester=:requester",nativeQuery = true)
 public List<DocuRequestProjection> getMyDocRequestProjections(@Param("requester") String requester);
+
+@Query (value = "SELECT * FROM documentrequests WHERE requester=:requester order by id desc",nativeQuery = true)
+public  List<DocumentRequest> findMyDocumentRequests(@Param("requester") String requester );
 }

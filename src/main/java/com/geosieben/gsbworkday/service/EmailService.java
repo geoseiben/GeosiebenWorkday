@@ -1,147 +1,1353 @@
 package com.geosieben.gsbworkday.service;
 
+import com.geosieben.gsbworkday.addon.AddonServ;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.geosieben.gsbworkday.addon.*;
-import java.io.UnsupportedEncodingException;
-import java.time.LocalDate;
 
 @Service
 public class EmailService {
 
-    private JavaMailSender mailSender;
+    private static final String COMPANY_NAME = "Geosieben Consulting Private Limited";
+    private static final String LOGO_URL = "https://geosieben.org/assets/images/gsblogo.png";
+    private static final String BASE_URL = "https://www.geosieben.org";
+    private static final String IT_TICKET_URL = "https://www.geosieben.org/itticket";
+    private static final String ATTENDANCE_URL = "https://portal.geosieben.org/hr/attendance";
+
+    private final JavaMailSender mailSender;
+
     @Value("${spring.mail.username}")
     private String from;
- private String fromname="Geosieben! HR Portal";
 
+    @Value("${app.mail.from-name:Geosieben! HR Portal}")
+    private String fromName;
 
     public EmailService(JavaMailSender mailSender) {
-    this.mailSender = mailSender;
-}
-    public void sendHtmlEmail(String to, String subject, String htmlBody) throws MessagingException, UnsupportedEncodingException {
+        this.mailSender = mailSender;
+    }
+
+    private void sendHtml(String to, String subject, String htmlBody)
+            throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from.trim(), fromname);
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setFrom(from.trim(), fromName);
         helper.setTo(to.trim());
         helper.setSubject(subject);
-        helper.setText(htmlBody, true); // true enables HTML
-
+        helper.setText(htmlBody, true);
         mailSender.send(message);
     }
-    public void leaveApplicationHR(String to, String toname, String employeename, String eid, LocalDate fromDate,LocalDate toDate,String leaveType,String reason,LocalDate appliedOn,double days,String subject,String year) throws MessagingException, UnsupportedEncodingException {
-        String html = "        <p>Hello <strong>"+toname+"</strong>,</p>\n" +
-                "                <p><strong>"+employeename+"</strong> has submitted a new leave request. Please find the details below for your review:</p>\n" +
-                "                <hr style='border:none; border-top:1px solid #eee;' />\n" +
-                "                <p>\n" +
-                "                    <strong>Employee Name:</strong> "+employeename+" <br>\n" +
-                "                    <strong>Employee ID:</strong> "+eid+" <br>\n" +
-                "                    <strong>Leave Type:</strong> "+leaveType+" <br>\n" +
-                "                    <strong>Duration:</strong> "+AddonServ.fullDateFormatter(fromDate)+" to "+AddonServ.fullDateFormatter(toDate)+" <br>\n" +
-                "                    <strong>Total Days:</strong> "+days+" <br>\n" +
-                "                    <strong>Reason:</strong> "+reason+" <br>\n" +
-                "                    <strong>Date Applied:</strong> "+AddonServ.fullDateFormatter(LocalDate.now())+"\n" +
-                "                </p>\n" +
-                "                <hr style='border:none; border-top:1px solid #eee;' />\n" +
-                "                <p>To approve or reject this request, please log in to the portal:</p>\n" +
-                "                <p><a href='https://www.geosieben.org' style='background-color: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>Review Application</a></p>\n" +
-                "                <p>Regards,<br>\n" +
-                "                <strong>Leave Management System</strong><br>\n" +
-                "                Geosieben Consulting Private Limited</p>\n" +
-                "                <br>\n" +
-                "                <small style='color:#777;'>&copy; "+year+" Geosieben Consulting Private Limited. All rights reserved.</small>";
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from.trim(), fromname);
-        helper.setTo(to.trim());
-        helper.setSubject(subject);
-        helper.setText(html, true); // true enables HTML
-        mailSender.send(message);
 
-        
+    public void sendHtmlEmail(String to, String subject, String htmlBody)
+            throws MessagingException, UnsupportedEncodingException {
+        sendHtml(to, subject, htmlBody);
     }
 
-    public  void raiseTicket(String toname,String tomail,String employeename,String issue,String descriptin,String priority,LocalDate raisedOn) throws MessagingException, UnsupportedEncodingException {
-        String subject="IT Ticket submitted By "+employeename;
-        String html = "        <p>Hello <strong>"+toname+"</strong>,</p>\n" +
-                "        <p><strong>"+employeename+"</strong> has submitted a new IT Ticket. Please find the details below for your review:</p>\n" +
-                "        <hr style='border:none; border-top:1px solid #eee;' />\n" +
-                "        <p>\n" +
-                "            <strong>Employee Name:</strong> "+employeename+" <br>\n" +
-                "            <strong>Issue:</strong> "+issue+" <br>\n" +
-                "            <strong>Priority:</strong> "+priority+" <br>\n" +
-                "            <strong>Description:</strong> "+descriptin+" <br>\n" +
-                "            <strong>Date Submitted:</strong> "+AddonServ.fullDateFormatter(raisedOn)+"\n" +
-                "        </p>\n" +
-                "        <hr style='border:none; border-top:1px solid #eee;' />\n" +
-                "        <p>To review or update this ticket, please log in to the portal:</p>\n" +
-                "        <p><a href='https://www.geosieben.org/itticket' style='background-color: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>Review Ticket</a></p>\n" +
-                "        <p>Regards,<br>\n" +
-                "        <strong>IT Management System</strong><br>\n" +
-                "        Geosieben Consulting Private Limited</p>\n" +
-                "        <br>\n" +
-                "        <small style='color:#777;'>&copy; "+LocalDate.now().getYear()+" Geosieben Consulting Private Limited. All rights reserved.</small>";
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from.trim(), fromname);
-        helper.setTo(tomail.trim());
-        helper.setSubject(subject);
-        helper.setText(html, true); // true enables HTML
-        mailSender.send(message);
+    // -------------------------------------------------------------------------
+    // 1. Leave Application Notification (HR)
+    // -------------------------------------------------------------------------
+    public void leaveApplicationHR(
+            String to,
+            String toname,
+            String employeename,
+            String eid,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String leaveType,
+            String reason,
+            LocalDate appliedOn,
+            double days,
+            String subject,
+            String year
+    ) throws MessagingException, UnsupportedEncodingException {
+        LocalDate effectiveAppliedDate = (appliedOn != null) ? appliedOn : LocalDate.now();
+        int effectiveYear = parseYearOrCurrent(year);
+
+        String preheader = "New leave request submitted by " + employeename + " (" + eid + ").";
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, <strong style="color: #0f172a;">%s</strong> has submitted a new leave request. Please review the details below:
+                </p>
+                """.formatted(escapeHtml(toname), escapeHtml(employeename));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeename), true),
+                new GridItem("Employee ID", escapeHtml(eid), false),
+                new GridItem("Leave Type", escapeHtml(leaveType), true),
+                new GridItem("Total Days", escapeHtml(String.valueOf(days)), true),
+                new GridItem("Duration", escapeHtml(AddonServ.fullDateFormatter(fromDate) + " to " + AddonServ.fullDateFormatter(toDate)), false),
+                new GridItem("Date Applied", escapeHtml(AddonServ.fullDateFormatter(effectiveAppliedDate)), false)
+        ));
+
+        String remarksHtml = buildCalloutBox("Reason for Leave", sanitizeAndEscapeRemarks(reason), "#2563eb");
+
+        String bodyHtml = """
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    To approve or reject this leave request, please log in to the HRMS portal using the button below.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "New Leave Request",
+                "HR &amp; Leave Management",
+                "Leave Request",
+                "#2563eb",
+                "#eff6ff",
+                "#bfdbfe",
+                "#1d4ed8",
+                preheader,
+                "Leave Request &mdash; " + escapeHtml(employeename),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Review Application &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "Leave Management System",
+                "This is an automated leave workflow notification generated by the Geosieben HRMS Portal.",
+                effectiveYear
+        );
+
+        sendHtml(to, subject, html);
     }
-public void closeticket(String toname,String tomail,int ticketid,String remarks,String issue) throws MessagingException, UnsupportedEncodingException{
-    String html = """
-    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; border: 1px solid #f0f0f0; padding: 20px; border-radius: 8px;">
-        <h2 style="color: #059669;">Ticket Closed</h2>
-        <p>Hello <strong>%s</strong>,</p>
-        <p>Great news! Your IT Ticket has been marked as <strong>Resolved</strong>. Please see the closure summary below:</p>
-        
-        <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; border-left: 4px solid #059669;">
-            <strong>Ticket Details:</strong><br>
-            <span style="color: #666;">Issue:</span> %s <br>
-            <span style="color: #666;">Closed On:</span> %s <br>
-            <hr style="border:none; border-top:1px solid #ddd; margin: 10px 0;" />
-            <strong>Resolution Summary:</strong><br>
-            %s
-        </div>
 
-        <p>If you feel this issue is not fully resolved, you can reopen it or submit a new request via the portal:</p>
-        <p style="margin-top: 20px;">
-            <a href="https://www.geosieben.org/itticket" 
-               style="background-color: #059669; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-               Go to Portal
-            </a>
-        </p>
-        
-        <p style="margin-top: 30px; border-top: 1px solid #eee; pt-10px;">
-            Regards,<br>
-            <strong>IT Support Team</strong><br>
-            Geosieben Consulting Private Limited
-        </p>
-        
-        <small style="color:#999; display: block; margin-top: 20px; font-size: 11px;">
-            &copy; %d Geosieben Consulting Private Limited. This is an automated notification.
-        </small>
-    </div>
-    """.formatted(
-        toname,                        // The person who opened the ticket
-        issue,                               // Original issue title
-        AddonServ.fullDateFormatter(LocalDate.now()),  // The date it was closed
-        remarks,                     // What was done to fix it
-        LocalDate.now().getYear()
-    );
-            MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from.trim(), fromname);
-        helper.setTo(tomail.trim());
-        helper.setSubject("IT Ticket Closed For The Reference ID :"+ticketid);
-        helper.setText(html, true); // true enables HTML
-        mailSender.send(message);
+    // -------------------------------------------------------------------------
+    // 2. IT Ticket Submitted
+    // -------------------------------------------------------------------------
+    public void raiseTicket(
+            String toname,
+            String tomail,
+            String employeename,
+            String issue,
+            String descriptin,
+            String priority,
+            LocalDate raisedOn
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "IT Ticket submitted By " + employeename;
+        String preheader = "New IT Support Ticket submitted by " + employeename + " (" + priority + " priority).";
 
-}
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, <strong style="color: #0f172a;">%s</strong> has raised a new IT support ticket. Please find the details below for review:
+                </p>
+                """.formatted(escapeHtml(toname), escapeHtml(employeename));
 
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeename), true),
+                new GridItem("Priority", escapeHtml(priority), true),
+                new GridItem("Issue Summary", escapeHtml(issue), false),
+                new GridItem("Date Submitted", escapeHtml(AddonServ.fullDateFormatter(raisedOn)), false)
+        ));
 
+        String remarksHtml = buildCalloutBox("Issue Description", sanitizeAndEscapeRemarks(descriptin), "#2563eb");
+
+        String bodyHtml = """
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please log in to the IT Service Desk portal to assign, update, or resolve this ticket.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "New IT Ticket Submitted",
+                "IT Support &amp; Infrastructure",
+                "New IT Ticket",
+                "#2563eb",
+                "#eff6ff",
+                "#bfdbfe",
+                "#1d4ed8",
+                preheader,
+                "IT Support Ticket &mdash; " + escapeHtml(issue),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Review Ticket &rarr;",
+                IT_TICKET_URL,
+                "#2563eb",
+                "IT Management System",
+                "This is an automated IT support notification generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(tomail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. IT Ticket Closed
+    // -------------------------------------------------------------------------
+    public void closeticket(
+            String toname,
+            String tomail,
+            int ticketid,
+            String remarks,
+            String issue
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "IT Ticket Closed For The Reference ID :" + ticketid;
+        String preheader = "Your IT Ticket #" + ticketid + " (" + issue + ") has been marked as Resolved.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, your IT support ticket has been marked as <strong style="color: #059669;">Resolved</strong>. Please review the closure summary below:
+                </p>
+                """.formatted(escapeHtml(toname));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Ticket Reference", "#" + ticketid, true),
+                new GridItem("Closed On", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Reported Issue", escapeHtml(issue), false),
+                new GridItem("Status", "Resolved", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Resolution Summary", sanitizeAndEscapeRemarks(remarks), "#059669");
+
+        String bodyHtml = """
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    If you feel this issue is not fully resolved, you can reopen the ticket or submit a new request via the IT portal.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "IT Ticket Resolved",
+                "IT Support &amp; Infrastructure",
+                "Ticket Resolved",
+                "#059669",
+                "#ecfdf5",
+                "#a7f3d0",
+                "#047857",
+                preheader,
+                "IT Ticket Closed &mdash; #" + ticketid,
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Go to IT Portal &rarr;",
+                IT_TICKET_URL,
+                "#059669",
+                "IT Support Team",
+                "This is an automated IT support notification generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(tomail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. Incomplete Working Hours Notice (Employee)
+    // -------------------------------------------------------------------------
+    public void sendIncompleteHoursEscalationMail(
+            String employeeName,
+            String employeeMail,
+            LocalDate warningDate,
+            LocalTime login,
+            LocalTime logout,
+            LocalTime breakHrs,
+            LocalTime workingHrs,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Incomplete Working Hours Notice - " + warningDate;
+        String preheader = "Attendance Compliance Notice: Incomplete working hours observed on " + warningDate + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Dear <strong style="color: #0f172a;">%s</strong>, this is to bring to your attention that incomplete working hours have been observed on the date detailed below.
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildAttendanceGrid(employeeName, warningDate, login, logout, breakHrs, workingHrs);
+        String remarksHtml = buildCalloutBox("HR Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly ensure that breaks are taken within the permitted duration and maintain proper work discipline during working hours.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please avoid such occurrences in the future and adhere to company policies. Thank you for your cooperation.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Incomplete Working Hours Notice",
+                "HR &amp; Attendance Compliance",
+                "&#9888;&nbsp; Attendance Compliance Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Incomplete Working Hours Notice &mdash; " + warningDate,
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "View Attendance Portal &rarr;",
+                ATTENDANCE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR attendance compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(employeeMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. Incomplete Working Hours Notice (Manager)
+    // -------------------------------------------------------------------------
+    public void sendIncompleteHoursEscalationMailManager(
+            String employeeName,
+            String managerName,
+            String managerMail,
+            LocalDate warningDate,
+            LocalTime login,
+            LocalTime logout,
+            LocalTime breakHrs,
+            LocalTime workingHrs,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Incomplete Working Hours Notice - " + warningDate;
+        String preheader = "Attendance Escalation Notice: Incomplete working hours observed for " + employeeName + " on " + warningDate + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Dear <strong style="color: #0f172a;">%s</strong>, this is to inform you that incomplete working hours have been observed for one of your team members, <strong style="color: #0f172a;">%s</strong>, on the date detailed below.
+                </p>
+                """.formatted(escapeHtml(managerName), escapeHtml(employeeName));
+
+        String gridHtml = buildAttendanceGrid(employeeName, warningDate, login, logout, breakHrs, workingHrs);
+        String remarksHtml = buildCalloutBox("HR Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly speak with the concerned team member and ensure that breaks are taken within the permitted duration and that proper work discipline is maintained during office hours.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please avoid such occurrences in the future and adhere to company policies. Thank you for your cooperation.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Incomplete Working Hours Notice",
+                "HR &amp; Attendance Compliance",
+                "&#9888;&nbsp; Attendance Compliance Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Incomplete Working Hours Notice &mdash; " + warningDate,
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Review Team Attendance &rarr;",
+                ATTENDANCE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR attendance compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(managerMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. Mobile Usage Escalation (Manager)
+    // -------------------------------------------------------------------------
+    public void sendMobileUsageEscalationMailManager(
+            String employeeName,
+            String managerName,
+            String managerMail
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Mobile Usage Escalation - " + employeeName;
+        String preheader = "Workplace Discipline Notice: Excessive mobile phone usage observed for " + employeeName + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to inform you that excessive mobile phone usage has been observed for one of your team members, <strong style="color: #0f172a;">%s</strong>, during office hours.
+                </p>
+                """.formatted(escapeHtml(managerName), escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Notice Category", "Workplace Discipline", false),
+                new GridItem("Observation", "Excessive Mobile Usage", true),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false)
+        ));
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly speak with the concerned team member and ensure that mobile phone usage is limited to necessary purposes only during working hours and that proper work discipline is maintained.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please ensure that such occurrences do not continue in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Mobile Usage Escalation",
+                "HR &amp; Workplace Compliance",
+                "&#9888;&nbsp; Workplace Discipline Notice",
+                "#d97706",
+                "#fffbeb",
+                "#fde68a",
+                "#b45309",
+                preheader,
+                "Mobile Usage Escalation &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                "",
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(managerMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. Mobile Usage Escalation (Employee)
+    // -------------------------------------------------------------------------
+    public void sendMobileUsageEscalationMail(
+            String employeeName,
+            String employeeMail
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Mobile Usage Escalation - " + employeeName;
+        String preheader = "Workplace Discipline Notice: Excessive mobile phone usage observed during office hours.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to bring to your attention that excessive mobile phone usage has been observed during office hours.
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Notice Category", "Workplace Discipline", false),
+                new GridItem("Observation", "Excessive Mobile Usage", true),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false)
+        ));
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly ensure that phone usage is limited to necessary and important purposes only during working hours and maintain proper work discipline in the workplace.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please avoid such occurrences in the future and adhere to company policies.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Mobile Usage Escalation",
+                "HR &amp; Workplace Compliance",
+                "&#9888;&nbsp; Workplace Discipline Notice",
+                "#d97706",
+                "#fffbeb",
+                "#fde68a",
+                "#b45309",
+                preheader,
+                "Mobile Usage Notice &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                "",
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(employeeMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. Performance Escalation (Manager)
+    // -------------------------------------------------------------------------
+    public void sendPerformanceEscalationMailManager(
+            String employeeName,
+            String managerName,
+            String managerMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Performance Escalation - " + employeeName;
+        String preheader = "Performance Escalation Notice for " + employeeName + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to inform you that the productivity and work output of one of your team members, <strong style="color: #0f172a;">%s</strong>, have been observed to be below the expected level.
+                </p>
+                """.formatted(escapeHtml(managerName), escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Escalation Area", "Productivity &amp; Output", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Action Required", "Manager Review", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly speak with the concerned team member and ensure that assigned tasks are completed within the expected timelines and that consistent performance is maintained.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please ensure that the necessary improvements are made to avoid such concerns in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Performance Escalation",
+                "HR &amp; Performance Management",
+                "&#9888;&nbsp; Performance Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Performance Escalation &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR performance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(managerMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. Performance Escalation (Employee)
+    // -------------------------------------------------------------------------
+    public void sendPerformanceEscalationMail(
+            String employeeName,
+            String employeeMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Performance Escalation - " + employeeName;
+        String preheader = "Performance Notice: Productivity and work output observed below expected levels.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to bring to your attention that your productivity and work output during office hours have been observed to be below the expected level.
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Notice Area", "Productivity &amp; Output", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Status", "Action Required", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly ensure that assigned tasks are completed within the expected timelines and maintain consistent performance during working hours.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please take the necessary steps to improve your productivity and avoid such concerns in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Performance Escalation",
+                "HR &amp; Performance Management",
+                "&#9888;&nbsp; Performance Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Performance Notice &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR performance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(employeeMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 10. Excess Leaves / Absenteeism Escalation (Manager)
+    // -------------------------------------------------------------------------
+    public void sendExessLeavesEscalationMailManager(
+            String employeeName,
+            String managerName,
+            String managerMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Excessive Leaves Escalation - " + employeeName;
+        String preheader = "Attendance & Leave Notice: Frequent leave requests/absences observed for " + employeeName + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to inform you that frequent leave requests and absences have been observed recently for one of your team members, <strong style="color: #0f172a;">%s</strong>.
+                </p>
+                """.formatted(escapeHtml(managerName), escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Escalation Area", "Excessive Leaves / Absences", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Action Required", "Manager Review", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#d97706");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly speak with the concerned team member and ensure that leaves are planned appropriately to avoid any impact on work continuity and team operations.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please ensure that regular attendance is maintained and that such occurrences are minimized in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Excessive Leaves Escalation",
+                "HR &amp; Leave Compliance",
+                "&#9888;&nbsp; Leave Compliance Notice",
+                "#d97706",
+                "#fffbeb",
+                "#fde68a",
+                "#b45309",
+                preheader,
+                "Excessive Leaves Escalation &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Review Team Attendance &rarr;",
+                ATTENDANCE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR leave compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(managerMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 11. Excess Leaves / Absenteeism Escalation (Employee)
+    // -------------------------------------------------------------------------
+    public void sendExessLeavesEscalationMail(
+            String employeeName,
+            String employeeMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Excessive Leaves Notice - " + employeeName;
+        String preheader = "Leave Policy Notice: Frequent leave requests/absences observed recently.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to bring to your attention that frequent leave requests and absences have been observed recently.
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Notice Area", "Excessive Leaves / Absences", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Policy Reference", "Company Leave Policy", false)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#d97706");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly ensure that leaves are planned appropriately and avoid excessive absences, as they may affect work continuity and team operations.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please maintain regular attendance and adhere to the company leave policy going forward.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Excessive Leaves Notice",
+                "HR &amp; Leave Compliance",
+                "&#9888;&nbsp; Leave Compliance Notice",
+                "#d97706",
+                "#fffbeb",
+                "#fde68a",
+                "#b45309",
+                preheader,
+                "Excessive Leaves Notice &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR leave compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(employeeMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 12. Production Quality Escalation (Manager)
+    // -------------------------------------------------------------------------
+    public void sendQualityEscalationMailManager(
+            String employeeName,
+            String managerName,
+            String managerMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Quality Escalation - " + employeeName;
+        String preheader = "Quality Escalation Notice for " + employeeName + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to inform you that the production quality of one of your team members, <strong style="color: #0f172a;">%s</strong>, has been observed to be below the expected standard.
+                </p>
+                """.formatted(escapeHtml(managerName), escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Escalation Area", "Production Quality &amp; QA", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Action Required", "Manager Review", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly speak with the concerned team member and ensure that tasks are executed with the required quality standards and attention to detail.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please ensure that the necessary improvements are made to avoid such concerns in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Quality Escalation",
+                "HR &amp; Quality Assurance",
+                "&#9888;&nbsp; Quality Escalation Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Quality Escalation &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR quality compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(managerMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 13. Production Quality Escalation (Employee)
+    // -------------------------------------------------------------------------
+    public void sendQualityEscalationMail(
+            String employeeName,
+            String employeeMail,
+            String remarks
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Quality Escalation - " + employeeName;
+        String preheader = "Quality Notice: Production quality observed below expected standards.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, this is to bring to your attention that your production quality has been observed to be below the expected standard.
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Employee Name", escapeHtml(employeeName), true),
+                new GridItem("Notice Area", "Production Quality &amp; QA", false),
+                new GridItem("Date Issued", escapeHtml(AddonServ.fullDateFormatter(LocalDate.now())), false),
+                new GridItem("Status", "Action Required", true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Additional Remarks", sanitizeAndEscapeRemarks(remarks), "#dc2626");
+
+        String bodyHtml = """
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Kindly ensure that tasks are handled with greater attention to detail and maintain the required quality standards moving forward.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please take the necessary steps to improve your output and avoid such concerns in the future.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "Quality Escalation",
+                "HR &amp; Quality Assurance",
+                "&#9888;&nbsp; Quality Escalation Notice",
+                "#dc2626",
+                "#fef2f2",
+                "#fecaca",
+                "#b91c1c",
+                preheader,
+                "Quality Notice &mdash; " + escapeHtml(employeeName),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "Open HRMS Portal &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HR Team",
+                "This is an automated HR quality compliance notice generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(employeeMail, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 14. HRD Ticket Confirmation (Employee)
+    // -------------------------------------------------------------------------
+    public void sendHrdEmployeeMail(
+            String mailId,
+            String employeeName,
+            String eid,
+            int ticketId,
+            String subjectText,
+            String description,
+            String date
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "HRD Ticket submitted with ticket ID: HRD-" + ticketId;
+        String preheader = "Your HRD Ticket #HRD-" + ticketId + " has been submitted successfully.";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Dear <strong style="color: #0f172a;">%s</strong>, this is to confirm that your HRD support ticket has been <strong style="color: #2563eb;">submitted</strong>. Below are your ticket details:
+                </p>
+                """.formatted(escapeHtml(employeeName));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Ticket ID", "#HRD-" + ticketId, true),
+                new GridItem("Date Submitted", escapeHtml(date), false),
+                new GridItem("Raised By", escapeHtml(employeeName) + " (" + escapeHtml(eid) + ")", false),
+                new GridItem("Subject", escapeHtml(subjectText), true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Ticket Description", sanitizeAndEscapeRemarks(description), "#2563eb");
+
+        String bodyHtml = """
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Our HRD support team will review your request shortly. You can track updates or reply directly from the portal.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "HRD Ticket Notification",
+                "HRD Helpdesk &amp; Support",
+                "HRD Ticket Submitted",
+                "#2563eb",
+                "#eff6ff",
+                "#bfdbfe",
+                "#1d4ed8",
+                preheader,
+                "HRD Ticket Confirmation &mdash; #HRD-" + ticketId,
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "View Ticket Details &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HRD Team",
+                "This is an automated HRD helpdesk notification generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(mailId, subject, html);
+    }
+
+    // -------------------------------------------------------------------------
+    // 15. HRD Ticket Notification (HR Team)
+    // -------------------------------------------------------------------------
+    public void sendHrdHrNotifyMail(
+            String mailId,
+            String recipientName,
+            String employeeName,
+            String eid,
+            String ticketId,
+            String subjectText,
+            String description,
+            String date
+    ) throws MessagingException, UnsupportedEncodingException {
+        String subject = "HRD Ticket submitted with ticket ID: HRD-" + ticketId;
+        String preheader = employeeName + " (" + eid + ") raised HRD Ticket #HRD-" + ticketId + ".";
+
+        String introHtml = """
+                <p style="margin: 0; font-size: 15px; line-height: 24px; color: #475569;">
+                    Hello <strong style="color: #0f172a;">%s</strong>, <strong style="color: #0f172a;">%s</strong> (%s) has raised a new HRD ticket. Please review the details below:
+                </p>
+                """.formatted(escapeHtml(recipientName), escapeHtml(employeeName), escapeHtml(eid));
+
+        String gridHtml = buildKeyValueGrid(List.of(
+                new GridItem("Ticket ID", "#HRD-" + escapeHtml(ticketId), true),
+                new GridItem("Date Submitted", escapeHtml(date), false),
+                new GridItem("Raised By", escapeHtml(employeeName) + " (" + escapeHtml(eid) + ")", false),
+                new GridItem("Subject", escapeHtml(subjectText), true)
+        ));
+
+        String remarksHtml = buildCalloutBox("Ticket Description", sanitizeAndEscapeRemarks(description), "#2563eb");
+
+        String bodyHtml = """
+                <p style="margin: 0; font-size: 14px; line-height: 22px; color: #475569;">
+                    Please log in to the HRMS portal to review and respond to this employee request.
+                </p>
+                """;
+
+        String html = buildCorporateEmail(
+                "HRD Ticket Notification",
+                "HRD Helpdesk &amp; Support",
+                "Action Required",
+                "#2563eb",
+                "#eff6ff",
+                "#bfdbfe",
+                "#1d4ed8",
+                preheader,
+                "New HRD Ticket &mdash; #HRD-" + escapeHtml(ticketId),
+                introHtml,
+                gridHtml,
+                remarksHtml,
+                bodyHtml,
+                "View Ticket Details &rarr;",
+                BASE_URL,
+                "#2563eb",
+                "HRD Support System",
+                "This is an automated HRD helpdesk notification generated by the Geosieben HRMS Portal.",
+                LocalDate.now().getYear()
+        );
+
+        sendHtml(mailId, subject, html);
+    }
+
+    // =========================================================================
+    // Shared Corporate HTML Email Layout & Helper Builders
+    // =========================================================================
+
+    private record GridItem(String label, String valueHtml, boolean emphasize) {}
+
+    private String buildKeyValueGrid(List<GridItem> items) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < items.size(); i += 2) {
+            GridItem left = items.get(i);
+            GridItem right = (i + 1 < items.size()) ? items.get(i + 1) : null;
+            boolean isLastRow = (i + 2 >= items.size());
+            String bottomBorder = isLastRow ? "" : "border-bottom: 1px solid #e2e8f0;";
+
+            String leftWeight = left.emphasize() ? "font-weight: 700; color: #0f172a;" : "font-weight: 600; color: #1e293b;";
+            String rightWeight = (right != null && right.emphasize()) ? "font-weight: 700; color: #0f172a;" : "font-weight: 600; color: #1e293b;";
+
+            rows.append("""
+                    <tr>
+                        <td width="50%%" class="stack-column" style="padding: 15px 18px; %s border-right: 1px solid #e2e8f0; vertical-align: top;">
+                            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">%s</div>
+                            <div style="font-size: 14px; %s">%s</div>
+                        </td>
+                        <td width="50%%" class="stack-column" style="padding: 15px 18px; %s vertical-align: top;">
+                            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">%s</div>
+                            <div style="font-size: 14px; %s">%s</div>
+                        </td>
+                    </tr>
+                    """.formatted(
+                    bottomBorder,
+                    left.label(),
+                    leftWeight,
+                    left.valueHtml(),
+                    bottomBorder,
+                    right != null ? right.label() : "&nbsp;",
+                    rightWeight,
+                    right != null ? right.valueHtml() : "&nbsp;"
+            ));
+        }
+
+        return """
+                <tr>
+                    <td class="mobile-padding" style="padding: 0 36px 24px 36px;">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                            %s
+                        </table>
+                    </td>
+                </tr>
+                """.formatted(rows.toString());
+    }
+
+    private String buildAttendanceGrid(
+            String employeeName,
+            LocalDate warningDate,
+            LocalTime login,
+            LocalTime logout,
+            LocalTime breakHrs,
+            LocalTime workingHrs
+    ) {
+        return """
+                <tr>
+                    <td class="mobile-padding" style="padding: 0 36px 24px 36px;">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                            <tr>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">Employee Name</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0f172a;">%s</div>
+                                </td>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; border-bottom: 1px solid #e2e8f0; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">Date</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #1e293b;">%s</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">Login Time</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #1e293b;">%s</div>
+                                </td>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; border-bottom: 1px solid #e2e8f0; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px;">Logout Time</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #1e293b;">%s</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; border-right: 1px solid #e2e8f0; background-color: #fffbeb; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #92400e; margin-bottom: 4px;">Break Hours</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #b45309;">%s</div>
+                                </td>
+                                <td width="50%%" class="stack-column" style="padding: 15px 18px; background-color: #fef2f2; vertical-align: top;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #991b1b; margin-bottom: 4px;">Working Hours</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #b91c1c;">%s</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                """.formatted(
+                escapeHtml(employeeName),
+                escapeHtml(String.valueOf(warningDate)),
+                escapeHtml(String.valueOf(login)),
+                escapeHtml(String.valueOf(logout)),
+                escapeHtml(String.valueOf(breakHrs)),
+                escapeHtml(String.valueOf(workingHrs))
+        );
+    }
+
+    private String buildCalloutBox(String title, String escapedBodyHtml, String accentHex) {
+        return """
+                <tr>
+                    <td class="mobile-padding" style="padding: 0 36px 24px 36px;">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid %s; border-radius: 8px;">
+                            <tr>
+                                <td style="padding: 16px 20px;">
+                                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 6px;">
+                                        %s
+                                    </div>
+                                    <p style="margin: 0; font-size: 14px; line-height: 22px; color: #334155; white-space: pre-line;">
+                                        %s
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                """.formatted(accentHex, title, escapedBodyHtml);
+    }
+
+    private String buildCorporateEmail(
+            String pageTitle,
+            String departmentBadge,
+            String pillLabel,
+            String bannerAccentColor,
+            String pillBgColor,
+            String pillBorderColor,
+            String pillTextColor,
+            String preheaderText,
+            String headingHtml,
+            String introHtml,
+            String gridSectionHtml,
+            String calloutSectionHtml,
+            String advisoryHtml,
+            String ctaLabel,
+            String ctaUrl,
+            String ctaBgColor,
+            String signOffTeam,
+            String footerDisclaimer,
+            int year
+    ) {
+        return """
+                <!DOCTYPE html>
+                <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <meta name="x-apple-disable-message-reformatting">
+                    <title>%s</title>
+
+                    <!--[if mso]>
+                    <style>
+                        * { font-family: Arial, sans-serif !important; }
+                    </style>
+                    <![endif]-->
+
+                    <style>
+                        body, table, td, a { -webkit-text-size-adjust: 100%%; -ms-text-size-adjust: 100%%; }
+                        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+                        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%%; outline: none; text-decoration: none; }
+                        table { border-collapse: collapse !important; }
+                        body { height: 100%% !important; margin: 0 !important; padding: 0 !important; width: 100%% !important; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; }
+                        a { color: #2563eb; text-decoration: none; }
+                        a:hover { text-decoration: underline; }
+
+                        @media screen and (max-width: 600px) {
+                            .email-container { width: 100%% !important; max-width: 100%% !important; }
+                            .mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
+                            .stack-column { display: block !important; width: 100%% !important; max-width: 100%% !important; direction: ltr !important; border-right: none !important; }
+                        }
+                    </style>
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #f3f4f6; -webkit-font-smoothing: antialiased;">
+
+                    <!-- Hidden Preheader Text -->
+                    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+                        %s
+                    </div>
+
+                    <!-- Main Email Wrapper -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f3f4f6;">
+                        <tr>
+                            <td align="center" style="padding: 32px 12px;">
+
+                                <!-- Centered Container (600px max width) -->
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="max-width: 600px; width: 100%%;">
+
+                                    <!-- Top Brand / Portal Header -->
+                                    <tr>
+                                        <td align="left" style="padding: 0 0 20px 0;">
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%">
+                                                <tr>
+                                                    <td valign="middle">
+                                                        <a href="https://geosieben.org" target="_blank" style="text-decoration: none; display: inline-block; vertical-align: middle;">
+                                                            <img src="%s" alt="%s" height="36" style="height: 36px; width: auto; max-width: 180px; display: block; border: 0;" />
+                                                        </a>
+                                                    </td>
+                                                    <td align="right" valign="middle">
+                                                        <span style="display: inline-block; background-color: #e2e8f0; color: #334155; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 10px; border-radius: 6px;">%s</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Main Card Body -->
+                                    <tr>
+                                        <td style="background-color: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); overflow: hidden;">
+
+                                            <!-- Top Status Banner Accent -->
+                                            <div style="height: 5px; background-color: %s; width: 100%%;"></div>
+
+                                            <!-- Card Content Wrapper -->
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%">
+
+                                                <!-- Greeting & Header -->
+                                                <tr>
+                                                    <td class="mobile-padding" style="padding: 32px 36px 24px 36px;">
+                                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                                                            <tr>
+                                                                <td style="background-color: %s; border: 1px solid %s; border-radius: 9999px; padding: 5px 14px;">
+                                                                    <span style="font-size: 12px; font-weight: 700; color: %s; text-transform: uppercase; letter-spacing: 0.04em;">%s</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+
+                                                        <h1 style="margin: 0 0 12px 0; font-size: 21px; line-height: 29px; font-weight: 700; color: #0f172a; letter-spacing: -0.01em;">
+                                                            %s
+                                                        </h1>
+                                                        %s
+                                                    </td>
+                                                </tr>
+
+                                                <!-- Metadata Grid -->
+                                                %s
+
+                                                <!-- Remarks / Description Callout -->
+                                                %s
+
+                                                <!-- Policy / Advisory Note -->
+                                                <tr>
+                                                    <td class="mobile-padding" style="padding: 0 36px 28px 36px;">
+                                                        %s
+                                                    </td>
+                                                </tr>
+
+                                                <!-- Primary CTA Button -->
+                                                <tr>
+                                                    <td class="mobile-padding" style="padding: 0 36px 32px 36px;">
+                                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                                            <tr>
+                                                                <td align="center" style="border-radius: 8px; background-color: %s; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);">
+                                                                    <a href="%s" target="_blank" style="font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 24px; border: 1px solid %s; display: inline-block;">
+                                                                        %s
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Corporate Footer -->
+                                    <tr>
+                                        <td style="padding: 28px 16px 16px 16px; text-align: center;">
+                                            <p style="margin: 0 0 20px 0; font-size: 12px; line-height: 18px; color: #64748b;">
+                                                Regards, <strong style="color: #334155;">%s</strong> &mdash; For queries or assistance, please reach out via the HRMS Portal.
+                                            </p>
+
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%%" style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                                                <tr>
+                                                    <td align="center" style="padding-top: 20px; padding-bottom: 10px;">
+                                                        <a href="https://geosieben.org" target="_blank" style="text-decoration: none; display: inline-block;">
+                                                            <img src="%s" alt="%s" height="32" style="height: 32px; width: auto; max-width: 160px; display: block; margin: 0 auto; border: 0;" />
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding-bottom: 6px;">
+                                                        <span style="font-size: 13px; font-weight: 700; color: #1e293b; letter-spacing: 0.01em;">
+                                                            %s
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding-bottom: 12px;">
+                                                        <span style="font-size: 12px; line-height: 18px; color: #64748b;">
+                                                            Human Resources &amp; Workforce Operations
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding-bottom: 12px; font-size: 12px; line-height: 18px; color: #64748b;">
+                                                        <a href="https://geosieben.org" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;">Website</a>
+                                                        &nbsp;&bull;&nbsp;
+                                                        <a href="https://portal.geosieben.org" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;">HRMS Portal</a>
+                                                        &nbsp;&bull;&nbsp;
+                                                        <a href="https://support.geosieben.org" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;">HR Helpdesk</a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="font-size: 11px; line-height: 16px; color: #94a3b8;">
+                                                        &copy; %d %s. All rights reserved.<br>
+                                                        %s
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                </body>
+                </html>
+                """.formatted(
+                escapeHtml(pageTitle),
+                escapeHtml(preheaderText),
+                LOGO_URL,
+                COMPANY_NAME,
+                departmentBadge,
+                bannerAccentColor,
+                pillBgColor,
+                pillBorderColor,
+                pillTextColor,
+                pillLabel,
+                headingHtml,
+                introHtml,
+                gridSectionHtml,
+                calloutSectionHtml,
+                advisoryHtml,
+                ctaBgColor,
+                ctaUrl,
+                ctaBgColor,
+                ctaLabel,
+                escapeHtml(signOffTeam),
+                LOGO_URL,
+                COMPANY_NAME,
+                COMPANY_NAME,
+                year,
+                COMPANY_NAME,
+                escapeHtml(footerDisclaimer)
+        );
+    }
+
+    private String sanitizeRemarks(String remarks) {
+        return (remarks == null || remarks.isBlank()) ? "-" : remarks.trim();
+    }
+
+    private String sanitizeAndEscapeRemarks(String remarks) {
+        return escapeHtml(sanitizeRemarks(remarks));
+    }
+
+    private int parseYearOrCurrent(String year) {
+        if (year == null || year.isBlank()) {
+            return LocalDate.now().getYear();
+        }
+        try {
+            return Integer.parseInt(year.trim());
+        } catch (NumberFormatException ex) {
+            return LocalDate.now().getYear();
+        }
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
 }

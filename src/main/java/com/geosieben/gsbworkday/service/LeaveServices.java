@@ -1,6 +1,7 @@
 package com.geosieben.gsbworkday.service;
 
 import com.geosieben.gsbworkday.dto.LeaveBalanceReposnseDto;
+import com.geosieben.gsbworkday.dto.LeaveProjection;
 import com.geosieben.gsbworkday.dto.LeaveRequestDto;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
 import com.geosieben.gsbworkday.entity.*;
@@ -260,5 +261,9 @@ public void deleteAttendance(Leaves leave){
         attendanceRepository.deleteById(attendanceRepository.findExistingAttendanceRecord(String.valueOf(leave.getFromDate()),leave.getEmployeeBasicInfo().getEID()).get().getId());
     }
 
+}
+
+public  List<LeaveProjection> getLeaveProjectionsService(){
+    return leaveRepository.findLeavesForCalenderProjection();
 }
 }

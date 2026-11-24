@@ -5,10 +5,16 @@ import com.geosieben.gsbworkday.service.LeaveServices;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.geosieben.gsbworkday.dto.AllotmentsProjection;
+import com.geosieben.gsbworkday.dto.AssignedTaskProjection;
+import com.geosieben.gsbworkday.dto.EmployeeAttendanceProjection;
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
+import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
+import com.geosieben.gsbworkday.dto.EmployeeStatsProjection;
 import com.geosieben.gsbworkday.dto.LeaveAvailedDto;
+import com.geosieben.gsbworkday.dto.LeaveProjection;
 import com.geosieben.gsbworkday.dto.ProjectRequest;
 import com.geosieben.gsbworkday.dto.ResourceDto;
+import com.geosieben.gsbworkday.dto.SeparatedEmployeeProjection;
 import com.geosieben.gsbworkday.entity.BookedHours;
 import com.geosieben.gsbworkday.entity.Clients;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
@@ -39,6 +45,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 
@@ -171,11 +178,8 @@ public List<ResourceDto> getResourceData() {
 }
 
 @GetMapping("/getStats")
-public ResponseEntity<Map<String,String>> getstats() {
-    Map<String,String> response=new HashMap<>();
-response.put("status", "success");
-response.put("message", "response returned");
-    return ResponseEntity.ok(response);
+public EmployeeStatsProjection getstats() {
+    return employeeService.getEmployeeStatsProjection();
 }
 
 @PostMapping("/admin/manualSeparation")
@@ -194,5 +198,26 @@ public ResponseEntity<Map<String,String>> manualSeparation(
 public List<LeaveAvailedDto> getLeaveAvailedReport() {  
     return employeeService.getLeaveAvailedDtos();
 }
+@GetMapping("/admin/getSeparated")
+public List<SeparatedEmployeeProjection> getSeparated() {
+    return employeeService.getSeparatedProjections();
+}
 
+@GetMapping("/admin/leaveCalenderData")
+public List<LeaveProjection> leaveCalenderData() {
+    return leaveServices.getLeaveProjectionsService();
+}
+@GetMapping("/getAttendance")
+public List<EmployeeAttendanceProjection> getAttendance() {
+    return employeeService.getEmployeeAttendanceService();
+}
+
+@GetMapping("/getMyTasks")
+public List<AssignedTaskProjection> getMyTasks() {
+    return employeeService.getAssignedTasksProjectionService();
+}
+@GetMapping("/admin/getEmployee/{eid}")
+public EmployeeReportProjection getEmployeeById(@PathVariable String eid) {
+    return employeeService.getEmployeeReportByEidService(eid);
+}
 }

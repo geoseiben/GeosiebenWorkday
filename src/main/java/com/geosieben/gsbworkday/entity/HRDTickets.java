@@ -1,9 +1,10 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
-
+@Data 
 @Entity
 @Table(name="hrdtickets")
 public class HRDTickets {
@@ -21,51 +22,23 @@ public class HRDTickets {
     @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name="raisedBy")
     private EmployeeBasicInfo employeeBasicInfo;
-
-
-    public EmployeeBasicInfo getEmployeeBasicInfo() {
-        return employeeBasicInfo;
-    }
-    public void setEmployeeBasicInfo(EmployeeBasicInfo employeeBasicInfo) {
-        this.employeeBasicInfo = employeeBasicInfo;
-    }
+    
     public HRDTickets() {
     }
-    public HRDTickets(String priority, String subject, String description) {
+
+    public HRDTickets(int id, String priority, String subject, String description, int status, LocalDateTime raisedOn,
+            LocalDateTime updatedAt, EmployeeBasicInfo employeeBasicInfo) {
+        this.id = id;
         this.priority = priority;
         this.subject = subject;
         this.description = description;
-    }
-    public String getPriority() {
-        return priority;
-    }
-    public void setPriority(String priority) {
-        this.priority = priority;
-    }
-    public String getSubject() {
-        return subject;
-    }
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    public int getStatus() {
-        return status;
-    }
-    public void setStatus(int status) {
         this.status = status;
-    }
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.raisedOn = raisedOn;
         this.updatedAt = updatedAt;
+        this.employeeBasicInfo = employeeBasicInfo;
     }
+
+
 
 
 }

@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consolidated Hours Report</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#1034A6',
+                            dark: '#0B2475',
+                            light: '#EEF2FF'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- jQuery & SheetJS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f6fb;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(16, 52, 166, 0.06), transparent 35%),
+                radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.04), transparent 35%);
+            background-attachment: fixed;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Sticky Desktop Columns */
+        .sticky-sno {
+            position: sticky;
+            left: 0;
+            z-index: 16;
+        }
+        .sticky-emp {
+            position: sticky;
+            left: 42px;
+            z-index: 15;
+            box-shadow: 2px 0 6px -3px rgba(15, 23, 42, 0.08);
+        }
+
+        /* Custom Thin Scrollbars */
+        .thin-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .thin-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .thin-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .thin-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Hide scrollbars on horizontal pill strips for mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .skeleton-bar {
+            position: relative;
+            overflow: hidden;
+            background-color: #e2e8f0;
+        }
+        .skeleton-bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+            animation: shimmer 1.3s infinite;
+        }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="text-slate-800 antialiased selection:bg-[#1034A6]/15 selection:text-[#1034A6]">
+
+<div class="max-w-[98%] mx-auto px-2.5 sm:px-5 lg:px-6 py-3 sm:py-4 space-y-3">
+
+    <!-- Top Header & Quick Year Switcher -->
+    <header class="bg-white border border-slate-200/90 rounded-xl px-3.5 sm:px-4 py-2.5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div class="flex items-center justify-between sm:justify-start gap-2.5">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-[#1034A6] text-white flex items-center justify-center shadow-sm shrink-0">
+                    <i class="bi bi-grid-3x3-gap-fill text-base"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-tight">Consolidated Hours Report</h1>
+                        <span id="reportBadge" class="text-[10px] font-bold text-[#1034A6] bg-[#1034A6]/10 border border-[#1034A6]/20 px-2 py-0.5 rounded-full">FY 2026</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 hidden sm:block">Annual employee booked-hours matrix &amp; utilization overview</p>
+                </div>
+            </div>
+
+            <!-- Mobile Refresh Button -->
+            <button id="mobileRefreshBtn" type="button" title="Reload data"
+                    class="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-slate-50 active:bg-slate-100 text-slate-600 text-xs">
+                <i class="bi bi-arrow-clockwise refresh-icon"></i>
+            </button>
+        </div>
+
+        <!-- Year Pills Strip (Horizontally scrollable on small phones) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span class="text-[11px] font-semibold text-slate-400 shrink-0">Year:</span>
+            <div id="yearPills" class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/80 gap-0.5 shrink-0"></div>
+        </div>
+    </header>
+
+    <!-- Compact KPI Summary + Monthly Trend Spark-Bars -->
+    <section class="grid grid-cols-2 lg:grid-cols-12 gap-2.5">
+        <!-- 4 KPI Cards -->
+        <div class="col-span-2 lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+            <div class="bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-[#1034A6]/10 text-[#1034A6] flex items-center justify-center text-sm shrink-0">
+                    <i class="bi bi-people-fill"></i>
+                </span>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Staff</div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="kpiEmployees" class="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums">0</span>
+                        <span id="kpiStatusSplit" class="text-[10px] font-medium text-slate-400 truncate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shrink-0">
+                    <i class="bi bi-clock-fill"></i>
+                </span>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Hrs</div>
+                    <div id="kpiTotalHours" class="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums truncate">0h</div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-sm shrink-0">
+                    <i class="bi bi-speedometer2"></i>
+                </span>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg / Staff</div>
+                    <div id="kpiAvgHours" class="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums truncate">0h</div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm shrink-0">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </span>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Peak Month</div>
+                    <div id="kpiPeakMonth" class="text-sm sm:text-base font-extrabold text-slate-900 tabular-nums truncate">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 12-Month Spark-Bar Distribution -->
+        <div class="col-span-2 lg:col-span-5 bg-white border border-slate-200/90 rounded-xl px-3 py-2 shadow-sm flex flex-col justify-center">
+            <div id="monthlySparkBars" class="grid grid-cols-12 gap-1 sm:gap-1.5 items-end h-11"></div>
+        </div>
+    </section>
+
+    <!-- Main Report Container -->
+    <section class="bg-white border border-slate-200/90 rounded-xl shadow-sm overflow-hidden">
+
+        <!-- Responsive Filter & Action Toolbar -->
+        <div class="bg-slate-50/90 border-b border-slate-200/80 p-3 sm:px-3.5 sm:py-2.5 space-y-2.5 xl:space-y-0 xl:flex xl:items-center xl:justify-between gap-2.5">
+
+            <!-- Left Controls: Search + Status Pills + Year Select -->
+            <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
+                <!-- Search Input (Full width on mobile) -->
+                <div class="relative w-full sm:w-56">
+                    <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" placeholder="Search employee name..."
+                           class="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-800 shadow-sm focus:border-[#1034A6] focus:ring-1 focus:ring-[#1034A6]/20 focus:outline-none">
+                    <button id="clearSearchBtn" type="button" title="Clear search"
+                            class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <i class="bi bi-x-circle-fill text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Status Segmented Control -->
+                <div id="statusFilterGroup" class="grid grid-cols-3 sm:inline-flex items-center bg-slate-200/75 p-0.5 rounded-lg border border-slate-300/70 text-xs">
+                    <button type="button" data-status="All"
+                            class="status-pill px-2.5 py-1 rounded-md font-bold bg-white text-[#1034A6] shadow-sm transition text-center">
+                        All <span id="countAll" class="text-[10px] text-slate-400 font-semibold">(0)</span>
+                    </button>
+                    <button type="button" data-status="Active"
+                            class="status-pill px-2.5 py-1 rounded-md font-semibold text-slate-600 hover:text-slate-900 transition text-center">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span>Active
+                        <span id="countActive" class="text-[10px] text-slate-400">(0)</span>
+                    </button>
+                    <button type="button" data-status="Separated"
+                            class="status-pill px-2.5 py-1 rounded-md font-semibold text-slate-600 hover:text-slate-900 transition text-center">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 mr-1"></span>Separated
+                        <span id="countSeparated" class="text-[10px] text-slate-400">(0)</span>
+                    </button>
+                </div>
+
+                <!-- Year Dropdown + Page Size + Heatmap -->
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 sm:w-28">
+                        <i class="bi bi-calendar3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                        <select id="yearFilter" class="w-full pl-7 pr-2 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800 shadow-sm focus:border-[#1034A6] focus:outline-none"></select>
+                    </div>
+
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[11px] font-semibold text-slate-500">Rows:</span>
+                        <select id="pageSizeSelect" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-[#1034A6] focus:outline-none">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="99999">All</option>
+                        </select>
+                    </div>
+
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 shadow-sm hover:bg-slate-50 select-none shrink-0">
+                        <input type="checkbox" id="heatmapToggle" checked class="rounded text-[#1034A6] focus:ring-[#1034A6] w-3.5 h-3.5">
+                        <span class="text-xs font-semibold text-slate-700"><i class="bi bi-palette2 text-[#1034A6] mr-1"></i>Heatmap</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Right Controls: Legend + Sort (Mobile) + Exports -->
+            <div class="flex flex-wrap items-center justify-between xl:justify-end gap-2 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-200/70">
+                <!-- Heatmap Legend -->
+                <div id="heatmapLegend" class="hidden 2xl:flex items-center gap-1 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">
+                    <span class="font-semibold">Hrs:</span>
+                    <span class="px-1.5 rounded bg-slate-100 text-slate-600">&lt;80</span>
+                    <span class="px-1.5 rounded bg-indigo-50 text-indigo-700">80–140</span>
+                    <span class="px-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold">140–180</span>
+                    <span class="px-1.5 rounded bg-amber-100 text-amber-800 font-semibold">180+</span>
+                </div>
+
+                <!-- Mobile Quick Sort Selector (Visible only below md) -->
+                <div class="flex md:hidden items-center gap-1">
+                    <select id="mobileSortSelect" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm focus:border-[#1034A6] focus:outline-none">
+                        <option value="name_asc">Sort: Name (A–Z)</option>
+                        <option value="name_desc">Sort: Name (Z–A)</option>
+                        <option value="total_desc">Sort: Total Hrs (High–Low)</option>
+                        <option value="total_asc">Sort: Total Hrs (Low–High)</option>
+                        <option value="avg_desc">Sort: Avg/Mo (High–Low)</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
+                    <button id="refreshBtn" type="button" title="Reload data"
+                            class="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 text-xs shadow-sm transition">
+                        <i class="bi bi-arrow-clockwise refresh-icon"></i>
+                    </button>
+                    <button id="exportExcelBtn" type="button"
+                            class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 shadow-sm transition">
+                        <i class="bi bi-file-earmark-excel"></i> <span>Excel</span>
+                    </button>
+                    <button id="exportCsvBtn" type="button"
+                            class="inline-flex items-center gap-1 rounded-lg bg-[#1034A6] hover:bg-[#0B2475] active:bg-[#081B59] text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 shadow-sm transition">
+                        <i class="bi bi-filetype-csv"></i> <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DESKTOP VIEW: Compact Sticky Matrix Table (md and up) -->
+        <div class="hidden md:block overflow-x-auto thin-scroll">
+            <table id="hoursMatrixTable" class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100/95 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600 select-none">
+                        <th class="sticky-sno bg-slate-100 py-2 px-2.5 w-[42px] min-w-[42px] border-r border-slate-200 text-slate-500">#</th>
+                        <th data-sort="name" class="sortable-th sticky-emp bg-slate-100 py-2 px-3 min-w-[175px] border-r border-slate-200 cursor-pointer hover:text-[#1034A6]">
+                            <div class="flex items-center justify-between">
+                                <span>Employee Name</span>
+                                <i class="bi bi-arrow-down-up text-[9px] text-slate-400"></i>
+                            </div>
+                        </th>
+                        <th data-sort="status" class="sortable-th py-2 px-2.5 min-w-[92px] border-r border-slate-200/70 cursor-pointer hover:text-[#1034A6]">
+                            <div class="flex items-center justify-between">
+                                <span>Status</span>
+                                <i class="bi bi-arrow-down-up text-[9px] text-slate-400"></i>
+                            </div>
+                        </th>
+                        <th data-sort="1" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Jan</th>
+                        <th data-sort="2" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Feb</th>
+                        <th data-sort="3" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Mar</th>
+                        <th data-sort="4" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Apr</th>
+                        <th data-sort="5" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">May</th>
+                        <th data-sort="6" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Jun</th>
+                        <th data-sort="7" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Jul</th>
+                        <th data-sort="8" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Aug</th>
+                        <th data-sort="9" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Sep</th>
+                        <th data-sort="10" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Oct</th>
+                        <th data-sort="11" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Nov</th>
+                        <th data-sort="12" class="sortable-th py-2 px-2 min-w-[58px] cursor-pointer hover:text-[#1034A6]">Dec</th>
+                        <th data-sort="avg" class="sortable-th py-2 px-2.5 min-w-[66px] bg-slate-100/80 border-l border-slate-200 cursor-pointer hover:text-[#1034A6]">Avg/Mo</th>
+                        <th data-sort="total" class="sortable-th py-2 px-3 min-w-[80px] bg-[#1034A6]/10 text-[#1034A6] border-l border-slate-200 cursor-pointer hover:text-[#0B2475]">
+                            <div class="flex items-center justify-between">
+                                <span>Total</span>
+                                <i class="bi bi-arrow-down-up text-[9px] text-[#1034A6]/60"></i>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="matrixBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                <tfoot id="matrixFoot" class="bg-slate-100/95 border-t-2 border-slate-300 text-[11px] font-extrabold text-slate-800 hidden"></tfoot>
+            </table>
+        </div>
+
+        <!-- MOBILE VIEW: Expandable Employee Cards (< 768px) -->
+        <div id="mobileCardsContainer" class="md:hidden divide-y divide-slate-200/80 bg-white"></div>
+
+        <!-- Mobile Grand Total Strip -->
+        <div id="mobileSummaryFoot" class="md:hidden hidden bg-[#1034A6]/5 border-t border-slate-200 px-3.5 py-2.5 flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Filtered Grand Total</span>
+            <div class="flex items-center gap-3 tabular-nums">
+                <span class="text-slate-500">Avg: <strong id="mobileFootAvg" class="text-slate-800">0</strong></span>
+                <span class="text-[#1034A6] font-extrabold text-sm" id="mobileFootTotal">0h</span>
+            </div>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="bg-slate-50/90 border-t border-slate-200/80 px-3.5 py-2.5 flex flex-col sm  :flex-row sm:items-center sm:justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo" class="font-medium text-center sm:text-left">Showing 0 to 0 of 0 employees</div>
+            <div id="paginationControls" class="inline-flex items-center justify-center gap-1 flex-wrap"></div>
+        </div>
+    </section>
+</div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+<script>
+$(document).ready(function () {
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const FULL_MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    const AVATAR_TONES = [
+        'bg-[#1034A6]/10 text-[#1034A6]',
+        'bg-emerald-100 text-emerald-700',
+        'bg-sky-100 text-sky-700',
+        'bg-amber-100 text-amber-800',
+        'bg-purple-100 text-purple-700',
+        'bg-rose-100 text-rose-700'
+    ];
+    const currentYear = new Date().getFullYear();
+
+    let rawRecords = [];
+    let allEmployees = [];
+    let filteredEmployees = [];
+    let selectedStatus = 'All';
+    let currentPage = 1;
+    let pageSize = 100;
+    let sortKey = 'name';
+    let sortDir = 'asc';
+    const expandedCards = new Set();
+
+    // Case-insensitive property resolver for Spring Boot DTOs / Maps
+    function pickField(obj, candidates) {
+        if (!obj || typeof obj !== 'object') return undefined;
+        const lowerMap = {};
+        for (const k of Object.keys(obj)) {
+            lowerMap[k.toLowerCase().replace(/[^a-z0-9]/g, '')] = obj[k];
+        }
+        for (const key of candidates) {
+            const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (lowerMap[normalized] !== undefined && lowerMap[normalized] !== null) {
+                return lowerMap[normalized];
+            }
+        }
+        return undefined;
+    }
+
+    function extractYear(row) {
+        const y = pickField(row, ['year', 'yr', 'bookingYear', 'reportYear']);
+        if (y) return Number(y);
+        const mVal = String(pickField(row, ['month', 'monthYear', 'period']) || '');
+        const match = mVal.match(/\b(20\d{2})\b/);
+        return match ? Number(match[1]) : currentYear;
+    }
+
+    function getMonthIndex(row) {
+        const rawMonth = pickField(row, ['monthNum', 'month_num', 'monthIndex', 'month', 'monthName', 'period']);
+        if (rawMonth === undefined || rawMonth === null) return null;
+
+        if (!isNaN(rawMonth) && Number(rawMonth) >= 1 && Number(rawMonth) <= 12) {
+            return Number(rawMonth);
+        }
+
+        const str = String(rawMonth).trim();
+        const isoMatch = str.match(/^20\d{2}-(\d{1,2})/);
+        if (isoMatch) return Number(isoMatch[1]);
+
+        const token = str.split(/[-\s/]/)[0].toLowerCase();
+        const abbrIdx = MONTHS.findIndex(m => m.toLowerCase() === token.slice(0, 3));
+        if (abbrIdx !== -1) return abbrIdx + 1;
+
+        const fullIdx = FULL_MONTHS.indexOf(token);
+        if (fullIdx !== -1) return fullIdx + 1;
+
+        return null;
+    }
+
+    function getFormattedToday() {
+        const d = new Date();
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mmm = MONTHS[d.getMonth()];
+        const yyyy = d.getFullYear();
+        return `${dd}-${mmm}-${yyyy}`;
+    }
+
+    function getAvatarTone(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return AVATAR_TONES[Math.abs(hash) % AVATAR_TONES.length];
+    }
+
+    function getStatusBadge(status) {
+        if (status === 'Separated') {
+            return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Separated
+                    </span>`;
+        }
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active
+                </span>`;
+    }
+
+    function getHeatmapBadge(val, enabled) {
+        const formatted = Number(val.toFixed(2));
+        if (!enabled) {
+            return `<span class="font-medium text-slate-800">${formatted}</span>`;
+        }
+        if (val >= 180) {
+            return `<span class="inline-block px-1.5 py-0.5 rounded bg-amber-100/90 text-amber-900 font-semibold text-[11px]">${formatted}</span>`;
+        }
+        if (val >= 140) {
+            return `<span class="inline-block px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold text-[11px]">${formatted}</span>`;
+        }
+        if (val >= 80) {
+            return `<span class="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium text-[11px]">${formatted}</span>`;
+        }
+        return `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">${formatted}</span>`;
+    }
+
+    function renderSkeletons() {
+        // Desktop skeleton
+        let rows = '';
+        for (let i = 0; i < 8; i++) {
+            rows += `<tr>
+                <td class="py-2 px-2.5"><div class="h-3.5 w-4 rounded skeleton-bar"></div></td>
+                <td class="py-2 px-3"><div class="h-3.5 w-32 rounded skeleton-bar"></div></td>
+                <td class="py-2 px-2.5"><div class="h-3.5 w-14 rounded skeleton-bar"></div></td>
+                ${Array(14).fill('<td class="py-2 px-2"><div class="h-3.5 w-8 rounded skeleton-bar"></div></td>').join('')}
+            </tr>`;
+        }
+        $('#matrixBody').html(rows);
+
+        // Mobile skeleton
+        let cards = '';
+        for (let i = 0; i < 5; i++) {
+            cards += `<div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full skeleton-bar"></div>
+                    <div class="space-y-1.5">
+                        <div class="h-3.5 w-28 rounded skeleton-bar"></div>
+                        <div class="h-3 w-16 rounded skeleton-bar"></div>
+                    </div>
+                </div>
+                <div class="h-4 w-14 rounded skeleton-bar"></div>
+            </div>`;
+        }
+        $('#mobileCardsContainer').html(cards);
+    }
+
+    function populateYearControls(records, preferredYear) {
+        const yearSet = new Set([currentYear, currentYear - 1, currentYear - 2]);
+        (records || []).forEach(r => {
+            const y = extractYear(r);
+            if (y) yearSet.add(y);
+        });
+
+        const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
+        const selectedYear = Number(preferredYear || $('#yearFilter').val()) || sortedYears[0];
+
+        $('#yearFilter').html(
+            sortedYears.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')
+        );
+
+        $('#yearPills').html(
+            sortedYears.slice(0, 5).map(y => {
+                const active = y === selectedYear
+                    ? 'bg-white text-[#1034A6] shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-slate-900 font-medium';
+                return `<button type="button" data-year="${y}" class="px-2.5 py-0.5 rounded-md text-[11px] transition ${active}">${y}</button>`;
+            }).join('')
+        );
+
+        $('#reportBadge').text(`FY ${selectedYear}`);
+    }
+
+    function pivotRowsForYear(rows, selectedYear) {
+        const map = new Map();
+
+        rows.forEach(r => {
+            const rowYear = extractYear(r);
+            if (Number(rowYear) !== Number(selectedYear)) return;
+
+            const rawName = pickField(r, ['employeeName', 'employeename', 'empName', 'fullName', 'name', 'userName']);
+            const name = String(rawName || '').trim();
+
+            const rawStatus = pickField(r, ['status', 'empStatus', 'employeeStatus', 'userStatus', 'activeStatus']);
+            const status = String(rawStatus || 'Active').trim().toLowerCase() === 'separated' ? 'Separated' : 'Active';
+
+            const m = getMonthIndex(r);
+            const rawHrs = pickField(r, ['hoursBooked', 'hoursbooked', 'totalHours', 'total_hours', 'bookedHours', 'hours', 'sum(b.hoursbooked)']);
+            const hrs = parseFloat(rawHrs) || 0;
+
+            if (!name || !m) return;
+
+            const key = `${name}__${status}`;
+            if (!map.has(key)) {
+                map.set(key, { key: key, employeename: name, status: status, months: {}, total: 0, activeMonths: 0, avg: 0 });
+            }
+            const entry = map.get(key);
+            entry.months[m] = (entry.months[m] || 0) + hrs;
+            entry.total += hrs;
+        });
+
+        return Array.from(map.values()).map(emp => {
+            const count = Object.keys(emp.months).length;
+            emp.activeMonths = count;
+            emp.avg = count > 0 ? emp.total / count : 0;
+            return emp;
+        });
+    }
+
+    function updateStatusFilterCounts() {
+        const total = allEmployees.length;
+        const activeCount = allEmployees.filter(e => e.status === 'Active').length;
+        const separatedCount = allEmployees.filter(e => e.status === 'Separated').length;
+
+        $('#countAll').text(`(${total})`);
+        $('#countActive').text(`(${activeCount})`);
+        $('#countSeparated').text(`(${separatedCount})`);
+        $('#kpiStatusSplit').text(`${activeCount}A / ${separatedCount}S`);
+    }
+
+    function sortEmployees(list) {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...list].sort((a, b) => {
+            if (sortKey === 'name') return a.employeename.localeCompare(b.employeename) * dir;
+            if (sortKey === 'status') return a.status.localeCompare(b.status) * dir || a.employeename.localeCompare(b.employeename);
+            if (sortKey === 'total') return (a.total - b.total) * dir;
+            if (sortKey === 'avg') return (a.avg - b.avg) * dir;
+            const m = Number(sortKey);
+            return ((a.months[m] ?? -1) - (b.months[m] ?? -1)) * dir;
+        });
+    }
+
+    function updateKPIsAndSparkBars(data) {
+        const empCount = data.length;
+        let grandTotal = 0;
+        const monthTotals = Array(12).fill(0);
+
+        data.forEach(emp => {
+            grandTotal += emp.total;
+            for (let m = 1; m <= 12; m++) {
+                monthTotals[m - 1] += (emp.months[m] || 0);
+            }
+        });
+
+        const avg = empCount > 0 ? (grandTotal / empCount).toFixed(1) : '0';
+        const maxVal = Math.max(...monthTotals);
+        const peakIdx = monthTotals.indexOf(maxVal);
+
+        $('#kpiEmployees').text(empCount);
+        $('#kpiTotalHours').text(Number(grandTotal.toFixed(1)).toLocaleString() + 'h');
+        $('#kpiAvgHours').text(Number(avg).toLocaleString() + 'h');
+        $('#kpiPeakMonth').text(maxVal > 0 ? `${MONTHS[peakIdx]} (${Math.round(maxVal)}h)` : '-');
+
+        $('#monthlySparkBars').html(monthTotals.map((val, idx) => {
+            const pct = maxVal > 0 ? Math.max(8, Math.round((val / maxVal) * 100)) : 8;
+            const isPeak = maxVal > 0 && idx === peakIdx;
+            const barColor = val === 0 ? 'bg-slate-200/70' : isPeak ? 'bg-amber-500' : 'bg-[#1034A6]';
+
+            return `
+                <div class="flex flex-col items-center gap-0.5" title="${MONTHS[idx]}: ${Number(val.toFixed(2))} hrs">
+                    <div class="w-full h-6 bg-slate-100 rounded flex items-end p-0.5 overflow-hidden">
+                        <div style="height: ${pct}%" class="w-full rounded-sm ${barColor} transition-all duration-300"></div>
+                    </div>
+                    <span class="text-[8px] sm:text-[9px] font-semibold ${isPeak ? 'text-amber-700 font-bold' : 'text-slate-400'}">${MONTHS[idx]}</span>
+                </div>`;
+        }).join(''));
+    }
+
+    function renderDataViews() {
+        updateStatusFilterCounts();
+
+        const query = $('#searchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
+
+        const filtered = allEmployees.filter(emp => {
+            const statusMatch = selectedStatus === 'All' || emp.status === selectedStatus;
+            const nameMatch = !query || emp.employeename.toLowerCase().includes(query);
+            return statusMatch && nameMatch;
+        });
+
+        filteredEmployees = sortEmployees(filtered);
+        updateKPIsAndSparkBars(filteredEmployees);
+
+        const heatmapEnabled = $('#heatmapToggle').is(':checked');
+        $('#heatmapLegend').toggleClass('hidden', !heatmapEnabled);
+
+        const totalRecords = filteredEmployees.length;
+        const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, totalRecords);
+        const pageSlice = filteredEmployees.slice(startIdx, endIdx);
+
+        if (totalRecords === 0) {
+            const emptyMsg = `No booked hours found for ${$('#yearFilter').val()} (${selectedStatus}).`;
+            $('#matrixBody').html(`<tr><td colspan="17" class="py-8 px-4 text-left text-slate-400 text-xs">${emptyMsg}</td></tr>`);
+            $('#mobileCardsContainer').html(`<div class="py-8 px-4 text-center text-slate-400 text-xs">${emptyMsg}</div>`);
+            $('#matrixFoot, #mobileSummaryFoot').addClass('hidden');
+            $('#paginationInfo').text('Showing 0 to 0 of 0 employees');
+            $('#paginationControls').empty();
+            return;
+        }
+
+        // 1. Render Desktop Matrix Rows
+        $('#matrixBody').html(pageSlice.map((emp, idx) => {
+            const serialNo = startIdx + idx + 1;
+            const initials = emp.employeename.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+            const tone = getAvatarTone(emp.employeename);
+
+            let monthCells = '';
+            for (let m = 1; m <= 12; m++) {
+                const val = emp.months[m];
+                if (val !== undefined && val !== null) {
+                    monthCells += `<td class="py-1.5 px-2 tabular-nums">${getHeatmapBadge(val, heatmapEnabled)}</td>`;
+                } else {
+                    monthCells += `<td class="py-1.5 px-2 text-slate-300 select-none">-</td>`;
+                }
+            }
+
+            return `
+                <tr class="group hover:bg-[#1034A6]/[0.03] transition-colors">
+                    <td class="sticky-sno bg-white group-hover:bg-[#f6f8fe] py-1.5 px-2.5 text-[11px] font-semibold text-slate-400 border-r border-slate-100 tabular-nums transition-colors">
+                        ${serialNo}
+                    </td>
+                    <td class="sticky-emp bg-white group-hover:bg-[#f6f8fe] py-1.5 px-3 font-semibold text-slate-800 border-r border-slate-100 transition-colors whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full ${tone} text-[10px] font-bold flex items-center justify-center shrink-0">
+                                ${initials}
+                            </span>
+                            <span class="text-slate-900">${emp.employeename}</span>
+                        </div>
+                    </td>
+                    <td class="py-1.5 px-2.5 border-r border-slate-100 whitespace-nowrap">
+                        ${getStatusBadge(emp.status)}
+                    </td>
+                    ${monthCells}
+                    <td class="py-1.5 px-2.5 text-[11px] font-semibold text-slate-600 bg-slate-50/70 border-l border-slate-100 tabular-nums">
+                        ${Number(emp.avg.toFixed(1))}
+                    </td>
+                    <td class="py-1.5 px-3 font-extrabold text-[#1034A6] bg-[#1034A6]/[0.04] border-l border-slate-100 tabular-nums">
+                        ${Number(emp.total.toFixed(2))}
+                    </td>
+                </tr>`;
+        }).join(''));
+
+        // 2. Render Mobile Expandable Cards
+        $('#mobileCardsContainer').html(pageSlice.map((emp, idx) => {
+            const serialNo = startIdx + idx + 1;
+            const initials = emp.employeename.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+            const tone = getAvatarTone(emp.employeename);
+            const isOpen = expandedCards.has(emp.key);
+
+            let monthGridItems = '';
+            for (let m = 1; m <= 12; m++) {
+                const val = emp.months[m];
+                const hasVal = val !== undefined && val !== null;
+                let cellStyle = 'bg-slate-50/80 border-slate-200/70 text-slate-400';
+                if (hasVal && heatmapEnabled) {
+                    if (val >= 180) cellStyle = 'bg-amber-50 border-amber-200 text-amber-900 font-bold';
+                    else if (val >= 140) cellStyle = 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold';
+                    else if (val >= 80) cellStyle = 'bg-indigo-50 border-indigo-200 text-indigo-800 font-semibold';
+                    else cellStyle = 'bg-white border-slate-200 text-slate-700 font-medium';
+                } else if (hasVal) {
+                    cellStyle = 'bg-white border-slate-200 text-slate-800 font-semibold';
+                }
+
+                monthGridItems += `
+                    <div class="rounded-lg border px-2 py-1.5 flex items-center justify-between text-[11px] ${cellStyle}">
+                        <span class="text-[10px] uppercase tracking-wider opacity-75 font-semibold">${MONTHS[m - 1]}</span>
+                        <span class="tabular-nums">${hasVal ? Number(val.toFixed(1)) : '-'}</span>
+                    </div>`;
+            }
+
+            return `
+                <div class="mobile-emp-card transition-colors ${isOpen ? 'bg-slate-50/60' : 'bg-white'}">
+                    <button type="button" data-emp-key="${emp.key}" class="toggle-mobile-card w-full text-left px-3.5 py-2.5 flex items-center justify-between gap-2 active:bg-slate-100/70">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-[10px] font-bold text-slate-400 w-4 shrink-0 tabular-nums">${serialNo}.</span>
+                            <span class="w-8 h-8 rounded-full ${tone} text-xs font-bold flex items-center justify-center shrink-0">
+                                ${initials}
+                            </span>
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold text-slate-900 truncate">${emp.employeename}</div>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    ${getStatusBadge(emp.status)}
+                                    <span class="text-[10px] text-slate-500 font-medium">Avg: <strong class="text-slate-700">${Number(emp.avg.toFixed(1))}h</strong>/mo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            <div class="text-right">
+                                <div class="text-xs font-extrabold text-[#1034A6] tabular-nums">${Number(emp.total.toFixed(2))}h</div>
+                                <div class="text-[10px] text-slate-400">${emp.activeMonths} mos</div>
+                            </div>
+                            <i class="bi bi-chevron-down text-slate-400 text-xs transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#1034A6]' : ''}"></i>
+                        </div>
+                    </button>
+
+                    <div class="mobile-card-details px-3.5 pb-3 pt-1 ${isOpen ? '' : 'hidden'}">
+                        <div class="grid grid-cols-3 xs:grid-cols-4 gap-1.5">
+                            ${monthGridItems}
+                        </div>
+                    </div>
+                </div>`;
+        }).join(''));
+
+        // 3. Totals Calculation (Desktop Footer & Mobile Strip)
+        const colTotals = Array(12).fill(0);
+        let grandTotal = 0;
+        filteredEmployees.forEach(emp => {
+            grandTotal += emp.total;
+            for (let m = 1; m <= 12; m++) {
+                colTotals[m - 1] += (emp.months[m] || 0);
+            }
+        });
+        const overallAvg = filteredEmployees.length > 0 ? (grandTotal / filteredEmployees.length) : 0;
+
+        $('#matrixFoot').removeClass('hidden').html(`
+            <tr>
+                <td class="sticky-sno bg-slate-100 py-2 px-2.5 border-r border-slate-200 text-slate-400">#</td>
+                <td class="sticky-emp bg-slate-100 py-2 px-3 border-r border-slate-200 uppercase tracking-wider">Monthly Total</td>
+                <td class="py-2 px-2.5 border-r border-slate-200 text-slate-500">${selectedStatus}</td>
+                ${colTotals.map(v => `<td class="py-2 px-2 tabular-nums">${v > 0 ? Number(v.toFixed(2)) : '-'}</td>`).join('')}
+                <td class="py-2 px-2.5 text-slate-600 border-l border-slate-200 tabular-nums">${Number(overallAvg.toFixed(1))}</td>
+                <td class="py-2 px-3 text-[#1034A6] bg-[#1034A6]/10 border-l border-slate-200 tabular-nums">${Number(grandTotal.toFixed(2))}</td>
+            </tr>`);
+
+        $('#mobileSummaryFoot').removeClass('hidden');
+        $('#mobileFootAvg').text(`${Number(overallAvg.toFixed(1))}h`);
+        $('#mobileFootTotal').text(`${Number(grandTotal.toFixed(2)).toLocaleString()}h`);
+
+        $('#paginationInfo').text(`Showing ${startIdx + 1} to ${endIdx} of ${totalRecords} employees`);
+        renderPaginationButtons(totalPages);
+    }
+
+    function renderPaginationButtons(totalPages) {
+        if (totalPages <= 1) {
+            $('#paginationControls').empty();
+            return;
+        }
+
+        let html = `
+            <button data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}
+                class="px-2 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold transition">
+                <i class="bi bi-chevron-left"></i>
+            </button>`;
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1) {
+                const active = p === currentPage
+                    ? 'bg-[#1034A6] text-white border-[#1034A6] shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100';
+                html += `<button data-page="${p}" class="px-2.5 py-1 rounded border font-semibold transition ${active}">${p}</button>`;
+            } else if (Math.abs(p - currentPage) === 2) {
+                html += `<span class="px-1 text-slate-400">...</span>`;
+            }
+        }
+
+        html += `
+            <button data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}
+                class="px-2 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold transition">
+                <i class="bi bi-chevron-right"></i>
+            </button>`;
+
+        $('#paginationControls').html(html);
+    }
+
+    function applyYearSelection(year) {
+        $('#yearFilter').val(year);
+        populateYearControls(rawRecords, year);
+        allEmployees = pivotRowsForYear(rawRecords, year);
+        expandedCards.clear();
+        currentPage = 1;
+        renderDataViews();
+    }
+
+    function fetchConsolidateReport() {
+        renderSkeletons();
+        $('.refresh-icon').addClass('animate-spin');
+
+        $.ajax({
+            url: '/admin/reports/getConsolidatedReport',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                rawRecords = Array.isArray(response)
+                    ? response
+                    : (response?.data || response?.records || response?.result || []);
+
+                let targetYear = Number($('#yearFilter').val()) || currentYear;
+                allEmployees = pivotRowsForYear(rawRecords, targetYear);
+
+                if (allEmployees.length === 0 && rawRecords.length > 0) {
+                    const availableYears = rawRecords.map(extractYear).filter(Boolean).sort((a, b) => b - a);
+                    if (availableYears.length > 0) {
+                        targetYear = availableYears[0];
+                        allEmployees = pivotRowsForYear(rawRecords, targetYear);
+                    }
+                }
+
+                populateYearControls(rawRecords, targetYear);
+                currentPage = 1;
+                renderDataViews();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error fetching consolidated report:', error);
+                const errHtml = `<i class="bi bi-exclamation-triangle-fill mr-1.5"></i>Failed to load data from /admin/reports/getConsolidatedReport.`;
+                $('#matrixBody').html(`<tr><td colspan="17" class="py-6 px-4 text-left text-rose-600 text-xs font-medium">${errHtml}</td></tr>`);
+                $('#mobileCardsContainer').html(`<div class="py-6 px-4 text-center text-rose-600 text-xs font-medium">${errHtml}</div>`);
+            },
+            complete: function () {
+                $('.refresh-icon').removeClass('animate-spin');
+            }
+        });
+    }
+
+    function buildExportSheetData() {
+        const selectedYear = $('#yearFilter').val();
+        const statusSuffix = selectedStatus !== 'All' ? ` (${selectedStatus})` : '';
+        const reportTitle = `Booked Hours Report${statusSuffix} for Year ${selectedYear} as on ${getFormattedToday()}`;
+
+        const headers = ['S.No', 'Employee Name', 'Status', ...MONTHS, 'Avg/Mo', 'Total'];
+        const rows = filteredEmployees.map((emp, idx) => {
+            const row = [idx + 1, emp.employeename, emp.status];
+            for (let m = 1; m <= 12; m++) {
+                row.push(emp.months[m] !== undefined ? Number(emp.months[m].toFixed(2)) : '-');
+            }
+            row.push(Number(emp.avg.toFixed(1)));
+            row.push(Number(emp.total.toFixed(2)));
+            return row;
+        });
+
+        return { reportTitle, aoa: [[reportTitle], [], headers, ...rows] };
+    }
+
+    $('#exportExcelBtn').on('click', function () {
+        const { reportTitle, aoa } = buildExportSheetData();
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = [{ wch: 7 }, { wch: 26 }, { wch: 13 }, ...Array(14).fill({ wch: 10 })];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, `Booked Hours ${$('#yearFilter').val()}`);
+        XLSX.writeFile(wb, `${reportTitle}.xlsx`);
+    });
+
+    $('#exportCsvBtn').on('click', function () {
+        const { reportTitle, aoa } = buildExportSheetData();
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${reportTitle}.csv`;
+        link.click();
+    });
+
+    // Mobile Card Expand / Collapse
+    $('#mobileCardsContainer').on('click', '.toggle-mobile-card', function () {
+        const key = $(this).data('emp-key');
+        const card = $(this).closest('.mobile-emp-card');
+        const details = card.find('.mobile-card-details');
+        const chevron = $(this).find('.bi-chevron-down');
+
+        if (expandedCards.has(key)) {
+            expandedCards.delete(key);
+            details.addClass('hidden');
+            chevron.removeClass('rotate-180 text-[#1034A6]');
+            card.removeClass('bg-slate-50/60').addClass('bg-white');
+        } else {
+            expandedCards.add(key);
+            details.removeClass('hidden');
+            chevron.addClass('rotate-180 text-[#1034A6]');
+            card.removeClass('bg-white').addClass('bg-slate-50/60');
+        }
+    });
+
+    // Status Pills
+    $('#statusFilterGroup').on('click', '.status-pill', function () {
+        selectedStatus = $(this).data('status');
+        $('.status-pill')
+            .removeClass('bg-white text-[#1034A6] shadow-sm font-bold')
+            .addClass('text-slate-600 font-semibold');
+        $(this)
+            .removeClass('text-slate-600 font-semibold')
+            .addClass('bg-white text-[#1034A6] shadow-sm font-bold');
+
+        currentPage = 1;
+        renderDataViews();
+    });
+
+    $('#yearFilter').on('change', function () {
+        applyYearSelection($(this).val());
+    });
+
+    $('#yearPills').on('click', 'button[data-year]', function () {
+        applyYearSelection($(this).data('year'));
+    });
+
+    $('#searchInput').on('input', function () {
+        currentPage = 1;
+        renderDataViews();
+    });
+
+    $('#clearSearchBtn').on('click', function () {
+        $('#searchInput').val('');
+        currentPage = 1;
+        renderDataViews();
+    });
+
+    $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderDataViews();
+    });
+
+    $('#heatmapToggle').on('change', renderDataViews);
+    $('#refreshBtn, #mobileRefreshBtn').on('click', fetchConsolidateReport);
+
+    // Desktop Table Column Sort
+    $('.sortable-th').on('click', function () {
+        const key = String($(this).data('sort'));
+        if (sortKey === key) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortKey = key;
+            sortDir = (key === 'name' || key === 'status') ? 'asc' : 'desc';
+        }
+        $('#mobileSortSelect').val(`${sortKey}_${sortDir}`);
+        renderDataViews();
+    });
+
+    // Mobile Dropdown Sort
+    $('#mobileSortSelect').on('change', function () {
+        const [k, d] = $(this).val().split('_');
+        sortKey = k;
+        sortDir = d;
+        renderDataViews();
+    });
+
+    $('#paginationControls').on('click', 'button[data-page]', function () {
+        const target = Number($(this).data('page'));
+        const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+        if (target >= 1 && target <= totalPages) {
+            currentPage = target;
+            renderDataViews();
+        }
+    });
+
+    // Initial load
+    populateYearControls([]);
+    fetchConsolidateReport();
+});
+</script>
+</body>
+</html>

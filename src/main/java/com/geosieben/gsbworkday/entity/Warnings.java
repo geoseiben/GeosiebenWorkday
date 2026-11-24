@@ -36,6 +36,8 @@ public class Warnings {
     @Column(name = "warningType", length = 20)
     private String warningType;
 
+    @Column(name = "remarks", length = 255)
+    private String remarks;
     @Column(name = "warningDate")
     private LocalDate warningDate;
 
@@ -45,11 +47,11 @@ public class Warnings {
     @Column(name = "logoutTime")
     private LocalTime logoutTime;
 
-    @Column(name = "workingHours", precision = 4, scale = 2)
-    private BigDecimal workingHours;
+    @Column(name = "workingHours")
+    private LocalTime workingHours;
 
-    @Column(name = "breakHours", precision = 4, scale = 2)
-    private BigDecimal breakHours;
+    @Column(name = "breakHours")
+    private LocalTime breakHours;
     @ManyToOne
     @JoinColumn(name="issuedBy")
     private EmployeeBasicInfo issuedBy;
@@ -57,7 +59,7 @@ public class Warnings {
     @JoinColumn(name="reportingManager")
     private EmployeeBasicInfo reportingManager;
     public Warnings(EmployeeBasicInfo issuedTo, LocalDateTime issuedOn, String warningType, LocalDate warningDate,
-            LocalTime loginTime, LocalTime logoutTime, BigDecimal workingHours, BigDecimal breakHours,
+            LocalTime loginTime, LocalTime logoutTime, LocalTime workingHours, LocalTime breakHours,
             EmployeeBasicInfo issuedBy, EmployeeBasicInfo reportingManager) {
         this.issuedTo = issuedTo;
         this.issuedOn = issuedOn;

@@ -4,7 +4,9 @@ import com.geosieben.gsbworkday.dto.AvailableUsers;
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
 import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
+import com.geosieben.gsbworkday.dto.EmployeeStatsProjection;
 import com.geosieben.gsbworkday.dto.ManageEmployeeResponseDto;
+import com.geosieben.gsbworkday.dto.SeparatedEmployeeProjection;
 import com.geosieben.gsbworkday.dto.StatsDto;
 import com.geosieben.gsbworkday.dto.attendanceRecordDto;
 import com.geosieben.gsbworkday.entity.EmployeeBasicInfo;
@@ -124,4 +126,90 @@ public List<AvailableUsers> getAvailableUsers(@Param("eid") String eid);
 " left join employee_basic_info m on m.eid=j.reportingManager "+
 " left join departments dt on dt.id=d.department",nativeQuery = true)
 public  List<EmployeeReportProjection> getEmployeeReport();
+
+@Query (value = "select e.eid,concat(e.firstname,' ',e.lastname) as employeeName,e.phone,e.email, "+
+" date_format(j.dateofjoining,'%d-%b-%Y') as dateofjoining,d.designation,dt.departmentShortName, "+
+" concat(m.firstname,' ',m.lastname) as manager,date_format(s.lastworkingDay,'%d-%b-%Y') as lastWorkingDay, "+
+" s.eligibleForReHire,s.reasonforLeaving,concat(ab.firstname,' ',ab.lastname) as approvedBy,i.image "+
+" from  "+
+" 	employee_basic_info e  "+
+" 	left join employee_joining_info j on e.eid=j.eid "+
+" LEFT JOIN images i on i.eid=e.eid "+
+"   left join employee_designation_info d on d.eid=e.eid "+
+"   left join departments dt on dt.id=d.department "+
+"   left join employee_basic_info m on m.eid=j.reportingManager "+
+"   left join separation s on s.eid=e.eid and s.status=3 "+
+"   left join employee_basic_info ab on ab.eid=s.ApprovedBy "+
+"   where e.employmentStatus=0",nativeQuery=true)
+    public List<SeparatedEmployeeProjection> findSeparatedEmployees();
+
+    @Query (value = """
+        SELECT 
+    (CASUALLEAVES + SICKLEAVES + EARNEDLEAVES + restrictedholidays) AS leaveBalance,
+    CASUALLEAVES,SICKLEAVES,EARNEDLEAVES,restrictedholidays AS RISTRICTEDLEAVES,
+
+    -- Active tasks
+    (SELECT COUNT(*) 
+     FROM projectallocation 
+     WHERE status NOT IN (3,6,10) 
+       AND (
+            ((type IN ('QC','Prod','Pilot') AND allottedto=:eid) 
+             OR (type='QC' AND qcAssinee=:eid))
+           )
+    ) AS activeTasks,
+
+    -- Booking hours for current month
+    (SELECT SUM(hoursBooked) 
+     FROM bookedhours 
+     WHERE MONTH(date)=MONTH(CURRENT_DATE) 
+       AND YEAR(date)=YEAR(CURRENT_DATE) 
+       AND eid=:eid
+    ) AS bookingHrs,
+
+    -- Pending IT tickets
+    (SELECT COUNT(*) 
+     FROM ittickets 
+     WHERE EID=:eid
+       AND status<>'Closed'
+    ) AS pendingTickets,
+
+    -- Client interactions this month
+    (SELECT COUNT(*) 
+     FROM clientinteraction 
+     WHERE MONTH(createdAt)=MONTH(CURRENT_DATE) 
+       AND YEAR(createdAt)=YEAR(CURRENT_DATE) 
+       AND addedBy=:eid
+    ) AS clientInteraction,
+          (SELECT targethours 
+        FROM employeetargethours 
+        WHERE eid=:eid and 
+        monthnum=month(current_date) and year=year(current_date))
+    AS targethours,coalesce((SELECT SUM(hours) as extraHours from extrahours where eid=:eid),0)
+    AS extraHours
+    
+FROM leavebalance 
+WHERE eid=:eid
+
+
+        """,nativeQuery = true)
+        public  EmployeeStatsProjection getEmployeeStats(@Param("eid") String eid);
+
+        @Query (value = "select e.eid as employeeId,e.firstName,e.lastName,date_format(e.dob,'%d-%b-%Y') as dob,e.gender, "+
+" e.maritalStatus,e.employmentStatus,e.bloodGroup,e.email as personalEmail,e.phone,e.address, "+
+" date_format(j.dateOfJoining,'%d-%b-%Y') as dateOfJoining,j.workmail, "+
+" j.status,date_format(j.confirmationDate,'%d-%b-%Y') as confirmationDate,d.designation,dt.departmentName, "+
+" s.aadhar,s.pan,s.uan,s.pfNo,date_format(s.pfStartDate,'%d-%b-%Y') as pfStartDate,s.esiNo, "+
+" ec.emergencyContactName,ec.emergencyContactNum,ec.relation as emergencyRelation,ee.college, "+
+" b.bankName,b.branchName,b.accountNumber,ee.degree,ee.fieldOfStudy,ee.yearOfPassing,ee.gpa,concat(m.firstName,' ',e.lastName) as manager,i.image "+
+" from employee_basic_info e  "+
+" inner join employee_joining_info j on e.eid=j.eid "+
+" inner join employee_designation_info d on d.eid=e.eid "+
+" inner join employee_statutory_info s on s.eid=e.eid "+
+" inner join employee_emergcontact_info ec on e.eid=ec.eid "+
+" inner join employee_bank_info b on b.eid=e.eid "+
+" inner join employee_education_info ee on e.eid=ee.eid "+
+" LEFT join images i on i.eid=e.eid "+
+" left join employee_basic_info m on m.eid=j.reportingManager "+
+" left join departments dt on dt.id=d.department where e.eid=:eid",nativeQuery = true)
+public  EmployeeReportProjection getEmployeeReportByEid(@Param("eid") String eid);
 }

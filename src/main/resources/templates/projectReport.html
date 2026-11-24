@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Allotment Reports</title>
+
+    <!-- Icons & Fonts (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+
+    <!-- Core DataTables & Buttons CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+    <style>
+        /* Clean Light Theme Overrides for DataTables */
+        table.dataTable.no-footer {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        table.dataTable thead th, table.dataTable thead td {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .dataTables_wrapper .dataTables_info {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 500;
+            padding-top: 0.4rem;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            padding-top: 0.25rem;
+            font-size: 0.72rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.25rem 0.6rem;
+            margin-left: 0.25rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            color: #475569 !important;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled) {
+            background: #f8fafc !important;
+            color: #1034A6 !important;
+            border-color: #cbd5e1 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #1034A6 !important;
+            color: #ffffff !important;
+            border-color: #1034A6 !important;
+            font-weight: 600;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        /* Light Theme Export Button */
+        button.dt-button.btn-excel {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border: 1px solid #cbd5e1 !important;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            padding: 0.38rem 0.85rem !important;
+            border-radius: 0.5rem !important;
+            margin: 0 !important;
+            transition: all 0.15s ease !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+        }
+        button.dt-button.btn-excel:hover {
+            background: #f8fafc !important;
+            color: #1034A6 !important;
+            border-color: #1034A6 !important;
+            transform: translateY(-1px);
+        }
+        button.dt-button.btn-excel:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body >
+
+    <div class="max-w-[98%] mx-auto space-y-3">
+        
+        <!-- Standard Light Header Bar -->
+        <header class="bg-white border border-slate-200 px-4 py-2.5 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <button onclick="history.back()" class="group inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-[#1034A6] border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 active:scale-95">
+                    <i class="fas fa-arrow-left text-[10px] text-slate-500 group-hover:text-[#1034A6] transition-transform duration-150 group-hover:-translate-x-0.5"></i>
+                    <span>Back</span>
+                </button>
+                <div class="h-4 w-[1px] bg-slate-200"></div>
+                <div>
+                    <h1 id="dynamicHeader" class="text-sm sm:text-base font-bold tracking-tight text-slate-900">
+                        Performance Analytics
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Export & KPI Summary -->
+            <div class="flex items-center gap-2.5">
+                <div class="hidden sm:flex items-center gap-2 bg-blue-50/80 border border-blue-100 px-3 py-1.5 rounded-lg">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Filtered Hours</span>
+                    <span id="totalHoursBadge" class="text-xs font-bold text-[#1034A6] tabular-nums">0.0</span>
+                </div>
+                <div id="buttonContainer"></div>
+            </div>
+        </header>
+
+        <!-- Compact Analytics Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            <!-- Hour Contribution Chart -->
+            <div class="lg:col-span-7 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-slate-300 transition-colors duration-150 p-3.5">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+                    <h2 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-5 h-5 rounded bg-blue-50 text-[#1034A6] flex items-center justify-center">
+                            <i class="fas fa-chart-pie text-[11px]"></i>
+                        </span>
+                        Hour Contribution
+                    </h2>
+                    <span class="text-[10px] font-medium text-slate-400">By Project</span>
+                </div>
+                <div class="relative h-[195px] w-full">
+                    <canvas id="projectHoursChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Type Mix Chart -->
+            <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-slate-300 transition-colors duration-150 p-3.5">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+                    <h2 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-5 h-5 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fas fa-layer-group text-[11px]"></i>
+                        </span>
+                        Type Mix
+                    </h2>
+                    <span class="text-[10px] font-medium text-slate-400">Allotment Split</span>
+                </div>
+                <div class="relative h-[195px] w-full">
+                    <canvas id="projectTypeChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Data Table Card -->
+        <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+            
+            <!-- Filter & Live Status Bar -->
+            <div class="px-4 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Reporting Month -->
+                    <div>
+                        <label for="monthFilter" class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                            Reporting Month
+                        </label>
+                        <select id="monthFilter" class="min-w-[135px] bg-slate-50 hover:bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg px-2.5 py-1.5 focus:bg-white focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer">
+                            <option value="all">Full History</option>
+                        </select>
+                    </div>
+
+                    <!-- Fiscal Window -->
+                    <div>
+                        <label for="fyFilter" class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                            Fiscal Window
+                        </label>
+                        <select id="fyFilter" class="min-w-[135px] bg-slate-50 hover:bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg px-2.5 py-1.5 focus:bg-white focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer">
+                            <option value="all">All FYs</option>
+                        </select>
+                    </div>
+
+                    <!-- Inline Search Input -->
+                    <div>
+                        <label for="customSearch" class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                            Quick Search
+                        </label>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                            <input type="text" id="customSearch" placeholder="Project, lead, status..." class="w-44 sm:w-56 bg-slate-50 hover:bg-white border border-slate-200 text-slate-700 text-xs rounded-lg pl-7 pr-2.5 py-1.5 focus:bg-white focus:outline-none focus:border-[#1034A6] focus:ring-2 focus:ring-blue-500/10 transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Status Indicator -->
+                <div class="ml-auto text-right flex items-center gap-2.5">
+                    <div>
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Live Data Feed</span>
+                        </div>
+                        <div id="liveClock" class="text-xs font-semibold text-slate-600 tabular-nums">--:-- UTC</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- High-Density Light Table -->
+            <div class="overflow-x-auto">
+                <table id="dataTable" class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <th class="py-2 px-3 text-center w-10">#</th> 
+                            <th class="py-2 px-3 w-24">Month</th> 
+                            <th class="py-2 px-3">Project</th>
+                            <th class="py-2 px-3">Allotment</th>
+                            <th class="py-2 px-3">Lead</th>
+                            <th class="py-2 px-3">Type</th>
+                            <th class="py-2 px-3 text-center">Status</th>
+                            <th class="py-2 px-3 text-right">Hours Booked</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs bg-white"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+    <!-- Scripts: Single jQuery instance loaded strictly before DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <script th:inline="none">
+        $(document).ready(function() {
+            Chart.register(ChartDataLabels);
+
+            // Pure JS Date & Default Month Calculation
+            const now = new Date();
+            const currentDay = now.toISOString().split('T')[0];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const urlParams = new URLSearchParams(window.location.search);
+            const defaultMonth = urlParams.get('month') || `${monthNames[now.getMonth()]}-${now.getFullYear()}`;
+
+            // Live UTC Clock
+            function updateClock() {
+                const d = new Date();
+                const hrs = String(d.getUTCHours()).padStart(2, '0');
+                const mins = String(d.getUTCMinutes()).padStart(2, '0');
+                $('#liveClock').text(`${hrs}:${mins} UTC`);
+            }
+            updateClock();
+            setInterval(updateClock, 30000);
+
+            let projectHoursChart, projectTypeChart;
+            const palette = ['#1034A6', '#0ea5e9', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#64748b'];
+
+            function initAnalytics(data) {
+                const ctxPie = document.getElementById('projectHoursChart').getContext('2d');
+                const ctxDoughnut = document.getElementById('projectTypeChart').getContext('2d');
+
+                const hoursMap = {};
+                const typeMap = {};
+                let totalHours = 0;
+                
+                data.forEach(item => {
+                    const hrs = parseFloat(item.hours || 0);
+                    totalHours += hrs;
+                    const label = item.projectName || item.projectname || 'Unassigned';
+                    hoursMap[label] = (hoursMap[label] || 0) + hrs;
+                    const type = item.projectType || 'General';
+                    typeMap[type] = (typeMap[type] || 0) + 1;
+                });
+
+                // Update header KPI badge
+                $('#totalHoursBadge').text(totalHours.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+
+                if (projectHoursChart) projectHoursChart.destroy();
+                if (projectTypeChart) projectTypeChart.destroy();
+
+                projectHoursChart = new Chart(ctxPie, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(hoursMap),
+                        datasets: [{
+                            data: Object.values(hoursMap),
+                            backgroundColor: palette,
+                            borderWidth: 1.5,
+                            borderColor: '#ffffff',
+                            hoverOffset: 5
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        animation: { duration: 550, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: { 
+                                position: 'right', 
+                                labels: { boxWidth: 8, usePointStyle: true, color: '#475569', font: { family: 'Inter', size: 10, weight: '500' }, padding: 8 } 
+                            },
+                            datalabels: {
+                                color: '#fff',
+                                font: { family: 'Inter', weight: '700', size: 9 },
+                                formatter: (value, ctx) => {
+                                    let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    let pct = sum ? (value * 100 / sum).toFixed(0) : 0;
+                                    return pct > 8 ? `${pct}%` : '';
+                                }
+                            }
+                        }
+                    }
+                });
+
+                projectTypeChart = new Chart(ctxDoughnut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(typeMap),
+                        datasets: [{
+                            data: Object.values(typeMap),
+                            backgroundColor: ['#10b981', '#1034A6', '#0ea5e9', '#f59e0b'],
+                            cutout: '74%',
+                            borderWidth: 1,
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        animation: { duration: 550, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: { 
+                                position: 'bottom', 
+                                labels: { boxWidth: 8, usePointStyle: true, color: '#475569', font: { family: 'Inter', size: 10, weight: '500' }, padding: 10 } 
+                            },
+                            datalabels: { display: false }
+                        }
+                    }
+                });
+            }
+
+            function getFYFromMonthString(monthStr) {
+                if (!monthStr) return null;
+                const parts = monthStr.split('-');
+                if (parts.length !== 2) return null;
+                const monthIdx = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11 }[parts[0]];
+                const year = parseInt(parts[1]);
+                if (isNaN(year) || monthIdx === undefined) return null;
+                return (monthIdx >= 3) ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+            }
+
+            function getStatusBadge(status) {
+                const s = (status || '').toLowerCase();
+                if (s.includes('active') || s.includes('progress') || s.includes('open')) {
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">${status}</span>`;
+                }
+                if (s.includes('complete') || s.includes('closed') || s.includes('done')) {
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">${status}</span>`;
+                }
+                if (s.includes('hold') || s.includes('pending')) {
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">${status}</span>`;
+                }
+                return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-blue-50 text-[#1034A6] border border-blue-200">${status || 'N/A'}</span>`;
+            }
+
+            let table = $('#dataTable').DataTable({ 
+                dom: 'rt<"px-4 py-2 bg-slate-50/70 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2"ip>',
+                buttons: [{
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel text-emerald-600 mr-1.5"></i>Export Excel',
+                    className: 'btn-excel',
+                    title: () => "Report_" + currentDay
+                }],
+                ajax: {
+                    url: '/admin/reports/getProjectReport',
+                    type: 'GET',
+                    dataSrc: (json) => { 
+                        const rows = Array.isArray(json) ? json : (json.data || []);
+                        populateFilters(rows); 
+                        return rows; 
+                    }
+                },
+                createdRow: function(row) {
+                    $(row).addClass('hover:bg-slate-50 transition-colors duration-100 group');
+                },
+                columns: [
+                    { 
+                        data: null, 
+                        className: 'py-1.5 px-3 text-center text-slate-400 font-semibold tabular-nums' 
+                    },
+                    { 
+                        data: 'month', 
+                        className: 'py-1.5 px-3',
+                        render: d => `<span class="text-slate-600 font-medium">${d || '-'}</span>` 
+                    },
+                    { 
+                        data: 'projectName', 
+                        className: 'py-1.5 px-3',
+                        render: d => `<span class="text-slate-900 font-semibold group-hover:text-[#1034A6] transition-colors">${d || '-'}</span>` 
+                    },
+                    { 
+                        data: 'allotmentName', 
+                        className: 'py-1.5 px-3',
+                        render: d => `<span class="text-slate-700">${d || '-'}</span>` 
+                    },
+                    { 
+                        data: 'projectLead', 
+                        className: 'py-1.5 px-3 text-slate-600'
+                    },
+                    { 
+                        data: 'projectType', 
+                        className: 'py-1.5 px-3 text-[11px] text-slate-500 font-medium'
+                    },
+                    { 
+                        data: 'projectStatus', 
+                        className: 'py-1.5 px-3 text-center', 
+                        render: d => getStatusBadge(d)
+                    },
+                    { 
+                        data: 'hours', 
+                        className: 'py-1.5 px-3 text-right font-bold text-[#1034A6] bg-blue-50/40 group-hover:bg-blue-50/80 tabular-nums transition-colors',
+                        render: d => parseFloat(d || 0).toFixed(1)
+                    }
+                ],
+                pageLength: 25,
+                order: [[1, 'desc']],
+                initComplete: function() {
+                    table.buttons().container().appendTo('#buttonContainer');
+                    if ($('#monthFilter option[value="' + defaultMonth + '"]').length > 0) {
+                        $('#monthFilter').val(defaultMonth);
+                    }
+                    $('#monthFilter').trigger('change');
+                }
+            });
+
+            function populateFilters(data) {
+                let months = new Set();
+                let fys = new Set();
+                data.forEach(row => {
+                    if (row.month) {
+                        months.add(row.month);
+                        let fy = getFYFromMonthString(row.month);
+                        if (fy) fys.add(fy);
+                    }
+                });
+                const $mSel = $('#monthFilter');
+                Array.from(months).sort().forEach(m => $mSel.append(`<option value="${m}">${m}</option>`));
+                const $fSel = $('#fyFilter');
+                Array.from(fys).sort().reverse().forEach(f => $fSel.append(`<option value="${f}">${f}</option>`));
+            }
+
+            // Custom Search Binding
+            $('#customSearch').on('keyup input', function() {
+                table.search(this.value).draw();
+                initAnalytics(table.rows({ search: 'applied' }).data().toArray());
+            });
+
+            // Dropdown Filter Bindings
+            $('#monthFilter, #fyFilter').on('change', function() {
+                const mVal = $('#monthFilter').val();
+                if (mVal === 'all') table.column(1).search('').draw();
+                else table.column(1).search('^' + mVal + '$', true, false).draw();
+                initAnalytics(table.rows({ search: 'applied' }).data().toArray());
+            });
+
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                let selectedFY = $('#fyFilter').val();
+                if (selectedFY === 'all') return true;
+                return getFYFromMonthString(data[1]) === selectedFY;
+            });
+
+            table.on('draw.dt', function () {
+                let info = table.page.info();
+                table.column(0, { search: 'applied' }).nodes().each((cell, i) => cell.innerHTML = i + 1 + info.start);
+            });
+        });
+    </script>
+</body>
+</html>

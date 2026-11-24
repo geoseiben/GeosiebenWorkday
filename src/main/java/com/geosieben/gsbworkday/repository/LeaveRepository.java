@@ -3,6 +3,7 @@ package com.geosieben.gsbworkday.repository;
 import com.geosieben.gsbworkday.dto.LeaveAvailedDto;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProj;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProjMonth;
+import com.geosieben.gsbworkday.dto.LeaveProjection;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
 import com.geosieben.gsbworkday.entity.Leaves;
 
@@ -77,4 +78,42 @@ public interface LeaveRepository extends JpaRepository<Leaves,Integer> {
         "GROUP BY DATE_FORMAT(current_leave_date, '%b-%Y'), DATE_FORMAT(current_leave_date, '%Y-%m') " +
         "ORDER BY DATE_FORMAT(current_leave_date, '%Y-%m') ASC", nativeQuery = true)
 public List<LeaveAvailedProjMonth> getLeaveAvailedByMonthForYear(@Param("year") int year, @Param("eid") String eid);
+
+
+@Query(value = """
+            SELECT
+                l.id,
+                ROUND(l.NoofDays, 1) AS NoofDays,
+                l.FromDate,
+                l.ToDate,
+                l.LeaveType,
+                l.fromsession,
+                l.tosession,
+                l.Description,
+                l.eid,
+                DATE_FORMAT(l.fromdate, '%d-%b-%Y') AS fromdatee,
+                DATE_FORMAT(l.todate, '%d-%b-%Y') AS todatee,
+                j.reportingmanager,
+                CONCAT(e.firstname, ' ', e.lastname) AS employeeName,
+                CONCAT(m.firstname, ' ', m.lastname) AS manager,
+                DATE_FORMAT(l.postingdate, '%d-%b-%Y') AS appliedOn,
+                DATE_FORMAT(l.AdminRemarkDate, '%d-%b-%Y') AS approvedOn,
+                CONCAT(ab.firstname, ' ', ab.lastname) AS approvedBy,
+                'N/A' AS department,
+                l.status,
+                CASE
+                    WHEN co.compOffDate IS NOT NULL AND co.workedDate IS NULL THEN 'Pending'
+                    WHEN co.compOffDate IS NOT NULL AND co.workedDate IS NOT NULL THEN 'Cleared'
+                    ELSE NULL
+                END AS coStatus
+            FROM tblleaves l
+            INNER JOIN employee_basic_info e ON l.eid = e.eid
+            INNER JOIN employee_joining_info j ON e.eid = j.eid
+            LEFT JOIN employee_basic_info m ON j.ReportingManager = m.eid
+            LEFT JOIN employee_basic_info ab ON l.ApprovedBy = ab.eid
+            LEFT JOIN compensatoryoff co ON co.lid = l.id
+            WHERE l.status = 1
+            ORDER BY l.eid ASC
+            """, nativeQuery = true)
+        public List<LeaveProjection> findLeavesForCalenderProjection();
 }

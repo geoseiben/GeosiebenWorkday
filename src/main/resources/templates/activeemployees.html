@@ -609,7 +609,7 @@ $(document).ready(function () {
     // Endpoints resolved through Thymeleaf (respect context path)
     const CTX            = /*[[@{/}]]*/ '/';
     const EMPLOYEES_URL  = /*[[@{/admin/reports/employeeReport}]]*/ '/admin/reports/employeeReport';
-    const EMPLOYEE_API   = /*[[@{/api/employeeApi}]]*/ '/admin/issueWarning';
+    const EMPLOYEE_API   ='/admin/warnings/issueWarning';
     const CONFIRM_API    = /*[[@{/api/confirmEmployee}]]*/ '/api/confirmEmployee';
     const SEPARATION_API = /*[[@{/api/separation}]]*/ '/api/separation';
 
@@ -962,7 +962,7 @@ $(document).ready(function () {
         return '<tr class="hover:bg-slate-50">' +
             '<td class="' + TD + '">' + n + '</td>' +
             '<td class="' + TD + '">' +
-                '<a href="' + esc(CTX + 'viewEmployee?eid=' + encodeURIComponent(r.eid)) + '" class="no-underline">' +
+                '<a href="' + esc('/admin/viewEmployee?eid=' + encodeURIComponent(r.eid)) + '" class="no-underline">' +
                     '<div class="flex items-center gap-2">' + img +
                         '<div><span class="font-semibold text-primary block leading-[1.1]">' + nm + '</span>' +
                         '<span class="text-[9px] text-slate-500">' + eid + '</span></div>' +
@@ -1492,7 +1492,7 @@ $(document).ready(function () {
 
     // One-click warnings with REQUIRED remarks
     const triggerConfirmation = (title, text, type) => {
-        console.log(title,text,type);
+                                    console.log(type);
         showConfirm({
             type: 'warning',
             title: title,
@@ -1501,12 +1501,14 @@ $(document).ready(function () {
             confirmClass: 'warning',
             requireRemarks: true,
             action: function (remarks) {
+
                 return $.ajax({
                     url: EMPLOYEE_API,
                     type: 'POST',
+                    headers:{'X-CSRF-TOKEN':CSRF_TOKEN},
                     data: {
                         action: 'issue_warning',
-                        warning_type: type,
+                        type: type,
                         eid: activeWarningEid,
                         remarks: remarks,
                         csrf: CSRF_TOKEN
@@ -1564,10 +1566,11 @@ $(document).ready(function () {
     function submitWarningForm($form, payload, formEl, successText) {
         const $submitBtn = $form.find('button[type="submit"]');
         $submitBtn.prop('disabled', true).html(SPIN_MR + 'Recording...');
-
+        console.log(payload);
         $.ajax({
             url: EMPLOYEE_API,
             type: 'POST',
+            header:{'X-CSRF-TOKEN':payload.csrf},
             data: payload,
             dataType: 'json',
             success: function(response) {
