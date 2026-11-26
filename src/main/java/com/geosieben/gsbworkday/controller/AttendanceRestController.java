@@ -8,17 +8,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.geosieben.gsbworkday.dto.*;
 import com.geosieben.gsbworkday.service.AttendanceService;
+import com.geosieben.gsbworkday.service.EmployeeService;
+
 import org.springframework.web.bind.annotation.PostMapping;
 
 ;
 @RestController
 @RequestMapping("/admin")
 public class AttendanceRestController {
-    private AttendanceService attendanceService;
+    private final AttendanceService attendanceService;
+    private final EmployeeService employeeService;
 
 
-    public AttendanceRestController(AttendanceService attendanceService) {
+    public AttendanceRestController(AttendanceService attendanceService, EmployeeService employeeService) {
         this.attendanceService = attendanceService;
+        this.employeeService = employeeService;
     }
 
     @GetMapping("/getAttendanceData")
@@ -46,6 +50,10 @@ public class AttendanceRestController {
     @GetMapping("/getMasterReport")
     public List<AttendenceMasterReportProjection>  getMasterReport(@RequestParam("month") String month) {
         return attendanceService.getMasterData(month);
+    }
+    @GetMapping("/")
+    public List<EmployeeDataProjection> getEmployeeList(){
+        return  employeeService.getActiveEmployeeProjectionsService();
     }
     
 }

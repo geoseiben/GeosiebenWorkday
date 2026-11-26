@@ -7,341 +7,1258 @@
   <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
-
   <title>Leave Management | Admin Portal</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Tailwind CSS, Chart.js & jQuery -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
-    :root {
-      --brand-primary: #6366f1;
-      --brand-primary-soft: #f5f3ff;
-      --brand-secondary: #4f46e5;
-      --brand-success: #10b981;
-      --brand-danger: #ef4444;
-      --bg-main: #f8fafc;
-      --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --border-color: #e2e8f0;
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
     }
-
-    body { background: var(--bg-main); font-family: 'Inter', sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased; }
-    h1, h2, h3, h4, h5, .header-font { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.03em; }
-
-    /* Ensure dropdowns appear above table elements */
-    .dropdown-menu { z-index: 1060 !important; border: 1px solid var(--border-color); box-shadow: var(--card-shadow); }
-
-    .page-header { padding: 1rem 0; background: #ffffff; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000; }
-    .glass-card { background: #ffffff; border: 1px solid var(--border-color); box-shadow: var(--card-shadow); overflow: hidden; margin-top: 0.1rem; border-radius: 12px; }
-    .group:hover .group-hover\:visible {
-      visibility: visible !important;
-      opacity: 1 !important;
-      z-index: 9999 !important;
-      display: block !important;
+    .header-font {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
     }
-
-    /* Fix for potential Tailwind Preflight conflict */
-    .invisible {
-      display: none;
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
     }
-    .group:hover .invisible {
-      display: block;
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
     }
-    #enhancedDataTable thead th {
-      background: #fdfdfe;
-      color: #475569;
-      font-weight: 700;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
     }
-
-    .main-row { transition: all 0.2s ease; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-    .main-row:hover { background-color: #f8fafc !important; }
-    .main-row.shown { background-color: var(--brand-primary-soft) !important; box-shadow: inset 4px 0 0 var(--brand-primary); }
-
-    .employee-photo { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; border: 1px solid #e2e8f0; }
-    .status-pill { padding: 6px 14px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
-    .pill-pending { background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
-
-    .child-wrapper { padding: 0; background: #fcfcfd; overflow: hidden; animation: expandRow 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes expandRow { from { max-height: 0; opacity: 0; } to { max-height: 800px; opacity: 1; } }
-
-    .expansion-content { padding: 2rem; background: linear-gradient(180deg, var(--brand-primary-soft) 0%, #ffffff 100%); }
-    .detail-card { background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); height: 100%; }
-    .action-panel { background: #ffffff; border: 1px solid var(--brand-primary); border-radius: 16px; padding: 1.5rem; }
-
-    .text-label { color: #64748b; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem; }
-    .text-value { color: #1e293b; font-weight: 600; font-size: 0.9rem; }
-
-    .btn-action { border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: none; }
-    .btn-approve { background: var(--brand-primary); color: white; }
-    .btn-reject { background: #fee2e2; color: #b91c1c; }
-
-    .session-tag { font-size: 0.65rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; }
-    .dataTables_filter input { border-radius: 10px !important; border: 1px solid #cbd5e1 !important; padding: 8px 16px !important; }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:hover {
+      background-color: #e2e8f0;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-expand {
+      animation: slideDown 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-toast {
+      animation: toastIn 0.2s ease-out;
+    }
   </style>
 </head>
 <head th:replace="includes/header :: header"></head>
-<body>
-<div class="container-fluid py-4">
 
-  <div class="glass-card">
-    <div style="margin-left:10px; margin-top:10px;">
-      <h2 class="fw-bold text-slate-800 mb-1">Leave Requests</h2>
-    </div>
-    <div class="table-responsive">
-      <table id="enhancedDataTable" class="table w-100 mb-0">
-        <thead>
-        <tr>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast Notification Stack -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3 sm:px-0"></div>
+
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[99%] mx-auto px-3 sm:px-4 py-3 flex-1">
+
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
+
+      <!-- Slim Top Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#254b9e] to-[#4f46e5] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="history.back()" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 class="header-font text-sm sm:text-base font-bold truncate">Pending Leave Approval</h1>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 border border-white/20 text-[11px] font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>
+              <span id="queueCount">0</span> Pending
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="toggleAnalyticsBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors" title="Toggle Charts">
+            <i class="fas fa-chart-pie text-indigo-200 text-[11px]"></i>
+            <span class="hidden sm:inline">Analytics</span>
+          </button>
+          <button id="refreshBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors" title="Reload Queue">
+            <i class="fas fa-rotate-right text-[11px]"></i>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors">
+            <i class="fas fa-file-csv text-emerald-300"></i>
+            <span class="hidden sm:inline">Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Body -->
+      <div class="p-3 sm:p-4 space-y-3">
+
+        <!-- 6-Card Interactive KPI Strip (Click type cards to filter) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <!-- Total Pending -->
+          <button type="button" data-type-filter="all" class="kpi-type-card text-left bg-slate-50/80 hover:bg-indigo-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-indigo-600 ring-2 ring-indigo-500/40 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">All Pending</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="statPendingCount" class="text-base font-bold font-mono text-slate-900 leading-tight">0</h3>
+                <span class="text-[10px] text-slate-400">reqs</span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-inbox text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Total Days -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-amber-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Days</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="statTotalDays" class="text-base font-bold font-mono text-amber-600 leading-tight">0</h3>
+                <span class="text-[10px] text-slate-400">days</span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-amber-100/80 text-amber-600 flex items-center justify-center shrink-0">
+              <i class="far fa-calendar-check text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Casual Leave (CL) -->
+          <button type="button" data-type-filter="CL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-sky-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-sky-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Casual (CL)</p>
+              <h3 id="statClCount" class="text-base font-bold font-mono text-sky-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-umbrella-beach text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Sick Leave (SL) -->
+          <button type="button" data-type-filter="SL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-rose-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-rose-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sick (SL)</p>
+              <h3 id="statSlCount" class="text-base font-bold font-mono text-rose-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-notes-medical text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Earned / Comp-Off / RH -->
+          <button type="button" data-type-filter="EL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-emerald-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-emerald-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Earned (EL)</p>
+              <h3 id="statElCount" class="text-base font-bold font-mono text-emerald-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-plane-departure text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Half-Day Requests -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Half-Day</p>
+              <h3 id="statHalfDayCount" class="text-base font-bold font-mono text-violet-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-clock-rotate-left text-xs"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Visual Insights Row -->
+        <div id="analyticsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- Leave Days by Employee / Manager Bar Chart -->
+          <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-bar text-indigo-600"></i>
+                <span id="barChartTitle">Requested Leave Days by Employee</span>
+              </h2>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[10px] font-medium">
+                <button type="button" data-bmode="employee" class="bar-mode-btn px-2 py-0.5 rounded bg-white text-indigo-700 shadow-2xs">By Employee</button>
+                <button type="button" data-bmode="manager" class="bar-mode-btn px-2 py-0.5 rounded text-slate-600">By Manager</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-36 w-full">
+              <canvas id="leaveBarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Leave Type Distribution Doughnut -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-1.5">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-indigo-600"></i>
+                Leave Type Breakdown
+              </h2>
+              <span class="text-[10px] text-slate-400">By request count</span>
+            </div>
+            <div class="relative flex-1 h-36 w-full flex items-center justify-center">
+              <canvas id="leaveTypeDoughnut"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                <span id="doughnutCenterCount" class="text-base font-bold font-mono text-slate-800 leading-none">0</span>
+                <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leave Requests Table Panel -->
+        <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Toolbar + Bulk Action Bar -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/70 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mr-1">
+                <i class="fas fa-list-check text-indigo-600"></i>
+                Pending Requests
+              </h2>
+
+              <!-- Leave Type Quick Filter Pills -->
+              <div id="typeFilterGroup" class="inline-flex flex-wrap items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg text-[11px] font-medium">
+                <button type="button" data-type-filter="all" class="type-pill-btn px-2 py-0.5 rounded-md bg-white text-indigo-700 shadow-2xs transition-all">All</button>
+                <button type="button" data-type-filter="CL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Casual</button>
+                <button type="button" data-type-filter="SL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Sick</button>
+                <button type="button" data-type-filter="EL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Earned</button>
+                <button type="button" data-type-filter="RH" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">RH</button>
+                <button type="button" data-type-filter="CO" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Comp-Off</button>
+              </div>
+
+              <span id="filteredBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 requests</span>
+
+              <!-- Contextual Bulk Action Strip (appears when rows are checked) -->
+              <div id="bulkActionBar" class="hidden inline-flex items-center gap-1.5 pl-2 border-l border-slate-300">
+                <span id="selectedCountLabel" class="text-[11px] font-bold text-indigo-700">0 selected</span>
+                <button type="button" id="bulkApproveBtn" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-colors inline-flex items-center gap-1">
+                  <i class="fas fa-check-double text-[9px]"></i> Approve Selected
+                </button>
+              </div>
+            </div>
+
+            <!-- Search & Page Size -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative flex-1 sm:w-56">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search employee, EID, manager..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
-          <th>Employee</th>
-          <th>Absence Type</th>
-          <th>Duration & Sessions</th>
-          <th class="text-end">Status</th>
-        </tr>
-        </thead>
-        <tbody id="tableBody">
-        </tbody>
-      </table>
+
+          <!-- Ultra-Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="enhancedDataTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2.5 w-8 text-center">
+                    <input type="checkbox" id="selectAllCheckbox" class="w-3.5 h-3.5 rounded accent-indigo-600 cursor-pointer" title="Select all on page">
+                  </th>
+                  <th class="py-1.5 px-1 w-6 text-center"></th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="employeename">
+                    <div class="flex items-center gap-1">
+                      <span>Employee</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="leavetype">
+                    <div class="flex items-center gap-1">
+                      <span>Absence Type</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="fromTs">
+                    <div class="flex items-center gap-1">
+                      <span>Duration &amp; Sessions</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden md:table-cell" data-sort="manager">
+                    <div class="flex items-center gap-1">
+                      <span>Manager</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="days">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Days</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-center">Status</th>
+                  <th class="py-1.5 px-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody" class="divide-y divide-slate-100 text-xs">
+                <tr class="animate-pulse">
+                  <td colspan="9" class="py-6 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Loading leave requests...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
-</div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
-<script>
-  $(document).ready(function() {
-    let leaveTable;
+  <!-- Custom Tailwind Decision Modal (Replaces SweetAlert2) -->
+  <div id="customDecisionModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all animate-expand">
+      <!-- Modal Header -->
+      <div id="modalHeaderBanner" class="px-4 py-3 text-white flex items-center justify-between bg-indigo-600">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
+            <i id="modalHeaderIcon" class="fas fa-check text-xs"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="text-sm font-bold leading-tight">Confirm Decision</h3>
+            <p id="modalSubtitle" class="text-[11px] text-white/80">Review leave request details</p>
+          </div>
+        </div>
+        <button type="button" class="close-decision-modal w-6 h-6 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-    fetchData();
+      <!-- Modal Body -->
+      <div class="p-4 space-y-3 text-xs">
+        <!-- Employee & Leave Summary Box -->
+        <div class="bg-slate-50 border border-slate-200/90 rounded-lg p-2.5 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p id="modalEmpName" class="font-bold text-slate-800 truncate">--</p>
+            <p id="modalLeaveDates" class="text-[11px] text-slate-500 mt-0.5">--</p>
+          </div>
+          <span id="modalLeaveBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">--</span>
+        </div>
 
-    function fetchData() {
-      $.ajax({
-        url: '/admin/pendingrequests',
-        type: 'GET',
-        dataType: 'json',
-        success: function(res) {
-          renderTable(res);
-          $('#queueCount').text(res ? res.length : 0);
-        },
-        error: function() {
-          $('#tableBody').html('<tr><td colspan="4" class="text-center py-5 text-muted"><i class="fas fa-plug me-2"></i>Service Unavailable</td></tr>');
-        }
-      });
-    }
+        <!-- Quick Canned Remarks Chips -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="modalRemarksInput" class="font-semibold text-slate-700">
+              Admin Remarks <span id="modalRequiredMark" class="text-rose-500 hidden">* (Required)</span>
+            </label>
+            <span class="text-[10px] text-slate-400">Quick fill:</span>
+          </div>
+          <div id="quickChipsContainer" class="flex flex-wrap gap-1 mb-1.5"></div>
+          <textarea id="modalRemarksInput" rows="3" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" placeholder="Enter approval notes or rejection justification..."></textarea>
+          <p id="modalValidationMsg" class="hidden text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Justification is required before rejecting a leave request.</span>
+          </p>
+        </div>
+      </div>
 
-    function formatDate(dateStr) {
-      if(!dateStr) return 'N/A';
-      let date = new Date(dateStr);
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      let day = String(date.getDate()).padStart(2, '0');
-      let month = months[date.getMonth()];
-      let year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    }
+      <!-- Modal Footer -->
+      <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button type="button" class="close-decision-modal px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors">
+          Cancel
+        </button>
+        <button type="button" id="confirmDecisionBtn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5">
+          <i class="fas fa-check"></i>
+          <span>Confirm</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
-    function renderTable(data) {
-      if ($.fn.DataTable.isDataTable('#enhancedDataTable')) {
-        $('#enhancedDataTable').DataTable().destroy();
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+  <script>
+    $(document).ready(function () {
+      // State
+      let allRequests = [];
+      let filteredRequests = [];
+      let selectedIds = new Set();
+      let expandedId = null;
+      let currentPage = 1;
+      let pageSize = 10;
+      let sortColumn = 'fromTs';
+      let sortDirection = 'desc';
+      let activeTypeFilter = 'all';
+      let barMode = 'employee'; // 'employee' | 'manager'
+
+      // Chart Instances
+      let leaveBarChart = null;
+      let leaveTypeDoughnut = null;
+
+      // Modal Pending State
+      let pendingModalAction = null; // 'approve' | 'reject' | 'bulk-approve'
+      let pendingModalLeaveIds = [];
+
+      /* ---------------- Custom Toast Notification ---------------- */
+      function showToast(title, message = '', type = 'success') {
+        const config = {
+          success: {
+            border: 'border-emerald-200',
+            iconBg: 'bg-emerald-100 text-emerald-600',
+            icon: 'fa-check-circle'
+          },
+          error: {
+            border: 'border-rose-200',
+            iconBg: 'bg-rose-100 text-rose-600',
+            icon: 'fa-exclamation-circle'
+          },
+          warning: {
+            border: 'border-amber-200',
+            iconBg: 'bg-amber-100 text-amber-600',
+            icon: 'fa-triangle-exclamation'
+          }
+        }[type] || {
+          border: 'border-slate-200',
+          iconBg: 'bg-indigo-100 text-indigo-600',
+          icon: 'fa-info-circle'
+        };
+
+        const toastId = `toast-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const toastHtml = `
+          <div id="${toastId}" class="pointer-events-auto animate-toast bg-white border ${config.border} rounded-xl shadow-lg p-3 flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-lg ${config.iconBg} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fas ${config.icon} text-xs"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-slate-800">${title}</p>
+              ${message ? `<p class="text-[11px] text-slate-500 mt-0.5 leading-snug">${message}</p>` : ''}
+            </div>
+            <button type="button" onclick="$('#${toastId}').remove()" class="text-slate-400 hover:text-slate-600 text-xs">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+        $('#toastContainer').append(toastHtml);
+        setTimeout(() => {
+          $(`#${toastId}`).fadeOut(250, function () { $(this).remove(); });
+        }, 3200);
       }
 
-      const $tbody = $('#tableBody');
-      $tbody.empty();
+      /* ---------------- Custom Decision Modal ---------------- */
+      function openDecisionModal(action, ids, prefilledRemarks = '') {
+        const idArray = Array.isArray(ids) ? ids : [ids];
+        if (!idArray.length) return;
 
-      if (!data || data.length === 0) {
-        $tbody.html('<tr><td colspan="4" class="text-center py-5 text-muted">All clear! No pending requests.</td></tr>');
-        return;
-      }
+        pendingModalAction = action;
+        pendingModalLeaveIds = idArray;
 
-      data.forEach(item => {
-        // Ensure ID is passed to the row for easier targeting
-        $tbody.append(`
-                <tr class="main-row" data-id="${item.id}" data-full-info='${JSON.stringify(item).replace(/'/g, "&apos;")}'>
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center gap-3">
-                            <img src="${item.image || ''}"
-                                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.employeename)}&background=6366f1&color=fff&bold=true'"
-                                 class="employee-photo">
-                            <div>
-                                <div class="fw-bold" style="font-size: 0.9rem;">${item.employeename}</div>
-                                <div class="text-muted small">EID: ${item.eid}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-semibold" style="font-size: 0.85rem;">${item.leavetype}</div>
-                        <div class="text-muted small text-truncate" style="max-width: 200px;">${item.reason || 'No summary'}</div>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <div class="fw-bold" style="font-size: 0.85rem;">
-                                ${formatDate(item.fromdate)} <span class="text-muted mx-1">to</span> ${formatDate(item.todate)}
-                            </div>
-                            <div class="d-flex align-items-center mt-1">
-                                <span class="session-tag">${item.fromSession || 'S1'}</span>
-                                <i class="fas fa-arrow-right extra-small text-muted mx-1" style="font-size: 0.6rem;"></i>
-                                <span class="session-tag">${item.toSession || 'S2'}</span>
-                                <span class="text-primary small fw-bold ms-2">${item.days} Day(s)</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="text-end pe-4 align-middle">
-                        <span class="status-pill pill-pending">
-                            <i class="fas fa-spinner fa-spin"></i> Pending
-                        </span>
-                    </td>
-                </tr>
-            `);
-      });
+        const isApprove = action === 'approve' || action === 'bulk-approve';
+        const isBulk = idArray.length > 1;
 
-      leaveTable = $('#enhancedDataTable').DataTable({
-        responsive: true,
-        pageLength: 10,
-        order: [],
-        dom: '<"d-flex justify-content-between align-items-center p-4 border-bottom"f>rt<"d-flex justify-content-between align-items-center p-4"ip>',
-        language: { search: "", searchPlaceholder: "Search requests..." }
-      });
+        $('#modalHeaderBanner')
+          .removeClass('bg-indigo-600 bg-emerald-600 bg-rose-600')
+          .addClass(isApprove ? 'bg-emerald-600' : 'bg-rose-600');
+        $('#modalHeaderIcon')
+          .removeClass('fa-check fa-times fa-check-double')
+          .addClass(isBulk ? 'fa-check-double' : (isApprove ? 'fa-check' : 'fa-times'));
 
-      $('#enhancedDataTable tbody').off('click').on('click', 'tr.main-row', function() {
-        const tr = $(this);
-        const row = leaveTable.row(tr);
-
-        if (row.child.isShown()) {
-          row.child.hide();
-          tr.removeClass('shown');
+        if (isBulk) {
+          $('#modalTitle').text(`Approve ${idArray.length} Selected Requests`);
+          $('#modalSubtitle').text('Batch approval will update all checked requests');
+          const totalSelectedDays = allRequests
+            .filter(r => idArray.map(String).includes(String(r.id)))
+            .reduce((sum, r) => sum + r.days, 0);
+          $('#modalEmpName').text(`${idArray.length} Employees Selected`);
+          $('#modalLeaveDates').text(`Combined duration: ${totalSelectedDays} Day(s)`);
+          $('#modalLeaveBadge').text('Batch Action');
         } else {
-          leaveTable.rows().every(function() {
-            if (this.child.isShown()) {
-              this.child.hide();
-              $(this.node()).removeClass('shown');
-            }
-          });
+          const item = allRequests.find(r => String(r.id) === String(idArray[0]));
+          if (!item) return;
+          $('#modalTitle').text(isApprove ? 'Approve Leave Request' : 'Reject Leave Request');
+          $('#modalSubtitle').text(isApprove ? 'Confirm leave approval for this employee' : 'Provide a clear reason for rejecting this request');
+          $('#modalEmpName').text(`${item.employeename} (${item.eid})`);
+          $('#modalLeaveDates').text(`${formatDate(item.fromdate)} to ${formatDate(item.todate)} • ${item.days} Day(s)`);
+          $('#modalLeaveBadge').text(item.leavetype);
+        }
 
-          const info = JSON.parse(tr.attr('data-full-info'));
-          row.child(renderChild(info)).show();
-          tr.addClass('shown');
+        // Quick remark chips tailored to approve vs reject
+        const chips = isApprove
+          ? ['Approved as requested.', 'Approved. Ensure handover before leave.', 'Approved for medical/personal reasons.']
+          : ['Rejected due to critical project deliverable.', 'Insufficient leave balance available.', 'Team overlap on requested dates; please reschedule.'];
+
+        $('#quickChipsContainer').html(
+          chips.map(c => `<button type="button" class="quick-remark-chip px-2 py-0.5 rounded bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 text-[10px] transition-colors">${c}</button>`).join('')
+        );
+
+        $('#modalRemarksInput').val(prefilledRemarks).removeClass('border-rose-500 ring-2 ring-rose-500/20');
+        $('#modalValidationMsg').addClass('hidden');
+        $('#modalRequiredMark').toggleClass('hidden', isApprove);
+
+        const confirmBtn = $('#confirmDecisionBtn');
+        confirmBtn
+          .prop('disabled', false)
+          .removeClass('bg-indigo-600 hover:bg-indigo-700 bg-emerald-600 hover:bg-emerald-700 bg-rose-600 hover:bg-rose-700')
+          .addClass(isApprove ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700')
+          .html(isBulk
+            ? `<i class="fas fa-check-double"></i><span>Approve All (${idArray.length})</span>`
+            : (isApprove ? '<i class="fas fa-check"></i><span>Approve Request</span>' : '<i class="fas fa-times"></i><span>Reject Request</span>'));
+
+        $('#customDecisionModal').removeClass('hidden').addClass('flex');
+        setTimeout(() => $('#modalRemarksInput').focus(), 50);
+      }
+
+      function closeDecisionModal() {
+        $('#customDecisionModal').addClass('hidden').removeClass('flex');
+        pendingModalAction = null;
+        pendingModalLeaveIds = [];
+      }
+
+      $(document).on('click', '.quick-remark-chip', function () {
+        $('#modalRemarksInput').val($(this).text()).trigger('input').focus();
+      });
+
+      $('.close-decision-modal').on('click', closeDecisionModal);
+      $('#customDecisionModal').on('click', function (e) {
+        if (e.target === this) closeDecisionModal();
+      });
+
+      $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$('#customDecisionModal').hasClass('hidden')) {
+          closeDecisionModal();
         }
       });
-    }
 
-    function renderChild(d) {
-      return `
-            <div class="child-wrapper">
-                <div class="expansion-content">
-                    <div class="row g-4">
-                        <div class="col-lg-4">
-                            <div class="detail-card">
-                                <h6 class="fw-bold mb-3 text-indigo-600" style="font-size: 0.8rem;">Additional Details</h6>
-                                <div class="mb-3">
-                                    <div class="text-label">Applied By</div>
-                                    <div class="text-value">${d.appliedBy || 'N/A'}</div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="text-label">Manager</div>
-                                    <div class="text-value">${d.manager || 'N/A'}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="detail-card">
-                                <h6 class="fw-bold mb-3 text-indigo-600" style="font-size: 0.8rem;">Reason</h6>
-                                <div class="bg-slate-50 p-3 rounded-3 h-75 overflow-auto border">
-                                    <p class="mb-0 small text-slate-700 fst-italic">"${d.reason || 'No Reason provided.'}"</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="action-panel">
-                                <h6 class="fw-bold mb-3" style="font-size: 0.8rem;">APPROVAL DECISION</h6>
-                                <textarea id="remarks-${d.id}" class="form-control mb-3" rows="3" placeholder="Add optional remarks..."></textarea>
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <button class="btn-action btn-approve" onclick="handleUpdate('approve', ${d.id}, this)">
-                                            <i class="fas fa-check"></i> Approve
-                                        </button>
-                                    </div>
-
-
-                                    <div class="col-6">
-                                        <button class="btn-action btn-reject" onclick="handleUpdate('reject', ${d.id}, this)">
-                                            <i class="fas fa-times"></i> Reject
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }
-  });
-
-  async function handleUpdate(action, id, btn) {
-    const $btn = $(btn);
-    const remarks = $(`#remarks-${id}`).val().trim();
-
-    if (action === 'reject' && !remarks) {
-      Swal.fire({ title: 'Justification Needed', text: 'Please provide a reason for the rejection.', icon: 'warning' });
-      return;
-    }
-
-    $btn.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i> Processing...');
-
-    // NOTE: Ensure your endpoint 'api/updateLeave.php' is correct for your Java/Thymeleaf backend
-    // If using Spring Boot, this would likely be '/api/leaves/update'
-    try {
-      const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-      const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute("content");
-
-      const params = new URLSearchParams();
-      params.append("action", action);
-      params.append("leaveId", id);
-      params.append("remarks", remarks);
-
-      const response = await fetch('/admin/updateLeave', {
-        method: 'POST',
-        headers: {
-          [csrfHeader]: csrfToken
-        },
-        body: params
+      $('#modalRemarksInput').on('input', function () {
+        if ($(this).val().trim().length > 0) {
+          $(this).removeClass('border-rose-500 ring-2 ring-rose-500/20');
+          $('#modalValidationMsg').addClass('hidden');
+        }
       });
 
+      $('#confirmDecisionBtn').on('click', async function () {
+        if (!pendingModalAction || !pendingModalLeaveIds.length) return;
+        const remarks = $('#modalRemarksInput').val().trim();
 
+        if (pendingModalAction === 'reject' && !remarks) {
+          $('#modalRemarksInput').addClass('border-rose-500 ring-2 ring-rose-500/20').focus();
+          $('#modalValidationMsg').removeClass('hidden');
+          return;
+        }
 
+        const actionToSend = pendingModalAction === 'bulk-approve' ? 'approve' : pendingModalAction;
+        await submitLeaveDecisions(actionToSend, [...pendingModalLeaveIds], remarks, $(this));
+      });
 
-      const res = await response.json();
-console.log(res);
-      if (res.status === 'success') {
-        Swal.fire({ icon: 'success', title: 'Action Recorded', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-
-        const $row = $(`.main-row[data-id="${id}"]`);
-        $row.fadeOut(500, function() {
-          $('#enhancedDataTable').DataTable().row($row).remove().draw(false);
-          const currentCount = parseInt($('#queueCount').text());
-          $('#queueCount').text(currentCount > 0 ? currentCount - 1 : 0);
-        });
-      } else {
-        throw new Error(res.message);
+      /* ---------------- Helpers & Formatting ---------------- */
+      function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${day}-${months[date.getMonth()]}-${date.getFullYear()}`;
       }
-    } catch (e) {
-      Swal.fire('Error', e.message || 'Server connection failed', 'error');
-      $btn.prop('disabled', false).html(action === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Reject');
-    }
-  }
-</script>
 
+      function getLeaveTypeCode(typeStr) {
+        const s = String(typeStr || '').toUpperCase();
+        if (s.includes('CASUAL') || s === 'CL') return 'CL';
+        if (s.includes('SICK') || s === 'SL') return 'SL';
+        if (s.includes('EARNED') || s.includes('PRIVILEGE') || s === 'EL') return 'EL';
+        if (s.includes('RESTRICTED') || s === 'RH') return 'RH';
+        if (s.includes('COMP') || s === 'CO') return 'CO';
+        return 'OTHER';
+      }
+
+      function getLeaveBadgeMarkup(typeStr) {
+        const code = getLeaveTypeCode(typeStr);
+        const styles = {
+          CL: 'bg-sky-50 text-sky-700 border-sky-200/80',
+          SL: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          EL: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+          RH: 'bg-violet-50 text-violet-700 border-violet-200/80',
+          CO: 'bg-amber-50 text-amber-700 border-amber-200/80',
+          OTHER: 'bg-slate-100 text-slate-700 border-slate-200'
+        }[code];
+        return `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${styles}">${typeStr || 'Leave'}</span>`;
+      }
+
+      /* ---------------- Fetch Data ---------------- */
+      function fetchData() {
+        $.ajax({
+          url: '/admin/pendingrequests',
+          type: 'GET',
+          dataType: 'json',
+          success: function (res) {
+            const list = Array.isArray(res) ? res : [];
+            initializeQueue(list, false);
+          },
+          error: function () {
+            const mockQueue = [
+              { id: 901, eid: 'GSB-0142', employeename: 'Ananya Deshmukh', leavetype: 'Casual Leave (CL)', fromdate: '2026-11-28', todate: '2026-11-29', fromSession: 'S1', toSession: 'S2', days: 2, reason: 'Attending family wedding in Bengaluru.', appliedBy: 'Ananya Deshmukh', manager: 'Rohan Sharma', image: '' },
+              { id: 902, eid: 'GSB-0188', employeename: 'Karthik Subramanian', leavetype: 'Sick Leave (SL)', fromdate: '2026-11-27', todate: '2026-11-27', fromSession: 'S1', toSession: 'S1', days: 0.5, reason: 'Morning dental appointment and recovery.', appliedBy: 'Karthik Subramanian', manager: 'Priya Nair', image: '' },
+              { id: 903, eid: 'GSB-0115', employeename: 'Meera Krishnan', leavetype: 'Earned Leave (EL)', fromdate: '2026-12-07', todate: '2026-12-11', fromSession: 'S1', toSession: 'S2', days: 5, reason: 'Planned year-end vacation trip.', appliedBy: 'Meera Krishnan', manager: 'Rohan Sharma', image: '' },
+              { id: 904, eid: 'GSB-0204', employeename: 'Vikramaditya Rao', leavetype: 'Comp-Off (CO)', fromdate: '2026-11-30', todate: '2026-11-30', fromSession: 'S1', toSession: 'S2', days: 1, reason: 'Compensatory off for weekend LiDAR server migration.', appliedBy: 'Vikramaditya Rao', manager: 'Sneha Menon', image: '' },
+              { id: 905, eid: 'GSB-0167', employeename: 'Divya Hegde', leavetype: 'Restricted Holiday (RH)', fromdate: '2026-12-24', todate: '2026-12-24', fromSession: 'S1', toSession: 'S2', days: 1, reason: 'Christmas Eve observance.', appliedBy: 'Divya Hegde', manager: 'Priya Nair', image: '' }
+            ];
+            initializeQueue(mockQueue, true);
+          }
+        });
+      }
+
+      function initializeQueue(list, isMock = false) {
+        if (isMock) $('#mockDataBadge').removeClass('hidden');
+        selectedIds.clear();
+        allRequests = list.map(item => ({
+          ...item,
+          days: parseFloat(item.days) || 0,
+          fromTs: item.fromdate ? new Date(item.fromdate).getTime() || 0 : 0,
+          typeCode: getLeaveTypeCode(item.leavetype)
+        }));
+        refreshDashboard();
+      }
+
+      function refreshDashboard() {
+        updateKPIs();
+        renderCharts();
+        applyFiltersAndSort();
+        syncBulkActionUI();
+      }
+
+      function updateKPIs() {
+        const total = allRequests.length;
+        let totalDays = 0, clCount = 0, slCount = 0, elCount = 0, halfDayCount = 0;
+
+        allRequests.forEach(r => {
+          totalDays += r.days;
+          if (r.typeCode === 'CL') clCount++;
+          else if (r.typeCode === 'SL') slCount++;
+          else if (r.typeCode === 'EL') elCount++;
+          if (r.days === 0.5) halfDayCount++;
+        });
+
+        $('#queueCount').text(total);
+        $('#statPendingCount').text(total);
+        $('#doughnutCenterCount').text(total);
+        $('#statTotalDays').text(Number.isInteger(totalDays) ? totalDays : totalDays.toFixed(1));
+        $('#statClCount').text(clCount);
+        $('#statSlCount').text(slCount);
+        $('#statElCount').text(elCount);
+        $('#statHalfDayCount').text(halfDayCount);
+      }
+
+      /* ---------------- Charts Rendering ---------------- */
+      function renderCharts() {
+        if (!allRequests.length) {
+          $('#analyticsSection').addClass('hidden');
+          return;
+        }
+        $('#analyticsSection').removeClass('hidden');
+
+        // 1. Bar Chart: Days by Employee or Manager
+        const barCtx = document.getElementById('leaveBarChart').getContext('2d');
+        if (leaveBarChart) leaveBarChart.destroy();
+
+        let labels = [], values = [];
+        if (barMode === 'employee') {
+          $('#barChartTitle').text('Requested Leave Days by Employee');
+          const sorted = [...allRequests].sort((a, b) => b.days - a.days).slice(0, 10);
+          labels = sorted.map(r => r.employeename);
+          values = sorted.map(r => r.days);
+        } else {
+          $('#barChartTitle').text('Requested Leave Days by Reporting Manager');
+          const mgrMap = {};
+          allRequests.forEach(r => {
+            const m = r.manager || 'Unassigned';
+            mgrMap[m] = (mgrMap[m] || 0) + r.days;
+          });
+          const entries = Object.entries(mgrMap).sort((a, b) => b[1] - a[1]);
+          labels = entries.map(e => e[0]);
+          values = entries.map(e => e[1]);
+        }
+
+        leaveBarChart = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Leave Days',
+              data: values,
+              backgroundColor: '#4f46e5',
+              hoverBackgroundColor: '#3730a3',
+              borderRadius: 4,
+              maxBarThickness: 26
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 11, weight: '600' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: { label: (ctx) => ` Requested: ${ctx.parsed.y} Day(s)` }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Inter', size: 10 }, color: '#64748b' }
+              },
+              y: {
+                beginAtZero: true,
+                border: { display: false },
+                grid: { color: '#f1f5f9' },
+                ticks: { font: { family: 'IBM Plex Mono', size: 10 }, color: '#64748b' }
+              }
+            }
+          }
+        });
+
+        // 2. Doughnut Chart: Leave Type Breakdown
+        const dCtx = document.getElementById('leaveTypeDoughnut').getContext('2d');
+        if (leaveTypeDoughnut) leaveTypeDoughnut.destroy();
+
+        const typeCounts = {};
+        allRequests.forEach(r => {
+          typeCounts[r.typeCode] = (typeCounts[r.typeCode] || 0) + 1;
+        });
+
+        const colorMap = { CL: '#0ea5e9', SL: '#f43f5e', EL: '#10b981', RH: '#8b5cf6', CO: '#f59e0b', OTHER: '#64748b' };
+        const dLabels = Object.keys(typeCounts);
+        const dValues = Object.values(typeCounts);
+        const dColors = dLabels.map(k => colorMap[k] || '#64748b');
+
+        leaveTypeDoughnut = new Chart(dCtx, {
+          type: 'doughnut',
+          data: {
+            labels: dLabels,
+            datasets: [{
+              data: dValues,
+              backgroundColor: dColors,
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  padding: 8,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6
+              }
+            }
+          }
+        });
+      }
+
+      /* ---------------- Filter Sync & Table Render ---------------- */
+      function setTypeFilter(typeVal) {
+        activeTypeFilter = typeVal;
+        $('.type-pill-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(`.type-pill-btn[data-type-filter="${typeVal}"]`).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+
+        $('.kpi-type-card').removeClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+        $(`.kpi-type-card[data-type-filter="${typeVal}"]`).addClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+
+        currentPage = 1;
+        applyFiltersAndSort();
+      }
+
+      function applyFiltersAndSort() {
+        const query = $('#tableSearchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
+
+        filteredRequests = allRequests.filter(item => {
+          const matchesType = activeTypeFilter === 'all' || item.typeCode === activeTypeFilter;
+          const matchesQuery = !query ||
+            String(item.employeename).toLowerCase().includes(query) ||
+            String(item.eid).toLowerCase().includes(query) ||
+            String(item.leavetype).toLowerCase().includes(query) ||
+            String(item.manager || '').toLowerCase().includes(query) ||
+            String(item.reason || '').toLowerCase().includes(query);
+          return matchesType && matchesQuery;
+        });
+
+        filteredRequests.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        $('#filteredBadge').text(`${filteredRequests.length} ${filteredRequests.length === 1 ? 'request' : 'requests'}`);
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const $tbody = $('#tableBody');
+        const totalRows = filteredRequests.length;
+
+        if (totalRows === 0) {
+          $tbody.html(`
+            <tr>
+              <td colspan="9" class="py-8 text-center text-slate-400">
+                <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-1.5">
+                  <i class="fas fa-check text-xs"></i>
+                </div>
+                <p class="font-semibold text-slate-600 text-xs">All clear! No pending leave requests.</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Try clearing filters or refreshing the queue.</p>
+              </td>
+            </tr>
+          `);
+          $('#paginationInfo').text('Showing 0 to 0 of 0 entries');
+          $('#paginationControls').empty();
+          $('#selectAllCheckbox').prop('checked', false);
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 100 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredRequests.slice(startIdx, endIdx);
+
+        let html = '';
+        pageSlice.forEach(item => {
+          const isExpanded = String(expandedId) === String(item.id);
+          const isChecked = selectedIds.has(String(item.id));
+          const avatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.employeename)}&background=4f46e5&color=fff&bold=true&size=64`;
+
+          html += `
+            <tr class="main-row cursor-pointer transition-colors ${isExpanded ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : (isChecked ? 'bg-indigo-50/30' : 'hover:bg-slate-50/90')}" data-id="${item.id}">
+              <td class="py-1.5 px-2.5 text-center" onclick="event.stopPropagation()">
+                <input type="checkbox" class="row-checkbox w-3.5 h-3.5 rounded accent-indigo-600 cursor-pointer" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
+              </td>
+              <td class="py-1.5 px-1 text-center text-slate-400">
+                <i class="fas fa-chevron-right text-[10px] transition-transform duration-150 ${isExpanded ? 'rotate-90 text-indigo-600' : ''}"></i>
+              </td>
+              <td class="py-1.5 px-2.5">
+                <div class="flex items-center gap-2">
+                  <img src="${item.image || avatarFallback}"
+                       onerror="this.src='${avatarFallback}'"
+                       alt="${item.employeename}"
+                       class="w-6 h-6 rounded-md object-cover border border-slate-200 shrink-0">
+                  <div class="min-w-0">
+                    <div class="font-semibold text-slate-800 truncate">${item.employeename}</div>
+                    <div class="text-[10px] font-mono text-slate-400 leading-none">${item.eid}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5">
+                <div class="flex items-center gap-2">
+                  ${getLeaveBadgeMarkup(item.leavetype)}
+                  <span class="text-[11px] text-slate-500 truncate max-w-[160px] hidden xl:inline" title="${item.reason || ''}">${item.reason || ''}</span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-medium text-slate-800 text-[11px]">${formatDate(item.fromdate)} <span class="text-slate-400">→</span> ${formatDate(item.todate)}</span>
+                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-[9px] font-bold text-slate-600">
+                    ${item.fromSession || 'S1'}–${item.toSession || 'S2'}
+                  </span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-600 text-[11px] hidden md:table-cell">
+                ${item.manager || '--'}
+              </td>
+              <td class="py-1.5 px-2.5 text-right font-mono font-bold text-indigo-700">
+                ${item.days} <span class="text-[10px] font-sans font-normal text-slate-400">d</span>
+              </td>
+              <td class="py-1.5 px-2.5 text-center">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  Pending
+                </span>
+              </td>
+              <td class="py-1.5 px-2.5 text-right" onclick="event.stopPropagation()">
+                <div class="inline-flex items-center gap-1">
+                  <button type="button" class="quick-decision-btn px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium transition-colors" data-action="approve" data-id="${item.id}" title="Approve">
+                    <i class="fas fa-check text-[9px]"></i>
+                  </button>
+                  <button type="button" class="quick-decision-btn px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-medium transition-colors" data-action="reject" data-id="${item.id}" title="Reject">
+                    <i class="fas fa-times text-[9px]"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+
+          if (isExpanded) {
+            html += renderExpandedRow(item);
+          }
+        });
+
+        $tbody.html(html);
+
+        // Sync select-all checkbox state
+        const allPageSelected = pageSlice.length > 0 && pageSlice.every(r => selectedIds.has(String(r.id)));
+        $('#selectAllCheckbox').prop('checked', allPageSelected);
+
+        $('#paginationInfo').text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderExpandedRow(d) {
+        return `
+          <tr class="bg-indigo-50/30 border-b border-indigo-100">
+            <td colspan="9" class="p-3">
+              <div class="animate-expand grid grid-cols-1 lg:grid-cols-12 gap-3">
+                <!-- Metadata Card -->
+                <div class="lg:col-span-3 bg-white rounded-lg p-3 border border-slate-200/90 space-y-2">
+                  <h4 class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                    <i class="fas fa-id-badge"></i> Request Metadata
+                  </h4>
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase text-slate-400">Applied By</p>
+                    <p class="text-xs font-semibold text-slate-800">${d.appliedBy || d.employeename || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase text-slate-400">Reporting Manager</p>
+                    <p class="text-xs font-semibold text-slate-800">${d.manager || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <!-- Reason Card -->
+                <div class="lg:col-span-5 bg-white rounded-lg p-3 border border-slate-200/90 flex flex-col">
+                  <h4 class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5 mb-1.5">
+                    <i class="fas fa-align-left"></i> Employee Reason
+                  </h4>
+                  <div class="flex-1 bg-slate-50 rounded-md p-2.5 border border-slate-200/70 text-xs text-slate-700 italic leading-relaxed">
+                    "${d.reason || 'No reason provided.'}"
+                  </div>
+                </div>
+
+                <!-- Inline Approval Decision Panel -->
+                <div class="lg:col-span-4 bg-white rounded-lg p-3 border border-indigo-200 shadow-2xs flex flex-col justify-between">
+                  <div>
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-1.5">
+                      <i class="fas fa-gavel text-indigo-600"></i> Approval Decision
+                    </h4>
+                    <textarea id="inline-remarks-${d.id}" rows="2" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add remarks (required if rejecting)..."></textarea>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button type="button" class="inline-decision-btn px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5" data-action="approve" data-id="${d.id}">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button type="button" class="inline-decision-btn px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5" data-action="reject" data-id="${d.id}">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $('#paginationControls');
+        container.empty();
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-indigo-600 border-indigo-600 text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      function syncBulkActionUI() {
+        const count = selectedIds.size;
+        if (count > 0) {
+          $('#selectedCountLabel').text(`${count} selected`);
+          $('#bulkActionBar').removeClass('hidden');
+        } else {
+          $('#bulkActionBar').addClass('hidden');
+        }
+      }
+
+      /* ---------------- Submit Single or Batch Decision ---------------- */
+      async function submitLeaveDecisions(action, ids, remarks, $btn) {
+        const originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i><span>Processing...</span>');
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || $('#csrfToken').val() || '';
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+        let successCount = 0;
+        let lastError = '';
+
+        for (const id of ids) {
+          try {
+            const params = new URLSearchParams();
+            params.append('action', action);
+            params.append('leaveId', id);
+            params.append('remarks', remarks);
+
+            const response = await fetch('/admin/updateLeave', {
+              method: 'POST',
+              headers: { [csrfHeader]: csrfToken },
+              body: params
+            });
+
+            const res = await response.json();
+            if (res.status === 'success') {
+              successCount++;
+              allRequests = allRequests.filter(r => String(r.id) !== String(id));
+              selectedIds.delete(String(id));
+              if (String(expandedId) === String(id)) expandedId = null;
+            } else {
+              lastError = res.message || `Failed to update request #${id}`;
+            }
+          } catch (err) {
+            lastError = err.message || 'Server connection failed.';
+          }
+        }
+
+        closeDecisionModal();
+        refreshDashboard();
+
+        if (successCount > 0) {
+          showToast(
+            action === 'approve' ? 'Leave Approved' : 'Leave Rejected',
+            successCount === 1
+              ? `Request #${ids[0]} has been updated.`
+              : `${successCount} leave requests have been approved.`,
+            'success'
+          );
+        }
+        if (lastError && successCount < ids.length) {
+          showToast('Partial / Failed Update', lastError, 'error');
+        }
+
+        $btn.prop('disabled', false).html(originalHtml);
+      }
+
+      /* ---------------- Event Listeners ---------------- */
+      $(document).on('click', 'tr.main-row', function () {
+        const id = $(this).data('id');
+        expandedId = String(expandedId) === String(id) ? null : id;
+        renderTablePage();
+      });
+
+      $(document).on('change', '.row-checkbox', function () {
+        const id = String($(this).data('id'));
+        if ($(this).is(':checked')) selectedIds.add(id);
+        else selectedIds.delete(id);
+        syncBulkActionUI();
+        renderTablePage();
+      });
+
+      $('#selectAllCheckbox').on('change', function () {
+        const checked = $(this).is(':checked');
+        const effectivePageSize = pageSize >= 100 ? filteredRequests.length : pageSize;
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const pageSlice = filteredRequests.slice(startIdx, startIdx + effectivePageSize);
+
+        pageSlice.forEach(r => {
+          if (checked) selectedIds.add(String(r.id));
+          else selectedIds.delete(String(r.id));
+        });
+        syncBulkActionUI();
+        renderTablePage();
+      });
+
+      $('#bulkApproveBtn').on('click', function () {
+        if (!selectedIds.size) return;
+        openDecisionModal('bulk-approve', Array.from(selectedIds), '');
+      });
+
+      $(document).on('click', '.quick-decision-btn', function () {
+        openDecisionModal($(this).data('action'), $(this).data('id'), '');
+      });
+
+      $(document).on('click', '.inline-decision-btn', function () {
+        const id = $(this).data('id');
+        const inlineRemarks = $(`#inline-remarks-${id}`).val().trim();
+        openDecisionModal($(this).data('action'), id, inlineRemarks);
+      });
+
+      $(document).on('click', '.kpi-type-card, .type-pill-btn', function () {
+        setTypeFilter($(this).data('type-filter'));
+      });
+
+      $('.bar-mode-btn').on('click', function () {
+        $('.bar-mode-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(this).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+        barMode = $(this).data('bmode');
+        renderCharts();
+      });
+
+      $('#toggleAnalyticsBtn').on('click', function () {
+        $('#analyticsSection').toggleClass('hidden');
+      });
+
+      $('#tableSearchInput').on('input', function () {
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#clearSearchBtn').on('click', function () {
+        $('#tableSearchInput').val('');
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
+
+      $(document).on('click', '.page-btn:not([disabled])', function () {
+        currentPage = Number($(this).data('page'));
+        renderTablePage();
+      });
+
+      $('th.sortable').on('click', function () {
+        const col = $(this).data('sort');
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = ['employeename', 'leavetype', 'manager'].includes(col) ? 'asc' : 'desc';
+        }
+        $('th.sortable .sort-icon').removeClass('fa-sort-up fa-sort-down text-indigo-600').addClass('fa-sort text-slate-400');
+        $(this).find('.sort-icon').removeClass('fa-sort text-slate-400').addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+        applyFiltersAndSort();
+      });
+
+      $('#refreshBtn').on('click', function () {
+        const icon = $(this).find('i').addClass('fa-spin');
+        fetchData();
+        setTimeout(() => icon.removeClass('fa-spin'), 500);
+      });
+
+      $('#exportCsvBtn').on('click', function () {
+        if (!filteredRequests.length) return;
+        const headers = ['Employee Name', 'EID', 'Leave Type', 'From Date', 'From Session', 'To Date', 'To Session', 'Days', 'Manager', 'Reason'];
+        const rows = [headers.join(',')];
+        filteredRequests.forEach(r => {
+          rows.push([
+            `"${String(r.employeename).replace(/"/g, '""')}"`,
+            `"${r.eid}"`,
+            `"${String(r.leavetype).replace(/"/g, '""')}"`,
+            `"${formatDate(r.fromdate)}"`,
+            `"${r.fromSession || 'S1'}"`,
+            `"${formatDate(r.todate)}"`,
+            `"${r.toSession || 'S2'}"`,
+            r.days,
+            `"${String(r.manager || '').replace(/"/g, '""')}"`,
+            `"${String(r.reason || '').replace(/"/g, '""')}"`
+          ].join(','));
+        });
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Pending_Leave_Requests_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Initial Load
+      fetchData();
+    });
+  </script>
 </body>
 </html>

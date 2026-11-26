@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <title>Completed Projects &amp; Invoice Report</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Tailwind CSS & jQuery -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header-font {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:hover {
+      background-color: #e2e8f0;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: modalIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-toast {
+      animation: toastIn 0.2s ease-out;
+    }
+  </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3 sm:px-0"></div>
+
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[98%] mx-auto px-3 sm:px-4 py-3 flex-1">
+
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
+
+      <!-- Slim Top Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#254b9e] to-[#4f46e5] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="history.back()" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 class="header-font text-sm sm:text-base font-bold truncate">Completed Projects &amp; Invoice Report</h1>
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/15 border border-white/20 text-[11px] font-medium text-indigo-100">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span id="reportDateLabel">--</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="refreshBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors" title="Reload Data">
+            <i class="fas fa-rotate-right text-[11px]"></i>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-xs font-semibold text-white shadow-xs transition-colors">
+            <i class="fas fa-file-excel text-[11px]"></i>
+            <span>Export Excel / CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Body Content -->
+      <div class="p-3 sm:p-4 space-y-3">
+
+        <!-- 5-Card High-Density KPI Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <!-- Total Finished Projects -->
+          <button type="button" data-inv-filter="all" class="kpi-inv-card text-left bg-slate-50/80 hover:bg-indigo-50/50 rounded-lg px-3 py-2 border border-slate-200/90 border-l-4 border-l-indigo-600 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">All Finished</p>
+              <h3 id="kpiTotalProjects" class="text-base font-bold font-mono text-slate-900 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-folder-check text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Pending Invoices -->
+          <button type="button" data-inv-filter="empty" class="kpi-inv-card text-left bg-slate-50/80 hover:bg-amber-50/50 rounded-lg px-3 py-2 border border-slate-200/90 border-l-4 border-l-amber-500 ring-2 ring-indigo-500/40 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pending Invoice</p>
+              <h3 id="kpiPendingInv" class="text-base font-bold font-mono text-amber-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-amber-100/80 text-amber-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-file-circle-question text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Finalized Invoices -->
+          <button type="button" data-inv-filter="filled" class="kpi-inv-card text-left bg-slate-50/80 hover:bg-emerald-50/50 rounded-lg px-3 py-2 border border-slate-200/90 border-l-4 border-l-emerald-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Finalized Invoice</p>
+              <h3 id="kpiFinalizedInv" class="text-base font-bold font-mono text-emerald-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-file-invoice-dollar text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Total Hours (Filtered) -->
+          <div class="bg-slate-50/80 rounded-lg px-3 py-2 border border-slate-200/90 border-l-4 border-l-sky-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Hours</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiTotalHours" class="text-base font-bold font-mono text-sky-600 leading-tight">0.00</h3>
+                <span class="text-[10px] text-slate-400">hrs</span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+              <i class="far fa-clock text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Departments Count -->
+          <div class="col-span-2 sm:col-span-1 bg-slate-50/80 rounded-lg px-3 py-2 border border-slate-200/90 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Departments</p>
+              <h3 id="kpiDepartments" class="text-base font-bold font-mono text-violet-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-sitemap text-xs"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Panel -->
+        <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Filter & Search Toolbar -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/70 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mr-1">
+                <i class="fas fa-table text-indigo-600"></i>
+                Project Billing Queue
+              </h2>
+
+              <!-- Invoice Filter Pills -->
+              <div class="inline-flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg text-[11px] font-medium">
+                <button type="button" data-inv-filter="all" class="inv-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">All Projects</button>
+                <button type="button" data-inv-filter="empty" class="inv-pill-btn px-2 py-0.5 rounded-md bg-white text-indigo-700 shadow-2xs transition-all">Pending Invoices</button>
+                <button type="button" data-inv-filter="filled" class="inv-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Finalized Invoices</button>
+              </div>
+
+              <span id="filteredBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 projects</span>
+            </div>
+
+            <!-- FY Filter, Department Filter, Search & Rows -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span class="font-semibold uppercase text-[10px] text-slate-500">FY:</span>
+                <select id="fyFilter" class="bg-white border border-slate-300 rounded-md px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="all">All Years</option>
+                </select>
+              </div>
+
+              <select id="deptFilter" class="bg-white border border-slate-300 rounded-md px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                <option value="all">All Depts</option>
+              </select>
+
+              <div class="relative flex-1 sm:w-52">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search project, ID, invoice, lead..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="20">20</option>
+                  <option value="50" selected>50</option>
+                  <option value="100">100</option>
+                  <option value="9999">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+          <!-- Ultra-Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="dataTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2 w-8 text-center">#</th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="projectId">
+                    <div class="flex items-center gap-1">
+                      <span>Proj ID</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="projectName">
+                    <div class="flex items-center gap-1">
+                      <span>Project Name</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="clientId">
+                    <div class="flex items-center gap-1">
+                      <span>Client ID</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden lg:table-cell" data-sort="department">
+                    <div class="flex items-center gap-1">
+                      <span>Dept</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="invoiceNumber">
+                    <div class="flex items-center gap-1">
+                      <span>Invoice No.</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-center sortable" data-sort="invoiceStatus">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Inv. Status</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="totalHours">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Total Hrs</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden md:table-cell" data-sort="projectLead">
+                    <div class="flex items-center gap-1">
+                      <span>Lead</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden xl:table-cell" data-sort="sdTs">
+                    <div class="flex items-center gap-1">
+                      <span>Start</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden xl:table-cell" data-sort="edTs">
+                    <div class="flex items-center gap-1">
+                      <span>End</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="finishedOnTs">
+                    <div class="flex items-center gap-1">
+                      <span>Completed On</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody" class="divide-y divide-slate-100 text-xs">
+                <tr class="animate-pulse">
+                  <td colspan="13" class="py-6 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Loading completed projects...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Details Modal (Exact fields from screenshot: Project Name, Project Lead, Start Date, End Date, Invoice No, Work Order, Client Hours, Prod. Hours) -->
+  <div id="editProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-[460px] overflow-hidden animate-modal p-6">
+      <h3 class="text-2xl font-bold text-slate-700 text-center mb-5">Edit Details</h3>
+
+      <input type="hidden" id="edit-pid">
+      <input type="hidden" id="edit-iid">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label for="edit-pname" class="block font-semibold text-slate-700 mb-1">Project Name</label>
+          <input type="text" id="edit-pname" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          <p id="editNameError" class="hidden text-[11px] text-rose-600 mt-1">Project name is required.</p>
+        </div>
+
+        <div>
+          <label for="edit-plead" class="block font-semibold text-slate-700 mb-1">Project Lead</label>
+          <select id="edit-plead" class="w-full px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+            <option value="">-- Select --</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="edit-psd" class="block font-semibold text-slate-700 mb-1">Start Date</label>
+            <input type="date" id="edit-psd" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+          <div>
+            <label for="edit-ped" class="block font-semibold text-slate-700 mb-1">End Date</label>
+            <input type="date" id="edit-ped" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="edit-inv" class="block font-semibold text-slate-700 mb-1">Invoice No</label>
+            <input type="text" id="edit-inv" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+          <div>
+            <label for="edit-wo" class="block font-semibold text-slate-700 mb-1">Work Order</label>
+            <input type="text" id="edit-wo" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="edit-ch" class="block font-semibold text-slate-700 mb-1">Client Hours</label>
+            <input type="number" step="0.01" id="edit-ch" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+          <div>
+            <label for="edit-ph" class="block font-semibold text-slate-700 mb-1">Prod. Hours</label>
+            <input type="number" step="0.01" id="edit-ph" class="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-2.5 mt-6">
+        <button type="button" id="saveEditProjectBtn" class="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition-colors">
+          Save
+        </button>
+        <button type="button" class="close-edit-modal px-5 py-2 rounded-md bg-slate-500 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+  <script>
+    $(document).ready(function () {
+      const todayFormatted = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).replace(/ /g, '-');
+      $('#reportDateLabel').text(todayFormatted);
+
+      // State
+      let rawProjects = [];
+      let filteredProjects = [];
+      let currentPage = 1;
+      let pageSize = 50;
+      let sortColumn = 'finishedOnTs';
+      let sortDirection = 'desc';
+      let activeInvoiceFilter = 'empty';
+      let activeFyFilter = 'all';
+      let activeDeptFilter = 'all';
+
+      /* ---------------- Toast Helper ---------------- */
+      function showToast(title, message = '', type = 'success') {
+        const cfg = {
+          success: { border: 'border-emerald-200', iconBg: 'bg-emerald-100 text-emerald-600', icon: 'fa-check-circle' },
+          error: { border: 'border-rose-200', iconBg: 'bg-rose-100 text-rose-600', icon: 'fa-exclamation-circle' },
+          info: { border: 'border-indigo-200', iconBg: 'bg-indigo-100 text-indigo-600', icon: 'fa-info-circle' }
+        }[type] || { border: 'border-slate-200', iconBg: 'bg-slate-100 text-slate-600', icon: 'fa-info-circle' };
+
+        const id = `toast-${Date.now()}`;
+        const html = `
+          <div id="${id}" class="pointer-events-auto animate-toast bg-white border ${cfg.border} rounded-xl shadow-lg p-3 flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-lg ${cfg.iconBg} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fas ${cfg.icon} text-xs"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-slate-800">${title}</p>
+              ${message ? `<p class="text-[11px] text-slate-500 mt-0.5 leading-snug">${message}</p>` : ''}
+            </div>
+            <button type="button" onclick="$('#${id}').remove()" class="text-slate-400 hover:text-slate-600 text-xs">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+        $('#toastContainer').append(html);
+        setTimeout(() => $(`#${id}`).fadeOut(250, function () { $(this).remove(); }), 3200);
+      }
+
+      /* ---------------- Normalization for CompletedProjectInvoiceProjection ---------------- */
+      function computeFinancialYear(dateInput) {
+        if (!dateInput) return null;
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return null;
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+      }
+
+      function toDateInputString(rawDate) {
+        if (!rawDate) return '';
+        if (Array.isArray(rawDate) && rawDate.length >= 3) {
+          const y = rawDate[0];
+          const m = String(rawDate[1]).padStart(2, '0');
+          const d = String(rawDate[2]).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        }
+        const str = String(rawDate);
+        return str.length >= 10 ? str.substring(0, 10) : '';
+      }
+
+      function normalizeProjection(item) {
+        const invoiceId = item.invoiceId ?? null;
+        const invoiceNumber = (item.invoiceNumber && String(item.invoiceNumber).trim() !== '')
+          ? String(item.invoiceNumber).trim()
+          : '';
+        const hasInvoice = Boolean(invoiceNumber && invoiceId !== null);
+        const invoiceStatus = item.invoiceStatus || (hasInvoice ? 'Generated' : 'Unbilled');
+
+        const finishedOnRaw = Array.isArray(item.finishedOn)
+          ? toDateInputString(item.finishedOn)
+          : item.finishedOn;
+
+        return {
+          invoiceId,
+          invoiceNumber,
+          hasInvoice,
+          invoiceStatus,
+          workOrder: item.workOrder ?? item.workorder ?? '',
+          clientHours: item.clientHours ?? item.totalHours ?? 0,
+          prodHours: item.prodHours ?? '',
+
+          pid: item.pid ?? '',
+          eid: item.eid ?? '',
+          projectId: item.projectId ?? (item.pid ? `PRJ-${item.pid}` : '--'),
+          projectName: item.projectName || 'Untitled Project',
+          totalHours: Number(item.totalHours ?? 0) || 0,
+          startdate: item.startdate || '--',
+          enddate: item.enddate || '--',
+          sd: toDateInputString(item.sd),
+          ed: toDateInputString(item.ed),
+          sdTs: item.sd ? new Date(toDateInputString(item.sd)).getTime() || 0 : 0,
+          edTs: item.ed ? new Date(toDateInputString(item.ed)).getTime() || 0 : 0,
+          projectLead: item.projectLead || 'Unassigned',
+          createdBy: item.createdBy || '--',
+          department: item.department || 'General',
+          createdAt: item.createdAt || '--',
+          finishedOn: finishedOnRaw || null,
+          finishedOnTs: finishedOnRaw ? new Date(finishedOnRaw).getTime() || 0 : 0,
+          clientId: item.clientId ?? '--',
+          finDate: item.finDate || '--',
+          status: item.status || 'Completed',
+          fy: computeFinancialYear(finishedOnRaw)
+        };
+      }
+
+      /* ---------------- Fetch Data from /admin/project/getFinishedProjects ---------------- */
+      function fetchFinishedProjects() {
+        $.ajax({
+          url: '/admin/project/getFinishedProjects',
+          type: 'GET',
+          dataType: 'json',
+          success: function (res) {
+            const list = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+            initializeReport(list, false);
+          },
+          error: function () {
+            const fallbackSample = [
+              { invoiceId: null, invoiceNumber: null, invoiceStatus: null, pid: 101, eid: 'GSB-0104', projectId: 'PRJ-2026-01', projectName: 'TG-COMO-BATCH-1', totalHours: 50.0, startdate: '04-Nov-26', enddate: '04-Nov-26', sd: '2026-11-04', ed: '2026-11-04', projectLead: 'Swathi K S', createdBy: 'Anita Desai', department: '3D Modeling', createdAt: '01-Nov-2026', finishedOn: '2026-11-04T17:30:00', clientId: 1001, finDate: '04-Nov-26', status: 'Finished' },
+              { invoiceId: 881, invoiceNumber: 'INV-2026-094', invoiceStatus: 'Paid', pid: 102, eid: 'GSB-0118', projectId: 'PRJ-2026-02', projectName: '3D City Mesh Modeling - Phase II', totalHours: 512.0, startdate: '15-Aug-26', enddate: '25-Oct-26', sd: '2026-08-15', ed: '2026-10-25', projectLead: 'Priya Nair', createdBy: 'Vikram Menon', department: '3D Modeling', createdAt: '10-Aug-2026', finishedOn: '2026-10-26T14:15:00', clientId: 1004, finDate: '26-Oct-26', status: 'Finished' },
+              { invoiceId: null, invoiceNumber: null, invoiceStatus: null, pid: 103, eid: 'GSB-0129', projectId: 'PRJ-2026-03', projectName: 'Municipal Utility GIS Mapping', totalHours: 215.0, startdate: '05-Oct-26', enddate: '20-Nov-26', sd: '2026-10-05', ed: '2026-11-20', projectLead: 'Karthik Rao', createdBy: 'Anita Desai', department: 'GIS', createdAt: '01-Oct-2026', finishedOn: '2026-11-21T18:00:00', clientId: 1002, finDate: '21-Nov-26', status: 'Finished' }
+            ];
+            initializeReport(fallbackSample, true);
+          }
+        });
+      }
+
+      function initializeReport(dataList, isMock = false) {
+        if (isMock) $('#mockDataBadge').removeClass('hidden');
+        rawProjects = dataList.map(normalizeProjection);
+        populateDropdownFilters();
+        updateKPIs();
+        applyFiltersAndSort();
+      }
+
+      function populateDropdownFilters() {
+        const fySet = new Set(rawProjects.map(p => p.fy).filter(Boolean));
+        const sortedFY = Array.from(fySet).sort().reverse();
+        const $fy = $('#fyFilter');
+        $fy.find('option:not(:first)').remove();
+        sortedFY.forEach(fy => $fy.append(`<option value="${fy}">${fy}</option>`));
+
+        const currentFY = computeFinancialYear(new Date());
+        if (fySet.has(currentFY)) {
+          $fy.val(currentFY);
+          activeFyFilter = currentFY;
+        } else {
+          $fy.val('all');
+          activeFyFilter = 'all';
+        }
+
+        const deptSet = new Set(rawProjects.map(p => p.department).filter(Boolean));
+        const $dept = $('#deptFilter');
+        $dept.find('option:not(:first)').remove();
+        Array.from(deptSet).sort().forEach(d => $dept.append(`<option value="${d}">${d}</option>`));
+      }
+
+      function updateKPIs() {
+        const total = rawProjects.length;
+        const pending = rawProjects.filter(p => !p.hasInvoice).length;
+        const finalized = rawProjects.filter(p => p.hasInvoice).length;
+        const depts = new Set(rawProjects.map(p => p.department)).size;
+
+        $('#kpiTotalProjects').text(total.toLocaleString());
+        $('#kpiPendingInv').text(pending.toLocaleString());
+        $('#kpiFinalizedInv').text(finalized.toLocaleString());
+        $('#kpiDepartments').text(depts.toLocaleString());
+      }
+
+      function getInvoiceStatusBadge(p) {
+        if (!p.hasInvoice) {
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/90"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
+        }
+        const st = String(p.invoiceStatus).toLowerCase();
+        if (st.includes('paid')) {
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${p.invoiceStatus}</span>`;
+        }
+        if (st.includes('cancel')) {
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/90"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${p.invoiceStatus}</span>`;
+        }
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/90"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>${p.invoiceStatus}</span>`;
+      }
+
+      /* ---------------- Filter, Sort & Render Table ---------------- */
+      function setInvoiceFilter(val) {
+        activeInvoiceFilter = val;
+        $('.inv-pill-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(`.inv-pill-btn[data-inv-filter="${val}"]`).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+
+        $('.kpi-inv-card').removeClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+        $(`.kpi-inv-card[data-inv-filter="${val}"]`).addClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+
+        currentPage = 1;
+        applyFiltersAndSort();
+      }
+
+      function applyFiltersAndSort() {
+        const query = $('#tableSearchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
+
+        filteredProjects = rawProjects.filter(p => {
+          const matchesInv = activeInvoiceFilter === 'all' ||
+            (activeInvoiceFilter === 'empty' && !p.hasInvoice) ||
+            (activeInvoiceFilter === 'filled' && p.hasInvoice);
+          const matchesFy = activeFyFilter === 'all' || p.fy === activeFyFilter;
+          const matchesDept = activeDeptFilter === 'all' || p.department === activeDeptFilter;
+          const matchesQuery = !query ||
+            String(p.projectName).toLowerCase().includes(query) ||
+            String(p.projectId).toLowerCase().includes(query) ||
+            String(p.clientId).toLowerCase().includes(query) ||
+            String(p.invoiceNumber).toLowerCase().includes(query) ||
+            String(p.projectLead).toLowerCase().includes(query) ||
+            String(p.department).toLowerCase().includes(query);
+
+          return matchesInv && matchesFy && matchesDept && matchesQuery;
+        });
+
+        filteredProjects.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        const filteredHours = filteredProjects.reduce((sum, p) => sum + p.totalHours, 0);
+        $('#kpiTotalHours').text(filteredHours.toFixed(2));
+        $('#filteredBadge').text(`${filteredProjects.length} ${filteredProjects.length === 1 ? 'project' : 'projects'}`);
+
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const tbody = $('#tableBody');
+        const totalRows = filteredProjects.length;
+
+        if (totalRows === 0) {
+          tbody.html(`
+            <tr>
+              <td colspan="13" class="py-8 text-center text-slate-400">
+                <i class="fas fa-folder-open text-lg mb-1 block text-slate-300"></i>
+                No matching completed projects found for the selected filters.
+              </td>
+            </tr>
+          `);
+          $('#paginationInfo').text('Showing 0 to 0 of 0 entries');
+          $('#paginationControls').empty();
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 9999 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredProjects.slice(startIdx, endIdx);
+
+        let html = '';
+        pageSlice.forEach((p, idx) => {
+          const slNo = startIdx + idx + 1;
+          html += `
+            <tr class="hover:bg-indigo-50/40 transition-colors">
+              <td class="py-1.5 px-2 text-center font-mono text-[11px] text-slate-400">${slNo}</td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-600 whitespace-nowrap">${p.projectId}</td>
+              <td class="py-1.5 px-2.5 font-medium">
+                <a href="/admin/project/viewProject?id=${encodeURIComponent(p.pid)}" class="text-[#1e3a8a] hover:text-indigo-600 font-semibold truncate max-w-[210px] block transition-colors" title="${p.projectName}">
+                  ${p.projectName}
+                </a>
+              </td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] font-semibold text-indigo-700">#${p.clientId}</td>
+              <td class="py-1.5 px-2.5 hidden lg:table-cell">
+                <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200/80">${p.department}</span>
+              </td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] ${p.hasInvoice ? 'font-semibold text-slate-800' : 'text-slate-400'}">
+                ${p.hasInvoice ? p.invoiceNumber : '--'}
+              </td>
+              <td class="py-1.5 px-2.5 text-center">
+                ${getInvoiceStatusBadge(p)}
+              </td>
+              <td class="py-1.5 px-2.5 text-right font-mono font-bold text-slate-900">
+                ${p.totalHours.toFixed(2)}
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-700 hidden md:table-cell whitespace-nowrap">${p.projectLead}</td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-500 hidden xl:table-cell whitespace-nowrap">${p.startdate}</td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-500 hidden xl:table-cell whitespace-nowrap">${p.enddate}</td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-600 whitespace-nowrap">${p.finDate}</td>
+              <td class="py-1.5 px-2.5 text-right">
+                <button type="button"
+                        class="edit-project-btn inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-indigo-600 text-[11px] font-semibold transition-colors"
+                        data-pid="${p.pid}">
+                  <i class="fas fa-edit text-[9px]"></i>
+                  <span>Edit</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.html(html);
+        $('#paginationInfo').text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $('#paginationControls');
+        container.empty();
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-indigo-600 border-indigo-600 text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      /* ---------------- Edit Modal & Lead Lookup ---------------- */
+      function loadProjectLeads(selectedLeadName) {
+        const $select = $('#edit-plead');
+        $select.html('<option value="">Loading leads...</option>');
+
+        $.get('/admin/getprojectrequired', function (data) {
+          $select.empty().append('<option value="">-- Select --</option>');
+          const leads = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : [];
+          leads.forEach(l => {
+            const name = l.name || l.fullname || '';
+            const isSelected = name === selectedLeadName ? 'selected' : '';
+            $select.append(`<option value="${l.eid}" ${isSelected}>${name}</option>`);
+          });
+        }, 'json').fail(function () {
+          $select.html(`<option value="${selectedLeadName}" selected>${selectedLeadName}</option>`);
+        });
+      }
+
+      function openEditModal(project) {
+        $('#edit-pid').val(project.pid);
+        $('#edit-iid').val(project.invoiceId ?? '');
+        $('#edit-pname').val(project.projectName);
+        $('#edit-psd').val(project.sd);
+        $('#edit-ped').val(project.ed);
+        $('#edit-inv').val(project.invoiceNumber);
+        $('#edit-wo').val(project.workOrder);
+        $('#edit-ch').val(Number(project.clientHours).toFixed(2));
+        $('#edit-ph').val(project.prodHours !== '' && project.prodHours !== null ? project.prodHours : '');
+        $('#editNameError').addClass('hidden');
+
+        loadProjectLeads(project.projectLead);
+
+        $('#saveEditProjectBtn').prop('disabled', false).text('Save');
+        $('#editProjectModal').removeClass('hidden').addClass('flex');
+      }
+
+      function closeEditModal() {
+        $('#editProjectModal').addClass('hidden').removeClass('flex');
+      }
+
+      $(document).on('click', '.edit-project-btn', function () {
+        const pid = $(this).data('pid');
+        const project = rawProjects.find(p => String(p.pid) === String(pid));
+        if (project) openEditModal(project);
+      });
+
+      $('.close-edit-modal').on('click', closeEditModal);
+      $('#editProjectModal').on('click', function (e) {
+        if (e.target === this) closeEditModal();
+      });
+      $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$('#editProjectModal').hasClass('hidden')) closeEditModal();
+      });
+
+      $('#saveEditProjectBtn').on('click', function () {
+        const projectName = $('#edit-pname').val().trim();
+        if (!projectName) {
+          $('#editNameError').removeClass('hidden');
+          $('#edit-pname').focus();
+          return;
+        }
+        $('#editNameError').addClass('hidden');
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).text('Saving...');
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || $('#csrfToken').val() || '';
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+        const payload = {
+          editInvoice: true,
+          pid: $('#edit-pid').val(),
+          iid: $('#edit-iid').val(),
+          projectName: projectName,
+          projectLead: $('#edit-plead').val(),
+          startdate: $('#edit-psd').val(),
+          enddate: $('#edit-ped').val(),
+          invoiceNo: $('#edit-inv').val().trim(),
+          workorder: $('#edit-wo').val().trim(),
+          clientHours: $('#edit-ch').val(),
+          prodHours: $('#edit-ph').val()
+        };
+
+        $.ajax({
+          url: '/admin/project/updateInvoice',
+          type: 'POST',
+          data: payload,
+          headers: { [csrfHeader]: csrfToken },
+          dataType: 'json',
+          success: function () {
+            closeEditModal();
+            showToast('Updated Successfully', `${projectName} details have been saved.`, 'success');
+            fetchFinishedProjects();
+          },
+          error: function () {
+            $btn.prop('disabled', false).text('Save');
+            showToast('Save Failed', 'Could not update project invoice details.', 'error');
+          }
+        });
+      });
+
+      /* ---------------- Filter, Sort, Refresh & Export Listeners ---------------- */
+      $(document).on('click', '.kpi-inv-card, .inv-pill-btn', function () {
+        setInvoiceFilter($(this).data('inv-filter'));
+      });
+
+      $('#fyFilter').on('change', function () {
+        activeFyFilter = $(this).val();
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#deptFilter').on('change', function () {
+        activeDeptFilter = $(this).val();
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#tableSearchInput').on('input', function () {
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#clearSearchBtn').on('click', function () {
+        $('#tableSearchInput').val('');
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
+
+      $(document).on('click', '.page-btn:not([disabled])', function () {
+        currentPage = Number($(this).data('page'));
+        renderTablePage();
+      });
+
+      $('th.sortable').on('click', function () {
+        const col = $(this).data('sort');
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = ['projectName', 'projectId', 'department', 'invoiceNumber', 'projectLead'].includes(col) ? 'asc' : 'desc';
+        }
+        $('th.sortable .sort-icon').removeClass('fa-sort-up fa-sort-down text-indigo-600').addClass('fa-sort text-slate-400');
+        $(this).find('.sort-icon').removeClass('fa-sort text-slate-400').addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+        applyFiltersAndSort();
+      });
+
+      $('#refreshBtn').on('click', function () {
+        const icon = $(this).find('i').addClass('fa-spin');
+        fetchFinishedProjects();
+        setTimeout(() => icon.removeClass('fa-spin'), 500);
+      });
+
+      $('#exportCsvBtn').on('click', function () {
+        if (!filteredProjects.length) return;
+        const headers = ['Sl No', 'Project ID', 'Project Name', 'Client ID', 'Department', 'Invoice Number', 'Invoice Status', 'Total Hours', 'Project Lead', 'Start Date', 'End Date', 'Completed On'];
+        const rows = [headers.join(',')];
+        filteredProjects.forEach((p, idx) => {
+          rows.push([
+            idx + 1,
+            `"${p.projectId}"`,
+            `"${p.projectName.replace(/"/g, '""')}"`,
+            `"${p.clientId}"`,
+            `"${p.department}"`,
+            `"${p.hasInvoice ? p.invoiceNumber : '--'}"`,
+            `"${p.invoiceStatus}"`,
+            p.totalHours.toFixed(2),
+            `"${p.projectLead.replace(/"/g, '""')}"`,
+            `"${p.startdate}"`,
+            `"${p.enddate}"`,
+            `"${p.finDate}"`
+          ].join(','));
+        });
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Completed_Projects_Invoice_Report_${todayFormatted}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Initial Fetch
+      fetchFinishedProjects();
+    });
+  </script>
+</body>
+</html>

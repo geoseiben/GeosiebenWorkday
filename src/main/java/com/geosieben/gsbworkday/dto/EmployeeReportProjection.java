@@ -37,5 +37,7 @@ String getYearOfPassing();
 String getGpa();
 String getManager();
 String getImage();
+String getIfsc();
+String getPaymentMode();
 }
 

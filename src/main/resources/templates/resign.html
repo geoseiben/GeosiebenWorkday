@@ -1,241 +1,748 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <title>Employee | Submit Resignation</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="assets/images/favicon-32x32.png" type="image/x-icon">
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons for enhanced UI -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-      <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee | Resignation & Separation</title>
+    <link rel="icon" href="assets/images/favicon-32x32.png" type="image/x-icon">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
 
-  <style>
-    /* Customizing Bootstrap variables for an Indigo theme */
-    :root {
-        --bs-primary: #4F46E5; /* Indigo 600 */
-        --bs-primary-rgb: 79, 70, 229;
-    }
-    .btn-primary {
-        --bs-btn-bg: var(--bs-primary);
-        --bs-btn-border-color: var(--bs-primary);
-        --bs-btn-hover-bg: #4338CA; /* Indigo 700 */
-        --bs-btn-hover-border-color: #4338CA;
-        --bs-btn-active-bg: #3730A3; /* Indigo 800 */
-        --bs-btn-active-border-color: #3730A3;
-        --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
-    }
-    body {
-      background-color: #f7f8fc; /* Softer light background */
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .form-container {
-      max-width: 720px; /* Slightly wider container */
-      margin: 60px auto;
-      padding: 40px;
-      background: #fff;
-      border-radius: 16px; /* More rounded corners */
-      /* Professional shadow with subtle border ring */
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
-    }
-    .form-title {
-      font-size: 2rem; /* Larger title */
-      font-weight: 700;
-      margin-bottom: 30px;
-      /* Primary color vertical divider */
-      border-left: 5px solid var(--bs-primary);
-      padding-left: 15px;
-      color: #1f2937; /* Darker, clearer text */
-    }
-    .form-label {
-        font-weight: 500;
-        color: #374151; /* Medium dark gray for labels */
-    }
-    .form-control, .form-select {
-      border-radius: 10px;
-      padding: 10px 15px;
-      border: 1px solid #e5e7eb; /* Lighter default border */
-      transition: all 0.2s ease;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: var(--bs-primary);
-        box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25); /* Stronger focus highlight */
-    }
-    .btn-primary {
-      border-radius: 10px;
-      font-weight: 600;
-      padding: 10px 25px;
-      /* Subtle lift effect on hover */
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); 
-      transition: all 0.2s ease;
-    }
-    .btn-primary:hover {
-        box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
-        transform: translateY(-1px);
-    }
-    .form-check-input:checked {
-        background-color: var(--bs-primary);
-        border-color: var(--bs-primary);
-    }
-    .form-text {
-        color: #6b7280; /* Muted hint text */
-    }
-    /* Spinner */
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 3px solid rgba(255, 255, 255, 0.6);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
-</head>
-<head th:replace="includes/header :: header"></head>
-<body>
-  <div id="leave-toast-container"></div>
-<div class="form-container">
-  <!-- Updated Title with new icon -->
-  <div class="form-title"><i class="bi bi-person-fill-lock me-3"></i>Submit Resignation</div>
-
-  <form id="resignationForm" novalidate>
-    <!-- Last Working Date -->
-    <div class="mb-4">
-      <label for="lastworking" class="form-label">Last Working Date</label>
-      <input type="date" class="form-control" id="lastworking" name="lastworking">
-      <div class="form-text">System calculated (30 days from today)</div>
-    </div>
-
-    <!-- Reason -->
-    <div class="mb-4">
-      <label for="reason" class="form-label">Reason for Resignation</label>
-      <select id="reason" name="reason" class="form-select" required>
-        <option value="" disabled selected>Select Reason</option>
-        <option value="Career Change">Career Change</option>
-        <option value="Career Growth">Career Growth</option>
-        <option value="Health Issues">Health Issues</option>
-        <option value="Better Salary and Benefits">Better Salary and Benefits</option>
-        <option value="Family Circumstances">Family Circumstances</option>
-      </select>
-    </div>
-
-    <!-- Remarks -->
-    <div class="mb-4">
-      <label for="remark" class="form-label">Additional Remarks</label>
-      <textarea id="remark" name="remark" class="form-control" rows="4"
-        placeholder="Enter any additional remarks or details not covered above..." required></textarea>
-    </div>
-             <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />    <!-- Documents -->
-    <div class="mb-5">
-      <label class="form-label">Documents Required</label>
-      <div class="row g-2">
-        <div class="col-md-6">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="doc1" name="documents[]" value="Relieving Letter">
-            <label class="form-check-label" for="doc1">Relieving Letter</label>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="doc2" name="documents[]" value="Last Increment Letter">
-            <label class="form-check-label" for="doc2">Last Increment Letter</label>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="doc3" name="documents[]" value="Experience Certificate">
-            <label class="form-check-label" for="doc3">Experience Certificate</label>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="doc4" name="documents[]" value="Salary Slips">
-            <label class="form-check-label" for="doc4">Salary Slips</label>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="doc5" name="documents[]" value="My Original Documents">
-            <label class="form-check-label" for="doc5">My Original Documents</label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Submit -->
-    <div class="text-end">
-      <button type="submit" id="submitBtn" class="btn btn-primary">
-        <!-- Updated icon for submission -->
-        <i class="bi bi-send-fill"></i> Submit Resignation
-      </button>
-    </div>
-  </form>
-</div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-$(function(){
-  $('#resignationForm').on('submit', function(e){
-    e.preventDefault();
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-    let reason = $('#reason').val();
-    let remark = $('#remark').val().trim();
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    if(!reason){
-      Swal.fire("Missing Field","Please select a reason","warning");
-      return;
-    }
-    if(!remark){
-      Swal.fire("Missing Field","Please enter additional remarks","warning");
-      return;
-    }
+        h1, h2, h3, .font-display {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+        }
 
-    let docs = $('input[name="documents[]"]:checked').map(function(){
-      return $(this).val();
-    }).get();
-    console.log(docs);
+        /* Interactive Document Checkbox Card */
+        .doc-checkbox:checked + .doc-card {
+            border-color: #4338ca;
+            background-color: #eef2ff;
+        }
 
-    const btn = $('#submitBtn');
-    btn.prop('disabled', true).html('<span class="spinner"></span> Submitting...');
-  const csrfToken = document.getElementById("csrfToken").value;
-    $.ajax({
-      url: '/separtion/resign',
-      headers: {
-                  'X-CSRF-TOKEN': csrfToken
-              },
-      type: 'POST',
-      data: {
-        lastworking: $('#lastworking').val(),
-        reason: reason,
-        remark: remark,
-        documents: docs
-      },
-      dataType: 'json',
-      success: function(res){
-        console.log(res);
-        Swal.fire("Success","Resignation submitted successfully","success");
-        $('#resignationForm')[0].reset();
-      },
-      error: function(err){
-        console.error(err);
-        Swal.fire("Error",res.message,"error");
-      },
-      complete: function(){
-        btn.prop('disabled', false).html('<i class="bi bi-send-fill"></i> Submit Resignation');
-      }
-    });
-  });
-});
-</script>
+        .doc-checkbox:checked + .doc-card .doc-check-box {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
 
+        .doc-checkbox:checked + .doc-card .doc-check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .doc-checkbox:checked + .doc-card .doc-title {
+            color: #312e81;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-spinner {
+            width: 0.875rem;
+            height: 0.875rem;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #ffffff;
+            border-radius: 9999px;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-900">
+    <!-- Top Header -->
+    <div th:replace="~{includes/header :: header}"></div>
+
+    <div id="leave-toast-container"></div>
+
+    <main class="max-w-[98%] mx-auto px-4 sm:px-6 py-5">
+        <!-- Compact Top Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-700 shrink-0">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-tight">Resignation & Separation</h1>
+                    <p class="text-xs text-slate-500">Submit a separation request, select exit documents, and track approval status.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    Standard Notice: 30 Days
+                </span>
+            </div>
+        </div>
+
+        <!-- 2-Column Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+            <!-- LEFT COLUMN (7 Cols): Submit Resignation Form -->
+            <div class="lg:col-span-7 bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+                <div class="px-5 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">New Resignation Application</h2>
+                    </div>
+                    <span id="formLockBadge" class="hidden text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        Active Request Exists
+                    </span>
+                </div>
+
+                <!-- Active Request Lock Banner (shown automatically if Pending/Approved request exists) -->
+                <div id="activeRequestAlert" class="hidden mx-5 mt-4 p-3 rounded-lg bg-amber-50/80 border border-amber-200 flex items-start gap-2.5 text-xs text-amber-900">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                    <div>
+                        <p class="font-semibold">You already have an active resignation request.</p>
+                        <p class="text-[11px] text-amber-700 mt-0.5">To submit a new request, withdraw your pending submission from the panel on the right first.</p>
+                    </div>
+                </div>
+
+                <form id="resignationForm" class="p-5 space-y-4" novalidate>
+                    <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
+
+                    <!-- Row 1: Last Working Date & Reason -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Last Working Date -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="lastworking" class="block text-xs font-semibold text-slate-700">
+                                    Last Working Date
+                                </label>
+                                <span id="noticeDaysBadge" class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                                    30 days notice
+                                </span>
+                            </div>
+                            <input type="date" id="lastworking" name="lastworking"
+                                class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 disabled:opacity-60 disabled:cursor-not-allowed transition">
+                            <p class="text-[11px] text-slate-400 mt-1">System calculated (30 days from today)</p>
+                        </div>
+
+                        <!-- Reason -->
+                        <div>
+                            <label for="reason" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Reason for Resignation <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <select id="reason" name="reason" required
+                                    class="w-full appearance-none px-3 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 disabled:opacity-60 disabled:cursor-not-allowed transition cursor-pointer">
+                                    <option value="" disabled selected>Select primary reason...</option>
+                                    <option value="Career Change">Career Change</option>
+                                    <option value="Career Growth">Career Growth</option>
+                                    <option value="Health Issues">Health Issues</option>
+                                    <option value="Better Salary and Benefits">Better Salary and Benefits</option>
+                                    <option value="Family Circumstances">Family Circumstances</option>
+                                </select>
+                                <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-1">Confidentially logged for HR exit review</p>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="remark" class="block text-xs font-semibold text-slate-700">
+                                Additional Remarks <span class="text-rose-500">*</span>
+                            </label>
+                            <span id="remarkCounter" class="text-[11px] text-slate-400 tabular-nums">0 / 500</span>
+                        </div>
+                        <textarea id="remark" name="remark" rows="3" maxlength="500" required
+                            placeholder="Provide handover context, notice period notes, or details not covered above..."
+                            class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 disabled:opacity-60 disabled:cursor-not-allowed transition resize-y"></textarea>
+                    </div>
+
+                    <!-- Documents Required -->
+                    <div class="pt-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700">Documents Required Upon Exit</label>
+                                <p class="text-[11px] text-slate-400">Select all documents needed after full & final clearance.</p>
+                            </div>
+                            <button type="button" id="toggleAllDocsBtn"
+                                class="text-[11px] font-semibold text-indigo-700 hover:text-indigo-800 hover:underline cursor-pointer">
+                                Select All
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="cursor-pointer select-none">
+                                <input type="checkbox" id="doc1" name="documents[]" value="Relieving Letter" class="doc-checkbox sr-only">
+                                <div class="doc-card flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                                    <span class="doc-check-box w-4 h-4 rounded border border-slate-300 bg-white flex items-center justify-center shrink-0 transition">
+                                        <svg class="doc-check-icon w-2.5 h-2.5 text-white opacity-0 scale-75 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="doc-title text-xs text-slate-700">Relieving Letter</span>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer select-none">
+                                <input type="checkbox" id="doc2" name="documents[]" value="Last Increment Letter" class="doc-checkbox sr-only">
+                                <div class="doc-card flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                                    <span class="doc-check-box w-4 h-4 rounded border border-slate-300 bg-white flex items-center justify-center shrink-0 transition">
+                                        <svg class="doc-check-icon w-2.5 h-2.5 text-white opacity-0 scale-75 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="doc-title text-xs text-slate-700">Last Increment Letter</span>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer select-none">
+                                <input type="checkbox" id="doc3" name="documents[]" value="Experience Certificate" class="doc-checkbox sr-only">
+                                <div class="doc-card flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                                    <span class="doc-check-box w-4 h-4 rounded border border-slate-300 bg-white flex items-center justify-center shrink-0 transition">
+                                        <svg class="doc-check-icon w-2.5 h-2.5 text-white opacity-0 scale-75 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="doc-title text-xs text-slate-700">Experience Certificate</span>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer select-none">
+                                <input type="checkbox" id="doc4" name="documents[]" value="Salary Slips" class="doc-checkbox sr-only">
+                                <div class="doc-card flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                                    <span class="doc-check-box w-4 h-4 rounded border border-slate-300 bg-white flex items-center justify-center shrink-0 transition">
+                                        <svg class="doc-check-icon w-2.5 h-2.5 text-white opacity-0 scale-75 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="doc-title text-xs text-slate-700">Salary Slips</span>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer select-none sm:col-span-2">
+                                <input type="checkbox" id="doc5" name="documents[]" value="My Original Documents" class="doc-checkbox sr-only">
+                                <div class="doc-card flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                                    <span class="doc-check-box w-4 h-4 rounded border border-slate-300 bg-white flex items-center justify-center shrink-0 transition">
+                                        <svg class="doc-check-icon w-2.5 h-2.5 text-white opacity-0 scale-75 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="doc-title text-xs text-slate-700">My Original Documents (Submitted at Joining)</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Footer -->
+                    <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" id="resetBtn"
+                            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 transition cursor-pointer">
+                            Reset
+                        </button>
+
+                        <button type="submit" id="submitBtn"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-xs transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                            </svg>
+                            <span>Submit Resignation</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- RIGHT COLUMN (5 Cols): Existing Resignation Request Status -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+                    <div class="px-5 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Existing Resignation Request</h2>
+                        </div>
+
+                        <button type="button" onclick="fetchExistingResignation()" title="Refresh Status"
+                            class="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Content Container -->
+                    <div id="existingRequestContainer" class="p-5">
+                        <!-- Loading Skeleton -->
+                        <div class="animate-pulse space-y-3">
+                            <div class="h-4 bg-slate-100 rounded w-1/3"></div>
+                            <div class="h-16 bg-slate-100 rounded"></div>
+                            <div class="h-24 bg-slate-100 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Past History Accordion / List (if multiple records exist) -->
+                <div id="pastRequestsWrapper" class="hidden bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+                    <div class="px-5 py-2.5 bg-slate-50/80 border-b border-slate-200">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Previous Submissions</h3>
+                    </div>
+                    <div id="pastRequestsList" class="divide-y divide-slate-100"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Chat Widget -->
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(function () {
+            const csrfToken = document.getElementById('csrfToken').value;
+            const defaultBtnHtml = `
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+                <span>Submit Resignation</span>`;
+
+            // --- Date & Form Helpers ---
+            function formatDateDisplay(dateStr) {
+                if (!dateStr) return 'Not specified';
+                const clean = String(dateStr).substring(0, 10);
+                const parts = clean.split('-');
+                if (parts.length !== 3) return dateStr;
+                const d = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+
+            function setDefaultLastWorkingDate() {
+                const today = new Date();
+                const future = new Date(today);
+                future.setDate(today.getDate() + 30);
+                const yyyy = future.getFullYear();
+                const mm = String(future.getMonth() + 1).padStart(2, '0');
+                const dd = String(future.getDate()).padStart(2, '0');
+                $('#lastworking').val(`${yyyy}-${mm}-${dd}`).trigger('change');
+            }
+
+            $('#lastworking').on('change', function () {
+                const val = $(this).val();
+                const badge = $('#noticeDaysBadge');
+                if (!val) {
+                    badge.text('Not set').attr('class', 'text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded');
+                    return;
+                }
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const parts = val.split('-');
+                const selected = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                const diffDays = Math.round((selected - today) / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                    badge.text(`${Math.abs(diffDays)}d past`).attr('class', 'text-[11px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded');
+                } else {
+                    badge.text(`${diffDays} days notice`).attr('class', 'text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded');
+                }
+            });
+
+            setDefaultLastWorkingDate();
+
+            $('#remark').on('input', function () {
+                $('#remarkCounter').text(`${$(this).val().length} / 500`);
+            });
+
+            $('#toggleAllDocsBtn').on('click', function () {
+                const checkboxes = $('.doc-checkbox');
+                const allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+                checkboxes.prop('checked', !allChecked);
+                $(this).text(allChecked ? 'Select All' : 'Clear All');
+            });
+
+            $('.doc-checkbox').on('change', function () {
+                const checkboxes = $('.doc-checkbox');
+                const allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+                $('#toggleAllDocsBtn').text(allChecked ? 'Clear All' : 'Select All');
+            });
+
+            $('#resetBtn').on('click', function () {
+                $('#resignationForm')[0].reset();
+                $('#remarkCounter').text('0 / 500');
+                $('#toggleAllDocsBtn').text('Select All');
+                setDefaultLastWorkingDate();
+            });
+
+            function setFormDisabledState(isLocked) {
+                $('#resignationForm').find('input, select, textarea, button').prop('disabled', isLocked);
+                if (isLocked) {
+                    $('#activeRequestAlert').removeClass('hidden');
+                    $('#formLockBadge').removeClass('hidden');
+                } else {
+                    $('#activeRequestAlert').addClass('hidden');
+                    $('#formLockBadge').addClass('hidden');
+                }
+            }
+
+            // --- Status Badge & Stepper Builder ---
+            function getStatusMeta(rawStatus) {
+                const s = String(rawStatus || 'Pending').trim().toLowerCase();
+                if (s === 'approved' || s === 'accepted' || s === '1') {
+                    return {
+                        label: 'Approved',
+                        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        dot: 'bg-emerald-500',
+                        step: 3,
+                        isActive: true
+                    };
+                }
+                if (s === 'rejected' || s === 'declined' || s === '2') {
+                    return {
+                        label: 'Rejected',
+                        badge: 'bg-rose-50 text-rose-700 border-rose-200',
+                        dot: 'bg-rose-500',
+                        step: 2,
+                        isActive: false
+                    };
+                }
+                if (s === 'withdrawn' || s === 'cancelled' || s === '3') {
+                    return {
+                        label: 'Withdrawn',
+                        badge: 'bg-slate-100 text-slate-600 border-slate-200',
+                        dot: 'bg-slate-400',
+                        step: 1,
+                        isActive: false
+                    };
+                }
+                if (s === 'hold' || s === 'on hold') {
+                    return {
+                        label: 'On Hold',
+                        badge: 'bg-orange-50 text-orange-700 border-orange-200',
+                        dot: 'bg-orange-500',
+                        step: 2,
+                        isActive: true
+                    };
+                }
+                return {
+                    label: 'Pending Review',
+                    badge: 'bg-amber-50 text-amber-700 border-amber-200',
+                    dot: 'bg-amber-500 animate-pulse',
+                    step: 2,
+                    isActive: true,
+                    canWithdraw: true
+                };
+            }
+
+            function parseDocumentsList(docsField) {
+                if (!docsField) return [];
+                if (Array.isArray(docsField)) return docsField;
+                return String(docsField).split(',').map(d => d.trim()).filter(Boolean);
+            }
+
+            function renderExistingResignation(records) {
+                const container = $('#existingRequestContainer');
+                const pastWrapper = $('#pastRequestsWrapper');
+                const pastList = $('#pastRequestsList');
+
+                const list = Array.isArray(records) ? records : (records ? [records] : []);
+
+                if (list.length === 0) {
+                    setFormDisabledState(false);
+                    pastWrapper.addClass('hidden');
+                    container.html(`
+                        <div class="py-8 px-4 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                            <div class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center mx-auto text-slate-400 mb-2.5 shadow-2xs">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <p class="text-xs font-semibold text-slate-700">No Resignation Request Found</p>
+                            <p class="text-[11px] text-slate-500 mt-1 max-w-xs mx-auto">
+                                You currently have no active or past resignation submissions on record.
+                            </p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                // Latest record is displayed as primary card
+                const latest = list[0];
+                const meta = getStatusMeta(latest.status);
+                setFormDisabledState(meta.isActive);
+
+                const docs = parseDocumentsList(latest.documents || latest.requiredDocuments);
+                const docsHtml = docs.length > 0
+                    ? docs.map(doc => `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50/70 text-indigo-700 border border-indigo-100">${doc}</span>`).join('')
+                    : `<span class="text-[11px] text-slate-400 italic">None specified</span>`;
+
+                const appliedDate = latest.createdAt || latest.appliedDate || latest.submittedDate;
+                const hrRemark = latest.hrRemark || latest.adminRemark || latest.approverRemark;
+
+                container.html(`
+                    <div class="space-y-4">
+                        <!-- Top Status Row -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <span class="text-[11px] font-medium text-slate-400">Request ID</span>
+                                <p class="text-xs font-bold text-slate-800">#${latest.id || 'SEP-01'}</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${meta.badge}">
+                                <span class="w-1.5 h-1.5 rounded-full ${meta.dot}"></span>
+                                ${meta.label}
+                            </span>
+                        </div>
+
+                        <!-- 3-Step Workflow Progress Bar -->
+                        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div>
+                                    <div class="h-1.5 rounded-full ${meta.step >= 1 ? 'bg-indigo-600' : 'bg-slate-200'} mb-1.5"></div>
+                                    <span class="text-[10px] font-semibold ${meta.step >= 1 ? 'text-indigo-700' : 'text-slate-400'}">Submitted</span>
+                                </div>
+                                <div>
+                                    <div class="h-1.5 rounded-full ${meta.step >= 2 ? (meta.label === 'Rejected' ? 'bg-rose-500' : 'bg-indigo-600') : 'bg-slate-200'} mb-1.5"></div>
+                                    <span class="text-[10px] font-semibold ${meta.step >= 2 ? (meta.label === 'Rejected' ? 'text-rose-600' : 'text-indigo-700') : 'text-slate-400'}">HR Review</span>
+                                </div>
+                                <div>
+                                    <div class="h-1.5 rounded-full ${meta.step >= 3 ? 'bg-emerald-500' : 'bg-slate-200'} mb-1.5"></div>
+                                    <span class="text-[10px] font-semibold ${meta.step >= 3 ? 'text-emerald-700' : 'text-slate-400'}">Relieving</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Key Dates & Reason Grid -->
+                        <div class="grid grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200/80 bg-white">
+                            <div>
+                                <p class="text-[11px] text-slate-400">Last Working Date</p>
+                                <p class="text-xs font-bold text-slate-900 mt-0.5">${formatDateDisplay(latest.lastworking || latest.lastWorkingDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400">Submitted On</p>
+                                <p class="text-xs font-semibold text-slate-700 mt-0.5">${formatDateDisplay(appliedDate)}</p>
+                            </div>
+                            <div class="col-span-2 pt-2 border-t border-slate-100">
+                                <p class="text-[11px] text-slate-400">Reason</p>
+                                <p class="text-xs font-semibold text-slate-800 mt-0.5">${latest.reason || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        <!-- Employee Remarks -->
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-500 mb-1">Your Remarks</p>
+                            <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 leading-relaxed">
+                                ${latest.remark || latest.remarks || 'No remarks provided.'}
+                            </p>
+                        </div>
+
+                        <!-- HR / Manager Response (if available) -->
+                        ${hrRemark ? `
+                        <div>
+                            <p class="text-[11px] font-semibold text-indigo-700 mb-1">HR / Manager Note</p>
+                            <p class="text-xs text-slate-700 bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100 leading-relaxed">
+                                ${hrRemark}
+                            </p>
+                        </div>` : ''}
+
+                        <!-- Requested Documents -->
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-500 mb-1.5">Requested Exit Documents</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${docsHtml}
+                            </div>
+                        </div>
+
+                        <!-- Withdraw Action (Only if Pending) -->
+                        ${meta.canWithdraw && latest.id ? `
+                        <div class="pt-3 border-t border-slate-100 flex justify-end">
+                            <button type="button" onclick="withdrawResignation('${latest.id}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white border border-rose-200 transition cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Withdraw Request
+                            </button>
+                        </div>` : ''}
+                    </div>
+                `);
+
+                // Render Older History if > 1 record
+                if (list.length > 1) {
+                    pastWrapper.removeClass('hidden');
+                    pastList.html(list.slice(1).map(item => {
+                        const itemMeta = getStatusMeta(item.status);
+                        return `
+                            <div class="px-5 py-2.5 flex items-center justify-between gap-2 text-xs">
+                                <div>
+                                    <p class="font-semibold text-slate-800">${item.reason || 'Resignation'}</p>
+                                    <p class="text-[11px] text-slate-400">LWD: ${formatDateDisplay(item.lastworking || item.lastWorkingDate)}</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${itemMeta.badge}">
+                                    ${itemMeta.label}
+                                </span>
+                            </div>
+                        `;
+                    }).join(''));
+                } else {
+                    pastWrapper.addClass('hidden');
+                }
+            }
+
+            // --- Fetch Existing Resignation ---
+            window.fetchExistingResignation = function () {
+                $.ajax({
+                    url: '/separtion/my-resignation',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (res) {
+                        renderExistingResignation(res);
+                    },
+                    error: function (err) {
+                        console.error('Failed to load existing resignation:', err);
+                        setFormDisabledState(false);
+                        $('#existingRequestContainer').html(`
+                            <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 text-center">
+                                <p class="text-xs font-medium text-slate-600">No existing resignation record loaded.</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Ensure <code class="text-slate-600">GET /separtion/my-resignation</code> is mapped.</p>
+                            </div>
+                        `);
+                    }
+                });
+            };
+
+            // --- Withdraw Pending Resignation ---
+            window.withdrawResignation = function (resignationId) {
+                Swal.fire({
+                    title: 'Withdraw Resignation?',
+                    text: 'Are you sure you want to withdraw your pending resignation request?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Withdraw',
+                    cancelButtonText: 'Keep Request',
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '/separtion/withdraw',
+                        type: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrfToken },
+                        data: { id: resignationId },
+                        dataType: 'json',
+                        success: function (res) {
+                            Swal.fire({
+                                title: 'Withdrawn',
+                                text: res.message || 'Your resignation request has been withdrawn.',
+                                icon: 'success',
+                                confirmButtonColor: '#4338ca'
+                            });
+                            fetchExistingResignation();
+                        },
+                        error: function (err) {
+                            const msg = err.responseJSON?.message || 'Unable to withdraw request.';
+                            Swal.fire({ title: 'Error', text: msg, icon: 'error', confirmButtonColor: '#e11d48' });
+                        }
+                    });
+                });
+            };
+
+            // --- Submit Resignation ---
+            $('#resignationForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const lastworking = $('#lastworking').val();
+                const reason = $('#reason').val();
+                const remark = $('#remark').val().trim();
+
+                if (!reason) {
+                    Swal.fire({ title: 'Missing Field', text: 'Please select a reason for resignation.', icon: 'warning', confirmButtonColor: '#4338ca' });
+                    return;
+                }
+                if (!remark) {
+                    Swal.fire({ title: 'Missing Field', text: 'Please enter additional remarks.', icon: 'warning', confirmButtonColor: '#4338ca' });
+                    return;
+                }
+
+                const docs = $('input[name="documents[]"]:checked').map(function () {
+                    return $(this).val();
+                }).get();
+
+                Swal.fire({
+                    title: 'Confirm Resignation Submission',
+                    html: `<p class="text-xs text-slate-600">Proposed Last Working Date: <strong>${formatDateDisplay(lastworking)}</strong>.<br>Do you want to submit this resignation?</p>`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Submit',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#4338ca',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    const btn = $('#submitBtn');
+                    btn.prop('disabled', true).html('<span class="btn-spinner"></span><span>Submitting...</span>');
+
+                    $.ajax({
+                        url: '/separtion/resign',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        type: 'POST',
+                        data: {
+                            lastworking: lastworking,
+                            reason: reason,
+                            remark: remark,
+                            documents: docs
+                        },
+                        dataType: 'json',
+                        success: function (res) {
+                            Swal.fire({
+                                title: 'Success',
+                                text: res.message || 'Resignation submitted successfully.',
+                                icon: 'success',
+                                confirmButtonColor: '#4338ca'
+                            });
+                            $('#resignationForm')[0].reset();
+                            $('#remarkCounter').text('0 / 500');
+                            $('#toggleAllDocsBtn').text('Select All');
+                            setDefaultLastWorkingDate();
+                            fetchExistingResignation();
+                        },
+                        error: function (err) {
+                            console.error(err);
+                            const errMsg = err.responseJSON?.message || 'Failed to submit resignation.';
+                            Swal.fire({ title: 'Error', text: errMsg, icon: 'error', confirmButtonColor: '#e11d48' });
+                        },
+                        complete: function () {
+                            btn.prop('disabled', false).html(defaultBtnHtml);
+                        }
+                    });
+                });
+            });
+
+            // Initial load of existing resignation request
+            fetchExistingResignation();
+        });
+    </script>
 </body>
 </html>

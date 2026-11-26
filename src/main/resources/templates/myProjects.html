@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>My Projects</title>
+
+    <!-- Fonts: IBM Plex Sans & Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"IBM Plex Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"IBM Plex Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7fa',
+                            100: '#d9ecf4',
+                            600: '#2C6E8F',
+                            700: '#225670',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body class="bg-slate-50 text-slate-900 antialiased selection:bg-brand-100 selection:text-brand-700">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-[98%] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                    <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-semibold tracking-tight text-slate-900 leading-none">My Projects</h1>
+                        <span id="leadBadge" class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600"></span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5 hidden sm:block">Allotments, hours &amp; deadlines across active work</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="refreshBtn" onclick="loadProjects()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/20">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[98%] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total -->
+            <div onclick="setStatusFilter('ALL')" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-all shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Projects</span>
+                    <div class="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <span id="statTotal" class="font-mono text-2xl font-semibold text-slate-900 tabular-nums">–</span>
+                </div>
+            </div>
+
+            <!-- In-Progress -->
+            <div onclick="setStatusFilter('IN_PROGRESS')" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600/40 transition-all shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">In-Progress</span>
+                    <div class="w-7 h-7 rounded-md bg-sky-50 text-brand-600 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                        <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <span id="statInProgress" class="font-mono text-2xl font-semibold text-brand-600 tabular-nums">–</span>
+                </div>
+            </div>
+
+            <!-- Created -->
+            <div onclick="setStatusFilter('CREATED')" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-4 hover:border-indigo-500/40 transition-all shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Created</span>
+                    <div class="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                        <i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <span id="statCreated" class="font-mono text-2xl font-semibold text-indigo-600 tabular-nums">–</span>
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div onclick="setStatusFilter('COMPLETED')" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-4 hover:border-emerald-500/40 transition-all shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed</span>
+                    <div class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <span id="statCompleted" class="font-mono text-2xl font-semibold text-emerald-600 tabular-nums">–</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Data Panel -->
+        <div class="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
+            
+            <!-- Toolbar: Filters & Search -->
+            <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+                
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 flex-wrap" id="filterPills">
+                    <button data-filter="ALL" onclick="setStatusFilter('ALL')" class="filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-slate-900 text-white">
+                        All Projects
+                    </button>
+                    <button data-filter="IN_PROGRESS" onclick="setStatusFilter('IN_PROGRESS')" class="filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-slate-600 hover:bg-slate-100">
+                        In-Progress
+                    </button>
+                    <button data-filter="CREATED" onclick="setStatusFilter('CREATED')" class="hidden filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-slate-600 hover:bg-slate-100">
+                        Created
+                    </button>
+                    <button data-filter="COMPLETED" onclick="setStatusFilter('COMPLETED')" class="filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-slate-600 hover:bg-slate-100">
+                        Completed
+                    </button>
+                    <button data-filter="LOW_HOURS" onclick="setStatusFilter('LOW_HOURS')" class="filter-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-amber-700 bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200/60">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Low Hours (&lt;10h)
+                    </button>
+                </div>
+
+                <!-- Search & Department Filter -->
+                <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                    <select id="deptFilter" onchange="applyFilters()" class="text-xs bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-700 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15">
+                        <option value="">All Departments</option>
+                    </select>
+
+                    <div class="relative flex-1 sm:w-64">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search allotment, creator, PID..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorBanner" class="hidden bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between text-xs text-red-700">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                    <span id="errorMessage">Failed to load projects from /getMyProjects.</span>
+                </div>
+                <button onclick="loadProjects()" class="underline font-medium hover:text-red-900">Retry</button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500 select-none">
+                            <th class="py-2.5 px-3.5 w-12 text-center">#</th>
+                            <th onclick="sortBy('allotmentName')" class="py-2.5 px-3.5 cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center gap-1">Allotment <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th onclick="sortBy('totalHours')" class="py-2.5 px-3.5 text-right cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center justify-end gap-1">Total Hrs <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th onclick="sortBy('bookedhours')" class="py-2.5 px-3.5 text-right cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center justify-end gap-1">Booked / Progress <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th onclick="sortBy('department')" class="py-2.5 px-3.5 cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center gap-1">Dept <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th onclick="sortBy('startdate')" class="py-2.5 px-3.5 cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center gap-1">Start Date <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th onclick="sortBy('enddate')" class="py-2.5 px-3.5 cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center gap-1">Deadline <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th class="py-2.5 px-3.5">Completion</th>
+                            <th onclick="sortBy('status')" class="py-2.5 px-3.5 cursor-pointer hover:text-slate-800 transition-colors">
+                                <div class="flex items-center gap-1">Status <i data-lucide="chevrons-up-down" class="w-3 h-3 opacity-40"></i></div>
+                            </th>
+                            <th class="py-2.5 px-3.5">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 text-[13px]">
+                        <tr class="animate-pulse">
+                            <td colspan="11" class="p-8 text-center text-slate-400 text-xs">Loading projects...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer: Pagination & Info -->
+            <div class="px-4 py-3 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div class="flex items-center gap-3">
+                    <span id="paginationInfo">Showing 0 to 0 of 0 entries</span>
+                    <select id="pageSizeSelect" onchange="changePageSize()" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none">
+                        <option value="15">15 / page</option>
+                        <option value="25" selected>25 / page</option>
+                        <option value="50">50 / page</option>
+                        <option value="100">100 / page</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1" id="paginationControls"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Assign Project Modal -->
+    <div id="assignModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modalTitle" role="dialog" aria-modal="true">
+        <div onclick="closeAssignModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-[1px] transition-opacity"></div>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none flex items-center justify-center p-4">
+            <div class="bg-white border border-slate-200 rounded-lg shadow-xl w-full max-w-lg pointer-events-auto overflow-hidden transform transition-all">
+                
+                <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-900" id="modalTitle">Assign Project</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Allocate hours and deadline to a team member</p>
+                    </div>
+                    <button onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <form id="assignForm" onsubmit="handleAssignSubmit(event)" class="p-5 space-y-4">
+                    <input type="hidden" id="projectId" name="projectId">
+
+                    <div>
+                        <label for="teamMember" class="block text-xs font-semibold text-slate-700 mb-1.5">Team Member <span class="text-red-500">*</span></label>
+                        <select id="teamMember" name="teamMember" required onchange="validateAssignForm()" class="w-full text-sm bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20">
+                            <option value="">-- Select Member --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="feeders" class="block text-xs font-semibold text-slate-700 mb-1.5">Feeders <span class="text-red-500">*</span></label>
+                        <input type="text" id="feeders" name="feeders" required oninput="validateAssignForm()" placeholder="Enter feeders..." class="w-full text-sm bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="segmentHours" class="text-xs font-semibold text-slate-700">Hours <span class="text-red-500">*</span></label>
+                                <span id="availableHrsBadge" class="font-mono text-[11px] px-1.5 py-0.5 rounded bg-sky-50 text-brand-600 font-medium">0 hrs avail</span>
+                            </div>
+                            <input type="number" id="segmentHours" name="segmentHours" min="1" step="0.5" required oninput="validateAssignForm()" placeholder="0" class="w-full font-mono text-sm bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20">
+                        </div>
+
+                        <div>
+                            <label for="deadline" class="block text-xs font-semibold text-slate-700 mb-1.5">Deadline <span class="text-red-500">*</span></label>
+                            <input type="date" id="deadline" name="deadline" required onchange="validateAssignForm()" class="w-full font-mono text-sm bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                        <button type="button" onclick="closeAssignModal()" class="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="assignSubmitBtn" disabled class="px-4 py-2 text-xs font-medium text-white bg-brand-600 rounded-md hover:bg-brand-700 disabled:opacity-45 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5">
+                            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                            <span>Assign Project</span>
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+    <script>
+        let allProjects = [];
+        let filteredProjects = [];
+        let currentStatusFilter = 'ALL';
+        let sortConfig = { key: null, direction: 'asc' };
+        let currentPage = 1;
+        let pageSize = 25;
+        let currentAvailableHours = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadProjects();
+        });
+
+        async function loadProjects() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            const errorBanner = document.getElementById('errorBanner');
+            refreshIcon.classList.add('animate-spin');
+            errorBanner.classList.add('hidden');
+
+            try {
+                const response = await fetch('/getMyProjects', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const payload = await response.json();
+                allProjects = Array.isArray(payload) ? payload : (payload.data || payload.projects || []);
+
+                // Show Lead Name / EID badge in header if present
+                if (allProjects.length > 0 && allProjects[0].projectLeadd) {
+                    const leadBadge = document.getElementById('leadBadge');
+                    const eid = allProjects[0].EID || allProjects[0].eid || '';
+                    leadBadge.textContent = eid ? `${allProjects[0].projectLeadd} (${eid})` : allProjects[0].projectLeadd;
+                    leadBadge.classList.remove('hidden');
+                }
+
+                computeStats(allProjects);
+                populateDepartmentDropdown(allProjects);
+                applyFilters();
+            } catch (err) {
+                console.error('Error fetching /getMyProjects:', err);
+                errorBanner.classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = `Unable to fetch projects from /getMyProjects (${err.message}).`;
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="11" class="py-12 text-center text-slate-400 text-xs">
+                            No project data available. Check API connection and try again.
+                        </td>
+                    </tr>`;
+            } finally {
+                refreshIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // Compute KPI stats mapped to SQL CASE values: 'Created', 'In-Progress', 'Completed', 'On Hold', 'Withdrawn'
+        function computeStats(projects) {
+            let total = projects.length;
+            let inProgress = 0;
+            let created = 0;
+            let completed = 0;
+
+            projects.forEach(p => {
+                const s = (p.status || '').toLowerCase().trim();
+                if (s === 'in-progress') inProgress++;
+                else if (s === 'created') created++;
+                else if (s === 'completed') completed++;
+            });
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statInProgress').textContent = inProgress;
+            document.getElementById('statCreated').textContent = created;
+            document.getElementById('statCompleted').textContent = completed;
+        }
+
+        function populateDepartmentDropdown(projects) {
+            const deptSelect = document.getElementById('deptFilter');
+            const currentVal = deptSelect.value;
+            const departments = [...new Set(projects.map(p => p.department).filter(Boolean))].sort();
+
+            deptSelect.innerHTML = '<option value="">All Departments</option>' +
+                departments.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+            deptSelect.value = currentVal;
+        }
+
+        function setStatusFilter(filter) {
+            currentStatusFilter = filter;
+            currentPage = 1;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isSelected = btn.dataset.filter === filter;
+                if (filter === 'LOW_HOURS' && isSelected) {
+                    btn.className = 'filter-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-amber-600 text-white border border-amber-600';
+                } else if (btn.dataset.filter === 'LOW_HOURS') {
+                    btn.className = 'filter-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-amber-700 bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200/60';
+                } else if (isSelected) {
+                    btn.className = 'filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-slate-900 text-white';
+                } else {
+                    btn.className = 'filter-btn px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-slate-600 hover:bg-slate-100';
+                }
+            });
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            const deptQuery = document.getElementById('deptFilter').value;
+
+            filteredProjects = allProjects.filter(p => {
+                const status = (p.status || '').toLowerCase().trim();
+                const totalHrs = parseFloat(p.totalHours) || 0;
+                const bookedHrs = parseFloat(p.bookedhours) || 0;
+                const available = totalHrs - bookedHrs;
+
+                if (currentStatusFilter === 'IN_PROGRESS' && status !== 'in-progress') return false;
+                if (currentStatusFilter === 'CREATED' && status !== 'created') return false;
+                if (currentStatusFilter === 'COMPLETED' && status !== 'completed') return false;
+                if (currentStatusFilter === 'LOW_HOURS' && (status === 'completed' || available >= 10)) return false;
+
+                if (deptQuery && p.department !== deptQuery) return false;
+
+                if (searchQuery) {
+                    const haystack = `${p.pid || ''} ${p.allotmentName || ''} ${p.department || ''} ${p.createdBy || ''} ${p.status || ''}`.toLowerCase();
+                    if (!haystack.includes(searchQuery)) return false;
+                }
+
+                return true;
+            });
+
+            if (sortConfig.key) {
+                sortData();
+            }
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        function sortBy(key) {
+            if (sortConfig.key === key) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.key = key;
+                sortConfig.direction = 'asc';
+            }
+            sortData();
+            renderTable();
+        }
+
+        function sortData() {
+            const { key, direction } = sortConfig;
+            const mult = direction === 'asc' ? 1 : -1;
+
+            filteredProjects.sort((a, b) => {
+                let valA = a[key] ?? '';
+                let valB = b[key] ?? '';
+
+                if (key === 'totalHours' || key === 'bookedhours') {
+                    valA = parseFloat(valA) || 0;
+                    valB = parseFloat(valB) || 0;
+                    return (valA - valB) * mult;
+                }
+
+                // Parse DD-MMM-YYYY dates properly when sorting date columns
+                if (key === 'startdate' || key === 'enddate') {
+                    const dA = Date.parse(valA) || 0;
+                    const dB = Date.parse(valB) || 0;
+                    return (dA - dB) * mult;
+                }
+
+                return String(valA).localeCompare(String(valB), undefined, { numeric: true }) * mult;
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const totalItems = filteredProjects.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, totalItems);
+            const pageSlice = filteredProjects.slice(startIdx, endIdx);
+
+            if (totalItems === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="py-12 text-center">
+                            <div class="inline-flex flex-col items-center text-slate-400">
+                                <i data-lucide="inbox" class="w-8 h-8 mb-2 stroke-[1.5]"></i>
+                                <span class="text-xs font-medium text-slate-600">No matching projects found</span>
+                                <span class="text-[11px] mt-0.5">Try adjusting your filters or search query</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                lucide.createIcons();
+                renderPagination(0, 0, 0, 1);
+                return;
+            }
+
+            tbody.innerHTML = pageSlice.map((row, idx) => {
+                const slno = startIdx + idx + 1;
+                const totalHrs = parseFloat(row.totalHours) || 0;
+                const bookedHrs = parseFloat(row.bookedhours) || 0;
+                const available = Math.max(0, totalHrs - bookedHrs);
+                const pct = totalHrs > 0 ? Math.min(100, Math.round((bookedHrs / totalHrs) * 100)) : 0;
+
+                const statusLower = (row.status || '').toLowerCase().trim();
+                const isCompleted = statusLower === 'completed';
+                const isLowHours = !isCompleted && (totalHrs - bookedHrs) < 10;
+
+                const rowClass = isLowHours
+                    ? 'bg-amber-50/65 hover:bg-amber-100/60 transition-colors'
+                    : 'hover:bg-sky-50/50 transition-colors';
+
+                // Uses `row.allotmentName` from SQL query
+                const projectTitleHtml = isCompleted
+                    ? `<span class="font-medium text-slate-700">${escapeHtml(row.allotmentName || '-')}</span>`
+                    : `<a href="/viewProject?id=${encodeURIComponent(row.pid)}" class="font-medium text-brand-600 hover:text-brand-700 hover:underline">${escapeHtml(row.allotmentName || '-')}</a>`;
+
+                let barColor = 'bg-brand-600';
+                if (pct >= 95) barColor = 'bg-amber-500';
+                if (isCompleted) barColor = 'bg-emerald-500';
+
+                const actionHtml = (!isCompleted && available > 0)
+                    ? `<button onclick='openAssignModal(${JSON.stringify({ id: row.pid, name: row.allotmentName, available })})' class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-brand-600 bg-white border border-slate-200 rounded hover:border-brand-600 hover:bg-brand-50 transition-colors">
+                        <i data-lucide="user-plus" class="w-3 h-3"></i> Assign
+                       </button>`
+                    : `<span class="text-slate-300 text-xs">—</span>`;
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="py-2.5 px-3.5 text-center font-mono text-xs text-slate-400 tabular-nums">${slno}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                ${projectTitleHtml}
+                                ${isLowHours ? `<span title="Less than 10 hours remaining" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-100 text-amber-800">${available}h left</span>` : ''}
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-right font-mono text-xs text-slate-700 tabular-nums">${totalHrs}</td>
+                        <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center justify-end gap-2.5">
+                                <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
+                                    <div class="h-full ${barColor} rounded-full" style="width: ${pct}%"></div>
+                                </div>
+                                <span class="font-mono text-xs text-slate-700 tabular-nums w-10 text-right">${bookedHrs}</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap text-slate-600 text-xs">${escapeHtml(row.department || '—')}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap font-mono text-xs text-slate-500">${escapeHtml(row.startdate || '—')}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap font-mono text-xs text-slate-600">${escapeHtml(row.enddate || '—')}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap font-mono text-xs text-slate-500">${escapeHtml(row.completionDate || '—')}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap">${renderStatusBadge(row.status)}</td>
+                        <td class="py-2.5 px-3.5 whitespace-nowrap">
+                            <div class="text-xs text-slate-700">${escapeHtml(row.createdBy || '—')}</div>
+                            <div class="font-mono text-[11px] text-slate-400">${escapeHtml(row.createdAt || '')}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+            renderPagination(startIdx + 1, endIdx, totalItems, totalPages);
+        }
+
+        // Status badges matching SQL CASE outputs: 'Created', 'In-Progress', 'Completed', 'On Hold', 'Withdrawn'
+        function renderStatusBadge(status) {
+            const s = (status || '').toLowerCase().trim();
+            if (s === 'completed') {
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${escapeHtml(status)}
+                </span>`;
+            }
+            if (s === 'in-progress') {
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-brand-600 border border-sky-200/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-600"></span>${escapeHtml(status)}
+                </span>`;
+            }
+            if (s === 'created') {
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>${escapeHtml(status)}
+                </span>`;
+            }
+            if (s === 'on hold') {
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${escapeHtml(status)}
+                </span>`;
+            }
+            if (s === 'withdrawn') {
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${escapeHtml(status)}
+                </span>`;
+            }
+            return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>${escapeHtml(status || 'Unknown')}
+            </span>`;
+        }
+
+        function renderPagination(start, end, total, totalPages) {
+            document.getElementById('paginationInfo').textContent =
+                total === 0 ? 'Showing 0 entries' : `Showing ${start} to ${end} of ${total} entries`;
+
+            const container = document.getElementById('paginationControls');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none">
+                    Prev
+                </button>`;
+
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                    const activeCls = p === currentPage
+                        ? 'bg-brand-600 text-white border-brand-600 font-medium'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+                    html += `<button onclick="goToPage(${p})" class="px-2.5 py-1 rounded border font-mono ${activeCls}">${p}</button>`;
+                } else if (p === currentPage - 2 || p === currentPage + 2) {
+                    html += `<span class="px-1 text-slate-400">…</span>`;
+                }
+            }
+
+            html += `
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none">
+                    Next
+                </button>`;
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Assign Modal Logic
+        async function openAssignModal({ id, name, available }) {
+            currentAvailableHours = available;
+            document.getElementById('projectId').value = id;
+            document.getElementById('modalTitle').textContent = `Assign: ${name}`;
+            document.getElementById('availableHrsBadge').textContent = `${available} Hrs Available`;
+
+            const memberSelect = document.getElementById('teamMember');
+            memberSelect.innerHTML = '<option value="">Loading team members...</option>';
+            document.getElementById('feeders').value = '';
+            document.getElementById('segmentHours').value = '';
+            document.getElementById('segmentHours').max = available;
+
+            const today = new Date().toISOString().split('T')[0];
+            const deadlineInput = document.getElementById('deadline');
+            deadlineInput.min = today;
+            deadlineInput.value = '';
+
+            document.getElementById('assignSubmitBtn').disabled = true;
+            document.getElementById('assignModal').classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/getProjectMembers?projectId=${encodeURIComponent(id)}`);
+                if (!res.ok) throw new Error('Failed to load members');
+                const members = await res.json();
+
+                memberSelect.innerHTML = '<option value="">-- Select Member --</option>' +
+                    members.map(m => `<option value="${escapeHtml(m.EID || m.eid || m.id)}">${escapeHtml(m.fullname || m.name)}</option>`).join('');
+            } catch (err) {
+                memberSelect.innerHTML = '<option value="">No members available</option>';
+            }
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').classList.add('hidden');
+        }
+
+        function validateAssignForm() {
+            const entered = parseFloat(document.getElementById('segmentHours').value);
+            const member = document.getElementById('teamMember').value;
+            const feeders = document.getElementById('feeders').value.trim();
+            const deadline = document.getElementById('deadline').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            const isValid = entered > 0 && entered <= currentAvailableHours && member && feeders && deadline >= today;
+            document.getElementById('assignSubmitBtn').disabled = !isValid;
+        }
+
+        async function handleAssignSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('assignSubmitBtn');
+            submitBtn.disabled = true;
+
+            const payload = {
+                projectId: document.getElementById('projectId').value,
+                teamMember: document.getElementById('teamMember').value,
+                feeders: document.getElementById('feeders').value.trim(),
+                segmentHours: parseFloat(document.getElementById('segmentHours').value),
+                deadline: document.getElementById('deadline').value
+            };
+
+            try {
+                const res = await fetch('/assignProject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error('Assignment request failed');
+
+                closeAssignModal();
+                showToast('Project assigned successfully', 'success');
+                loadProjects();
+            } catch (err) {
+                showToast(err.message || 'Failed to assign project', 'error');
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = type === 'success'
+                ? 'bg-slate-900 text-white border-slate-800'
+                : 'bg-red-600 text-white border-red-700';
+
+            toast.className = `${colors} border px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium flex items-center gap-2 transition-all duration-300`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-1');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>

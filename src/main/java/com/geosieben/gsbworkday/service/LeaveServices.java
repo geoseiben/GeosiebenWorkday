@@ -1,6 +1,7 @@
 package com.geosieben.gsbworkday.service;
 
 import com.geosieben.gsbworkday.dto.LeaveBalanceReposnseDto;
+import com.geosieben.gsbworkday.dto.LeaveDetailProjection;
 import com.geosieben.gsbworkday.dto.LeaveProjection;
 import com.geosieben.gsbworkday.dto.LeaveRequestDto;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
@@ -29,10 +30,13 @@ public class LeaveServices implements LeaveInterface {
     private EmailService emailService;
     private AdminActivitiesRepository adminActivitiesRepository;
     private AttendanceRepository attendanceRepository;
+    private final RestricetdHolidayRepository restricetdHolidayRepository;
+
 
     public LeaveServices(LeaveBalanceRepository leaveBalanceRepository, LeaveRepository leaveRepository,
             BasicInfoRepository basicInfoRepository, HttpSession httpSession, EmailService emailService,
-            AdminActivitiesRepository adminActivitiesRepository, AttendanceRepository attendanceRepository) {
+            AdminActivitiesRepository adminActivitiesRepository, AttendanceRepository attendanceRepository,
+            RestricetdHolidayRepository restricetdHolidayRepository) {
         this.leaveBalanceRepository = leaveBalanceRepository;
         this.leaveRepository = leaveRepository;
         this.basicInfoRepository = basicInfoRepository;
@@ -40,7 +44,10 @@ public class LeaveServices implements LeaveInterface {
         this.emailService = emailService;
         this.adminActivitiesRepository = adminActivitiesRepository;
         this.attendanceRepository = attendanceRepository;
+        this.restricetdHolidayRepository = restricetdHolidayRepository;
+
     }
+
     @Value("${app.hrname}")
     private String toname;
     @Value("${app.hrmail}")
@@ -266,4 +273,12 @@ public void deleteAttendance(Leaves leave){
 public  List<LeaveProjection> getLeaveProjectionsService(){
     return leaveRepository.findLeavesForCalenderProjection();
 }
+
+public List<LeaveDetailProjection> getLeavesByEmployeeId() {
+        return leaveRepository.findLeavesByEmployeeId((String) httpSession.getAttribute("eid"));
+    }
+
+    public   List<RestrictedHolidays> fetchRHService(){
+        return restricetdHolidayRepository.getRhAvailable();
+    }
 }

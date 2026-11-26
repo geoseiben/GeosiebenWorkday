@@ -3,6 +3,7 @@ package com.geosieben.gsbworkday.repository;
 import com.geosieben.gsbworkday.dto.LeaveAvailedDto;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProj;
 import com.geosieben.gsbworkday.dto.LeaveAvailedProjMonth;
+import com.geosieben.gsbworkday.dto.LeaveDetailProjection;
 import com.geosieben.gsbworkday.dto.LeaveProjection;
 import com.geosieben.gsbworkday.dto.PendingLeaveResponseDto;
 import com.geosieben.gsbworkday.entity.Leaves;
@@ -116,4 +117,34 @@ public List<LeaveAvailedProjMonth> getLeaveAvailedByMonthForYear(@Param("year") 
             ORDER BY l.eid ASC
             """, nativeQuery = true)
         public List<LeaveProjection> findLeavesForCalenderProjection();
+
+        @Query(value = """
+            SELECT 
+                id AS id, 
+                eid AS eid, 
+                DATE_FORMAT(fromdate, '%d-%b-%Y') AS fromDate,
+                DATE_FORMAT(toDate, '%d-%b-%Y') AS toDate,
+                noofdays AS noofdays, 
+                description AS description, 
+                CASE leaveType 
+                    WHEN 'CL' THEN 'Casual Leave'
+                    WHEN 'SL' THEN 'Sick Leave'
+                    WHEN 'EL' THEN 'Earned Leave'
+                    WHEN 'RH' THEN 'Restricted Holiday'
+                    WHEN 'CO' THEN 'Compensatory Off'
+                END AS leaveType, 
+                CASE status
+                    WHEN 0 THEN 'Pending'
+                    WHEN 1 THEN 'Approved'
+                    WHEN 2 THEN 'Rejected'
+                    WHEN 3 THEN 'Cancelled'
+                    WHEN 4 THEN 'Withdrawn'
+                    WHEN 5 THEN 'Hold'
+                END AS status
+            FROM tblleaves 
+            WHERE EID = :eid 
+            ORDER BY id DESC
+            """, nativeQuery = true)
+  public   List<LeaveDetailProjection> findLeavesByEmployeeId(@Param("eid") String eid);
 }
+

@@ -8,8 +8,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
+@Data 
 @Table(name = "restricted_holidays")
 public class RestrictedHolidays {
 @Id
@@ -18,44 +20,21 @@ private int id;
 private String holidayName;
 private LocalDate holidayDate;
 private LocalDateTime createdAt=LocalDateTime.now();
+private LocalDateTime updatedAt=LocalDateTime.now();
 private String type;
 
 
 public RestrictedHolidays() {
 }
-public RestrictedHolidays(String holidayName, LocalDate holidayDate, String type) {
-    this.holidayName = holidayName;
-    this.holidayDate = holidayDate;
-    this.type = type;
-}
-public int getId() {
-    return id;
-}
-public void setId(int id) {
+
+
+public RestrictedHolidays(int id, String holidayName, LocalDate holidayDate, LocalDateTime createdAt,
+        LocalDateTime updatedAt, String type) {
     this.id = id;
-}
-public String getHolidayName() {
-    return holidayName;
-}
-public void setHolidayName(String holidayName) {
     this.holidayName = holidayName;
-}
-public LocalDate getHolidayDate() {
-    return holidayDate;
-}
-public void setHolidayDate(LocalDate holidayDate) {
     this.holidayDate = holidayDate;
-}
-public LocalDateTime getCreatedAt() {
-    return createdAt;
-}
-public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
-}
-public String getType() {
-    return type;
-}
-public void setType(String type) {
+    this.updatedAt = updatedAt;
     this.type = type;
 }
 

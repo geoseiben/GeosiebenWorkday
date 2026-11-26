@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 
+
 @RestController
 public class TestController {
     private final BasicInfoRepository basicInfoRepository;
@@ -45,7 +46,6 @@ public class TestController {
                 if(!file.isEmpty()){
                  path=excelService.uploadImage(file);
                 }
-                System.out.println(path);
                         return employeeService.addEmployee(dto, path);
     }
     @GetMapping("/leaves/getbalance")
@@ -61,6 +61,23 @@ public class TestController {
     public ResponseEntity<Map<String,String>> applyLeave(@ModelAttribute LeaveRequestDto dto) throws MessagingException, UnsupportedEncodingException {
         return leaveServices.applyLeave(dto);
     }
+
+    @GetMapping("/leaves/getLeavesHistory")
+    public ResponseEntity<List<LeaveDetailProjection>> getEmployeeLeaves() {
+        List<LeaveDetailProjection> leaves = leaveServices.getLeavesByEmployeeId();
+        
+        if (leaves.isEmpty()) {
+            return ResponseEntity.noContent().build(); // Returns HTTP 204 if no records exist
+        }
+        
+        return ResponseEntity.ok(leaves); // Returns HTTP 200 with JSON array
+    }
+
+    @GetMapping("/leaves/getRh")
+    public  List<RestrictedHolidays> getRh() {
+        return leaveServices.fetchRHService();
+    }
+    
     @GetMapping("/admin/pendingrequests")
     
     public List<PendingLeaveResponseDto> pendingRequests(){

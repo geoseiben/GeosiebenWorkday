@@ -22,11 +22,12 @@ public class Project {
 @Id 
 @GeneratedValue(strategy=GenerationType.IDENTITY)
 private int pid;
+private  String projectId;
 private String allotmentName;
 private BigDecimal totalHours;
 private BigDecimal productionHrs;
 private BigDecimal qaHrs;
-private LocalDate starDate;
+private LocalDate startDate;
 private LocalDate endDate;
 private String area;
 @ColumnDefault("1")
@@ -55,15 +56,18 @@ private RootProject rootProject;
 @ManyToOne(cascade = CascadeType.MERGE)
 @JoinColumn(name="department")
 private Department department;
-public Project(String allotmentName, BigDecimal totalHours, BigDecimal productionHrs, BigDecimal qaHrs,
-        LocalDate starDate, LocalDate endDate, String area, int isHoursFixed, LocalDateTime createdAt, int status,
-        String filePath, double addHours, LocalDateTime finishedOn, EmployeeBasicInfo projectLead,
-        ProjectCategories category, EmployeeBasicInfo createdBy, RootProject rootProject, Department department) {
+public Project(int pid, String projectId, String allotmentName, BigDecimal totalHours, BigDecimal productionHrs,
+        BigDecimal qaHrs, LocalDate startDate, LocalDate endDate, String area, int isHoursFixed,
+        LocalDateTime createdAt, int status, String filePath, double addHours, LocalDateTime finishedOn,
+        EmployeeBasicInfo projectLead, ProjectCategories category, EmployeeBasicInfo createdBy, RootProject rootProject,
+        Department department) {
+    this.pid = pid;
+    this.projectId = projectId;
     this.allotmentName = allotmentName;
     this.totalHours = totalHours;
     this.productionHrs = productionHrs;
     this.qaHrs = qaHrs;
-    this.starDate = starDate;
+    this.startDate = startDate;
     this.endDate = endDate;
     this.area = area;
     this.isHoursFixed = isHoursFixed;
@@ -78,5 +82,6 @@ public Project(String allotmentName, BigDecimal totalHours, BigDecimal productio
     this.rootProject = rootProject;
     this.department = department;
 }
+
 
 }

@@ -8,7 +8,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 import javax.crypto.Cipher;
@@ -18,6 +20,32 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AddonServ {
+
+    public static Map<String,Integer> targetHoursMap=new HashMap<>();
+    public static Map<String,Integer> extendedTargetMap=new HashMap<>();
+    static {
+        targetHoursMap.put("Trainee", 110);
+        targetHoursMap.put("GIS Trainee", 110);
+        targetHoursMap.put("Associate", 140);
+        targetHoursMap.put("GIS Associate", 140);
+        targetHoursMap.put("Analyst", 160);
+        targetHoursMap.put("GIS Analyst", 160);
+        targetHoursMap.put("Team Lead", 184);
+        targetHoursMap.put("Senior Associate", 184);
+        targetHoursMap.put("Un-Assigned", 175);
+
+
+        extendedTargetMap.put("Trainee", 110);
+        extendedTargetMap.put("GIS Trainee", 110);
+        extendedTargetMap.put("Associate", 160);
+        extendedTargetMap.put("GIS Associate", 160);
+        extendedTargetMap.put("Analyst", 184);
+        extendedTargetMap.put("GIS Analyst", 184);
+        extendedTargetMap.put("Team Lead", 200);
+        extendedTargetMap.put("Senior Associate", 200);
+        extendedTargetMap.put("Un-Assigned", 184);
+
+    }
     public static String fullDateFormatter(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
         return date.format(formatter);

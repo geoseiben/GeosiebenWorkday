@@ -41,13 +41,14 @@
             type:'GET',
             dataType:'JSON',
             success:function(res){
+                console.log(res);
                 let container=document.getElementById("container");
                 container.innerHTML=`<main class="mn-inner max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4 transition-all duration-300" >
 
     <div class="mn-card p-6 mb-6 flex flex-col md:flex-row items-center md:items-start gap-6">
         
         <div class="relative flex-shrink-0">
-            <img src="" alt="Profile" class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border border-slate-200 shadow-sm">
+            <img src="${res.image}" alt="Profile" class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border border-slate-200 shadow-sm">
             <div class="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" title="Active"></div>
         </div>
 

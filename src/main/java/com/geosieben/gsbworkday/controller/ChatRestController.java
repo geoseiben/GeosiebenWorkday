@@ -8,7 +8,6 @@ import com.geosieben.gsbworkday.repository.ChattingRepository;
 import com.geosieben.gsbworkday.service.ChattingService;
 
 import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
@@ -17,22 +16,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
+
 
 
 
 
 @RestController
 public class ChatRestController {
-private final ChattingRepository chattingRepository;
 private final HttpSession httpSession;
 private final ChattingService chattingService;
 
 
-public ChatRestController(ChattingRepository chattingRepository, HttpSession httpSession,
+public ChatRestController( HttpSession httpSession,
         ChattingService chattingService) {
-    this.chattingRepository = chattingRepository;
     this.httpSession = httpSession;
     this.chattingService = chattingService;
 }

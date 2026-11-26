@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Overall Hours & Performance</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50:  '#f0f4ff',
+            100: '#dfe8ff',
+            200: '#c4d4ff',
+            300: '#9cb6ff',
+            400: '#6e8eff',
+            500: '#4564ff',
+            600: '#1034A6',
+            700: '#0c277d',
+          }
+        },
+        keyframes: {
+          fadeIn: { '0%': {opacity: 0, transform: 'translateY(-3px)'}, '100%': {opacity: 1, transform: 'translateY(0)'} },
+          shimmer: { '0%': {backgroundPosition: '-400px 0'}, '100%': {backgroundPosition: '400px 0'} },
+        },
+        animation: {
+          fadeIn: 'fadeIn .2s ease-out',
+          shimmer: 'shimmer 1.4s infinite linear',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .skeleton {
+    background: linear-gradient(90deg, #eef2f7 25%, #f7fafc 37%, #eef2f7 63%);
+    background-size: 400px 100%;
+  }
+  ::-webkit-scrollbar { height: 6px; width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  select.plain-select {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right .55rem center;
+    background-size: .85rem;
+  }
+  th[data-sort] { cursor: pointer; user-select: none; }
+  th[data-sort]:hover { color: #1034A6; }
+  .sort-arrow { display: inline-flex; opacity: .35; transition: opacity .15s, transform .15s; }
+  th[data-sort].sort-asc .sort-arrow,
+  th[data-sort].sort-desc .sort-arrow { opacity: 1; color: #1034A6; }
+  th[data-sort].sort-desc .sort-arrow { transform: rotate(180deg); }
+</style>
+</head>
+<head th:replace="includes/header :: header"></head>
+
+<body >
+
+
+<div class="w-full px-4 sm:px-6 py-4 space-y-3.5">
+
+  <!-- Top Command Bar: Identity, Quick Year Pills, YoY Selector & Actions -->
+  <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-2xs">
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base font-bold text-slate-900 tracking-tight">My Overall Hours & Performance</h1>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200/70" id="empIdLabel">
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls: Year Pill Strip + Comparison Selector + Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Dynamic Year Pills -->
+      <div id="yearPillGroup" class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/70 text-xs"></div>
+
+      <!-- Comparison Dropdown -->
+      <div class="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Compare:</span>
+        <select id="compareYearSelect" class="plain-select text-xs font-semibold text-slate-700 pr-5 focus:outline-none bg-transparent">
+          <option value="NONE">Off</option>
+        </select>
+      </div>
+
+      <button id="exportAllBtn"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-600 active:scale-95">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 10.5 12 15m0 0 4.5-4.5M12 15V3" />
+        </svg>
+        <span id="exportBtnLabel">Export CSV</span>
+      </button>
+
+      <button id="refreshBtn"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-700 active:scale-95">
+        <svg id="refreshIcon" class="w-3.5 h-3.5 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        Refresh
+      </button>
+
+      <button id="logout" style="display:<?php echo ($_SESSION['desgn'] ?? '') === 'Freelancer' ? '' : 'none'; ?>;"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-100 active:scale-95">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+        Log Out
+      </button>
+    </div>
+  </div>
+
+  <!-- 6 KPI Cards with Sparklines & YoY Deltas -->
+  <div id="summaryCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"></div>
+
+  <!-- Primary Analytics Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+    <!-- Main Multi-Perspective Chart (7 cols) -->
+    <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800" id="mainChartTitle">Monthly Hours & Efficiency Trajectory</h2>
+          <p class="text-[11px] text-slate-400" id="mainChartSubtitle">Booked, Extra & Carried hours vs Target capacity & Utilization %</p>
+        </div>
+        <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px]" id="chartModeToggle">
+          <button data-mode="combo" class="px-2 py-1 rounded-md bg-white text-brand-600 font-semibold shadow-2xs">Trend</button>
+          <button data-mode="yoy" class="px-2 py-1 rounded-md text-slate-600 hover:text-slate-900">Jan–Dec YoY</button>
+          <button data-mode="cumulative" class="px-2 py-1 rounded-md text-slate-600 hover:text-slate-900">Cumulative</button>
+          <button data-mode="quarterly" class="px-2 py-1 rounded-md text-slate-600 hover:text-slate-900">Quarterly</button>
+        </div>
+      </div>
+      <div class="relative h-60 w-full">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Right Analytics Cluster (5 cols) -->
+    <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+      <!-- 5-Axis Performance Radar -->
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Efficiency Radar</h2>
+            <span id="radarBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-600">Score: —</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Multi-metric capability profile</p>
+        </div>
+        <div class="relative h-44 w-full my-1">
+          <canvas id="radarChart"></canvas>
+        </div>
+        <div id="radarScoreSummary" class="text-[11px] text-slate-500 border-t border-slate-100 pt-2 flex justify-between"></div>
+      </div>
+
+      <!-- Work Category Mix Donut -->
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Work Mix Split</h2>
+          <p class="text-[11px] text-slate-400">Hours distribution by type</p>
+        </div>
+        <div class="relative h-36 w-full my-1 flex items-center justify-center">
+          <canvas id="typeDonutChart"></canvas>
+        </div>
+        <div id="typeLegend" class="space-y-1 text-[11px] border-t border-slate-100 pt-2"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Secondary Strip: 12-Month Consistency Heatmap + Feeder Distribution + Executive Audit -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+    <!-- Monthly Consistency Matrix & Executive Review (7 cols) -->
+    <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Monthly Utilization Heatmap & Executive Audit</h3>
+          <p class="text-[11px] text-slate-400">Click any month cell to filter the ledger below</p>
+        </div>
+        <div class="flex items-center gap-2 text-[10px] text-slate-500">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-emerald-500 inline-block"></span>&ge;100%</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-brand-600 inline-block"></span>85–99%</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-amber-400 inline-block"></span>&lt;85%</span>
+          <span id="overallGradeBadge" class="ml-1 text-[11px] font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-600 border border-brand-200">—</span>
+        </div>
+      </div>
+
+      <!-- 12-Month Interactive Matrix -->
+      <div id="monthHeatmap" class="grid grid-cols-6 sm:grid-cols-12 gap-1.5"></div>
+
+      <!-- 4-Column Executive Review Metrics -->
+      <div id="performanceInsights" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1 border-t border-slate-100"></div>
+    </div>
+
+    <!-- Top Feeders Horizontal Bar (5 cols) -->
+    <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-1">
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Top Feeder / Project Allocation</h3>
+          <p class="text-[11px] text-slate-400">Highest hour-consuming assignments</p>
+        </div>
+        <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600" id="feederScopeLabel">Focus Scope</span>
+      </div>
+      <div class="relative h-36 w-full">
+        <canvas id="feederBarChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- High-Density Full-Width Ledger Table -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+
+    <!-- Compact Toolbar -->
+    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b border-slate-200 bg-slate-50/70">
+      <div class="flex flex-wrap items-center gap-2 flex-1">
+        <div class="relative w-56">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.34-4.34M18.667 10.333a8.333 8.333 0 1 1-16.667 0 8.333 8.333 0 0 1 16.667 0Z" />
+          </svg>
+          <input id="searchInput" type="text" placeholder="Search month or feeder..."
+            class="w-full pl-8 pr-6 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-600 transition" />
+          <button id="clearSearchBtn" title="Clear search" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">&times;</button>
+        </div>
+
+        <select id="typeFilter" class="plain-select text-xs rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 pr-7 text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-200">
+          <option value="">All Types</option>
+        </select>
+
+        <select id="statusFilter" class="plain-select text-xs rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 pr-7 text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-200">
+          <option value="">All Performance</option>
+          <option value="exceeded">Exceeded (&ge;100%)</option>
+          <option value="ontrack">On Track (85–99%)</option>
+          <option value="under">Under Target (&lt;85%)</option>
+        </select>
+
+        <span id="activeFilterChip" class="hidden inline-flex items-center gap-1 px-2 py-1 rounded-md bg-brand-50 text-brand-600 border border-brand-200 text-[11px] font-medium">
+          <span id="activeFilterText"></span>
+          <button id="resetTableFiltersBtn" class="hover:text-brand-800 font-bold ml-1">&times;</button>
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="expandAllBtn" class="text-xs font-medium text-slate-600 hover:text-brand-600 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:border-brand-300 transition">
+          Expand All
+        </button>
+        <select id="pageSizeSelect" class="plain-select text-xs rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 pr-7 text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-200">
+          <option value="12">12 / page</option>
+          <option value="25" selected>25 / page</option>
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 text-[11px] uppercase tracking-wider">
+            <th class="w-8 px-3 py-2 text-center">
+              <input id="selectAll" type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-400" />
+            </th>
+            <th class="w-6"></th>
+            <th class="text-left font-semibold px-3 py-2" data-sort="month">
+              <span class="inline-flex items-center gap-1">Month
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" data-sort="targetHours">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Target
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" data-sort="carriedHours">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Carried
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" data-sort="bookedHours">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Booked
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" data-sort="variance">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Variance
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" data-sort="extraHours">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Extra
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2" id="yoyColHeader">
+              <span class="inline-flex items-center gap-1 justify-end w-full">Prior Yr</span>
+            </th>
+            <th class="text-left font-semibold px-3 py-2 w-44" data-sort="utilization">
+              <span class="inline-flex items-center gap-1">Utilization & Status
+                <svg class="sort-arrow w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+              </span>
+            </th>
+            <th class="text-right font-semibold px-3 py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+        <tfoot id="tableTotalsFoot" class="hidden bg-slate-50/90 border-t-2 border-slate-200 font-semibold text-slate-800"></tfoot>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div id="tableFooter" class="hidden flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-2 border-t border-slate-200 bg-slate-50/40 text-xs text-slate-500">
+      <p id="entryCount"></p>
+      <div id="paginationControls" class="flex items-center gap-1"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-slate-400">
+      <svg class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+      </svg>
+      <p class="text-xs">No hours records match the current filter criteria.</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden flex-col items-center justify-center py-12 text-rose-500">
+      <svg class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+      </svg>
+      <p class="text-xs font-medium" id="errorMessage">Unable to load hours history.</p>
+    </div>
+
+  </div>
+</div>
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+<script>
+const API_URL     = '/getMyHoursHistory';
+const EMPLOYEE_ID = "<?php echo htmlspecialchars($_SESSION['emplogin'] ?? ''); ?>";
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const tableBody          = document.getElementById('tableBody');
+const tableTotalsFoot    = document.getElementById('tableTotalsFoot');
+const emptyState         = document.getElementById('emptyState');
+const errorState         = document.getElementById('errorState');
+const errorMsg           = document.getElementById('errorMessage');
+const summaryEl          = document.getElementById('summaryCards');
+const refreshBtn         = document.getElementById('refreshBtn');
+const refreshIcon        = document.getElementById('refreshIcon');
+const searchInput        = document.getElementById('searchInput');
+const clearSearchBtn     = document.getElementById('clearSearchBtn');
+const yearPillGroup      = document.getElementById('yearPillGroup');
+const compareYearSelect  = document.getElementById('compareYearSelect');
+const typeFilter         = document.getElementById('typeFilter');
+const statusFilter       = document.getElementById('statusFilter');
+const pageSizeSelect     = document.getElementById('pageSizeSelect');
+const selectAllCheckbox  = document.getElementById('selectAll');
+const tableFooter        = document.getElementById('tableFooter');
+const entryCountEl       = document.getElementById('entryCount');
+const paginationControls = document.getElementById('paginationControls');
+
+let ALL_GROUPS        = [];
+let VIEW_GROUPS       = [];
+let AVAILABLE_YEARS   = [];
+let selectedFocusYear = 'ALL';
+let currentPage       = 1;
+let pageSize          = 25;
+let sortKey           = 'month';
+let sortDir           = 'desc';
+let chartMode         = 'combo'; // 'combo' | 'yoy' | 'cumulative' | 'quarterly'
+let allExpanded       = false;
+const selectedMonths  = new Set();
+
+let trendChartInstance  = null;
+let radarChartInstance  = null;
+let donutChartInstance  = null;
+let feederChartInstance = null;
+
+const fmt = (n) => {
+  const v = Number(n ?? 0);
+  return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+};
+
+const fmtSigned = (n, suffix = '') => {
+  const v = Number(n ?? 0);
+  const str = Number.isInteger(v) ? Math.abs(v).toString() : Math.abs(v).toFixed(1);
+  if (v > 0) return `+${str}${suffix}`;
+  if (v < 0) return `-${str}${suffix}`;
+  return `0${suffix}`;
+};
+
+const parseMonthDate = (mStr) => {
+  if (!mStr) return new Date(0);
+  if (/^\d{4}-\d{2}$/.test(mStr)) return new Date(`${mStr}-01T00:00:00`);
+  const d = new Date(`01-${mStr}`);
+  return isNaN(d.getTime()) ? new Date(mStr) : d;
+};
+
+document.getElementById("logout")?.addEventListener("click", function(e) {
+  e.preventDefault();
+  fetch("logout.php", { method: "POST" })
+    .then(res => { if (res.ok) window.location.href = "index.php"; })
+    .catch(err => console.error("Logout failed:", err));
+});
+
+function skeletonRows(count = 6) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <tr>
+        <td class="px-3 py-2"></td>
+        <td class="px-3 py-2"></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-20 rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-11 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-11 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-11 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-11 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-11 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-14 ml-auto rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-28 rounded animate-shimmer"></div></td>
+        <td class="px-3 py-2"><div class="skeleton h-3.5 w-10 ml-auto rounded animate-shimmer"></div></td>
+      </tr>`;
+  }
+  tableBody.innerHTML = html;
+  tableTotalsFoot.classList.add('hidden');
+  tableFooter.classList.add('hidden');
+  tableFooter.classList.remove('flex');
+}
+
+function groupByMonth(rows) {
+  const map = new Map();
+
+  rows.forEach(r => {
+    const key = r.month || r.monthYear || 'Unknown';
+    if (!map.has(key)) {
+      const dt = parseMonthDate(key);
+      map.set(key, {
+        month: key,
+        year: isNaN(dt.getTime()) ? 'Unknown' : String(dt.getFullYear()),
+        monthIndex: isNaN(dt.getTime()) ? -1 : dt.getMonth(),
+        targetHours: Number(r.targethours ?? r.targetHours ?? 0),
+        carriedHours: Number(r.carriedHours ?? r.carried_hours ?? 0),
+        extraHours: 0,
+        bookedHours: 0,
+        details: []
+      });
+    }
+    const group = map.get(key);
+    const booked = Number(r.hoursBooked ?? r.hours_booked ?? 0);
+    group.bookedHours += booked;
+
+    const extra = r.extraHours ?? r.extra_hours;
+    if (extra != null) group.extraHours = Number(extra);
+
+    group.details.push({
+      feeder: r.feederAlloted || r.feeder || r.project || '—',
+      type: r.type || r.workType || '—',
+      hoursBooked: booked,
+      lastSubmittedDate: r.lastSubmittedDate || r.last_submitted_date || '—',
+      completionPercentage: Number(r.completionPercentage ?? r.completion_percentage ?? 0)
+    });
+  });
+
+  return Array.from(map.values())
+    .map(g => {
+      const utilization = g.targetHours > 0 ? (g.bookedHours / g.targetHours) * 100 : (g.bookedHours > 0 ? 100 : 0);
+      const variance = g.bookedHours - g.targetHours;
+      return { ...g, utilization, variance };
+    })
+    .sort((a, b) => parseMonthDate(a.month) - parseMonthDate(b.month));
+}
+
+function completionBadge(pct) {
+  const p = Number(pct || 0);
+  let classes = 'bg-slate-100 text-slate-600';
+  if (p >= 100) classes = 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
+  else if (p >= 50) classes = 'bg-amber-50 text-amber-700 border border-amber-200/80';
+  else if (p > 0) classes = 'bg-rose-50 text-rose-700 border border-rose-200/80';
+  return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium ${classes}">${fmt(p)}%</span>`;
+}
+
+function typeBadge(type) {
+  const t = (type || '').toString().toLowerCase();
+  const map = {
+    billable: 'bg-brand-50 text-brand-600 border border-brand-200/70',
+    'non-billable': 'bg-slate-100 text-slate-600 border border-slate-200',
+    leave: 'bg-violet-50 text-violet-700 border border-violet-200/70',
+  };
+  const classes = map[t] || 'bg-slate-100 text-slate-600 border border-slate-200';
+  return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium ${classes}">${type ?? '—'}</span>`;
+}
+
+// Inline SVG Sparkline Generator
+function buildSparkline(values, strokeColor = '#1034A6') {
+  if (!values || values.length < 2) return '';
+  const w = 56, h = 18, pad = 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg width="${w}" height="${h}" class="shrink-0 overflow-visible"><polyline fill="none" stroke="${strokeColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" points="${pts}" /></svg>`;
+}
+
+// ---- Compute Metrics ----
+
+function computeMetrics(groups) {
+  const target  = groups.reduce((s, g) => s + g.targetHours, 0);
+  const carried = groups.reduce((s, g) => s + g.carriedHours, 0);
+  const booked  = groups.reduce((s, g) => s + g.bookedHours, 0);
+  const extra   = groups.reduce((s, g) => s + g.extraHours, 0);
+  const util    = target > 0 ? (booked / target) * 100 : 0;
+  const metCount = groups.filter(g => g.utilization >= 95).length;
+  const consistency = groups.length > 0 ? (metCount / groups.length) * 100 : 0;
+
+  let billableHrs = 0;
+  let totalCompletion = 0;
+  let detailCount = 0;
+  groups.forEach(g => {
+    g.details.forEach(d => {
+      if ((d.type || '').toLowerCase() === 'billable') billableHrs += d.hoursBooked;
+      totalCompletion += d.completionPercentage;
+      detailCount++;
+    });
+  });
+
+  const billableRatio = booked > 0 ? (billableHrs / booked) * 100 : 0;
+  const avgCompletion = detailCount > 0 ? totalCompletion / detailCount : 0;
+
+  return { target, carried, booked, extra, util, consistency, metCount, count: groups.length, billableRatio, avgCompletion };
+}
+
+function getScopedCohorts() {
+  const pYear = selectedFocusYear;
+  const cYear = compareYearSelect.value;
+
+  const primaryGroups = pYear === 'ALL'
+    ? ALL_GROUPS
+    : ALL_GROUPS.filter(g => g.year === pYear);
+
+  const compareGroups = (cYear !== 'NONE' && cYear !== pYear)
+    ? ALL_GROUPS.filter(g => g.year === cYear)
+    : [];
+
+  return { pYear, cYear, primaryGroups, compareGroups };
+}
+
+function deltaPill(curr, prev, suffix = '') {
+  if (prev === null || prev === undefined || isNaN(prev)) return '';
+  const diff = curr - prev;
+  if (Math.abs(diff) < 0.05) return `<span class="text-slate-400 font-medium">0${suffix} vs prior</span>`;
+  const isPositive = diff > 0;
+  const cls = isPositive ? 'text-emerald-600' : 'text-rose-600';
+  const arrow = isPositive ? '▲' : '▼';
+  return `<span class="${cls} font-semibold">${arrow} ${Math.abs(diff).toFixed(1)}${suffix}</span>`;
+}
+
+// ---- Render 6 KPI Cards with Sparklines ----
+
+function renderSummary() {
+  const { pYear, cYear, primaryGroups, compareGroups } = getScopedCohorts();
+  const curr = computeMetrics(primaryGroups);
+  const hasComp = compareGroups.length > 0;
+  const prev = hasComp ? computeMetrics(compareGroups) : null;
+
+  const bookedSpark  = primaryGroups.map(g => g.bookedHours);
+  const targetSpark  = primaryGroups.map(g => g.targetHours);
+  const utilSpark    = primaryGroups.map(g => g.utilization);
+  const carriedSpark = primaryGroups.map(g => g.carriedHours);
+  const extraSpark   = primaryGroups.map(g => g.extraHours);
+
+  const cards = [
+    {
+      label: `Booked Hours (${pYear === 'ALL' ? 'All' : pYear})`,
+      value: `${fmt(curr.booked)}<span class="text-[11px] font-normal text-slate-400 ml-1">hrs</span>`,
+      sub: hasComp
+        ? `${deltaPill(curr.booked, prev.booked, 'h')} vs ${cYear}`
+        : `Net ${fmtSigned(curr.booked - curr.target, 'h')} vs target`,
+      accent: 'text-brand-600',
+      spark: buildSparkline(bookedSpark, '#1034A6')
+    },
+    {
+      label: 'Target Hours',
+      value: `${fmt(curr.target)}<span class="text-[11px] font-normal text-slate-400 ml-1">hrs</span>`,
+      sub: hasComp
+        ? `${deltaPill(curr.target, prev.target, 'h')} vs ${cYear}`
+        : `${curr.count} tracked month${curr.count === 1 ? '' : 's'}`,
+      accent: 'text-slate-900',
+      spark: buildSparkline(targetSpark, '#64748b')
+    },
+    {
+      label: 'PerformanceAverage',
+      value: `${curr.util.toFixed(1)}<span class="text-[11px] font-normal text-slate-400 ml-0.5">%</span>`,
+      sub: hasComp
+        ? `${deltaPill(curr.util, prev.util, '%')} vs ${cYear}`
+        : (curr.util >= 100 ? 'Exceeding capacity' : 'Benchmark: 100%'),
+      accent: curr.util >= 100 ? 'text-emerald-600' : curr.util >= 85 ? 'text-brand-600' : 'text-amber-600',
+      spark: buildSparkline(utilSpark, '#10b981')
+    },
+
+    {
+      label: 'Carried Balance',
+      value: `${fmt(curr.carried)}<span class="text-[11px] font-normal text-slate-400 ml-1">hrs</span>`,
+      sub: hasComp
+        ? `${deltaPill(curr.carried, prev.carried, 'h')} vs ${cYear}`
+        : (primaryGroups.length ? `Latest: ${fmt(primaryGroups[primaryGroups.length - 1].carriedHours)}h` : '—'),
+      accent: 'text-slate-800',
+      spark: buildSparkline(carriedSpark, '#3b82f6')
+    },
+    {
+      label: 'Extra / Overtime',
+      value: `${fmt(curr.extra)}<span class="text-[11px] font-normal text-slate-400 ml-1">hrs</span>`,
+      sub: hasComp
+        ? `${deltaPill(curr.extra, prev.extra, 'h')} vs ${cYear}`
+        : (curr.booked > 0 ? `${((curr.extra / curr.booked) * 100).toFixed(1)}% of booked` : '0% of booked'),
+      accent: 'text-amber-600',
+      spark: buildSparkline(extraSpark, '#f59e0b')
+    }
+  ];
+
+  summaryEl.innerHTML = cards.map(c => `
+    <div class="bg-white rounded-xl border border-slate-200 px-3.5 py-2.5 shadow-2xs hover:border-brand-300 transition flex flex-col justify-between">
+      <div class="flex items-center justify-between gap-1">
+        <p class="text-[11px] font-medium text-slate-500 truncate">${c.label}</p>
+        ${c.spark}
+      </div>
+      <p class="text-lg font-bold tracking-tight mt-0.5 tabular-nums ${c.accent}">${c.value}</p>
+      <p class="text-[11px] text-slate-400 mt-0.5 truncate">${c.sub}</p>
+    </div>
+  `).join('');
+}
+
+// ---- Render Charts & Heatmap ----
+
+function renderCharts() {
+  const { pYear, cYear, primaryGroups, compareGroups } = getScopedCohorts();
+  const hasComp = compareGroups.length > 0;
+
+  const compByMonthIdx = new Map();
+  compareGroups.forEach(g => { if (g.monthIndex >= 0) compByMonthIdx.set(g.monthIndex, g); });
+
+  const primByMonthIdx = new Map();
+  primaryGroups.forEach(g => { if (g.monthIndex >= 0) primByMonthIdx.set(g.monthIndex, g); });
+
+  // ---- 1. Main Chart (4 Modes: Trend, Jan-Dec YoY, Cumulative, Quarterly) ----
+  if (trendChartInstance) trendChartInstance.destroy();
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  const titleEl = document.getElementById('mainChartTitle');
+  const subEl   = document.getElementById('mainChartSubtitle');
+
+  if (chartMode === 'quarterly') {
+    titleEl.textContent = hasComp
+      ? `Quarterly Performance Rollup (${pYear} vs ${cYear})`
+      : `Quarterly Hours & Utilization Rollup (${pYear === 'ALL' ? 'All Years' : pYear})`;
+    subEl.textContent = `Q1–Q4 aggregated Booked Hours, Target Capacity & Utilization %`;
+
+    const qLabels = ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)'];
+    const calcQ = (list) => [0, 1, 2, 3].map(q => {
+      const sub = list.filter(g => Math.floor(g.monthIndex / 3) === q);
+      const b = sub.reduce((s, x) => s + x.bookedHours, 0);
+      const t = sub.reduce((s, x) => s + x.targetHours, 0);
+      const u = t > 0 ? Number(((b / t) * 100).toFixed(1)) : 0;
+      return { b, t, u };
+    });
+
+    const pQ = calcQ(primaryGroups);
+    const cQ = hasComp ? calcQ(compareGroups) : null;
+
+    const datasets = [
+      {
+        type: 'bar',
+        label: `${pYear === 'ALL' ? 'Focus' : pYear} Booked`,
+        data: pQ.map(x => x.b),
+        backgroundColor: '#1034A6',
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 2
+      },
+      {
+        type: 'line',
+        label: `${pYear === 'ALL' ? 'Focus' : pYear} Util %`,
+        data: pQ.map(x => x.u),
+        borderColor: '#10b981',
+        backgroundColor: '#10b981',
+        borderWidth: 2,
+        pointRadius: 4,
+        yAxisID: 'y1',
+        order: 0
+      }
+    ];
+
+    if (hasComp) {
+      datasets.splice(1, 0, {
+        type: 'bar',
+        label: `${cYear} Booked`,
+        data: cQ.map(x => x.b),
+        backgroundColor: '#94a3b8',
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 3
+      });
+      datasets.push({
+        type: 'line',
+        label: `${cYear} Util %`,
+        data: cQ.map(x => x.u),
+        borderColor: '#f59e0b',
+        borderDash: [4, 4],
+        borderWidth: 2,
+        pointRadius: 3,
+        yAxisID: 'y1',
+        order: 1
+      });
+    } else {
+      datasets.splice(1, 0, {
+        type: 'bar',
+        label: 'Target Capacity',
+        data: pQ.map(x => x.t),
+        backgroundColor: '#cbd5e1',
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 3
+      });
+    }
+
+    trendChartInstance = new Chart(trendCtx, {
+      type: 'bar',
+      data: { labels: qLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true } },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            callbacks: {
+              label: (ctx) => ctx.dataset.yAxisID === 'y1'
+                ? ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+                : ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} hrs`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => `${v}h` } },
+          y1: { position: 'right', beginAtZero: true, suggestedMax: 130, grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#10b981', callback: v => `${v}%` } }
+        }
+      }
+    });
+
+  } else if (chartMode === 'yoy') {
+    titleEl.textContent = hasComp
+      ? `Year-over-Year Monthly Comparison (${pYear} vs ${cYear})`
+      : `Jan–Dec Seasonal Hours Profile (${pYear === 'ALL' ? 'All Years' : pYear})`;
+    subEl.textContent = hasComp
+      ? `Side-by-side monthly Booked Hours & Utilization % trajectory across ${pYear} and ${cYear}`
+      : `Use the Compare dropdown in the top bar to overlay a prior year`;
+
+    const currBookedArr = MONTH_NAMES.map((_, idx) => primByMonthIdx.get(idx)?.bookedHours ?? 0);
+    const prevBookedArr = MONTH_NAMES.map((_, idx) => compByMonthIdx.get(idx)?.bookedHours ?? 0);
+    const currUtilArr   = MONTH_NAMES.map((_, idx) => Number((primByMonthIdx.get(idx)?.utilization ?? 0).toFixed(1)));
+    const prevUtilArr   = MONTH_NAMES.map((_, idx) => Number((compByMonthIdx.get(idx)?.utilization ?? 0).toFixed(1)));
+
+    const datasets = [
+      {
+        type: 'bar',
+        label: `${pYear === 'ALL' ? 'Focus' : pYear} Booked`,
+        data: currBookedArr,
+        backgroundColor: '#1034A6',
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 2
+      },
+      {
+        type: 'line',
+        label: `${pYear === 'ALL' ? 'Focus' : pYear} Util %`,
+        data: currUtilArr,
+        borderColor: '#10b981',
+        backgroundColor: '#10b981',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.3,
+        yAxisID: 'y1',
+        order: 0
+      }
+    ];
+
+    if (hasComp) {
+      datasets.splice(1, 0, {
+        type: 'bar',
+        label: `${cYear} Booked`,
+        data: prevBookedArr,
+        backgroundColor: '#94a3b8',
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 3
+      });
+      datasets.push({
+        type: 'line',
+        label: `${cYear} Util %`,
+        data: prevUtilArr,
+        borderColor: '#f59e0b',
+        borderDash: [4, 4],
+        borderWidth: 1.75,
+        pointRadius: 2.5,
+        tension: 0.3,
+        yAxisID: 'y1',
+        order: 1
+      });
+    }
+
+    trendChartInstance = new Chart(trendCtx, {
+      type: 'bar',
+      data: { labels: MONTH_NAMES, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true } },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            callbacks: {
+              label: (ctx) => ctx.dataset.yAxisID === 'y1'
+                ? ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+                : ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} hrs`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => `${v}h` } },
+          y1: { position: 'right', beginAtZero: true, suggestedMax: 130, grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#10b981', callback: v => `${v}%` } }
+        }
+      }
+    });
+
+  } else if (chartMode === 'cumulative') {
+    titleEl.textContent = hasComp
+      ? `Cumulative Booked Hours Pacing (${pYear} vs ${cYear})`
+      : `Cumulative Hours Accumulation vs Target Curve`;
+    subEl.textContent = `Running total trajectory across the calendar year to visualize surplus or deficit buildup`;
+
+    let runCurr = 0, runTarget = 0, runPrev = 0;
+    const cumCurr = [], cumTarget = [], cumPrev = [];
+
+    MONTH_NAMES.forEach((_, idx) => {
+      const cg = primByMonthIdx.get(idx);
+      const pg = compByMonthIdx.get(idx);
+      runCurr   += cg ? cg.bookedHours : 0;
+      runTarget += cg ? cg.targetHours : 0;
+      runPrev   += pg ? pg.bookedHours : 0;
+      cumCurr.push(cg ? runCurr : null);
+      cumTarget.push(cg ? runTarget : null);
+      cumPrev.push(pg ? runPrev : null);
+    });
+
+    const datasets = [
+      {
+        label: `${pYear === 'ALL' ? 'Focus' : pYear} Cumulative Booked`,
+        data: cumCurr,
+        borderColor: '#1034A6',
+        backgroundColor: 'rgba(16, 52, 166, 0.08)',
+        fill: true,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        tension: 0.25,
+        spanGaps: true
+      },
+      {
+        label: 'Cumulative Target',
+        data: cumTarget,
+        borderColor: '#64748b',
+        borderDash: [5, 4],
+        borderWidth: 1.75,
+        pointRadius: 2,
+        fill: false,
+        tension: 0.25,
+        spanGaps: true
+      }
+    ];
+
+    if (hasComp) {
+      datasets.push({
+        label: `${cYear} Cumulative Booked`,
+        data: cumPrev,
+        borderColor: '#f59e0b',
+        borderWidth: 2,
+        pointRadius: 2.5,
+        fill: false,
+        tension: 0.25,
+        spanGaps: true
+      });
+    }
+
+    trendChartInstance = new Chart(trendCtx, {
+      type: 'line',
+      data: { labels: MONTH_NAMES, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true } },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} hrs` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => `${v}h` } }
+        }
+      }
+    });
+
+  } else {
+    // Combo Trend Mode
+    titleEl.textContent = `Monthly Hours & Efficiency Trajectory`;
+    subEl.textContent = hasComp
+      ? `Booked, Extra & Carried hours with Prior Year (${cYear}) baseline & Utilization %`
+      : `Booked, Extra & Carried hours vs Target capacity & Utilization %`;
+
+    const labels      = primaryGroups.map(g => g.month);
+    const targetData  = primaryGroups.map(g => g.targetHours);
+    const bookedData  = primaryGroups.map(g => g.bookedHours);
+    const extraData   = primaryGroups.map(g => g.extraHours);
+    const carriedData = primaryGroups.map(g => g.carriedHours);
+    const utilData    = primaryGroups.map(g => Number(g.utilization.toFixed(1)));
+
+    const datasets = [
+      {
+        type: 'line',
+        label: 'Utilization %',
+        data: utilData,
+        yAxisID: 'y1',
+        borderColor: '#10b981',
+        backgroundColor: '#10b981',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.3,
+        order: 0
+      },
+      {
+        type: 'line',
+        label: 'Target Hours',
+        data: targetData,
+        yAxisID: 'y',
+        borderColor: '#64748b',
+        borderDash: [4, 4],
+        borderWidth: 1.75,
+        pointRadius: 2,
+        fill: false,
+        order: 1
+      },
+      {
+        type: 'bar',
+        label: 'Booked Hours',
+        data: bookedData,
+        yAxisID: 'y',
+        backgroundColor: '#1034A6',
+        borderRadius: 4,
+        barPercentage: 0.6,
+        order: 2
+      },
+      {
+        type: 'bar',
+        label: 'Extra Hours',
+        data: extraData,
+        yAxisID: 'y',
+        backgroundColor: '#f59e0b',
+        borderRadius: 4,
+        barPercentage: 0.6,
+        order: 3
+      },
+      {
+        type: 'bar',
+        label: 'Carried Hours',
+        data: carriedData,
+        yAxisID: 'y',
+        backgroundColor: '#93c5fd',
+        borderRadius: 4,
+        barPercentage: 0.6,
+        order: 4
+      }
+    ];
+
+    if (hasComp) {
+      const alignedPrior = primaryGroups.map(g => compByMonthIdx.get(g.monthIndex)?.bookedHours ?? null);
+      datasets.splice(2, 0, {
+        type: 'line',
+        label: `${cYear} Booked`,
+        data: alignedPrior,
+        yAxisID: 'y',
+        borderColor: '#ec4899',
+        backgroundColor: '#ec4899',
+        borderWidth: 1.75,
+        pointRadius: 2.5,
+        tension: 0.25,
+        spanGaps: true,
+        order: 1
+      });
+    }
+
+    trendChartInstance = new Chart(trendCtx, {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8, usePointStyle: true } },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            callbacks: {
+              label: (ctx) => ctx.dataset.yAxisID === 'y1'
+                ? ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+                : ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} hrs`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => `${v}h` } },
+          y1: { position: 'right', beginAtZero: true, suggestedMax: 130, grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#10b981', callback: v => `${v}%` } }
+        }
+      }
+    });
+  }
+
+  // ---- 2. 5-Axis Performance Radar ----
+  const currM = computeMetrics(primaryGroups);
+  const prevM = hasComp ? computeMetrics(compareGroups) : null;
+
+  const toRadarScores = (m) => [
+    Math.min(120, Number(m.util.toFixed(1))),
+    Number(m.consistency.toFixed(1)),
+    Number(m.billableRatio.toFixed(1)),
+    Number(m.avgCompletion.toFixed(1)),
+    m.booked > 0 ? Math.min(100, Number(((m.extra / m.booked) * 500).toFixed(1))) : 0
+  ];
+
+  const radarDatasets = [{
+    label: pYear === 'ALL' ? 'Current Scope' : pYear,
+    data: toRadarScores(currM),
+    borderColor: '#1034A6',
+    backgroundColor: 'rgba(16, 52, 166, 0.16)',
+    borderWidth: 2,
+    pointRadius: 2.5
+  }];
+
+  if (hasComp) {
+    radarDatasets.push({
+      label: cYear,
+      data: toRadarScores(prevM),
+      borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245, 158, 11, 0.14)',
+      borderWidth: 1.75,
+      borderDash: [3, 3],
+      pointRadius: 2
+    });
+  }
+
+  if (radarChartInstance) radarChartInstance.destroy();
+  radarChartInstance = new Chart(document.getElementById('radarChart').getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['Utilization', 'Consistency', 'Billable %', 'Completion', 'Extra Index'],
+      datasets: radarDatasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: hasComp, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 }, padding: 4 } }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 110,
+          ticks: { display: false, stepSize: 25 },
+          pointLabels: { font: { size: 9 }, color: '#475569' },
+          grid: { color: '#e2e8f0' }
+        }
+      }
+    }
+  });
+
+  const compositeScore = Math.round((Math.min(100, currM.util) * 0.4) + (currM.consistency * 0.3) + (currM.avgCompletion * 0.3));
+  document.getElementById('radarBadge').textContent = `Score: ${compositeScore}/100`;
+  document.getElementById('radarScoreSummary').innerHTML = `
+    <span>Billable: <strong class="text-slate-800">${currM.billableRatio.toFixed(0)}%</strong></span>
+    <span>Completion: <strong class="text-slate-800">${currM.avgCompletion.toFixed(0)}%</strong></span>
+  `;
+
+  // ---- 3. Work Mix Donut ----
+  const typeTotals = {};
+  const feederTotals = {};
+  primaryGroups.forEach(g => {
+    g.details.forEach(d => {
+      const t = d.type || 'Other';
+      typeTotals[t] = (typeTotals[t] || 0) + d.hoursBooked;
+      const f = d.feeder || 'Unassigned';
+      feederTotals[f] = (feederTotals[f] || 0) + d.hoursBooked;
+    });
+  });
+
+  const typeLabels = Object.keys(typeTotals);
+  const typeValues = Object.values(typeTotals);
+  const totalTypeHrs = typeValues.reduce((a, b) => a + b, 0);
+  const palette = ['#1034A6', '#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#64748b'];
+
+  if (donutChartInstance) donutChartInstance.destroy();
+  donutChartInstance = new Chart(document.getElementById('typeDonutChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: typeLabels,
+      datasets: [{
+        data: typeValues,
+        backgroundColor: palette.slice(0, typeLabels.length),
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '66%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          callbacks: {
+            label: (ctx) => {
+              const pct = totalTypeHrs > 0 ? ((ctx.parsed / totalTypeHrs) * 100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${fmt(ctx.parsed)}h (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('typeLegend').innerHTML = typeLabels.slice(0, 3).map((lbl, idx) => {
+    const pct = totalTypeHrs > 0 ? ((typeValues[idx] / totalTypeHrs) * 100).toFixed(0) : 0;
+    return `
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-1.5 truncate text-slate-600">
+          <span class="w-2 h-2 rounded-full shrink-0" style="background:${palette[idx % palette.length]}"></span>
+          <span class="truncate">${lbl}</span>
+        </span>
+        <span class="font-semibold text-slate-800 tabular-nums">${pct}%</span>
+      </div>`;
+  }).join('') || '<span class="text-slate-400">No work mix data</span>';
+
+  // ---- 4. Top Feeders Bar ----
+  document.getElementById('feederScopeLabel').textContent = pYear === 'ALL' ? 'All Years' : `Year ${pYear}`;
+  const sortedFeeders = Object.entries(feederTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  if (feederChartInstance) feederChartInstance.destroy();
+  feederChartInstance = new Chart(document.getElementById('feederBarChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: sortedFeeders.map(([name]) => name.length > 22 ? name.slice(0, 21) + '…' : name),
+      datasets: [{
+        label: 'Booked Hours',
+        data: sortedFeeders.map(([, hrs]) => hrs),
+        backgroundColor: '#1034A6',
+        borderRadius: 4,
+        barThickness: 12
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#0f172a', callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.x)} hrs` } }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 }, color: '#64748b' } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#334155' } }
+      }
+    }
+  });
+
+  // ---- 5. 12-Month Consistency Heatmap + Executive Audit ----
+  const heatmapEl = document.getElementById('monthHeatmap');
+  heatmapEl.innerHTML = MONTH_NAMES.map((mName, idx) => {
+    const g = primByMonthIdx.get(idx);
+    if (!g) {
+      return `
+        <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-1.5 text-center opacity-60">
+          <div class="text-[10px] font-semibold text-slate-400">${mName}</div>
+          <div class="text-[11px] font-medium text-slate-300 mt-0.5">—</div>
+        </div>`;
+    }
+    let tileCls = 'bg-amber-50 border-amber-200 text-amber-800 hover:border-amber-400';
+    if (g.utilization >= 100) tileCls = 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:border-emerald-400';
+    else if (g.utilization >= 85) tileCls = 'bg-brand-50 border-brand-200 text-brand-700 hover:border-brand-400';
+
+    return `
+      <button type="button" data-heat-month="${g.month}" title="${g.month}: ${fmt(g.bookedHours)}h / ${fmt(g.targetHours)}h (${g.utilization.toFixed(1)}%)"
+        class="rounded-lg border p-1.5 text-center transition cursor-pointer ${tileCls}">
+        <div class="text-[10px] font-bold">${mName}</div>
+        <div class="text-[11px] font-extrabold tabular-nums mt-0.5">${g.utilization.toFixed(0)}%</div>
+      </button>`;
+  }).join('');
+
+  heatmapEl.querySelectorAll('[data-heat-month]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = btn.getAttribute('data-heat-month');
+      searchInput.value = searchInput.value === m ? '' : m;
+      applyFiltersAndSort();
+    });
+  });
+
+  const gradeBadge = document.getElementById('overallGradeBadge');
+  if (currM.util >= 100 && currM.consistency >= 80) {
+    gradeBadge.textContent = 'Exceeding Expectations';
+    gradeBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200';
+  } else if (currM.util >= 85) {
+    gradeBadge.textContent = 'On Target';
+    gradeBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-600 border border-brand-200';
+  } else {
+    gradeBadge.textContent = 'Needs Attention';
+    gradeBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200';
+  }
+
+  const peakMonth = primaryGroups.length ? [...primaryGroups].sort((a, b) => b.utilization - a.utilization)[0] : null;
+  const lowMonth  = primaryGroups.length ? [...primaryGroups].sort((a, b) => a.utilization - b.utilization)[0] : null;
+  const avgMoHrs  = primaryGroups.length ? currM.booked / primaryGroups.length : 0;
+  const yoyGrowth = (hasComp && prevM.booked > 0) ? ((currM.booked - prevM.booked) / prevM.booked) * 100 : null;
+
+  document.getElementById('performanceInsights').innerHTML = `
+    <div class="bg-slate-50 rounded-lg px-2.5 py-2 border border-slate-100">
+      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Peak Month</div>
+      <div class="font-bold text-emerald-700 mt-0.5 truncate">${peakMonth ? `${peakMonth.month} (${peakMonth.utilization.toFixed(0)}%)` : '—'}</div>
+    </div>
+    <div class="bg-slate-50 rounded-lg px-2.5 py-2 border border-slate-100">
+      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Lowest Month</div>
+      <div class="font-bold text-amber-700 mt-0.5 truncate">${lowMonth ? `${lowMonth.month} (${lowMonth.utilization.toFixed(0)}%)` : '—'}</div>
+    </div>
+    <div class="bg-slate-50 rounded-lg px-2.5 py-2 border border-slate-100">
+      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Monthly Velocity</div>
+      <div class="font-bold text-brand-600 mt-0.5 truncate">${fmt(avgMoHrs)} hrs/mo</div>
+    </div>
+    <div class="bg-slate-50 rounded-lg px-2.5 py-2 border border-slate-100">
+      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">YoY Volume Shift</div>
+      <div class="font-bold ${yoyGrowth === null ? 'text-slate-600' : yoyGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5 truncate">
+        ${yoyGrowth === null ? 'Compare Off' : `${fmtSigned(yoyGrowth, '%')}`}
+      </div>
+    </div>
+  `;
+}
+
+// ---- Render Year Pills & Populate Filters ----
+
+function renderYearPills() {
+  const options = ['ALL', ...AVAILABLE_YEARS];
+  yearPillGroup.innerHTML = options.map(yr => {
+    const active = selectedFocusYear === yr;
+    return `
+      <button type="button" data-focus-year="${yr}"
+        class="px-2.5 py-1 rounded-md font-semibold transition cursor-pointer ${active ? 'bg-brand-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'}">
+        ${yr === 'ALL' ? 'All' : yr}
+      </button>`;
+  }).join('');
+
+  yearPillGroup.querySelectorAll('[data-focus-year]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedFocusYear = btn.getAttribute('data-focus-year');
+      // Prevent comparing a year against itself
+      if (compareYearSelect.value === selectedFocusYear) {
+        const altYear = AVAILABLE_YEARS.find(y => y !== selectedFocusYear);
+        compareYearSelect.value = altYear || 'NONE';
+      }
+      renderYearPills();
+      onYearComparisonChange();
+    });
+  });
+}
+
+function populateFilterOptions(groups) {
+  AVAILABLE_YEARS = Array.from(new Set(groups.map(g => g.year).filter(y => y !== 'Unknown'))).sort().reverse();
+  const types = new Set();
+  groups.forEach(g => g.details.forEach(d => { if (d.type && d.type !== '—') types.add(d.type); }));
+
+  compareYearSelect.innerHTML = `<option value="NONE">Off</option>` +
+    AVAILABLE_YEARS.map(y => `<option value="${y}">vs ${y}</option>`).join('');
+
+  if (AVAILABLE_YEARS.length >= 2) {
+    selectedFocusYear = AVAILABLE_YEARS[0];
+    compareYearSelect.value = AVAILABLE_YEARS[1];
+  } else if (AVAILABLE_YEARS.length === 1) {
+    selectedFocusYear = AVAILABLE_YEARS[0];
+    compareYearSelect.value = 'NONE';
+  } else {
+    selectedFocusYear = 'ALL';
+    compareYearSelect.value = 'NONE';
+  }
+
+  renderYearPills();
+
+  typeFilter.innerHTML = '<option value="">All Types</option>' +
+    Array.from(types).sort().map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+// ---- Table Filtering, Sorting & Totals ----
+
+function applyFiltersAndSort() {
+  const pYear  = selectedFocusYear;
+  const q      = searchInput.value.trim().toLowerCase();
+  const type   = typeFilter.value;
+  const status = statusFilter.value;
+
+  clearSearchBtn.classList.toggle('hidden', !q);
+
+  const activeChip = document.getElementById('activeFilterChip');
+  const activeParts = [];
+  if (q) activeParts.push(`"${searchInput.value.trim()}"`);
+  if (type) activeParts.push(type);
+  if (status) activeParts.push(status.toUpperCase());
+
+  if (activeParts.length) {
+    activeChip.classList.remove('hidden');
+    document.getElementById('activeFilterText').textContent = activeParts.join(' • ');
+  } else {
+    activeChip.classList.add('hidden');
+  }
+
+  let filtered = ALL_GROUPS.filter(g => {
+    if (pYear !== 'ALL' && g.year !== pYear) return false;
+    if (q) {
+      const matchMonth  = g.month.toLowerCase().includes(q);
+      const matchFeeder = g.details.some(d => d.feeder.toLowerCase().includes(q));
+      if (!matchMonth && !matchFeeder) return false;
+    }
+    if (type && !g.details.some(d => d.type === type)) return false;
+    if (status === 'exceeded' && g.utilization < 100) return false;
+    if (status === 'ontrack' && (g.utilization < 85 || g.utilization >= 100)) return false;
+    if (status === 'under' && g.utilization >= 85) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortKey === 'month') {
+      va = parseMonthDate(a.month);
+      vb = parseMonthDate(b.month);
+    } else {
+      va = a[sortKey];
+      vb = b[sortKey];
+    }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  VIEW_GROUPS = filtered;
+  currentPage = 1;
+  renderPage();
+}
+
+function updateSortHeaderStyles() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.getAttribute('data-sort') === sortKey) {
+      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+  });
+}
+
+// ---- Pagination ----
+
+function renderPagination(totalItems) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end   = Math.min(currentPage * pageSize, totalItems);
+  entryCountEl.textContent = `Showing ${start} to ${end} of ${totalItems} entr${totalItems === 1 ? 'y' : 'ies'}`;
+
+  const btn = (label, page, opts = {}) => `
+    <button ${opts.disabled ? 'disabled' : ''} data-page="${page}"
+      class="px-2 py-1 rounded text-xs font-medium transition
+        ${opts.active ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-200/70'}
+        ${opts.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''}">
+      ${label}
+    </button>`;
+
+  let html = '';
+  html += btn('&laquo;', 1, { disabled: currentPage === 1 });
+  html += btn('&lsaquo;', currentPage - 1, { disabled: currentPage === 1 });
+
+  const windowSize = 5;
+  let from = Math.max(1, currentPage - Math.floor(windowSize / 2));
+  let to   = Math.min(totalPages, from + windowSize - 1);
+  from     = Math.max(1, to - windowSize + 1);
+
+  for (let p = from; p <= to; p++) {
+    html += btn(p, p, { active: p === currentPage });
+  }
+
+  html += btn('&rsaquo;', currentPage + 1, { disabled: currentPage === totalPages });
+  html += btn('&raquo;', totalPages, { disabled: currentPage === totalPages });
+
+  paginationControls.innerHTML = html;
+  paginationControls.querySelectorAll('button[data-page]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = Number(b.getAttribute('data-page'));
+      if (!p || p === currentPage) return;
+      currentPage = p;
+      renderPage();
+    });
+  });
+}
+
+// ---- Render Table Rows & Totals Footer ----
+
+function renderPage() {
+  updateSortHeaderStyles();
+  const cYear = compareYearSelect.value;
+  const pYear = selectedFocusYear;
+  const hasComp = cYear !== 'NONE' && cYear !== pYear;
+
+  document.getElementById('yoyColHeader').innerHTML = `
+    <span class="inline-flex items-center gap-1 justify-end w-full">
+      ${hasComp ? `${cYear} Booked` : 'Prior Yr'}
+    </span>`;
+
+  const compMap = new Map();
+  if (hasComp) {
+    ALL_GROUPS.filter(g => g.year === cYear).forEach(g => compMap.set(g.monthIndex, g));
+  }
+
+  if (!VIEW_GROUPS.length) {
+    tableBody.innerHTML = '';
+    tableTotalsFoot.classList.add('hidden');
+    tableFooter.classList.add('hidden');
+    tableFooter.classList.remove('flex');
+    emptyState.classList.remove('hidden');
+    emptyState.classList.add('flex');
+    return;
+  }
+  emptyState.classList.add('hidden');
+  emptyState.classList.remove('flex');
+  tableFooter.classList.remove('hidden');
+  tableFooter.classList.add('flex');
+
+  const totalPages = Math.max(1, Math.ceil(VIEW_GROUPS.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const startIdx   = (currentPage - 1) * pageSize;
+  const pageGroups = VIEW_GROUPS.slice(startIdx, startIdx + pageSize);
+
+  tableBody.innerHTML = pageGroups.map((g) => {
+    const rowId   = `detail-${g.month.replace(/[^a-z0-9]/gi, '')}`;
+    const checked = selectedMonths.has(g.month) ? 'checked' : '';
+    const utilClamped = Math.min(100, Math.max(0, g.utilization));
+
+    let barColor = 'bg-rose-500';
+    let badgeText = 'Under';
+    let badgeCls = 'text-rose-700 bg-rose-50';
+    if (g.utilization >= 100) {
+      barColor = 'bg-emerald-500';
+      badgeText = 'Exceeded';
+      badgeCls = 'text-emerald-700 bg-emerald-50';
+    } else if (g.utilization >= 85) {
+      barColor = 'bg-brand-600';
+      badgeText = 'On Track';
+      badgeCls = 'text-brand-600 bg-brand-50';
+    }
+
+    const varianceCls = g.variance > 0
+      ? 'text-emerald-600 font-medium'
+      : g.variance < 0
+      ? 'text-rose-600 font-medium'
+      : 'text-slate-400';
+
+    const priorGroup = hasComp ? compMap.get(g.monthIndex) : null;
+    let yoyCellHtml = '<span class="text-slate-300">—</span>';
+    if (priorGroup) {
+      const diff = g.bookedHours - priorGroup.bookedHours;
+      const diffCls = diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-slate-400';
+      yoyCellHtml = `
+        <div class="leading-tight">
+          <span class="text-slate-700 font-medium">${fmt(priorGroup.bookedHours)}</span>
+          <span class="block text-[10px] ${diffCls} font-semibold">${fmtSigned(diff, 'h')}</span>
+        </div>`;
+    }
+
+    const detailRows = g.details.map(d => `
+      <div class="grid grid-cols-5 gap-2 px-3 py-1.5 text-xs items-center rounded hover:bg-white transition">
+        <div class="text-slate-700 font-medium truncate">${d.feeder}</div>
+        <div>${typeBadge(d.type)}</div>
+        <div class="text-right text-slate-700 tabular-nums">${fmt(d.hoursBooked)} hrs</div>
+        <div class="text-right text-slate-500">${d.lastSubmittedDate}</div>
+        <div class="text-right">${completionBadge(d.completionPercentage)}</div>
+      </div>
+    `).join('');
+
+    return `
+      <tr class="group transition-colors hover:bg-brand-50/40">
+        <td class="px-3 py-2 text-center">
+          <input type="checkbox" data-select="${g.month}" ${checked}
+            class="row-checkbox rounded border-slate-300 text-brand-600 focus:ring-brand-400" />
+        </td>
+        <td class="px-1 py-2 cursor-pointer" data-toggle="${rowId}">
+          <svg data-chevron="${rowId}" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 group-hover:text-brand-600" style="transform: rotate(${allExpanded ? 90 : 0}deg)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </td>
+        <td class="px-3 py-2 font-semibold text-slate-800 cursor-pointer whitespace-nowrap" data-toggle="${rowId}">
+          ${g.month}
+          <span class="ml-1 text-[10px] font-normal text-slate-400">(${g.details.length})</span>
+        </td>
+        <td class="px-3 py-2 text-right text-slate-600 tabular-nums">${fmt(g.targetHours)}</td>
+        <td class="px-3 py-2 text-right text-slate-600 tabular-nums">${fmt(g.carriedHours)}</td>
+        <td class="px-3 py-2 text-right font-bold text-brand-600 tabular-nums">${fmt(g.bookedHours)}</td>
+        <td class="px-3 py-2 text-right tabular-nums ${varianceCls}">${fmtSigned(g.variance)}</td>
+        <td class="px-3 py-2 text-right text-amber-600 font-medium tabular-nums">${fmt(g.extraHours)}</td>
+        <td class="px-3 py-2 text-right tabular-nums">${yoyCellHtml}</td>
+        <td class="px-3 py-2">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-[11px] font-bold text-slate-700 tabular-nums">${g.utilization.toFixed(0)}%</span>
+            <span class="text-[10px] font-medium px-1.5 py-0.2 rounded ${badgeCls}">${badgeText}</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full ${barColor} rounded-full transition-all duration-300" style="width: ${utilClamped}%"></div>
+          </div>
+        </td>
+        <td class="px-3 py-2 pr-4">
+          <div class="flex items-center justify-end gap-1">
+            <button data-toggle="${rowId}" title="Toggle feeder breakdown"
+              class="p-1 rounded text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+            </button>
+            <button data-export="${g.month}" title="Export month CSV"
+              class="p-1 rounded text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 10.5 12 15m0 0 4.5-4.5M12 15V3" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr id="${rowId}" class="${allExpanded ? '' : 'hidden'} bg-slate-50/70">
+        <td colspan="11" class="px-4 py-2">
+          <div class="bg-white border border-slate-200/80 rounded-lg p-2 animate-fadeIn">
+            <div class="grid grid-cols-5 gap-2 px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">
+              <div>Feeder / Allocation</div>
+              <div>Type</div>
+              <div class="text-right">Hours Booked</div>
+              <div class="text-right">Last Submitted</div>
+              <div class="text-right">Completion</div>
+            </div>
+            <div class="divide-y divide-slate-50 mt-1">
+              ${detailRows}
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Render Filtered Totals Summary Footer Row
+  const sumTarget  = VIEW_GROUPS.reduce((s, g) => s + g.targetHours, 0);
+  const sumCarried = VIEW_GROUPS.reduce((s, g) => s + g.carriedHours, 0);
+  const sumBooked  = VIEW_GROUPS.reduce((s, g) => s + g.bookedHours, 0);
+  const sumVar     = sumBooked - sumTarget;
+  const sumExtra   = VIEW_GROUPS.reduce((s, g) => s + g.extraHours, 0);
+  const sumPrior   = hasComp
+    ? VIEW_GROUPS.reduce((s, g) => s + (compMap.get(g.monthIndex)?.bookedHours ?? 0), 0)
+    : null;
+  const sumUtil    = sumTarget > 0 ? (sumBooked / sumTarget) * 100 : 0;
+
+  tableTotalsFoot.classList.remove('hidden');
+  tableTotalsFoot.innerHTML = `
+    <tr>
+      <td colspan="3" class="px-3 py-2.5 text-left text-[11px] uppercase tracking-wider text-slate-500">
+        Filtered Total (${VIEW_GROUPS.length} mo${VIEW_GROUPS.length === 1 ? '' : 's'})
+      </td>
+      <td class="px-3 py-2.5 text-right tabular-nums">${fmt(sumTarget)}</td>
+      <td class="px-3 py-2.5 text-right tabular-nums">${fmt(sumCarried)}</td>
+      <td class="px-3 py-2.5 text-right text-brand-600 tabular-nums">${fmt(sumBooked)}</td>
+      <td class="px-3 py-2.5 text-right tabular-nums ${sumVar >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${fmtSigned(sumVar)}</td>
+      <td class="px-3 py-2.5 text-right text-amber-600 tabular-nums">${fmt(sumExtra)}</td>
+      <td class="px-3 py-2.5 text-right tabular-nums text-slate-600">${sumPrior !== null ? fmt(sumPrior) : '—'}</td>
+      <td class="px-3 py-2.5 text-left text-slate-700 tabular-nums">${sumUtil.toFixed(1)}% Avg</td>
+      <td></td>
+    </tr>
+  `;
+
+  tableBody.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id        = el.getAttribute('data-toggle');
+      const detailRow = document.getElementById(id);
+      const chevron   = tableBody.querySelector(`[data-chevron="${id}"]`);
+      const isOpen    = !detailRow.classList.contains('hidden');
+
+      detailRow.classList.toggle('hidden', isOpen);
+      chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+    });
+  });
+
+  tableBody.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.addEventListener('click', (e) => e.stopPropagation());
+    cb.addEventListener('change', () => {
+      const month = cb.getAttribute('data-select');
+      if (cb.checked) selectedMonths.add(month); else selectedMonths.delete(month);
+      syncSelectAllState();
+    });
+  });
+
+  tableBody.querySelectorAll('[data-export]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportMonths([btn.getAttribute('data-export')], `hours-${btn.getAttribute('data-export')}.csv`);
+    });
+  });
+
+  syncSelectAllState();
+  renderPagination(VIEW_GROUPS.length);
+}
+
+function syncSelectAllState() {
+  const boxes = Array.from(tableBody.querySelectorAll('.row-checkbox'));
+  const allChecked = boxes.length > 0 && boxes.every(b => b.checked);
+  const anyChecked = boxes.some(b => b.checked);
+  selectAllCheckbox.checked = allChecked;
+  selectAllCheckbox.indeterminate = anyChecked && !allChecked;
+
+  const exportLabel = document.getElementById('exportBtnLabel');
+  exportLabel.textContent = selectedMonths.size > 0 ? `Export (${selectedMonths.size})` : 'Export CSV';
+}
+
+function exportMonths(monthList, filename = 'my-hours-history.csv') {
+  const targetGroups = monthList && monthList.length
+    ? ALL_GROUPS.filter(g => monthList.includes(g.month))
+    : VIEW_GROUPS;
+
+  if (!targetGroups.length) return;
+  const header = 'Month,Target Hours,Carried Hours,Booked Hours,Extra Hours,Utilization %,Feeder,Type,Feeder Hours,Last Submitted,Completion %\n';
+  const lines = [];
+
+  targetGroups.forEach(g => {
+    g.details.forEach(d => {
+      lines.push([
+        `"${g.month}"`,
+        fmt(g.targetHours),
+        fmt(g.carriedHours),
+        fmt(g.bookedHours),
+        fmt(g.extraHours),
+        `${g.utilization.toFixed(1)}%`,
+        `"${d.feeder}"`,
+        `"${d.type}"`,
+        fmt(d.hoursBooked),
+        `"${d.lastSubmittedDate}"`,
+        `${fmt(d.completionPercentage || 0)}%`
+      ].join(','));
+    });
+  });
+
+  const blob = new Blob([header + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Fetch Data from /getMyHoursHistory ----
+
+async function loadHours() {
+  skeletonRows();
+  errorState.classList.add('hidden');
+  errorState.classList.remove('flex');
+  emptyState.classList.add('hidden');
+  selectedMonths.clear();
+
+  try {
+    const url = EMPLOYEE_ID
+      ? `${API_URL}?eid=${encodeURIComponent(EMPLOYEE_ID)}`
+      : API_URL;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!res.ok) throw new Error(`Server responded with HTTP ${res.status}`);
+
+    const json = await res.json();
+
+    if (json.status === false || json.error) {
+      throw new Error(json.message || json.error || 'Failed to fetch hours history.');
+    }
+
+    const rows = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    ALL_GROUPS = groupByMonth(rows);
+
+    populateFilterOptions(ALL_GROUPS);
+    renderSummary();
+    renderCharts();
+    applyFiltersAndSort();
+  } catch (err) {
+    tableBody.innerHTML = '';
+    tableTotalsFoot.classList.add('hidden');
+    summaryEl.innerHTML = '';
+    tableFooter.classList.add('hidden');
+    tableFooter.classList.remove('flex');
+    errorMsg.textContent = err.message || 'Something went wrong while loading data.';
+    errorState.classList.remove('hidden');
+    errorState.classList.add('flex');
+  }
+}
+
+// ---- Event Wiring ----
+
+function onYearComparisonChange() {
+  renderSummary();
+  renderCharts();
+  applyFiltersAndSort();
+}
+
+compareYearSelect.addEventListener('change', onYearComparisonChange);
+
+document.getElementById('chartModeToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-mode]');
+  if (!btn) return;
+  chartMode = btn.getAttribute('data-mode');
+  document.querySelectorAll('#chartModeToggle button').forEach(b => {
+    b.className = 'px-2 py-1 rounded-md text-slate-600 hover:text-slate-900';
+  });
+  btn.className = 'px-2 py-1 rounded-md bg-white text-brand-600 font-semibold shadow-2xs';
+  renderCharts();
+});
+
+refreshBtn.addEventListener('click', () => {
+  refreshIcon.classList.add('rotate-[360deg]');
+  loadHours().finally(() => {
+    setTimeout(() => refreshIcon.classList.remove('rotate-[360deg]'), 500);
+  });
+});
+
+document.getElementById('exportAllBtn').addEventListener('click', () => {
+  const chosen = selectedMonths.size > 0 ? Array.from(selectedMonths) : null;
+  exportMonths(chosen, chosen ? 'selected-hours.csv' : 'overall-hours-report.csv');
+});
+
+document.getElementById('expandAllBtn').addEventListener('click', (e) => {
+  allExpanded = !allExpanded;
+  e.target.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+  renderPage();
+});
+
+clearSearchBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  applyFiltersAndSort();
+});
+
+document.getElementById('resetTableFiltersBtn').addEventListener('click', () => {
+  searchInput.value = '';
+  typeFilter.value = '';
+  statusFilter.value = '';
+  applyFiltersAndSort();
+});
+
+searchInput.addEventListener('input', applyFiltersAndSort);
+typeFilter.addEventListener('change', applyFiltersAndSort);
+statusFilter.addEventListener('change', applyFiltersAndSort);
+
+pageSizeSelect.addEventListener('change', () => {
+  pageSize = Number(pageSizeSelect.value);
+  currentPage = 1;
+  renderPage();
+});
+
+selectAllCheckbox.addEventListener('change', () => {
+  const boxes = tableBody.querySelectorAll('.row-checkbox');
+  boxes.forEach(cb => {
+    cb.checked = selectAllCheckbox.checked;
+    const month = cb.getAttribute('data-select');
+    if (cb.checked) selectedMonths.add(month); else selectedMonths.delete(month);
+  });
+  syncSelectAllState();
+});
+
+document.querySelectorAll('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.getAttribute('data-sort');
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = 'desc';
+    }
+    applyFiltersAndSort();
+  });
+});
+
+document.addEventListener('DOMContentLoaded', loadHours);
+</script>
+</body>
+</html>

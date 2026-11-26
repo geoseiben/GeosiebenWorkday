@@ -19,9 +19,10 @@ private String projectLeadId;
 private String filePath;
 private int category;
 private int isHoursFixed;
+private String area;
 public AllotmentRequestDto(int rootid, String allotmentName, LocalDate startDate, LocalDate deadline,
         BigDecimal totalHours, BigDecimal productionHours, BigDecimal qcHours, String projectLeadId, String filePath,
-        int category, int isHoursFixed) {
+        int category, int isHoursFixed, String area) {
     this.rootid = rootid;
     this.allotmentName = allotmentName;
     this.startDate = startDate;
@@ -33,7 +34,9 @@ public AllotmentRequestDto(int rootid, String allotmentName, LocalDate startDate
     this.filePath = filePath;
     this.category = category;
     this.isHoursFixed = isHoursFixed;
+    this.area = area;
 }
+
 
 
 }

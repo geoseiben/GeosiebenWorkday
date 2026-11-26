@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +17,14 @@ import com.geosieben.gsbworkday.dto.MyCompOffProjection;
 import com.geosieben.gsbworkday.service.CompOffService;
 
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class CompensatoryOffController {
-@Autowired
-private  CompOffService compOffService;
+private final  CompOffService compOffService;
+
+  CompensatoryOffController(CompOffService compOffService) {
+    this.compOffService = compOffService;
+  }
 
 @GetMapping("/myCompOffs")
 public String navGetCompOff() {

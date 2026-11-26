@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.geosieben.gsbworkday.dto.EmployeeHoursProjection;
 import com.geosieben.gsbworkday.dto.EmployeeTargetHoursProjection;
 import com.geosieben.gsbworkday.dto.TargetHoursReportProjection;
 import com.geosieben.gsbworkday.entity.EmployeeTargetHours;
@@ -50,5 +51,19 @@ public interface EmployeeTargetHoursRepository extends JpaRepository<EmployeeTar
  " where date_format(date,'%b-%Y')=date_format(current_date,'%b-%Y') "+
  " group by eid,month ) b on b.eid=t.eid and b.month=t.month",nativeQuery=true)
  public  List<TargetHoursReportProjection> getCurrentMonthTargetHoursReportProjections();
+
+ @Query (value = "SELECT * FROM employeetargethours where eid=:eid and month=:month",nativeQuery = true)
+ public EmployeeTargetHours findEmployeeTargetHoursByEidMonth(@Param ("month") String month,@Param ("eid") String eid);
+ 
+ @Query (value = """
+    select pa.feederAlloted,date_format(b.date,'%b-%Y') as month,t.targethours,t.carriedHours,b.type,ex.hours as extraHours ,date_format(max(b.date),'%d-%b-%Y') as lastSubmittedDate, max(b.completionPercentage) as completionPercentage,sum(b.hoursBooked) as hoursBooked
+from bookedhours b 
+LEFT JOIN projectallocation pa on pa.allotmentid=b.allotmentid
+LEFT JOIN employeetargethours t on t.eid=b.eid and t.month =date_format(b.date,'%b-%Y')
+LEFT JOIN extrahours ex on ex.eid=b.eid and ex.month =date_format(b.date,'%b-%Y')
+where b.eid=:eid
+GROUP BY pa.feederAlloted,date_format(b.date,'%b-%Y') ,t.targethours,t.carriedHours,b.type,ex.hours,b.date ORDER BY b.date desc
+    """,nativeQuery = true)
+    public  List<EmployeeHoursProjection> findEmployeeHoursHistory(@Param("eid") String eid);
 
 }

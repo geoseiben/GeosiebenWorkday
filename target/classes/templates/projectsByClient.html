@@ -1,335 +1,1105 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="title">Project Report</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="title">Client Projects Report</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              600: '#254b9e',
+              800: '#1e3a8a',
+              900: '#172554',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
     body {
-      background: linear-gradient(135deg, #eef2f7, #f5f7fb);
-      font-family: "Inter", sans-serif;
+      background-color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
     }
-
-    /* Link-style button */
-    .link-button {
-        background: none;
-        border: none;
-        padding: 0;
-        margin: 0;
-        color: #0d6efd;
-        cursor: pointer;
-        font-size: 16px;
-        text-decoration: none;
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
     }
-    .link-button:hover {
-        color: #0a58ca;
-        text-decoration: underline;
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
     }
-
-    /* Card styling */
-    .app-card {
-      border-radius: 18px;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(12px);
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
     }
-
-    .app-header {
-      background: linear-gradient(130deg, #2045c2, #1e3a8a);
-      padding: 1rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: #fff;
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
-
-    #enhancedDataTable thead th {
-      background: #f1f5fa;
-      font-weight: 700;
-      border-bottom: 2px solid #e5e7eb;
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
     }
-    /* Style for the chart container */
-    #chartContainer {
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        border: 1px solid #f1f5fa;
+    th.sortable:hover {
+      background-color: #e2e8f0;
     }
   </style>
-
 </head>
 <head th:replace="includes/header :: header"></head>
-<body>
-<div class="container-fluid py-4">
-  <div class="app-card">
 
-    <div class="app-header">
-      <div class="d-flex align-items-center">
-        <button class="btn btn-outline-light me-3" onclick="history.back()">
-          <i class="fas fa-arrow-left"></i>
-        </button>
-        <h5 id="header">Loading Report...</h5>
-      </div>
-    </div>
+<body >
 
-    <div class="p-4">
-      <div id="messageContainer" style="display:none;"></div>
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[98%] mx-auto px-3 sm:px-4 py-3 flex-1">
+    
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
       
-      <div class="table-responsive mt-3 px-2" id="dataTableWrapper" style="display:none;">
-        <table id="enhancedDataTable" class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th class="text-end">Project Lead</th>
-               <th class="text-end">No Of Allotments</th>
-              <th class="text-end">Category</th>
-              <th class="text-end">Created By</th>
-              <th class="text-end">Created On</th>
-              <th class="text-end">Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="root"></tbody>
-        </table>
+      <!-- Slim Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#22429c] to-[#254b9e] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="history.back()" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all duration-150 shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 id="header" class="text-sm sm:text-base font-bold tracking-tight truncate">
+              Loading Report...
+            </h1>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-[11px] font-medium text-indigo-100 border border-white/10">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span id="reportDate">--</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors">
+            <i class="fas fa-file-csv text-emerald-300"></i>
+            <span class="hidden sm:inline">Export CSV</span>
+          </button>
+          <button id="openCreateProjectBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-xs font-semibold text-white shadow-xs transition-colors">
+            <i class="fas fa-plus text-[11px]"></i>
+            <span>New Project</span>
+          </button>
+        </div>
       </div>
 
+      <!-- Compact Body Content -->
+      <div class="p-3 sm:p-4 space-y-3">
+
+        <!-- Alert / Status Banner -->
+        <div id="messageContainer" class="hidden rounded-lg p-3 border text-xs font-medium flex items-center justify-center gap-2"></div>
+
+        <!-- 5-Card Interactive Status KPI Strip (Click any card to filter table) -->
+        <div id="kpiGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <!-- All Projects -->
+          <button type="button" data-status-filter="all" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-indigo-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-indigo-600 ring-1 ring-indigo-500/30 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">All Projects</p>
+              <h3 id="kpiTotalProjects" class="text-base font-bold text-slate-900 leading-tight mt-0.5">--</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-layer-group text-[11px]"></i>
+            </div>
+          </button>
+
+          <!-- 0: Created -->
+          <button type="button" data-status-filter="0" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-sky-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-sky-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Created</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiCreated" class="text-base font-bold text-sky-600 leading-tight">--</h3>
+                <span id="kpiCreatedPct" class="text-[10px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-folder-plus text-[11px]"></i>
+            </div>
+          </button>
+
+          <!-- 1: In-Progress -->
+          <button type="button" data-status-filter="1" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-amber-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-amber-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">In-Progress</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiInProgress" class="text-base font-bold text-amber-600 leading-tight">--</h3>
+                <span id="kpiInProgressPct" class="text-[10px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-amber-100/80 text-amber-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-spinner text-[11px]"></i>
+            </div>
+          </button>
+
+          <!-- 2: Finished -->
+          <button type="button" data-status-filter="2" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-emerald-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-emerald-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Finished</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiFinished" class="text-base font-bold text-emerald-600 leading-tight">--</h3>
+                <span id="kpiFinishedPct" class="text-[10px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-check-circle text-[11px]"></i>
+            </div>
+          </button>
+
+          <!-- 3: Withdrawn -->
+          <button type="button" data-status-filter="3" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-rose-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-rose-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Withdrawn</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiWithdrawn" class="text-base font-bold text-rose-600 leading-tight">--</h3>
+                <span id="kpiWithdrawnPct" class="text-[10px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-ban text-[11px]"></i>
+            </div>
+          </button>
+
+          <!-- Total Allotments (Metric Card) -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Allotments</p>
+              <h3 id="kpiTotalAllotments" class="text-base font-bold text-slate-900 leading-tight mt-0.5">--</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-users-gear text-[11px]"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Charts Row -->
+        <div id="chartsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- Bar Chart (2/3 width) -->
+          <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i class="fas fa-chart-bar text-indigo-600"></i>
+                  <span id="barChartTitle">Allotments by Project</span>
+                </h2>
+              </div>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[11px] font-medium">
+                <button type="button" data-mode="project" class="chart-mode-btn px-2 py-0.5 rounded bg-white text-indigo-700 shadow-xs transition-all">By Project</button>
+                <button type="button" data-mode="category" class="chart-mode-btn px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 transition-all">By Category</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-44 w-full">
+              <canvas id="allotmentBarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 4-Stage Lifecycle Doughnut Chart (1/3 width) -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-indigo-600"></i>
+                Project Lifecycle Status
+              </h2>
+              <span class="text-[11px] text-slate-400">0–3 Breakdown</span>
+            </div>
+            <div class="relative flex-1 h-44 w-full flex items-center justify-center">
+              <canvas id="statusDoughnutChart"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-5">
+                <span id="doughnutCenterTotal" class="text-lg font-bold text-slate-800 leading-none">--</span>
+                <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Projects</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Detailed Projects Table Card -->
+        <div id="dataTableWrapper" class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Table Toolbar with Quick Status Pill Tabs -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/70 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mr-1">
+                <i class="fas fa-table text-indigo-600"></i>
+                Project Directory
+              </h2>
+
+              <!-- Quick Status Pill Filter Bar -->
+              <div class="inline-flex flex-wrap items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg text-[11px] font-medium">
+                <button type="button" data-status-filter="all" class="status-pill-btn px-2 py-0.5 rounded-md bg-white text-indigo-700 shadow-2xs transition-all">All</button>
+                <button type="button" data-status-filter="0" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Created</button>
+                <button type="button" data-status-filter="1" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">In-Progress</button>
+                <button type="button" data-status-filter="2" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Finished</button>
+                <button type="button" data-status-filter="3" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Withdrawn</button>
+              </div>
+
+              <span id="tableCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 projects</span>
+            </div>
+
+            <!-- Search & Rows Per Page -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative flex-1 sm:w-56">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search project, lead, category..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ultra-Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="enhancedDataTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2.5 sortable" data-sort="projectName">
+                    <div class="flex items-center gap-1">
+                      <span>Project Name</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="leadName">
+                    <div class="flex items-center gap-1">
+                      <span>Project Lead</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="allotments">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Allotments</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-center sortable" data-sort="categoryName">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Category</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden md:table-cell" data-sort="createdByName">
+                    <div class="flex items-center gap-1">
+                      <span>Created By</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable hidden sm:table-cell" data-sort="createdOnTs">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Created On</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-center sortable" data-sort="statusCode">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Status</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="root" class="divide-y divide-slate-100 text-xs">
+                <tr class="animate-pulse">
+                  <td colspan="8" class="py-5 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Loading client projects...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div id="paginationFooter" class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
-</div>
 
-<div class="modal fade" id="createProjectModal">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="fas fa-diagram-project me-2"></i>Create New Project</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body p-4">
-        
-        <label class="fw-semibold">Project Name</label>
-        <input type="text" id="projectNameInput" class="form-control mb-3" placeholder="Enter project name">
-
-        <label class="fw-semibold">Category</label>
-        <select id="projectCategorySelect" class="form-select mb-3"></select>
-
-        <label class="fw-semibold">Project Lead</label>
-        <select id="projectLeadSelect" class="form-select mb-3"></select>
-
-      </div>
-
-      <div class="modal-footer bg-light">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times"></i> Cancel
-        </button>
-        <button class="btn btn-success fw-bold" id="saveProjectBtn">
-          <i class="fas fa-save"></i> Create Project
+  <!-- Tailwind Create Project Modal -->
+  <div id="createProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] to-[#254b9e] px-4 py-2.5 text-white flex items-center justify-between">
+        <h3 class="text-sm font-bold flex items-center gap-2">
+          <i class="fas fa-diagram-project text-indigo-200"></i>
+          <span>Create New Project</span>
+        </h3>
+        <button type="button" class="close-modal-btn w-6 h-6 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors">
+          <i class="fas fa-times"></i>
         </button>
       </div>
 
+      <!-- Modal Body -->
+      <div class="p-4 space-y-3 text-xs">
+        <div>
+          <label for="projectNameInput" class="block font-semibold text-slate-700 mb-1">Project Name <span class="text-red-500">*</span></label>
+          <input type="text" id="projectNameInput" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" placeholder="Enter project name">
+        </div>
+
+        <div>
+          <label for="projectCategorySelect" class="block font-semibold text-slate-700 mb-1">Category <span class="text-red-500">*</span></label>
+          <select id="projectCategorySelect" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+            <option value="">-- Select Category --</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="projectLeadSelect" class="block font-semibold text-slate-700 mb-1">Project Lead <span class="text-red-500">*</span></label>
+          <select id="projectLeadSelect" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+            <option value="">-- Select Lead --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button type="button" class="close-modal-btn px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors">
+          <i class="fas fa-times mr-1"></i> Cancel
+        </button>
+        <button type="button" id="saveProjectBtn" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors">
+          <i class="fas fa-save mr-1"></i> Create Project
+        </button>
+      </div>
     </div>
   </div>
-</div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
-<script>
-$(document).ready(function () {
+  <script>
+    $(document).ready(function () {
+      const params = new URLSearchParams(window.location.search);
+      const clientId = params.get('cid');
+      const clientName = params.get('clientName') || 'Client';
 
-    const params = new URLSearchParams(window.location.search);
+      const dateToday = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).replace(/ /g, '-');
 
-// Extract the value of "cid"
-const clientId = params.get("cid");
-const clientName=params.get("clientName");
-  const dateToday = "<?php echo date('d-M-Y'); ?>";
-  let dataTable; // Variable to hold DataTable instance
+      $('#reportDate').text(dateToday);
+      $('#header').text(`${clientName}'s Projects Report`);
+      $('#title').text(`${clientName}'s Projects`);
 
-  function showMessage(msg, error=false) {
-      $("#messageContainer")
-          .show()
-          .html(`<div class="alert ${error ? 'alert-danger' : 'alert-warning'}">${msg}</div>`);
-  }
-$.ajax({
-    url: '/admin/project/projectsByClientDetailed', // endpoint
-    type: 'GET',                                    // HTTP method
-    data: { clientid: clientId },                   // query params -> ?clientid=123
-    dataType: 'json',                               // expect JSON response
-    success: function(res) {                        // callback on success
-        console.log(res);                           // inspect response
-    },
-    error: function(err) {           // optional error handler
-        console.error(err);
-    }
-});
+      // Explicit Project Status Map: 0 -> Created, 1 -> In-Progress, 2 -> Finished, 3 -> Withdrawn
+      const PROJECT_STATUS_MAP = {
+        0: {
+          code: 0,
+          label: 'Created',
+          badgeClass: 'bg-sky-50 text-sky-700 border-sky-200/90',
+          dotClass: 'bg-sky-500',
+          iconClass: 'fa-folder-plus',
+          chartColor: '#0ea5e9'
+        },
+        1: {
+          code: 1,
+          label: 'In-Progress',
+          badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/90',
+          dotClass: 'bg-amber-500',
+          iconClass: 'fa-spinner',
+          chartColor: '#f59e0b'
+        },
+        2: {
+          code: 2,
+          label: 'Finished',
+          badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/90',
+          dotClass: 'bg-emerald-500',
+          iconClass: 'fa-check-circle',
+          chartColor: '#10b981'
+        },
+        3: {
+          code: 3,
+          label: 'Withdrawn',
+          badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/90',
+          dotClass: 'bg-rose-500',
+          iconClass: 'fa-ban',
+          chartColor: '#f43f5e'
+        }
+      };
 
-  
-$.get("/admin/project/projectsByClientDetailed", { clientid: clientId }, function (res) {
-    console.log("Response received:", res);
-          let finalData = res.data ? res.data : res;
-
-          if (!Array.isArray(finalData)) {
-              showMessage("Unexpected data format.", true);
-              return;
+      function resolveStatusInfo(rawStatus) {
+        if (rawStatus !== null && rawStatus !== undefined && rawStatus !== '') {
+          const num = Number(rawStatus);
+          if (!Number.isNaN(num) && PROJECT_STATUS_MAP[num]) {
+            return PROJECT_STATUS_MAP[num];
           }
-
-          // Populate table and render chart
-          populateTable(finalData);
-       
-
-          $("#dataTableWrapper").show();
-
-          // Initialize DataTable
-          if (dataTable) {
-              dataTable.destroy(); // Destroy existing table if it exists
-          }
-          dataTable = $("#enhancedDataTable").DataTable({
-              pageLength: 10,
-              lengthMenu: [10, 25, 50, 100],
-              // Optional: Keep the search/pagination controls in place
-              destroy: true
-          });
-      },
-      "json"
-  );
-
-  /* =============================
-        POPULATE TABLE
-  ============================= */
-  function populateTable(data) {
-      let html = "";
-
-      data.forEach(p => {
-          html += `
-            <tr>
-              <td>
-    <a href="/admin/project/allotments?projectId=${p.projId}&projectName=${p.projectName}" class="text-primary-color fw-semibold text-decoration-none">${p.projectName}</a>
-              </td>
-               <td class="text-end">${p.projectlead.firstName}</td>
-                             <td class="text-end">${p.allotments??0}</td>
-              <td class="text-end">${p.category.catagoryShortname}</td>
-               <td class="text-end">${p.createdBy.firstName}</td>
-               <td class="text-end">${formatDate(p.createdOn)}</td>
-               <td class="text-end">${p.projectStatus}</td>
-               <td class="text-end">  </td>
-
-            </tr>
-          `;
-      });
-
-      $("#root").html(html);
-      $("#header").text(` ${clientName}'s Projects Report As On - ${dateToday}`);
-      $("#title").text(`${clientName}'s Projects`);
-  }
-
-  
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  }).format(d);
-}
-
-
-
-
-  /* =============================
-      OPEN CREATE PROJECT MODAL
-  ============================= */
-  $("#openCreateProjectBtn").click(function () {
-      fetchCategoriesForProject();
-      fetchProjectLeads();
-      $("#projectNameInput").val("");
-      new bootstrap.Modal("#createProjectModal").show();
-  });
-
-  /* =============================
-        FETCH CATEGORY LIST
-  ============================= */
-  function fetchCategoriesForProject() {
-      $.post("api/projDashboard.php",
-          { action: "getDepartments" },
-          function (data) {
-              const select = $("#projectCategorySelect");
-              select.empty();
-
-              select.append(`<option value="">-- Select Category --</option>`);
-
-              data.category.forEach(c => {
-                  select.append(`<option value="${c.categoryId}">${c.categoryname}</option>`);
-              });
-          },
-          "json"
-      );
-  }
-
-
-  function fetchProjectLeads() {
-      $.post("api/projDashboard.php",
-          { action: "getProjectLeads" },
-          function (data) {
-            console.log(data);
-              const select = $("#projectLeadSelect");
-              select.empty();
-
-              select.append(`<option value="">-- Select Lead --</option>`);
-
-              data.forEach(l => {
-                  select.append(`<option value="${l.eid}">${l.employeeName}</option>`);
-              });
-          },
-          "json"
-      );
-  }
-
-  /* =============================
-        SAVE NEW PROJECT
-  ============================= */
-  $("#saveProjectBtn").click(function () {
-      const name = $("#projectNameInput").val().trim();
-      const category = $("#projectCategorySelect").val();
-      const lead = $("#projectLeadSelect").val();
-
-      if (!name || !category || !lead) {
-          alert("Please fill all fields.");
-          return;
+          const str = String(rawStatus).trim().toLowerCase();
+          if (str === 'created' || str === 'new') return PROJECT_STATUS_MAP[0];
+          if (str.includes('progress') || str === 'active' || str === 'ongoing') return PROJECT_STATUS_MAP[1];
+          if (str.includes('finish') || str.includes('complete') || str === 'done') return PROJECT_STATUS_MAP[2];
+          if (str.includes('withdraw') || str.includes('cancel')) return PROJECT_STATUS_MAP[3];
+        }
+        return {
+          code: -1,
+          label: String(rawStatus || 'Unknown'),
+          badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+          dotClass: 'bg-slate-400',
+          iconClass: 'fa-circle-question',
+          chartColor: '#64748b'
+        };
       }
 
-      $.post("api/projDashboard.php", {
-          action: "createProject",
+      // State
+      let rawData = [];
+      let filteredData = [];
+      let currentPage = 1;
+      let pageSize = 15;
+      let sortColumn = 'createdOnTs';
+      let sortDirection = 'desc';
+      let chartMode = 'project'; // 'project' or 'category'
+      let activeStatusFilter = 'all'; // 'all', '0', '1', '2', '3'
+
+      // Chart instances
+      let barChartInstance = null;
+      let doughnutChartInstance = null;
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return new Intl.DateTimeFormat('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }).format(d);
+      }
+
+      function normalizeProject(p) {
+        const allotments = Number(p.allotments ?? 0) || 0;
+        const leadName = p.projectlead?.firstName
+          ? `${p.projectlead.firstName}${p.projectlead.lastName ? ' ' + p.projectlead.lastName : ''}`
+          : (p.projectLeadName || 'Unassigned');
+        const categoryName = p.category?.catagoryShortname || p.category?.categoryShortname || p.categoryName || 'General';
+        const createdByName = p.createdBy?.firstName
+          ? `${p.createdBy.firstName}${p.createdBy.lastName ? ' ' + p.createdBy.lastName : ''}`
+          : (p.createdByName || '--');
+        const createdOnFormatted = formatDate(p.createdOn);
+        const createdOnTs = p.createdOn ? new Date(p.createdOn).getTime() || 0 : 0;
+        const statusInfo = resolveStatusInfo(p.projectStatus);
+
+        return {
+          projId: p.projId ?? p.id ?? '',
+          projectName: p.projectName || 'Untitled Project',
+          leadName,
+          allotments,
+          categoryName,
+          createdByName,
+          createdOnFormatted,
+          createdOnTs,
+          statusCode: statusInfo.code,
+          statusLabel: statusInfo.label,
+          statusInfo
+        };
+      }
+
+      function showMessage(msg, error = false) {
+        const container = $('#messageContainer');
+        const styles = error
+          ? 'bg-red-50 text-red-700 border-red-200'
+          : 'bg-amber-50 text-amber-800 border-amber-200';
+        const icon = error ? 'fa-exclamation-circle text-red-500' : 'fa-info-circle text-amber-500';
+        container
+          .removeClass('hidden bg-red-50 text-red-700 border-red-200 bg-amber-50 text-amber-800 border-amber-200')
+          .addClass(styles)
+          .html(`<i class="fas ${icon} text-sm"></i><span>${msg}</span>`);
+      }
+
+      function renderStatusBadge(statusInfo) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusInfo.badgeClass}">
+            <span class="w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}"></span>
+            <span>${statusInfo.label}</span>
+          </span>
+        `;
+      }
+
+      // KPIs Update for Statuses 0, 1, 2, 3
+      function updateKPIs(dataset) {
+        const total = dataset.length;
+        const counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+        let totalAllotments = 0;
+
+        dataset.forEach(p => {
+          totalAllotments += p.allotments;
+          if (counts[p.statusCode] !== undefined) {
+            counts[p.statusCode]++;
+          }
+        });
+
+        const pct = (n) => (total > 0 ? `(${Math.round((n / total) * 100)}%)` : '');
+
+        $('#kpiTotalProjects').text(total.toLocaleString());
+        $('#kpiCreated').text(counts[0].toLocaleString());
+        $('#kpiCreatedPct').text(pct(counts[0]));
+
+        $('#kpiInProgress').text(counts[1].toLocaleString());
+        $('#kpiInProgressPct').text(pct(counts[1]));
+
+        $('#kpiFinished').text(counts[2].toLocaleString());
+        $('#kpiFinishedPct').text(pct(counts[2]));
+
+        $('#kpiWithdrawn').text(counts[3].toLocaleString());
+        $('#kpiWithdrawnPct').text(pct(counts[3]));
+
+        $('#kpiTotalAllotments').text(totalAllotments.toLocaleString());
+        $('#doughnutCenterTotal').text(total.toLocaleString());
+
+        return counts;
+      }
+
+      // Charts Rendering
+      function renderCharts(dataset, counts) {
+        if (!dataset.length) {
+          $('#chartsSection').addClass('hidden');
+          return;
+        }
+        $('#chartsSection').removeClass('hidden');
+
+        // 1. Bar Chart: By Project (color-coded by status) OR By Category (stacked by status 0-3)
+        const barCtx = document.getElementById('allotmentBarChart').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
+
+        if (chartMode === 'project') {
+          $('#barChartTitle').text('Allotments by Project (Top 12)');
+          const sorted = [...dataset].sort((a, b) => b.allotments - a.allotments).slice(0, 12);
+          const labels = sorted.map(p => p.projectName.length > 16 ? p.projectName.substring(0, 16) + '…' : p.projectName);
+          const fullLabels = sorted.map(p => p.projectName);
+          const values = sorted.map(p => p.allotments);
+          const barColors = sorted.map(p => p.statusInfo.chartColor);
+
+          barChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Allotments',
+                data: values,
+                backgroundColor: barColors,
+                borderRadius: 4,
+                maxBarThickness: 28
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#0f172a',
+                  titleFont: { family: 'Inter', size: 11, weight: '600' },
+                  bodyFont: { family: 'Inter', size: 11 },
+                  padding: 8,
+                  cornerRadius: 6,
+                  callbacks: {
+                    title: (items) => fullLabels[items[0].dataIndex],
+                    label: (ctx) => {
+                      const proj = sorted[ctx.dataIndex];
+                      return [` Allotments: ${ctx.parsed.y}`, ` Status: ${proj.statusLabel}`];
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { font: { family: 'Inter', size: 10 }, color: '#64748b', maxRotation: 25, minRotation: 0 }
+                },
+                y: {
+                  beginAtZero: true,
+                  border: { display: false },
+                  grid: { color: '#f1f5f9' },
+                  ticks: { precision: 0, font: { family: 'Inter', size: 10 }, color: '#64748b' }
+                }
+              }
+            }
+          });
+        } else {
+          $('#barChartTitle').text('Allotments by Category & Status');
+          const categories = [...new Set(dataset.map(p => p.categoryName))].sort();
+          const datasetsByStatus = [0, 1, 2, 3].map(code => ({
+            label: PROJECT_STATUS_MAP[code].label,
+            backgroundColor: PROJECT_STATUS_MAP[code].chartColor,
+            maxBarThickness: 28,
+            data: categories.map(cat =>
+              dataset
+                .filter(p => p.categoryName === cat && p.statusCode === code)
+                .reduce((sum, p) => sum + p.allotments, 0)
+            )
+          }));
+
+          barChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: { labels: categories, datasets: datasetsByStatus },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { mode: 'index', intersect: false },
+              plugins: {
+                legend: {
+                  position: 'top',
+                  align: 'end',
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    boxWidth: 6,
+                    boxHeight: 6,
+                    font: { family: 'Inter', size: 10, weight: '500' },
+                    color: '#475569',
+                    padding: 8
+                  }
+                },
+                tooltip: {
+                  backgroundColor: '#0f172a',
+                  titleFont: { family: 'Inter', size: 11, weight: '600' },
+                  bodyFont: { family: 'Inter', size: 11 },
+                  padding: 8,
+                  cornerRadius: 6
+                }
+              },
+              scales: {
+                x: {
+                  stacked: true,
+                  grid: { display: false },
+                  ticks: { font: { family: 'Inter', size: 10 }, color: '#64748b' }
+                },
+                y: {
+                  stacked: true,
+                  beginAtZero: true,
+                  border: { display: false },
+                  grid: { color: '#f1f5f9' },
+                  ticks: { precision: 0, font: { family: 'Inter', size: 10 }, color: '#64748b' }
+                }
+              }
+            }
+          });
+        }
+
+        // 2. Doughnut Chart: Exact 4-Status Lifecycle Distribution (0, 1, 2, 3)
+        const doughnutCtx = document.getElementById('statusDoughnutChart').getContext('2d');
+        if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+        const statusCodes = [0, 1, 2, 3];
+        doughnutChartInstance = new Chart(doughnutCtx, {
+          type: 'doughnut',
+          data: {
+            labels: statusCodes.map(c => PROJECT_STATUS_MAP[c].label),
+            datasets: [{
+              data: statusCodes.map(c => counts[c]),
+              backgroundColor: statusCodes.map(c => PROJECT_STATUS_MAP[c].chartColor),
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  padding: 8,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.parsed;
+                    const pct = dataset.length > 0 ? Math.round((val / dataset.length) * 100) : 0;
+                    return ` ${ctx.label}: ${val} (${pct}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Sync Active Status Filter UI across KPI Cards & Toolbar Pills
+      function setStatusFilter(filterVal) {
+        activeStatusFilter = String(filterVal);
+
+        // Update KPI cards active ring
+        $('.kpi-filter-card').removeClass('ring-2 ring-indigo-500/50 bg-indigo-50/40');
+        $(`.kpi-filter-card[data-status-filter="${activeStatusFilter}"]`).addClass('ring-2 ring-indigo-500/50 bg-indigo-50/40');
+
+        // Update toolbar pill tabs
+        $('.status-pill-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(`.status-pill-btn[data-status-filter="${activeStatusFilter}"]`).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+
+        currentPage = 1;
+        applyFiltersAndSort();
+      }
+
+      // Filter, Sort & Render Table
+      function applyFiltersAndSort() {
+        const query = $('#tableSearchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
+
+        filteredData = rawData.filter(item => {
+          const matchesStatus = activeStatusFilter === 'all' || String(item.statusCode) === activeStatusFilter;
+          const matchesQuery = !query ||
+            item.projectName.toLowerCase().includes(query) ||
+            item.leadName.toLowerCase().includes(query) ||
+            item.categoryName.toLowerCase().includes(query) ||
+            item.createdByName.toLowerCase().includes(query) ||
+            item.statusLabel.toLowerCase().includes(query);
+          return matchesStatus && matchesQuery;
+        });
+
+        filteredData.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        $('#tableCountBadge').text(`${filteredData.length} ${filteredData.length === 1 ? 'project' : 'projects'}`);
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const tbody = $('#root');
+        const totalRows = filteredData.length;
+
+        if (totalRows === 0) {
+          tbody.html(`
+            <tr>
+              <td colspan="8" class="py-6 text-center text-slate-400">
+                <i class="fas fa-folder-open text-lg mb-1 block text-slate-300"></i>
+                No matching projects found for the selected filter.
+              </td>
+            </tr>
+          `);
+          $('#paginationInfo').text('Showing 0 to 0 of 0 entries');
+          $('#paginationControls').empty();
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 100 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredData.slice(startIdx, endIdx);
+
+        let html = '';
+        pageSlice.forEach(p => {
+          const allotmentUrl = `/admin/project/allotments?projectId=${encodeURIComponent(p.projId)}&projectName=${encodeURIComponent(p.projectName)}`;
+          const initials = p.leadName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+          const isWithdrawn = p.statusCode === 3;
+
+          html += `
+            <tr class="hover:bg-indigo-50/40 transition-colors ${isWithdrawn ? 'bg-rose-50/20 opacity-85' : ''}">
+              <td class="py-1.5 px-2.5 font-medium">
+                <a href="${allotmentUrl}" class="text-[#1e3a8a] hover:text-indigo-600 font-semibold inline-flex items-center gap-1.5 transition-colors ${isWithdrawn ? 'line-through decoration-rose-400/70 text-slate-500' : ''}">
+                  <span class="w-1.5 h-1.5 rounded-full ${p.statusInfo.dotClass} shrink-0"></span>
+                  <span class="truncate max-w-[200px] sm:max-w-xs" title="${p.projectName}">${p.projectName}</span>
+                </a>
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-700">
+                <div class="inline-flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 text-[9px] font-bold inline-flex items-center justify-center shrink-0">${initials}</span>
+                  <span class="truncate max-w-[130px]">${p.leadName}</span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                  ${p.allotments}
+                </span>
+              </td>
+              <td class="py-1.5 px-2.5 text-center">
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200/80">
+                  ${p.categoryName}
+                </span>
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-500 hidden md:table-cell">
+                ${p.createdByName}
+              </td>
+              <td class="py-1.5 px-2.5 text-right text-slate-500 font-mono text-[11px] hidden sm:table-cell">
+                ${p.createdOnFormatted}
+              </td>
+              <td class="py-1.5 px-2.5 text-center">
+                ${renderStatusBadge(p.statusInfo)}
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <a href="${allotmentUrl}" title="Manage Allotments" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1e3a8a] hover:bg-indigo-700 text-white text-[11px] font-medium transition-colors">
+                  <i class="fas fa-tasks text-[9px]"></i>
+                  <span>Allotments</span>
+                </a>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.html(html);
+        $('#paginationInfo').text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $('#paginationControls');
+        container.empty();
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-[#1e3a8a] border-[#1e3a8a] text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      // Event Listeners
+      $(document).on('click', '.kpi-filter-card, .status-pill-btn', function () {
+        setStatusFilter($(this).data('status-filter'));
+      });
+
+      $('#tableSearchInput').on('input', function () {
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#clearSearchBtn').on('click', function () {
+        $('#tableSearchInput').val('');
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
+
+      $(document).on('click', '.page-btn:not([disabled])', function () {
+        currentPage = Number($(this).data('page'));
+        renderTablePage();
+      });
+
+      $('th.sortable').on('click', function () {
+        const col = $(this).data('sort');
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = ['projectName', 'leadName', 'categoryName', 'createdByName'].includes(col) ? 'asc' : 'desc';
+        }
+
+        $('th.sortable .sort-icon').removeClass('fa-sort-up fa-sort-down text-indigo-600').addClass('fa-sort text-slate-400');
+        const activeIcon = $(this).find('.sort-icon');
+        activeIcon.removeClass('fa-sort text-slate-400').addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+
+        applyFiltersAndSort();
+      });
+
+      $('.chart-mode-btn').on('click', function () {
+        $('.chart-mode-btn').removeClass('bg-white text-indigo-700 shadow-xs').addClass('text-slate-600');
+        $(this).addClass('bg-white text-indigo-700 shadow-xs').removeClass('text-slate-600');
+        chartMode = $(this).data('mode');
+        const counts = updateKPIs(rawData);
+        renderCharts(rawData, counts);
+      });
+
+      // CSV Export
+      $('#exportCsvBtn').on('click', function () {
+        if (!filteredData.length) return;
+        const headers = ['Project Name', 'Project Lead', 'Allotments', 'Category', 'Created By', 'Created On', 'Status Code', 'Status'];
+        const csvRows = [headers.join(',')];
+        filteredData.forEach(r => {
+          csvRows.push([
+            `"${r.projectName.replace(/"/g, '""')}"`,
+            `"${r.leadName.replace(/"/g, '""')}"`,
+            r.allotments,
+            `"${r.categoryName.replace(/"/g, '""')}"`,
+            `"${r.createdByName.replace(/"/g, '""')}"`,
+            `"${r.createdOnFormatted}"`,
+            r.statusCode,
+            `"${r.statusLabel}"`
+          ].join(','));
+        });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${clientName.replace(/\s+/g, '_')}_Projects_${dateToday}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Modal Controls
+      function openModal() {
+        $('#createProjectModal').removeClass('hidden').addClass('flex');
+      }
+      function closeModal() {
+        $('#createProjectModal').addClass('hidden').removeClass('flex');
+      }
+
+      $('#openCreateProjectBtn').on('click', function () {
+        fetchCategoriesForProject();
+        fetchProjectLeads();
+        $('#projectNameInput').val('');
+        openModal();
+      });
+
+      $('.close-modal-btn').on('click', closeModal);
+      $('#createProjectModal').on('click', function (e) {
+        if (e.target === this) closeModal();
+      });
+
+      function fetchCategoriesForProject() {
+        $.post('api/projDashboard.php', { action: 'getDepartments' }, function (data) {
+          const select = $('#projectCategorySelect');
+          select.empty().append('<option value="">-- Select Category --</option>');
+          (data.category || []).forEach(c => {
+            select.append(`<option value="${c.categoryId}">${c.categoryname}</option>`);
+          });
+        }, 'json');
+      }
+
+      function fetchProjectLeads() {
+        $.post('api/projDashboard.php', { action: 'getProjectLeads' }, function (data) {
+          const select = $('#projectLeadSelect');
+          select.empty().append('<option value="">-- Select Lead --</option>');
+          (data || []).forEach(l => {
+            select.append(`<option value="${l.eid}">${l.employeeName}</option>`);
+          });
+        }, 'json');
+      }
+
+      $('#saveProjectBtn').on('click', function () {
+        const name = $('#projectNameInput').val().trim();
+        const category = $('#projectCategorySelect').val();
+        const lead = $('#projectLeadSelect').val();
+
+        if (!name || !category || !lead) {
+          alert('Please fill all fields.');
+          return;
+        }
+
+        $.post('api/projDashboard.php', {
+          action: 'createProject',
           projectName: name,
           categoryId: category,
-          projectLead: lead
-      }, function(res){
-          alert("Project Created Successfully!");
-          $("#createProjectModal").modal("hide");
+          projectLead: lead,
+          clientId: clientId
+        }, function () {
+          closeModal();
           location.reload();
-      }, "json");
-  });
+        }, 'json');
+      });
 
-});
+      // Initialize Report Data
+      function initializeReport(dataList, isMock = false) {
+        rawData = dataList.map(normalizeProject);
+        if (isMock) $('#mockDataBadge').removeClass('hidden');
+        const counts = updateKPIs(rawData);
+        renderCharts(rawData, counts);
+        applyFiltersAndSort();
+      }
 
-
-</script>
-
+      // Single clean AJAX request to backend endpoint
+      $.ajax({
+        url: '/admin/project/projectsByClientDetailed',
+        type: 'GET',
+        data: { clientid: clientId },
+        dataType: 'json',
+        success: function (res) {
+          const finalData = res && res.data ? res.data : res;
+          if (!Array.isArray(finalData)) {
+            showMessage('Unexpected data format returned from server.', true);
+            return;
+          }
+          if (finalData.length === 0) {
+            showMessage(`No projects found for ${clientName}.`, false);
+            $('#chartsSection').addClass('hidden');
+            updateKPIs([]);
+            applyFiltersAndSort();
+            return;
+          }
+          initializeReport(finalData, false);
+        },
+        error: function () {
+          // Preview fallback data using numeric projectStatus codes (0, 1, 2, 3)
+          const sampleFallback = [
+            { projId: 501, projectName: 'Core ERP Migration Phase II', projectlead: { firstName: 'Rohan', lastName: 'Sharma' }, allotments: 14, category: { catagoryShortname: 'ERP' }, createdBy: { firstName: 'Anita' }, createdOn: '2026-10-12', projectStatus: 1 },
+            { projId: 502, projectName: 'Mobile Customer Portal v3', projectlead: { firstName: 'Priya', lastName: 'Nair' }, allotments: 9, category: { catagoryShortname: 'Mobile' }, createdBy: { firstName: 'Vikram' }, createdOn: '2026-09-24', projectStatus: 1 },
+            { projId: 503, projectName: 'Automated Billing Reconciliation', projectlead: { firstName: 'Karthik', lastName: 'Rao' }, allotments: 6, category: { catagoryShortname: 'FinTech' }, createdBy: { firstName: 'Anita' }, createdOn: '2026-08-05', projectStatus: 2 },
+            { projId: 504, projectName: 'Cloud Warehouse Analytics', projectlead: { firstName: 'Sneha', lastName: 'Menon' }, allotments: 11, category: { catagoryShortname: 'Data/BI' }, createdBy: { firstName: 'Suresh' }, createdOn: '2026-11-01', projectStatus: 0 },
+            { projId: 505, projectName: 'Vendor Onboarding Microservice', projectlead: { firstName: 'Arjun', lastName: 'Das' }, allotments: 5, category: { catagoryShortname: 'Backend' }, createdBy: { firstName: 'Vikram' }, createdOn: '2026-07-19', projectStatus: 2 },
+            { projId: 506, projectName: 'Legacy EDI Gateway Decommission', projectlead: { firstName: 'Meera', lastName: 'Iyer' }, allotments: 3, category: { catagoryShortname: 'Infra' }, createdBy: { firstName: 'Anita' }, createdOn: '2026-10-28', projectStatus: 3 },
+            { projId: 507, projectName: 'Real-Time Fleet Telemetry API', projectlead: { firstName: 'Rohan', lastName: 'Sharma' }, allotments: 8, category: { catagoryShortname: 'IoT' }, createdBy: { firstName: 'Suresh' }, createdOn: '2026-06-14', projectStatus: 2 },
+            { projId: 508, projectName: 'HR Self-Service Dashboard', projectlead: { firstName: 'Priya', lastName: 'Nair' }, allotments: 7, category: { catagoryShortname: 'Web' }, createdBy: { firstName: 'Anita' }, createdOn: '2026-11-10', projectStatus: 0 }
+          ];
+          initializeReport(sampleFallback, true);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package com.geosieben.gsbworkday.repository;
 import com.geosieben.gsbworkday.dto.AttendanceResponseDto;
 import com.geosieben.gsbworkday.dto.AvailableUsers;
+import com.geosieben.gsbworkday.dto.EmployeeDataProjection;
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
 import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
@@ -41,7 +42,7 @@ public interface BasicInfoRepository extends JpaRepository<EmployeeBasicInfo,Str
 @Query(nativeQuery = true, name = "EmployeeBasicInfo.fetchAggregates")
     StatsDto fetchAggregates();
 
-@Query(value = "SELECT e.firstName, e.lastName, e.gender, e.address, e.Eid, e.email, " +
+@Query(value = "SELECT e.firstName, e.lastName, e.gender, e.address, e.Eid, e.email,i.image, " +
                "j.dateOfJoining, j.status, j.workmail, " + // Added comma and space
                "s.pan, s.aadhar, s.uan, s.pfStartDate, " +
                "c.emergencyContactName, c.emergencyContactNum, c.relation, " + // Added comma
@@ -52,6 +53,7 @@ public interface BasicInfoRepository extends JpaRepository<EmployeeBasicInfo,Str
                "JOIN employee_bank_info b ON e.EID = b.EID " +
                "JOIN employee_statutory_info s ON e.EID = s.EID " +
                "JOIN employee_emergcontact_info c ON e.EID = c.EID " +
+               "LEFT JOIN images i on e.EID=i.EID "+
                "WHERE e.EID = :empid", nativeQuery = true)
 EmployeeProfileProjection employeeProfile(@Param("empid") String eid);
 
@@ -110,11 +112,11 @@ public List<AvailableUsers> getAvailableUsers(@Param("eid") String eid);
 
 @Query (value = "select e.eid as employeeId,e.firstName,e.lastName,date_format(e.dob,'%d-%b-%Y') as dob,e.gender, "+
 " e.maritalStatus,e.employmentStatus,e.bloodGroup,e.email as personalEmail,e.phone,e.address, "+
-" date_format(j.dateOfJoining,'%d-%b-%Y') as dateOfJoining,j.workmail, "+
+" date_format(j.dateOfJoining,'%d-%b-%Y') as dateOfJoining,j.workmail,b.ifsc,b.paymentMode, "+    
 " j.status,date_format(j.confirmationDate,'%d-%b-%Y') as confirmationDate,d.designation,dt.departmentName, "+
 " s.aadhar,s.pan,s.uan,s.pfNo,date_format(s.pfStartDate,'%d-%b-%Y') as pfStartDate,s.esiNo, "+
 " ec.emergencyContactName,ec.emergencyContactNum,ec.relation as emergencyRelation,ee.college, "+
-" b.bankName,b.branchName,b.accountNumber,ee.degree,ee.fieldOfStudy,ee.yearOfPassing,ee.gpa,concat(m.firstName,' ',e.lastName) as manager,i.image "+
+" b.bankName,b.branchName,b.accountNumber,ee.degree,ee.fieldOfStudy,ee.yearOfPassing,ee.gpa,concat(m.firstName,' ',m.lastName) as manager,i.image "+
 " from employee_basic_info e  "+
 " inner join employee_joining_info j on e.eid=j.eid "+
 " inner join employee_designation_info d on d.eid=e.eid "+
@@ -195,12 +197,12 @@ WHERE eid=:eid
         public  EmployeeStatsProjection getEmployeeStats(@Param("eid") String eid);
 
         @Query (value = "select e.eid as employeeId,e.firstName,e.lastName,date_format(e.dob,'%d-%b-%Y') as dob,e.gender, "+
-" e.maritalStatus,e.employmentStatus,e.bloodGroup,e.email as personalEmail,e.phone,e.address, "+
-" date_format(j.dateOfJoining,'%d-%b-%Y') as dateOfJoining,j.workmail, "+
+" e.maritalStatus as meritalStatus,e.employmentStatus,e.bloodGroup,e.email as personalEmail,e.phone,e.address, "+
+" date_format(j.dateOfJoining,'%d-%b-%Y') as dateOfJoining,j.workmail,b.ifsc,b.paymentMode, "+
 " j.status,date_format(j.confirmationDate,'%d-%b-%Y') as confirmationDate,d.designation,dt.departmentName, "+
 " s.aadhar,s.pan,s.uan,s.pfNo,date_format(s.pfStartDate,'%d-%b-%Y') as pfStartDate,s.esiNo, "+
 " ec.emergencyContactName,ec.emergencyContactNum,ec.relation as emergencyRelation,ee.college, "+
-" b.bankName,b.branchName,b.accountNumber,ee.degree,ee.fieldOfStudy,ee.yearOfPassing,ee.gpa,concat(m.firstName,' ',e.lastName) as manager,i.image "+
+" b.bankName,b.branchName,b.accountNumber,ee.degree,ee.fieldOfStudy,ee.yearOfPassing,ee.gpa,concat(m.firstName,' ',m.lastName) as manager,i.image "+
 " from employee_basic_info e  "+
 " inner join employee_joining_info j on e.eid=j.eid "+
 " inner join employee_designation_info d on d.eid=e.eid "+
@@ -212,4 +214,7 @@ WHERE eid=:eid
 " left join employee_basic_info m on m.eid=j.reportingManager "+
 " left join departments dt on dt.id=d.department where e.eid=:eid",nativeQuery = true)
 public  EmployeeReportProjection getEmployeeReportByEid(@Param("eid") String eid);
+
+@Query (value = "SELECT EID,CONCAT(firstName,' ',lastname) as employeeName from employee_basic_info where employmentStatus<>0 ",nativeQuery = true)
+public  List<EmployeeDataProjection> getActiveEmployeeList();
 }

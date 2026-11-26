@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-        <meta name="_csrf" th:content="${_csrf.token}"/>
-
+  <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employee Profile — View & Edit</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,16 +14,23 @@
     tailwind.config = {
       theme: {
         extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1034A6',
+              dark: '#0B2578',
+              light: '#EEF3FF',
+              border: '#C7D7FE'
+            }
+          },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
             display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           boxShadow: {
-            'card': '0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.03)',
-            'card-hover': '0 10px 24px -6px rgba(15, 23, 42, 0.07), 0 4px 10px -4px rgba(15, 23, 42, 0.04)',
-            'hero': '0 8px 30px -6px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)',
-            'float': '0 18px 40px -10px rgba(15, 23, 42, 0.14)',
+            'card': '0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.02)',
+            'hero': '0 4px 20px -4px rgba(16, 52, 166, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)',
+            'float': '0 20px 40px -10px rgba(15, 23, 42, 0.18)',
           }
         }
       }
@@ -39,28 +45,13 @@
     body {
       background-color: #f8fafc;
       background-image:
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.045) 0px, transparent 48%),
-        radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.045) 0px, transparent 48%);
-    }
-
-    .hero-mesh {
-      background:
-        radial-gradient(circle at 12% 20%, rgba(79, 70, 229, 0.14) 0%, transparent 45%),
-        radial-gradient(circle at 86% 18%, rgba(14, 165, 233, 0.16) 0%, transparent 46%),
-        radial-gradient(circle at 52% 95%, rgba(129, 140, 248, 0.10) 0%, transparent 50%),
-        linear-gradient(125deg, #eef2ff 0%, #f0f9ff 50%, #f8fafc 100%);
-    }
-
-    .hero-grid {
-      background-size: 22px 22px;
-      background-image:
-        linear-gradient(to right, rgba(79, 70, 229, 0.055) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(79, 70, 229, 0.055) 1px, transparent 1px);
+        radial-gradient(at 0% 0%, rgba(16, 52, 166, 0.03) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.03) 0px, transparent 50%);
     }
 
     ::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
       background: #f1f5f9;
@@ -78,9 +69,20 @@
     }
     .field-input:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+      border-color: #1034A6;
+      box-shadow: 0 0 0 3px rgba(16, 52, 166, 0.12);
       background-color: #ffffff;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite linear;
+      border-radius: 6px;
     }
 
     @keyframes fadeSlideUp {
@@ -88,13 +90,21 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .animate-in-up {
-      animation: fadeSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: fadeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes pulseHighlight {
+      0%, 100% { background-color: transparent; }
+      50% { background-color: rgba(16, 52, 166, 0.08); }
+    }
+    .field-flash {
+      animation: pulseHighlight 1s ease-in-out 2;
     }
 
     @media print {
       body {
         background: #ffffff !important;
-        font-size: 11pt;
+        font-size: 10pt;
       }
       .no-print {
         display: none !important;
@@ -108,136 +118,62 @@
         break-inside: avoid;
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
-        margin-bottom: 14px !important;
+        margin-bottom: 12px !important;
       }
     }
   </style>
 </head>
 <head th:replace="includes/header :: header"></head>
 
-<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+<body class="text-slate-800 antialiased selection:bg-brand-light selection:text-brand">
 
   <!-- Main Workspace -->
-  <main class="print-full mx-auto max-w-[98%] px-4 py-6 sm:px-6 lg:px-8">
+  <main class="print-full mx-auto max-w-[98%] px-4 py-5 sm:px-6 lg:px-8 pb-24">
 
-    <!-- Unsaved Changes Floating Banner -->
-    <div id="unsavedBanner" class="no-print mb-5 hidden animate-in-up items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-amber-50/90 to-orange-50/70 px-4 py-2.5 shadow-sm">
-      <div class="flex items-center gap-2.5 text-xs sm:text-sm">
-        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-          <i data-lucide="edit-3" class="h-3.5 w-3.5"></i>
-        </span>
-        <div>
-          <span class="font-semibold text-amber-950">Active Edit Session</span>
-          <span id="unsavedBannerText" class="ml-1.5 text-amber-800">Modify fields below and save to commit changes to the employee record.</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <button type="button" onclick="cancelAllEdits()" class="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100/60 transition">
-          Discard
-        </button>
-        <button type="button" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition">
-          <i data-lucide="check" class="h-3.5 w-3.5"></i>
-          Save Changes
-        </button>
-      </div>
-    </div>
+    <!-- EXECUTIVE HERO PROFILE HEADER -->
+    <section class="mb-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-hero relative">
+      <!-- Top Brand Accent Line -->
+      <div class="h-1 w-full bg-gradient-to-r from-brand via-blue-600 to-sky-400"></div>
 
-    <!-- HERO PROFILE CARD -->
-    <section class="mb-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-hero">
-      <!-- Daylight Mesh Cover Banner with Utility Actions -->
-      <div class="hero-mesh hero-grid relative h-32 sm:h-36 border-b border-slate-200/70">
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/45"></div>
-
-        <!-- Top Utility Strip inside Hero Banner -->
-        <div class="hidden no-print relative z-10 flex flex-wrap items-center justify-between gap-2 px-4 pt-3.5 sm:px-7">
-          <div class="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onclick="openAuditDrawer()"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
-              title="View Change History & Audit Log"
-            >
-              <i data-lucide="history" class="h-3.5 w-3.5 text-indigo-600"></i>
-              <span>Audit Log</span>
-              <span id="auditCountBadge" class="rounded-full bg-indigo-50 px-1.5 py-0.2 text-[10px] font-bold text-indigo-700 border border-indigo-200/70">0</span>
-            </button>
-
-            <button
-              type="button"
-              onclick="exportProfileJSON()"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
-              title="Download structured JSON payload"
-            >
-              <i data-lucide="download" class="h-3.5 w-3.5 text-slate-500"></i>
-              <span>Export JSON</span>
-            </button>
-
-            <button
-              type="button"
-              onclick="window.print()"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-xs backdrop-blur hover:bg-white hover:border-slate-300 transition"
-              title="Print or Save as PDF"
-            >
-              <i data-lucide="printer" class="h-3.5 w-3.5 text-slate-500"></i>
-              <span>Print</span>
-            </button>
-
-            <button
-              type="button"
-              onclick="getData(true)"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-slate-500 shadow-xs backdrop-blur hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/70 transition"
-              title="Reload latest record from server"
-            >
-              <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
-              <span class="hidden sm:inline">Reload</span>
-            </button>
-          </div>
-
-          <span class="hidden md:inline-flex items-center gap-1.5 rounded-full border border-indigo-200/70 bg-white/85 px-3 py-1 text-[11px] font-semibold text-indigo-700 shadow-xs backdrop-blur">
-            <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
-            Employee Master Record
-          </span>
-        </div>
-      </div>
-
-      <div class="px-5 pb-6 sm:px-7">
-        <div class="relative -mt-12 sm:-mt-14 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <!-- Left: Squircle Avatar + Primary Identity -->
-          <div class="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5">
-            <div class="group relative h-24 w-24 sm:h-28 sm:w-28 shrink-0">
-              <div class="h-full w-full overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-indigo-50 to-sky-100 shadow-md ring-1 ring-slate-200/80">
+      <!-- Main Identity Row -->
+      <div class="px-5 py-4 sm:px-6 sm:py-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <!-- Left: Avatar + Identity + Quick Copy Pills -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="group relative h-18 w-18 sm:h-20 sm:w-20 shrink-0">
+              <div class="h-full w-full overflow-hidden rounded-2xl border border-slate-200 bg-brand-light shadow-2xs ring-2 ring-slate-100">
                 <img id="heroAvatarImg" src="" alt="Employee Avatar" class="h-full w-full object-cover" />
               </div>
-              <label for="avatarFileInput" class="no-print absolute -bottom-1.5 -right-1.5 flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-md hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition" title="Change Profile Photo">
+              <label for="avatarFileInput" class="no-print absolute -bottom-1 -right-1 flex h-6.5 w-6.5 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-brand hover:text-white hover:border-brand transition p-1" title="Change Profile Photo">
                 <i data-lucide="camera" class="h-3.5 w-3.5"></i>
                 <input id="avatarFileInput" type="file" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)" />
               </label>
             </div>
 
-            <div class="pt-1">
-              <div class="flex flex-wrap items-center gap-2">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2.5">
                 <h1 id="heroFullName" class="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900"></h1>
                 <span id="heroStatusBadge"></span>
               </div>
 
-              <p id="heroRoleLine" class="mt-1 text-xs sm:text-sm font-medium text-slate-600"></p>
+              <p id="heroRoleLine" class="mt-0.5 text-xs sm:text-sm font-medium text-slate-500"></p>
 
               <!-- Copyable Contact & ID Chips -->
               <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
-                <button type="button" onclick="copyText(employeeData.EID, 'Employee ID')" class="group inline-flex items-center gap-1.5 rounded-lg border border-indigo-200/80 bg-indigo-50/70 px-2.5 py-1 font-mono font-semibold text-indigo-700 hover:bg-indigo-100/80 transition" title="Copy EID">
-                  <i data-lucide="hash" class="h-3 w-3 text-indigo-500"></i>
+                <button type="button" onclick="copyText(employeeData.EID, 'Employee ID')" class="group inline-flex items-center gap-1.5 rounded-md border border-brand-border bg-brand-light/70 px-2.5 py-1 font-mono font-semibold text-brand hover:bg-brand-light transition" title="Copy EID">
+                  <i data-lucide="hash" class="h-3 w-3 text-brand/70"></i>
                   <span id="heroEid"></span>
-                  <i data-lucide="copy" class="h-3 w-3 opacity-60 group-hover:opacity-100"></i>
+                  <i data-lucide="copy" class="h-3 w-3 opacity-50 group-hover:opacity-100"></i>
                 </button>
 
-                <button type="button" onclick="copyText(employeeData.workmail, 'Work Email')" class="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/40 hover:text-indigo-700 transition" title="Copy Work Email">
-                  <i data-lucide="mail" class="h-3 w-3 text-slate-400 group-hover:text-indigo-500"></i>
+                <button type="button" onclick="copyText(employeeData.workmail, 'Work Email')" class="group inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-slate-700 hover:border-brand-border hover:bg-brand-light/40 hover:text-brand transition" title="Copy Work Email">
+                  <i data-lucide="mail" class="h-3 w-3 text-slate-400 group-hover:text-brand"></i>
                   <span id="heroWorkmail"></span>
                   <i data-lucide="copy" class="h-3 w-3 opacity-40 group-hover:opacity-100"></i>
                 </button>
 
-                <button type="button" onclick="copyText(employeeData.phone, 'Phone Number')" class="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/40 hover:text-indigo-700 transition" title="Copy Phone">
-                  <i data-lucide="phone" class="h-3 w-3 text-slate-400 group-hover:text-indigo-500"></i>
+                <button type="button" onclick="copyText(employeeData.phone, 'Phone Number')" class="group inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-slate-700 hover:border-brand-border hover:bg-brand-light/40 hover:text-brand transition" title="Copy Phone">
+                  <i data-lucide="phone" class="h-3 w-3 text-slate-400 group-hover:text-brand"></i>
                   <span id="heroPhone"></span>
                   <i data-lucide="copy" class="h-3 w-3 opacity-40 group-hover:opacity-100"></i>
                 </button>
@@ -245,46 +181,98 @@
             </div>
           </div>
 
-          <!-- Right: Primary Edit / Save Controls -->
-          <div id="heroActionButtons" class="no-print flex flex-wrap items-center gap-2 shrink-0"></div>
+          <!-- Right: Toolbar & Primary Edit / Save Controls -->
+          <div class="no-print flex flex-wrap items-center gap-2 shrink-0">
+            <div class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50/70 p-1 gap-0.5">
+              <button
+                type="button"
+                onclick="openAuditDrawer()"
+                class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-white hover:text-brand hover:shadow-2xs transition"
+                title="View Change History & Audit Log"
+              >
+                <i data-lucide="history" class="h-3.5 w-3.5 text-brand"></i>
+                <span>Audit</span>
+                <span id="auditCountBadge" class="rounded-full bg-brand-light px-1.5 py-0.2 text-[10px] font-bold text-brand border border-brand-border">0</span>
+              </button>
+
+              <button
+                type="button"
+                onclick="exportProfileJSON()"
+                class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-2xs transition"
+                title="Download structured JSON payload"
+              >
+                <i data-lucide="download" class="h-3.5 w-3.5 text-slate-500"></i>
+                <span class="hidden sm:inline">JSON</span>
+              </button>
+
+              <button
+                type="button"
+                onclick="window.print()"
+                class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-2xs transition"
+                title="Print or Save as PDF"
+              >
+                <i data-lucide="printer" class="h-3.5 w-3.5 text-slate-500"></i>
+                <span class="hidden sm:inline">Print</span>
+              </button>
+
+              <button
+                type="button"
+                onclick="getData(true)"
+                class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white hover:text-brand hover:shadow-2xs transition"
+                title="Reload latest record from server"
+              >
+                <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+              </button>
+            </div>
+
+            <div id="heroActionButtons" class="flex items-center gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integrated 4-Column Metadata Strip -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 border-t border-slate-200/80 bg-slate-50/60 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
+        <div class="px-5 py-2.5 sm:px-6 flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand border border-brand-border/70">
+            <i data-lucide="calendar-clock" class="h-4 w-4"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Service Tenure</p>
+            <p id="kpiTenure" class="truncate font-display text-xs sm:text-sm font-bold text-slate-900"></p>
+            <p id="kpiJoinedSub" class="truncate text-[11px] text-slate-500"></p>
+          </div>
         </div>
 
-        <!-- 4-Tile KPI Summary Bar -->
-        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-slate-100 pt-5">
-          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
-            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
-              <span>Service Tenure</span>
-              <i data-lucide="calendar-clock" class="h-3.5 w-3.5 text-indigo-500"></i>
-            </div>
-            <p id="kpiTenure" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
-            <p id="kpiJoinedSub" class="text-[11px] text-slate-500"></p>
-          </div>
-
-          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
-            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
-              <span>Reporting Manager</span>
-              <i data-lucide="user-check" class="h-3.5 w-3.5 text-sky-600"></i>
-            </div>
-            <p id="kpiManager" class="mt-1 truncate font-display text-sm font-bold text-slate-900"></p>
+        <div class="px-5 py-2.5 sm:px-6 flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 border border-sky-200/80">
+            <i data-lucide="user-check" class="h-4 w-4"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Reporting Manager</p>
+            <p id="kpiManager" class="truncate font-display text-xs sm:text-sm font-bold text-slate-900"></p>
             <p id="kpiDeptSub" class="truncate text-[11px] text-slate-500"></p>
           </div>
+        </div>
 
-          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
-            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
-              <span>Age & Blood Group</span>
-              <i data-lucide="heart-pulse" class="h-3.5 w-3.5 text-rose-500"></i>
-            </div>
-            <p id="kpiAgeBlood" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
-            <p id="kpiDobSub" class="text-[11px] text-slate-500"></p>
+        <div class="px-5 py-2.5 sm:px-6 flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-200/80">
+            <i data-lucide="heart-pulse" class="h-4 w-4"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Age & Blood Group</p>
+            <p id="kpiAgeBlood" class="truncate font-display text-xs sm:text-sm font-bold text-slate-900"></p>
+            <p id="kpiDobSub" class="truncate text-[11px] text-slate-500"></p>
           </div>
+        </div>
 
-          <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5">
-            <div class="flex items-center justify-between text-[11px] font-medium text-slate-500">
-              <span>Confirmation & Surety</span>
-              <i data-lucide="shield-check" class="h-3.5 w-3.5 text-emerald-600"></i>
-            </div>
-            <p id="kpiConfirm" class="mt-1 font-display text-sm font-bold text-slate-900"></p>
-            <p id="kpiSuretySub" class="text-[11px] text-slate-500"></p>
+        <div class="px-5 py-2.5 sm:px-6 flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/80">
+            <i data-lucide="shield-check" class="h-4 w-4"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Confirmation & Surety</p>
+            <p id="kpiConfirm" class="truncate font-display text-xs sm:text-sm font-bold text-slate-900"></p>
+            <p id="kpiSuretySub" class="truncate text-[11px] text-slate-500"></p>
           </div>
         </div>
       </div>
@@ -293,43 +281,92 @@
     <!-- TWO-COLUMN WORKSPACE: Sticky Section Rail + 7 Section Cards -->
     <div class="flex flex-col lg:flex-row gap-6 items-start">
 
-      <!-- Left Sticky Navigation Rail -->
+      <!-- Left Sticky Navigation & Quick-Find Rail -->
       <aside class="no-print w-full lg:w-64 shrink-0 lg:sticky lg:top-5 space-y-4">
-        <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-card">
-          <div class="px-2.5 pb-2 pt-1 flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Profile Sections</span>
-            <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">7</span>
+        <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-card">
+          <!-- Instant Field Quick-Jump Search -->
+          <div class="border-b border-slate-100 p-2.5 bg-slate-50/60">
+            <div class="relative">
+              <i data-lucide="search" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400"></i>
+              <input
+                id="fieldSearchInput"
+                type="text"
+                placeholder="Jump to field (e.g. IFSC, UAN)..."
+                oninput="handleFieldSearch(this.value)"
+                class="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-7 text-xs text-slate-700 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10 transition"
+              />
+              <button
+                id="clearSearchBtn"
+                type="button"
+                onclick="clearFieldSearch()"
+                class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+              >
+                <i data-lucide="x" class="h-3 w-3"></i>
+              </button>
+            </div>
+            <div id="fieldSearchResults" class="mt-2 hidden max-h-48 overflow-y-auto space-y-1"></div>
           </div>
-          <nav id="sectionNavList" class="space-y-1"></nav>
+
+          <div class="px-3.5 pt-2.5 pb-1 flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sections</span>
+            <span class="font-mono text-[10px] font-semibold text-slate-400">07</span>
+          </div>
+          <nav id="sectionNavList" class="p-2 pt-1 space-y-0.5"></nav>
         </div>
 
         <!-- Profile Data Completeness Card -->
         <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-card">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-800">Profile Health</span>
-            <span id="sidebarCompletenessPct" class="font-mono text-xs font-bold text-indigo-600">0%</span>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="h-3.5 w-3.5 text-brand"></i>
+              <span class="text-xs font-bold text-slate-800">Record Completeness</span>
+            </div>
+            <span id="sidebarCompletenessPct" class="font-mono text-xs font-bold text-brand">0%</span>
           </div>
-          <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-            <div id="sidebarCompletenessBar" class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-sky-500 transition-all duration-300" style="width: 0%"></div>
+          <div class="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div id="sidebarCompletenessBar" class="h-full rounded-full bg-gradient-to-r from-brand to-sky-500 transition-all duration-300" style="width: 0%"></div>
           </div>
-          <p id="sidebarCompletenessNote" class="mt-2 text-[11px] leading-relaxed text-slate-500"></p>
-          <div id="missingFieldsQuickList" class="mt-2.5 hidden flex-wrap gap-1"></div>
+          <p id="sidebarCompletenessNote" class="mt-2.5 text-[11px] leading-relaxed text-slate-500"></p>
+          <div id="missingFieldsQuickList" class="mt-2.5 hidden flex-wrap gap-1.5"></div>
         </div>
       </aside>
 
       <!-- Main Section Cards Container -->
-      <div class="w-full flex-1 min-w-0 space-y-5">
-        <div id="sectionsContainer" class="space-y-5"></div>
+      <div class="w-full flex-1 min-w-0 space-y-4">
+        <div id="sectionsContainer" class="space-y-4"></div>
       </div>
     </div>
   </main>
 
+  <!-- FLOATING BOTTOM UNSAVED CHANGES DOCK -->
+  <div id="unsavedBanner" class="no-print fixed bottom-5 left-1/2 z-40 hidden -translate-x-1/2 animate-in-up items-center gap-4 rounded-2xl border border-slate-300 bg-white/95 px-4 py-2.5 shadow-float backdrop-blur-md">
+    <div class="flex items-center gap-2.5 text-xs">
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+        <i data-lucide="edit-3" class="h-3.5 w-3.5"></i>
+      </span>
+      <div>
+        <p class="font-bold text-slate-900">Unsaved Edits Active</p>
+        <p id="unsavedBannerText" class="text-[11px] text-slate-500">Modify fields and save changes</p>
+      </div>
+    </div>
+    <div class="h-6 w-px bg-slate-200"></div>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="cancelAllEdits()" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+        Discard
+      </button>
+      <button type="button" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-brand-dark transition">
+        <i data-lucide="check" class="h-3.5 w-3.5"></i>
+        Save Changes
+      </button>
+    </div>
+  </div>
+
   <!-- AUDIT LOG SLIDE-OVER DRAWER -->
   <div id="auditDrawerBackdrop" class="no-print fixed inset-0 z-50 hidden bg-slate-900/25 backdrop-blur-[2px] transition-opacity" onclick="closeAuditDrawer()"></div>
   <aside id="auditDrawer" class="no-print fixed inset-y-0 right-0 z-50 flex w-full max-w-md translate-x-full flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-out">
-    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50/70">
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50/80">
       <div class="flex items-center gap-2.5">
-        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80">
+        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-light text-brand border border-brand-border">
           <i data-lucide="history" class="h-4 w-4"></i>
         </span>
         <div>
@@ -361,7 +398,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const eid = urlParams.get('eid');
 
-    // Section-wise backend modification endpoints
     const SECTION_ENDPOINTS = {
       'basic-info': '/admin/updateEmployee/basic',
       'joining-info': '/admin/updateEmployee/joining',
@@ -372,19 +408,22 @@
       'emergency-contact': '/admin/updateEmployee/emergency'
     };
 
+    let reportingManagerOptions = [];
+    let departmentOptions = [];
+    let isLoadingProfile = Boolean(eid);
+
     const DEFAULT_AVATAR =
       'data:image/svg+xml;utf8,' +
       encodeURIComponent(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-          <rect width="128" height="128" fill="#EEF2FF"/>
-          <circle cx="64" cy="48" r="22" fill="#818CF8"/>
-          <path d="M24 114c0-22.091 17.909-40 40-40s40 17.909 40 40" fill="#6366F1"/>
+          <rect width="128" height="128" fill="#EEF3FF"/>
+          <circle cx="64" cy="48" r="22" fill="#3B82F6"/>
+          <path d="M24 114c0-22.091 17.909-40 40-40s40 17.909 40 40" fill="#1034A6"/>
         </svg>`
       );
 
     const EMPTY_EMPLOYEE = {
       avatarUrl: DEFAULT_AVATAR,
-      // 1. Basic Info
       EID: '',
       firstName: '',
       lastName: '',
@@ -395,19 +434,13 @@
       email: '',
       phone: '',
       address: '',
-
-      // 2. Joining Info
       dateOfJoining: '',
       confirmationDate: '',
       status: '',
       workmail: '',
       reportingManager: '',
-
-      // 3. Designation Info
       designation: '',
       department: '',
-
-      // 4. Statutory Info
       adhar: '',
       pan: '',
       uan: '',
@@ -415,35 +448,26 @@
       pfStartDate: '',
       esiNo: '',
       onSurity: 'No',
-
-      // 5. Bank Info
       bankName: '',
       branchName: '',
       accountNumber: '',
       IFSC: '',
       paymentMode: '',
-
-      // 6. Education
       degree: '',
       fieldOfStudy: '',
       college: '',
       yearOfPassing: '',
       gpa: '',
-
-      // 7. Emergency Contact
       emergencyContactName: '',
       relation: '',
       emergencyContactNum: ''
     };
 
-    // Maps Spring Data EmployeeReportProjection JSON -> UI employeeData keys
     function mapProjectionToEmployeeData(dto) {
       if (!dto) return { ...EMPTY_EMPLOYEE };
 
       return {
         avatarUrl: dto.image && String(dto.image).trim() !== '' ? dto.image : DEFAULT_AVATAR,
-
-        // 1. Basic Info
         EID: dto.employeeId ?? '',
         firstName: dto.firstName ?? '',
         lastName: dto.lastName ?? '',
@@ -454,19 +478,13 @@
         email: dto.personalEmail ?? '',
         phone: dto.phone ?? '',
         address: dto.address ?? '',
-
-        // 2. Joining Info
         dateOfJoining: dto.dateOfJoining ? formatDisplayDate(dto.dateOfJoining) : '',
         confirmationDate: dto.confirmationDate ? formatDisplayDate(dto.confirmationDate) : '',
         status: dto.status ?? '',
         workmail: dto.workmail ?? '',
         reportingManager: dto.manager ?? '',
-
-        // 3. Designation Info
         designation: dto.designation ?? '',
-        department: dto.departmentName ?? '',
-
-        // 4. Statutory Info
+        department: String(dto.departmentId ?? dto.department ?? dto.departmentName ?? ''),
         adhar: dto.aadhar ?? '',
         pan: dto.pan ?? '',
         uan: dto.uan ?? '',
@@ -474,29 +492,22 @@
         pfStartDate: dto.pfStartDate ? formatDisplayDate(dto.pfStartDate) : '',
         esiNo: dto.esiNo ?? '',
         onSurity: dto.onSurity ?? 'No',
-
-        // 5. Bank Info
         bankName: dto.bankName ?? '',
         branchName: dto.branchName ?? '',
         accountNumber: dto.accountNumber ?? '',
         IFSC: dto.ifsc ?? dto.IFSC ?? '',
         paymentMode: dto.paymentMode ?? '',
-
-        // 6. Education
         degree: dto.degree ?? '',
         fieldOfStudy: dto.fieldOfStudy ?? '',
         college: dto.college ?? '',
         yearOfPassing: dto.yearOfPassing ?? '',
         gpa: dto.gpa ?? '',
-
-        // 7. Emergency Contact
         emergencyContactName: dto.emergencyContactName ?? '',
         relation: dto.emergencyRelation ?? '',
         emergencyContactNum: dto.emergencyContactNum ?? ''
       };
     }
 
-    // Maps UI keys back to Spring Boot DTO keys for a specific section (dates formatted as yyyy-MM-dd)
     function buildSectionPayload(sectionId, sourceObj) {
       const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
       if (!sec) return {};
@@ -526,40 +537,107 @@
       return payload;
     }
 
-    // Sends AJAX modification request with optional Spring Security CSRF headers
     function sendSectionUpdateRequest(sectionId, payload) {
-      console.log(payload);
       const url = SECTION_ENDPOINTS[sectionId] || `/admin/updateEmployee/${encodeURIComponent(eid)}`;
       const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
       return $.ajax({
         url: url,
         type: 'POST',
-        headers:{'X-CSRF-TOKEN':csrfToken},
+        headers: { 'X-CSRF-TOKEN': csrfToken },
         dataType: 'json',
-        data: payload,
-        success:(res)=>{
-          console.log(res);
+        data: payload
+      });
+    }
+
+    function fetchReportingManagers() {
+      $.ajax({
+        url: '/admin/getEmployeeList',
+        type: 'GET',
+        dataType: 'json',
+        success: (res) => {
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          reportingManagerOptions = list
+            .filter(emp => emp && (emp.eid || emp.employeeName))
+            .map(emp => ({
+              value: String(emp.eid ?? '').trim(),
+              label: String(emp.employeeName ?? '').trim()
+            }));
+
+          if (!isLoadingProfile) {
+            renderHero();
+            renderSections();
+            if (window.lucide) lucide.createIcons();
+          }
         },
-        error:(err)=>{
-          console.log(err);
-        }
+        error: (err) => console.error('Error fetching employee list for reporting manager:', err)
+      });
+    }
+
+    function fetchDepartments() {
+      $.ajax({
+        url: '/admin/managedepartments',
+        type: 'GET',
+        dataType: 'json',
+        success: (res) => {
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          departmentOptions = list
+            .filter(dept => dept && ((dept.id !== undefined && dept.id !== null) || dept.departmentName))
+            .map(dept => ({
+              value: String(dept.id ?? '').trim(),
+              label: String(dept.departmentName ?? '').trim()
+            }));
+
+          if (employeeData.department) {
+            const matchByLabel = departmentOptions.find(
+              d => d.label.toLowerCase() === String(employeeData.department).trim().toLowerCase()
+            );
+            if (matchByLabel) {
+              employeeData.department = matchByLabel.value;
+              if (editingSections.has('designation-info')) {
+                draftData.department = matchByLabel.value;
+              }
+            }
+          }
+
+          if (!isLoadingProfile) {
+            renderHero();
+            renderSections();
+            if (window.lucide) lucide.createIcons();
+          }
+        },
+        error: (err) => console.error('Error fetching departments:', err)
       });
     }
 
     function getData(notify = false) {
       if (!eid) {
+        isLoadingProfile = false;
         showToast('Missing employee ID (?eid=...) in URL', 'error');
         renderAll();
         return;
       }
+
+      isLoadingProfile = true;
+      renderAll();
 
       $.ajax({
         url: `/admin/getEmployee/${encodeURIComponent(eid)}`,
         type: 'GET',
         dataType: 'JSON',
         success: (res) => {
+          isLoadingProfile = false;
           const record = Array.isArray(res) ? res[0] : (res?.data || res);
           employeeData = mapProjectionToEmployeeData(record);
+
+          if (employeeData.department && departmentOptions.length > 0) {
+            const matchByLabel = departmentOptions.find(
+              d => d.label.toLowerCase() === String(employeeData.department).trim().toLowerCase()
+            );
+            if (matchByLabel) {
+              employeeData.department = matchByLabel.value;
+            }
+          }
+
           editingSections.clear();
           draftData = {};
           fieldErrors = {};
@@ -567,6 +645,7 @@
           if (notify) showToast('Reloaded employee record from server', 'success');
         },
         error: (err) => {
+          isLoadingProfile = false;
           console.error('Error fetching employee details:', err);
           showToast('Failed to load employee details from server', 'error');
           renderAll();
@@ -584,9 +663,9 @@
         title: 'Basic Info',
         subtitle: 'Personal identity, demographics, contact channels, and residential address',
         icon: 'user',
-        accentBg: 'bg-indigo-50',
-        accentText: 'text-indigo-600',
-        accentBorder: 'border-indigo-200/80',
+        accentBg: 'bg-brand-light',
+        accentText: 'text-brand',
+        accentBorder: 'border-brand-border',
         fields: [
           { key: 'EID', label: 'Employee ID', type: 'text', readonly: true, mono: true },
           { key: 'firstName', label: 'First Name', type: 'text', required: true, placeholder: 'First name' },
@@ -612,9 +691,9 @@
         fields: [
           { key: 'dateOfJoining', label: 'Date of Joining', type: 'date', required: true },
           { key: 'confirmationDate', label: 'Confirmation Date', type: 'date' },
-          { key: 'status', label: 'Account / Active Status', type: 'select', required: true, options: ['Active', 'Probation', 'On Leave', 'Notice Period', 'Inactive'] },
+          { key: 'status', label: 'Account / Active Status', type: 'select', required: true, options: ['Confirmed', 'Probation', 'Contract'] },
           { key: 'workmail', label: 'Work Email', type: 'email', required: true, placeholder: 'name@company.com' },
-          { key: 'reportingManager', label: 'Reporting Manager', type: 'text', required: true, placeholder: 'Manager name & title' }
+          { key: 'reportingManager', label: 'Reporting Manager', type: 'select', required: true, dynamicOptions: () => reportingManagerOptions }
         ]
       },
       {
@@ -627,8 +706,36 @@
         accentText: 'text-violet-600',
         accentBorder: 'border-violet-200/80',
         fields: [
-          { key: 'designation', label: 'Designation', type: 'text', required: true, placeholder: 'e.g., Senior Software Engineer' },
-          { key: 'department', label: 'Department', type: 'select', required: true, options: ['Product Engineering', 'Human Resources', 'Finance & Accounts', 'Operations', 'Sales & Growth', 'IT Infrastructure', 'Quality Assurance', 'Design & UX'] }
+          {
+            key: 'designation',
+            label: 'Designation',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'Finance Head', label: 'Finance Head' },
+              { value: 'Freelancer', label: 'Freelancer' },
+              { value: 'GIS Analyst', label: 'GIS Analyst' },
+              { value: 'GIS Associate', label: 'GIS Associate' },
+              { value: 'GIS Trainee', label: 'GIS Trainee' },
+              { value: 'HR Admin', label: 'HR Admin' },
+              { value: 'HR Recruiter', label: 'HR Recruiter' },
+              { value: 'IT', label: 'IT' },
+              { value: 'Managing Director', label: 'Managing Director' },
+              { value: 'Marketing Executive', label: 'Marketing Executive' },
+              { value: 'Office boy/Housekeeping', label: 'Office boy/Housekeeping' },
+              { value: 'Project Co-Ordinator', label: 'Project Co-Ordinator' },
+              { value: 'Project Manager', label: 'Project Manager' },
+              { value: 'Team Lead', label: 'Team Lead' },
+              { value: 'Web Developer', label: 'Web Developer' }
+            ]
+          },
+          {
+            key: 'department',
+            label: 'Department',
+            type: 'select',
+            required: true,
+            dynamicOptions: () => departmentOptions
+          }
         ]
       },
       {
@@ -641,8 +748,8 @@
         accentText: 'text-emerald-600',
         accentBorder: 'border-emerald-200/80',
         fields: [
-          { key: 'adhar', label: 'Aadhaar Number', type: 'text', mono: true, placeholder: 'XXXX XXXX XXXX' },
-          { key: 'pan', label: 'PAN Number', type: 'text', mono: true, uppercase: true, placeholder: 'ABCDE1234F' },
+          { key: 'adhar', label: 'Aadhaar Number', type: 'text', mono: true, sensitive: true, placeholder: 'XXXX XXXX XXXX' },
+          { key: 'pan', label: 'PAN Number', type: 'text', mono: true, sensitive: true, uppercase: true, placeholder: 'ABCDE1234F' },
           { key: 'uan', label: 'UAN Number', type: 'text', mono: true, placeholder: '12-digit UAN' },
           { key: 'pfNo', label: 'PF Number', type: 'text', mono: true, placeholder: 'Region/Office/Est/Ext/Acc' },
           { key: 'pfStartDate', label: 'PF Start Date', type: 'date' },
@@ -660,9 +767,19 @@
         accentText: 'text-amber-600',
         accentBorder: 'border-amber-200/80',
         fields: [
-          { key: 'bankName', label: 'Bank Name', type: 'text', required: true, placeholder: 'e.g., HDFC Bank Ltd.' },
+          {
+            key: 'bankName',
+            label: 'Bank Name',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'ICICI', label: 'ICICI Bank' },
+              { value: 'Kotak Mahindra Bank', label: 'Kotak Mahindra Bank' },
+              { value: 'Others', label: 'Others' }
+            ]
+          },
           { key: 'branchName', label: 'Branch Name', type: 'text', placeholder: 'Branch location' },
-          { key: 'accountNumber', label: 'Account Number', type: 'text', required: true, mono: true, placeholder: 'Bank account number' },
+          { key: 'accountNumber', label: 'Account Number', type: 'text', required: true, mono: true, sensitive: true, placeholder: 'Bank account number' },
           { key: 'IFSC', label: 'IFSC Code', type: 'text', required: true, mono: true, uppercase: true, placeholder: 'HDFC0000184' },
           { key: 'paymentMode', label: 'Payment Mode', type: 'select', options: ['NEFT / Direct Bank Transfer', 'RTGS', 'IMPS', 'Cheque'] }
         ]
@@ -709,6 +826,7 @@
     let editingSections = new Set();
     let draftData = {};
     let fieldErrors = {};
+    let revealedFields = new Set();
     let activeNavId = 'basic-info';
 
     function loadAuditLogs() {
@@ -728,17 +846,41 @@
       }
     }
 
+    function toggleSensitiveField(key) {
+      if (revealedFields.has(key)) {
+        revealedFields.delete(key);
+      } else {
+        revealedFields.add(key);
+      }
+      renderSections();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function maskSensitiveValue(key, val) {
+      const str = String(val ?? '').trim();
+      if (!str) return '';
+      if (key === 'adhar') {
+        const digits = str.replace(/\s+/g, '');
+        return digits.length >= 4 ? `•••• •••• ${digits.slice(-4)}` : '•••• ••••';
+      }
+      if (key === 'pan') {
+        return str.length >= 4 ? `••••••${str.slice(-4)}` : '••••••••';
+      }
+      if (key === 'accountNumber') {
+        return str.length >= 4 ? `${'•'.repeat(Math.max(4, str.length - 4))}${str.slice(-4)}` : '••••••••';
+      }
+      return str;
+    }
+
     // =========================================================================
     // 4. DATE PARSING, VALIDATION & FORMATTING HELPERS
     // =========================================================================
     const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    // Parses "03-Mar-2001" or ISO "2001-03-03" into a local Date object
     function parseFlexibleDate(dateStr) {
       if (!dateStr) return null;
       const s = String(dateStr).trim();
 
-      // Match dd-MMM-yyyy (e.g., 03-Mar-2001)
       const dmyMatch = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
       if (dmyMatch) {
         const day = parseInt(dmyMatch[1], 10);
@@ -750,7 +892,6 @@
         }
       }
 
-      // Match ISO yyyy-MM-dd
       const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
       if (isoMatch) {
         const d = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
@@ -761,7 +902,6 @@
       return isNaN(fallback.getTime()) ? null : fallback;
     }
 
-    // Formats any valid date into UI display format "03-Mar-2001"
     function formatDisplayDate(dateStr) {
       const d = parseFlexibleDate(dateStr);
       if (!d) return dateStr ? String(dateStr) : '—';
@@ -771,7 +911,6 @@
       return `${dd}-${mmm}-${yyyy}`;
     }
 
-    // Converts "03-Mar-2001" -> "2001-03-03" for <input type="date"> AND backend JSON payload
     function toInputDateValue(dateStr) {
       const d = parseFlexibleDate(dateStr);
       if (!d) return '';
@@ -779,6 +918,39 @@
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function resolveSelectOptions(field, currentVal) {
+      const rawList = typeof field.dynamicOptions === 'function'
+        ? field.dynamicOptions()
+        : (field.options || []);
+
+      const normalized = rawList.map(opt =>
+        typeof opt === 'object' && opt !== null
+          ? { value: String(opt.value), label: String(opt.label ?? opt.value) }
+          : { value: String(opt), label: String(opt) }
+      );
+
+      if (currentVal && !normalized.some(o => o.value === currentVal)) {
+        normalized.unshift({ value: currentVal, label: currentVal });
+      }
+      return normalized;
+    }
+
+    function getSelectDisplayLabel(field, rawVal) {
+      if (!rawVal) return '';
+      const opts = resolveSelectOptions(field, rawVal);
+      const match = opts.find(o => o.value === rawVal);
+      return match ? match.label : rawVal;
+    }
+
+    function getFieldLabelByKey(key, rawVal) {
+      if (!rawVal) return '';
+      const field = PROFILE_SECTIONS.flatMap(s => s.fields).find(f => f.key === key);
+      if (field && field.type === 'select') {
+        return getSelectDisplayLabel(field, String(rawVal));
+      }
+      return String(rawVal);
     }
 
     function validateField(key, rawValue) {
@@ -884,15 +1056,19 @@
 
     function getStatusBadgeHTML(status) {
       const map = {
-        'Active': 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-500/20',
-        'Probation': 'bg-amber-50 text-amber-700 border-amber-200 ring-amber-500/20',
-        'On Leave': 'bg-sky-50 text-sky-700 border-sky-200 ring-sky-500/20',
-        'Notice Period': 'bg-orange-50 text-orange-700 border-orange-200 ring-orange-500/20',
-        'Inactive': 'bg-rose-50 text-rose-700 border-rose-200 ring-rose-500/20'
+        'Confirmed': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        'Active': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        'Probation': 'bg-amber-50 text-amber-700 border-amber-200',
+        'Contract': 'bg-sky-50 text-sky-700 border-sky-200',
+        'On Leave': 'bg-sky-50 text-sky-700 border-sky-200',
+        'Notice Period': 'bg-orange-50 text-orange-700 border-orange-200',
+        'Inactive': 'bg-rose-50 text-rose-700 border-rose-200'
       };
       const dotMap = {
+        'Confirmed': 'bg-emerald-500',
         'Active': 'bg-emerald-500',
         'Probation': 'bg-amber-500',
+        'Contract': 'bg-sky-500',
         'On Leave': 'bg-sky-500',
         'Notice Period': 'bg-orange-500',
         'Inactive': 'bg-rose-500'
@@ -916,6 +1092,29 @@
         .replace(/'/g, '&#39;');
     }
 
+    function isFieldDirty(key) {
+      if (editingSections.size === 0) return false;
+      const oldVal = (employeeData[key] ?? '').toString().trim();
+      const newVal = (draftData[key] ?? '').toString().trim();
+      return oldVal !== newVal;
+    }
+
+    function countDirtyFields(sectionId = null) {
+      if (editingSections.size === 0) return 0;
+      const targetSecs = sectionId
+        ? PROFILE_SECTIONS.filter(s => s.id === sectionId)
+        : PROFILE_SECTIONS.filter(s => editingSections.has(s.id));
+
+      let count = 0;
+      targetSecs.forEach(sec => {
+        sec.fields.forEach(f => {
+          if (f.readonly) return;
+          if (isFieldDirty(f.key)) count++;
+        });
+      });
+      return count;
+    }
+
     // =========================================================================
     // 5. RENDERING ENGINE
     // =========================================================================
@@ -930,11 +1129,36 @@
     }
 
     function renderHero() {
-      const fullName = `${employeeData.firstName || ''} ${employeeData.lastName || ''}`.trim() || 'Loading Employee...';
+      const fullNameEl = document.getElementById('heroFullName');
+      const roleLineEl = document.getElementById('heroRoleLine');
+      const statusBadgeEl = document.getElementById('heroStatusBadge');
+
       document.getElementById('heroAvatarImg').src = employeeData.avatarUrl || DEFAULT_AVATAR;
-      document.getElementById('heroFullName').textContent = fullName;
-      document.getElementById('heroStatusBadge').innerHTML = getStatusBadgeHTML(employeeData.status);
-      document.getElementById('heroRoleLine').textContent = `${employeeData.designation || 'Role Not Assigned'}  •  ${employeeData.department || 'Department Not Assigned'}`;
+
+      if (isLoadingProfile) {
+        fullNameEl.innerHTML = `<span class="inline-block h-6 w-48 skeleton"></span>`;
+        statusBadgeEl.innerHTML = `<span class="inline-block h-5 w-20 skeleton"></span>`;
+        roleLineEl.innerHTML = `<span class="inline-block h-4 w-64 skeleton mt-1"></span>`;
+        document.getElementById('heroEid').textContent = eid || '...';
+        document.getElementById('heroWorkmail').textContent = '...';
+        document.getElementById('heroPhone').textContent = '...';
+        ['kpiTenure', 'kpiManager', 'kpiAgeBlood', 'kpiConfirm'].forEach(id => {
+          document.getElementById(id).innerHTML = `<span class="inline-block h-4 w-24 skeleton"></span>`;
+        });
+        ['kpiJoinedSub', 'kpiDeptSub', 'kpiDobSub', 'kpiSuretySub'].forEach(id => {
+          document.getElementById(id).innerHTML = `<span class="inline-block h-3 w-28 skeleton mt-0.5"></span>`;
+        });
+        document.getElementById('heroActionButtons').innerHTML = '';
+        return;
+      }
+
+      const fullName = `${employeeData.firstName || ''} ${employeeData.lastName || ''}`.trim() || 'Employee Record';
+      const deptDisplay = getFieldLabelByKey('department', employeeData.department);
+      const managerDisplay = getFieldLabelByKey('reportingManager', employeeData.reportingManager);
+
+      fullNameEl.textContent = fullName;
+      statusBadgeEl.innerHTML = getStatusBadgeHTML(employeeData.status);
+      roleLineEl.textContent = `${employeeData.designation || 'Role Not Assigned'}  •  ${deptDisplay || 'Department Not Assigned'}`;
 
       document.getElementById('heroEid').textContent = employeeData.EID || eid || '—';
       document.getElementById('heroWorkmail').textContent = employeeData.workmail || '—';
@@ -944,8 +1168,8 @@
       document.getElementById('kpiTenure').textContent = computeTenure(employeeData.dateOfJoining);
       document.getElementById('kpiJoinedSub').textContent = `Joined ${formatDisplayDate(employeeData.dateOfJoining)}`;
 
-      document.getElementById('kpiManager').textContent = employeeData.reportingManager || '—';
-      document.getElementById('kpiDeptSub').textContent = employeeData.department || '—';
+      document.getElementById('kpiManager').textContent = managerDisplay || '—';
+      document.getElementById('kpiDeptSub').textContent = deptDisplay || '—';
 
       const age = computeAge(employeeData.dob);
       document.getElementById('kpiAgeBlood').textContent = `${age !== null ? age + ' Yrs' : '—'}  •  ${employeeData.bloodGroup || '—'}`;
@@ -960,18 +1184,18 @@
 
       if (anyEditing) {
         actionWrap.innerHTML = `
-          <button type="button" onclick="cancelAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition">
+          <button type="button" onclick="cancelAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition">
             <i data-lucide="x" class="h-3.5 w-3.5 text-slate-500"></i>
             Cancel All
           </button>
-          <button type="button" id="saveAllBtn" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition">
+          <button type="button" id="saveAllBtn" onclick="saveAllEdits()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-dark transition">
             <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
-            Save All Changes
+            Save All
           </button>
         `;
       } else {
         actionWrap.innerHTML = `
-          <button type="button" onclick="startEditAll()" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-[0.99] transition">
+          <button type="button" onclick="startEditAll()" class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-dark active:scale-[0.99] transition">
             <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
             Edit Full Profile
           </button>
@@ -991,15 +1215,16 @@
           <a
             href="#${sec.id}"
             onclick="setActiveNav('${sec.id}')"
-            class="group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition ${
+            class="group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition ${
               isActive
-                ? 'bg-indigo-50/90 text-indigo-700 font-semibold'
+                ? 'bg-brand-light/90 text-brand font-semibold'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }"
           >
+            ${isActive ? '<span class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand"></span>' : ''}
             <div class="flex items-center gap-2.5 min-w-0">
               <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border ${
-                isActive ? 'border-indigo-200 bg-white text-indigo-600 shadow-2xs' : 'border-slate-200/80 bg-slate-50 text-slate-500 group-hover:bg-white'
+                isActive ? 'border-brand-border bg-white text-brand shadow-2xs' : 'border-slate-200/80 bg-slate-50 text-slate-500 group-hover:bg-white'
               }">
                 <i data-lucide="${sec.icon}" class="h-3.5 w-3.5"></i>
               </span>
@@ -1018,13 +1243,19 @@
       const allFields = PROFILE_SECTIONS.flatMap(s => s.fields.map(f => ({ ...f, sectionId: s.id })));
       const missing = allFields.filter(f => !(employeeData[f.key] ?? '').toString().trim());
       const filled = allFields.length - missing.length;
-      const pct = Math.round((filled / allFields.length) * 100);
+      const pct = isLoadingProfile ? 0 : Math.round((filled / allFields.length) * 100);
 
       document.getElementById('sidebarCompletenessPct').textContent = `${pct}%`;
       document.getElementById('sidebarCompletenessBar').style.width = `${pct}%`;
 
       const noteEl = document.getElementById('sidebarCompletenessNote');
       const quickList = document.getElementById('missingFieldsQuickList');
+
+      if (isLoadingProfile) {
+        noteEl.textContent = 'Calculating profile completeness...';
+        quickList.classList.add('hidden');
+        return;
+      }
 
       if (missing.length === 0) {
         noteEl.textContent = `All ${allFields.length} employee fields across 7 sections are populated.`;
@@ -1053,12 +1284,12 @@
 
         return `
           <article id="${sec.id}" class="section-card scroll-mt-6 overflow-hidden rounded-2xl border ${
-            isEditing ? 'border-indigo-300 ring-2 ring-indigo-500/10' : 'border-slate-200/90'
+            isEditing ? 'border-brand ring-2 ring-brand/10' : 'border-slate-200/90'
           } bg-white shadow-card transition-all">
             <!-- Section Header -->
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3.5 sm:px-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/60 px-5 py-3 sm:px-6">
               <div class="flex items-center gap-3 min-w-0">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${sec.accentBorder} ${sec.accentBg} ${sec.accentText}">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${sec.accentBorder} ${sec.accentBg} ${sec.accentText}">
                   <i data-lucide="${sec.icon}" class="h-4 w-4"></i>
                 </span>
                 <div class="min-w-0">
@@ -1080,7 +1311,7 @@
                         <i data-lucide="x" class="h-3.5 w-3.5"></i>
                         Cancel
                       </button>
-                      <button type="button" id="saveBtn_${sec.id}" onclick="saveSectionEdit('${sec.id}')" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition">
+                      <button type="button" id="saveBtn_${sec.id}" onclick="saveSectionEdit('${sec.id}')" class="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-brand-dark transition">
                         <i data-lucide="check" class="h-3.5 w-3.5"></i>
                         Save Section
                       </button>
@@ -1090,9 +1321,9 @@
                         <i data-lucide="copy" class="h-3.5 w-3.5 text-slate-400"></i>
                         <span class="hidden sm:inline">Copy</span>
                       </button>
-                      <button type="button" onclick="startSectionEdit('${sec.id}')" class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100/80 transition">
+                      <button type="button" onclick="startSectionEdit('${sec.id}')" class="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-light/70 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-light transition">
                         <i data-lucide="edit-3" class="h-3.5 w-3.5"></i>
-                        Edit Section
+                        Edit
                       </button>
                     `
                 }
@@ -1100,8 +1331,12 @@
             </div>
 
             <!-- Section Fields Grid -->
-            <div class="p-5 sm:p-6">
-              <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="${isEditing ? 'p-5 sm:p-6' : 'px-5 py-1 sm:px-6'}">
+              <div class="${
+                isEditing
+                  ? 'grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3'
+                  : 'grid grid-cols-1 md:grid-cols-2 gap-x-8 divide-y md:divide-y-0 divide-slate-100'
+              }">
                 ${sec.fields.map(field => renderFieldCell(sec.id, field, isEditing)).join('')}
               </div>
             </div>
@@ -1111,11 +1346,22 @@
     }
 
     function renderFieldCell(sectionId, field, isEditing) {
-      const colSpanClass = field.fullWidth ? 'sm:col-span-2 xl:col-span-3' : '';
+      const colSpanClass = field.fullWidth ? 'md:col-span-2 xl:col-span-3' : '';
 
       if (!isEditing) {
+        if (isLoadingProfile) {
+          return `
+            <div class="${colSpanClass} flex items-center justify-between gap-4 border-b border-slate-100 py-3">
+              <span class="h-3.5 w-24 skeleton"></span>
+              <span class="h-4 w-36 skeleton"></span>
+            </div>
+          `;
+        }
+
         const rawVal = employeeData[field.key];
         const hasVal = rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '';
+        const isSensitive = Boolean(field.sensitive) && hasVal;
+        const isRevealed = revealedFields.has(field.key);
         let displayHTML = '';
 
         if (!hasVal) {
@@ -1132,35 +1378,59 @@
           let extraPill = '';
           if (field.key === 'dob') {
             const age = computeAge(rawVal);
-            if (age !== null) extraPill = `<span class="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">${age} yrs</span>`;
+            if (age !== null) extraPill = `<span class="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">${age} yrs</span>`;
           } else if (field.key === 'dateOfJoining') {
-            extraPill = `<span class="ml-2 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700">${computeTenure(rawVal)}</span>`;
+            extraPill = `<span class="ml-2 rounded bg-brand-light px-1.5 py-0.5 text-[11px] font-semibold text-brand">${computeTenure(rawVal)}</span>`;
           }
-          displayHTML = `<span class="text-sm font-semibold text-slate-800">${escapeHTML(formatted)}</span>${extraPill}`;
+          displayHTML = `<span class="text-[13px] sm:text-sm font-semibold text-slate-800">${escapeHTML(formatted)}</span>${extraPill}`;
+        } else if (field.type === 'select') {
+          const displayLabel = getSelectDisplayLabel(field, String(rawVal));
+          displayHTML = `<span class="${field.mono ? 'font-mono text-[13px]' : 'text-[13px] sm:text-sm'} font-semibold text-slate-800 break-words">${escapeHTML(displayLabel)}</span>`;
         } else {
-          displayHTML = `<span class="${field.mono ? 'font-mono text-[13px]' : 'text-sm'} font-semibold text-slate-800 break-words">${escapeHTML(rawVal)}</span>`;
+          const shownText = isSensitive && !isRevealed ? maskSensitiveValue(field.key, rawVal) : String(rawVal);
+          displayHTML = `<span class="${field.mono ? 'font-mono text-[13px]' : 'text-[13px] sm:text-sm'} font-semibold text-slate-800 break-words">${escapeHTML(shownText)}</span>`;
         }
 
+        const copyValue = field.type === 'select' && hasVal
+          ? getSelectDisplayLabel(field, String(rawVal))
+          : String(rawVal ?? '');
+
         return `
-          <div class="${colSpanClass} group rounded-xl border border-slate-100 bg-slate-50/45 px-3.5 py-2.5 hover:border-slate-200 hover:bg-slate-50/90 transition">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-medium text-slate-500">${escapeHTML(field.label)}</span>
-              ${
-                hasVal
-                  ? `<button type="button" onclick="copyText(${JSON.stringify(String(rawVal))}, ${JSON.stringify(field.label)})" class="no-print opacity-0 group-hover:opacity-100 rounded p-0.5 text-slate-400 hover:text-indigo-600 transition" title="Copy ${escapeHTML(field.label)}">
-                      <i data-lucide="copy" class="h-3 w-3"></i>
-                    </button>`
-                  : ''
-              }
-            </div>
-            <div class="mt-1 flex items-center flex-wrap">
-              ${displayHTML}
+          <div id="field_row_${field.key}" class="${colSpanClass} group flex items-start sm:items-center justify-between gap-3 border-b border-slate-100 py-2.5 px-2.5 -mx-2.5 rounded-lg hover:bg-slate-50/90 transition">
+            <span class="shrink-0 text-xs font-medium text-slate-500 pt-0.5 sm:pt-0">${escapeHTML(field.label)}</span>
+            <div class="flex items-center justify-end gap-1.5 min-w-0 text-right">
+              <div class="flex items-center justify-end flex-wrap min-w-0">
+                ${displayHTML}
+              </div>
+              <div class="no-print flex items-center gap-0.5 shrink-0">
+                ${
+                  isSensitive
+                    ? `<button type="button" onclick="toggleSensitiveField('${field.key}')" class="rounded p-1 text-slate-400 hover:bg-white hover:text-brand transition" title="${isRevealed ? 'Hide' : 'Show'} ${escapeHTML(field.label)}">
+                        <i data-lucide="${isRevealed ? 'eye-off' : 'eye'}" class="h-3.5 w-3.5"></i>
+                      </button>`
+                    : ''
+                }
+                ${
+                  hasVal
+                    ? `<button type="button" onclick="copyText(${JSON.stringify(copyValue)}, ${JSON.stringify(field.label)})" class="opacity-0 group-hover:opacity-100 rounded p-1 text-slate-400 hover:bg-white hover:text-brand transition" title="Copy ${escapeHTML(field.label)}">
+                        <i data-lucide="copy" class="h-3 w-3"></i>
+                      </button>`
+                    : ''
+                }
+                ${
+                  !field.readonly
+                    ? `<button type="button" onclick="jumpAndEditField('${sectionId}', '${field.key}')" class="opacity-0 group-hover:opacity-100 rounded p-1 text-slate-400 hover:bg-white hover:text-brand transition" title="Quick edit ${escapeHTML(field.label)}">
+                        <i data-lucide="pencil" class="h-3 w-3"></i>
+                      </button>`
+                    : ''
+                }
+              </div>
             </div>
           </div>
         `;
       }
 
-      // READ-ONLY FIELD IN EDIT MODE (e.g., Employee ID)
+      // READ-ONLY FIELD IN EDIT MODE
       if (field.readonly) {
         const lockedVal = employeeData[field.key] ?? eid ?? '';
         return `
@@ -1187,18 +1457,21 @@
       // EDIT MODE INPUT
       const currentVal = draftData[field.key] ?? '';
       const errorMsg = fieldErrors[field.key] || '';
+      const dirty = isFieldDirty(field.key);
       const isValid = !errorMsg && String(currentVal).trim() !== '';
 
       const borderClass = errorMsg
         ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-        : isValid
-          ? 'border-emerald-300 bg-white'
-          : 'border-slate-300 bg-white';
+        : dirty
+          ? 'border-brand border-l-[3px] bg-brand-light/15'
+          : isValid
+            ? 'border-slate-300 bg-white'
+            : 'border-slate-300 bg-white';
 
       let controlHTML = '';
       if (field.type === 'select') {
-        const opts = field.options || [];
-        const mergedOpts = currentVal && !opts.includes(currentVal) ? [currentVal, ...opts] : opts;
+        const mergedOpts = resolveSelectOptions(field, currentVal);
+        let matchedFirst = false;
         controlHTML = `
           <select
             id="input_${field.key}"
@@ -1206,7 +1479,11 @@
             class="field-input w-full rounded-lg border ${borderClass} px-3 py-2 text-sm font-medium text-slate-800"
           >
             <option value="">Select ${escapeHTML(field.label)}</option>
-            ${mergedOpts.map(opt => `<option value="${escapeHTML(opt)}" ${currentVal === opt ? 'selected' : ''}>${escapeHTML(opt)}</option>`).join('')}
+            ${mergedOpts.map(opt => {
+              const isSelected = !matchedFirst && currentVal === opt.value;
+              if (isSelected) matchedFirst = true;
+              return `<option value="${escapeHTML(opt.value)}" ${isSelected ? 'selected' : ''}>${escapeHTML(opt.label)}</option>`;
+            }).join('')}
           </select>
         `;
       } else if (field.type === 'textarea') {
@@ -1232,9 +1509,9 @@
               class="field-input w-full rounded-lg border ${borderClass} ${field.mono ? 'font-mono text-[13px]' : 'text-sm'} px-3 py-2 pr-8 font-medium text-slate-800"
             />
             ${
-              isValid
-                ? `<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-emerald-500">
-                    <i data-lucide="check-circle-2" class="h-4 w-4"></i>
+              dirty && !errorMsg
+                ? `<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand" title="Modified">
+                    <span class="h-2 w-2 rounded-full bg-brand"></span>
                   </span>`
                 : ''
             }
@@ -1249,6 +1526,7 @@
               ${escapeHTML(field.label)}
               ${field.required ? '<span class="text-rose-500 ml-0.5">*</span>' : ''}
             </span>
+            ${dirty ? '<span class="text-[10px] font-semibold text-brand">Modified</span>' : ''}
           </label>
           ${controlHTML}
           <p id="err_${field.key}" class="mt-1 text-[11px] font-medium text-rose-600 ${errorMsg ? '' : 'hidden'}">${escapeHTML(errorMsg)}</p>
@@ -1257,7 +1535,68 @@
     }
 
     // =========================================================================
-    // 6. EDITING, AJAX MODIFICATION, VALIDATION & AUDIT LOG ACTIONS
+    // 6. QUICK-FIND FIELD SEARCH
+    // =========================================================================
+    function handleFieldSearch(query) {
+      const q = String(query || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      const resultsEl = document.getElementById('fieldSearchResults');
+
+      clearBtn.classList.toggle('hidden', q.length === 0);
+
+      if (!q) {
+        resultsEl.classList.add('hidden');
+        resultsEl.innerHTML = '';
+        return;
+      }
+
+      const matches = [];
+      PROFILE_SECTIONS.forEach(sec => {
+        sec.fields.forEach(f => {
+          if (f.label.toLowerCase().includes(q) || f.key.toLowerCase().includes(q)) {
+            matches.push({ sectionId: sec.id, sectionTitle: sec.title, field: f });
+          }
+        });
+      });
+
+      resultsEl.classList.remove('hidden');
+      if (matches.length === 0) {
+        resultsEl.innerHTML = `<p class="px-2 py-1.5 text-[11px] text-slate-400">No matching fields</p>`;
+        return;
+      }
+
+      resultsEl.innerHTML = matches.slice(0, 8).map(m => `
+        <button
+          type="button"
+          onclick="jumpToField('${m.sectionId}', '${m.field.key}')"
+          class="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs hover:bg-brand-light/70 transition"
+        >
+          <span class="font-medium text-slate-800 truncate">${escapeHTML(m.field.label)}</span>
+          <span class="ml-2 shrink-0 text-[10px] text-slate-400">${escapeHTML(m.sectionTitle)}</span>
+        </button>
+      `).join('');
+    }
+
+    function clearFieldSearch() {
+      const input = document.getElementById('fieldSearchInput');
+      input.value = '';
+      handleFieldSearch('');
+    }
+
+    function jumpToField(sectionId, fieldKey) {
+      clearFieldSearch();
+      setActiveNav(sectionId);
+      const row = document.getElementById(`field_row_${fieldKey}`) || document.getElementById(`input_${fieldKey}`) || document.getElementById(sectionId);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.remove('field-flash');
+        void row.offsetWidth;
+        row.classList.add('field-flash');
+      }
+    }
+
+    // =========================================================================
+    // 7. EDITING, AJAX MODIFICATION, VALIDATION & AUDIT LOG ACTIONS
     // =========================================================================
     function startSectionEdit(sectionId) {
       if (editingSections.size === 0) {
@@ -1311,8 +1650,6 @@
       if (fieldDef && fieldDef.readonly) return;
 
       const isDateField = fieldDef && fieldDef.type === 'date';
-
-      // Store date fields in "03-Mar-2001" format for UI display while keeping <input type="date"> in YYYY-MM-DD
       const normalizedVal = isDateField && rawValue ? formatDisplayDate(rawValue) : rawValue;
       const formatted = autoFormatInput(key, normalizedVal);
       draftData[key] = formatted;
@@ -1335,10 +1672,13 @@
         errEl.classList.toggle('hidden', !err);
       }
       if (inputEl) {
+        const dirty = isFieldDirty(key);
         inputEl.classList.toggle('border-rose-400', Boolean(err));
         inputEl.classList.toggle('bg-rose-50/30', Boolean(err));
-        inputEl.classList.toggle('border-emerald-300', !err && String(formatted).trim() !== '');
+        inputEl.classList.toggle('border-brand', !err && dirty);
+        inputEl.classList.toggle('border-l-[3px]', !err && dirty);
       }
+      updateUnsavedBanner();
     }
 
     function saveSectionEdit(sectionId) {
@@ -1364,12 +1704,7 @@
         return;
       }
 
-      const hasChanges = sec.fields.some(f => {
-        if (f.readonly) return false;
-        const oldVal = (employeeData[f.key] ?? '').toString().trim();
-        const newVal = (draftData[f.key] ?? '').toString().trim();
-        return oldVal !== newVal;
-      });
+      const hasChanges = sec.fields.some(f => !f.readonly && isFieldDirty(f.key));
 
       if (!hasChanges) {
         editingSections.delete(sectionId);
@@ -1436,12 +1771,7 @@
       }
 
       const modifiedSecs = activeSecs.filter(sec =>
-        sec.fields.some(f => {
-          if (f.readonly) return false;
-          const oldVal = (employeeData[f.key] ?? '').toString().trim();
-          const newVal = (draftData[f.key] ?? '').toString().trim();
-          return oldVal !== newVal;
-        })
+        sec.fields.some(f => !f.readonly && isFieldDirty(f.key))
       );
 
       if (modifiedSecs.length === 0) {
@@ -1496,10 +1826,11 @@
     function jumpAndEditField(sectionId, fieldKey) {
       startSectionEdit(sectionId);
       setTimeout(() => {
-        const card = document.getElementById(sectionId);
-        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         const input = document.getElementById(`input_${fieldKey}`);
-        if (input && !input.disabled) input.focus();
+        if (input) {
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (!input.disabled) input.focus();
+        }
       }, 60);
     }
 
@@ -1512,10 +1843,11 @@
     function updateUnsavedBanner() {
       const banner = document.getElementById('unsavedBanner');
       if (editingSections.size > 0) {
+        const dirtyCount = countDirtyFields();
         banner.classList.remove('hidden');
         banner.classList.add('flex');
         document.getElementById('unsavedBannerText').textContent =
-          `Editing ${editingSections.size} section${editingSections.size > 1 ? 's' : ''}. Press Ctrl+S to save or Esc to discard.`;
+          `${editingSections.size} section${editingSections.size > 1 ? 's' : ''} open • ${dirtyCount} field${dirtyCount !== 1 ? 's' : ''} modified (Ctrl+S to save)`;
       } else {
         banner.classList.add('hidden');
         banner.classList.remove('flex');
@@ -1523,7 +1855,7 @@
     }
 
     // =========================================================================
-    // 7. AUDIT LOG & REVERT ENGINE
+    // 8. AUDIT LOG & REVERT ENGINE
     // =========================================================================
     function recordAuditEntry(sectionTitle, key, label, oldVal, newVal) {
       auditLogs.unshift({
@@ -1560,7 +1892,7 @@
       if (auditLogs.length === 0) {
         list.innerHTML = `
           <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
-            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs border border-slate-200/80">
+            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-2xs border border-slate-200/80">
               <i data-lucide="history" class="h-5 w-5"></i>
             </span>
             <p class="mt-3 text-xs font-semibold text-slate-700">No recorded edits yet</p>
@@ -1579,7 +1911,7 @@
         return `
           <div class="rounded-xl border border-slate-200/90 bg-slate-50/50 p-3.5">
             <div class="flex items-center justify-between gap-2">
-              <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200/70">
+              <span class="rounded-md bg-brand-light px-2 py-0.5 text-[10px] font-bold text-brand border border-brand-border">
                 ${escapeHTML(item.section)}
               </span>
               <span class="font-mono text-[10px] text-slate-400">${escapeHTML(timeStr)}</span>
@@ -1602,7 +1934,7 @@
               <button
                 type="button"
                 onclick="revertAuditEntry('${item.id}')"
-                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 transition"
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-brand-border hover:text-brand transition"
               >
                 <i data-lucide="undo-2" class="h-3 w-3"></i>
                 Revert Value
@@ -1651,7 +1983,7 @@
     }
 
     // =========================================================================
-    // 8. AVATAR UPLOAD, EXPORT, CLIPBOARD & UTILITIES
+    // 9. AVATAR UPLOAD, EXPORT, CLIPBOARD & UTILITIES
     // =========================================================================
     function handleAvatarUpload(event) {
       const file = event.target.files && event.target.files[0];
@@ -1682,7 +2014,11 @@
     function copySectionData(sectionId) {
       const sec = PROFILE_SECTIONS.find(s => s.id === sectionId);
       if (!sec) return;
-      const lines = sec.fields.map(f => `${f.label} (${f.key}): ${employeeData[f.key] || '—'}`);
+      const lines = sec.fields.map(f => {
+        const raw = employeeData[f.key];
+        const val = f.type === 'select' && raw ? getSelectDisplayLabel(f, String(raw)) : (raw || '—');
+        return `${f.label} (${f.key}): ${val}`;
+      });
       copyText(`${sec.title}\n${lines.join('\n')}`, `${sec.title} details`);
     }
 
@@ -1716,7 +2052,7 @@
       const iconMap = {
         success: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="check" class="h-3.5 w-3.5"></i></span>',
         error: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><i data-lucide="alert-circle" class="h-3.5 w-3.5"></i></span>',
-        info: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><i data-lucide="info" class="h-3.5 w-3.5"></i></span>'
+        info: '<span class="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-light text-brand"><i data-lucide="info" class="h-3.5 w-3.5"></i></span>'
       };
 
       const toast = document.createElement('div');
@@ -1733,7 +2069,6 @@
       }, 2800);
     }
 
-    // Keyboard shortcuts: Ctrl+S / Cmd+S to save, Esc to cancel or close drawer
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         if (editingSections.size > 0) {
@@ -1750,7 +2085,6 @@
       }
     });
 
-    // Scroll spy for sticky left navigation
     window.addEventListener('scroll', () => {
       let current = PROFILE_SECTIONS[0].id;
       for (const sec of PROFILE_SECTIONS) {
@@ -1767,9 +2101,10 @@
       }
     }, { passive: true });
 
-    // Initial boot once DOM & jQuery (from includes/header) are ready
     document.addEventListener('DOMContentLoaded', () => {
       renderAll();
+      fetchReportingManagers();
+      fetchDepartments();
       getData();
     });
   </script>

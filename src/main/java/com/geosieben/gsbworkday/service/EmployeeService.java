@@ -6,6 +6,8 @@ import com.geosieben.gsbworkday.dto.ActiveAllotments;
 import com.geosieben.gsbworkday.dto.AssignedTaskProjection;
 import com.geosieben.gsbworkday.dto.AvailableUsers;
 import com.geosieben.gsbworkday.dto.EmployeeAttendanceProjection;
+import com.geosieben.gsbworkday.dto.EmployeeDataProjection;
+import com.geosieben.gsbworkday.dto.EmployeeHoursProjection;
 import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
 import com.geosieben.gsbworkday.dto.EmployeeRequestDto;
 import com.geosieben.gsbworkday.dto.EmployeeResponseDto;
@@ -343,6 +345,13 @@ public List<AssignedTaskProjection> getAssignedTasksProjectionService(){
 
 public  EmployeeReportProjection getEmployeeReportByEidService(String eid){
     return basicInfoRepository.getEmployeeReportByEid(eid);
+}
+public List<EmployeeDataProjection> getActiveEmployeeProjectionsService(){
+    return  basicInfoRepository.getActiveEmployeeList();
+}
+
+public  List<EmployeeHoursProjection> employeeHoursProjectionService(){
+    return employeeTargetHoursRepository.findEmployeeHoursHistory((String) httpSession.getAttribute("eid"));
 }
 }
 

@@ -1,9 +1,13 @@
 package com.geosieben.gsbworkday.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Data 
 @Table(name="rootprojects")
 public class RootProject {
     @Id
@@ -25,76 +29,26 @@ public class RootProject {
         @ManyToOne(cascade = CascadeType.MERGE)
    @JoinColumn(name="clientId")
    private Clients client;
+private LocalDate completionDate;
 
    
         public RootProject() {
         }
-        public RootProject(String projectName, int projectStatus, String projectType, LocalDateTime createdOn,
-                EmployeeBasicInfo projectlead, EmployeeBasicInfo createdBy, ProjectCategories category,
-                Clients client) {
-            this.projectName = projectName;
-            this.projectStatus = projectStatus;
-            this.projectType = projectType;
-            this.createdOn = createdOn;
-            this.projectlead = projectlead;
-            this.createdBy = createdBy;
-            this.category = category;
-            this.client = client;
-        }
-        public int getProjId() {
-            return projId;
-        }
-        public void setProjId(int projId) {
+
+        public RootProject(int projId, String projectName, int projectStatus, String projectType,
+                LocalDateTime createdOn, EmployeeBasicInfo projectlead, EmployeeBasicInfo createdBy,
+                ProjectCategories category, Clients client, LocalDate completionDate) {
             this.projId = projId;
-        }
-        public String getProjectName() {
-            return projectName;
-        }
-        public void setProjectName(String projectName) {
             this.projectName = projectName;
-        }
-        public int getProjectStatus() {
-            return projectStatus;
-        }
-        public void setProjectStatus(int projectStatus) {
             this.projectStatus = projectStatus;
-        }
-        public String getProjectType() {
-            return projectType;
-        }
-        public void setProjectType(String projectType) {
             this.projectType = projectType;
-        }
-        public LocalDateTime getCreatedOn() {
-            return createdOn;
-        }
-        public void setCreatedOn(LocalDateTime createdOn) {
             this.createdOn = createdOn;
-        }
-        public EmployeeBasicInfo getProjectlead() {
-            return projectlead;
-        }
-        public void setProjectlead(EmployeeBasicInfo projectlead) {
             this.projectlead = projectlead;
-        }
-        public EmployeeBasicInfo getCreatedBy() {
-            return createdBy;
-        }
-        public void setCreatedBy(EmployeeBasicInfo createdBy) {
             this.createdBy = createdBy;
-        }
-        public ProjectCategories getCategory() {
-            return category;
-        }
-        public void setCategory(ProjectCategories category) {
             this.category = category;
-        }
-        public Clients getClient() {
-            return client;
-        }
-        public void setClient(Clients client) {
             this.client = client;
+            this.completionDate = completionDate;
         }
-       
+
    
 }

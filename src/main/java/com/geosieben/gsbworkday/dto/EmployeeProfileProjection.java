@@ -10,6 +10,7 @@ public interface EmployeeProfileProjection {
     String getEid();
     String getEmail();
     String getAddress();
+    String getImage();
 
     // Joining Info
     LocalDate getDateOfJoining();

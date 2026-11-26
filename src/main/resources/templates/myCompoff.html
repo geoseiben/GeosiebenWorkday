@@ -1,689 +1,384 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="_csrf" th:content="${_csrf.token}" />
-<meta name="_csrf_header" th:content="${_csrf.headerName}" />
-        <title>My Compensatory Off</title>
-        
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>My Compensatory Off</title>
 
-            :root {
-                --color-primary: #4338ca;       /* Indigo-700 */
-                --color-primary-light: #6366f1; /* Indigo-500, for gradients */
-                --color-primary-dark: #312e81;  /* Indigo-900 */
-                --color-secondary: #059669;     /* Emerald-600 (Save/Approve/Cleared) */
-                --color-requests: #2563eb;      /* Blue-600 (Requests / Apply) */
-                --color-amber: #d97706;         /* Amber-600 (To Be Cleared) */
-                --color-red: #e11d48;           /* Rose-600 */
-                --color-background: #f6f7fb;
-                --color-text-dark: #1e1b3a;
-                --color-text-medium: #64748b;
-                --color-text-faint: #94a3b8;
-                --color-border: #e6e8f0;
-                --color-white: #ffffff;
-                --color-success: #059669;
-                --font-display: 'Lexend', 'Inter', sans-serif;
-                --shadow-soft: 0 1px 2px rgba(30, 27, 58, 0.04), 0 8px 24px -12px rgba(30, 27, 58, 0.10);
-                --shadow-lift: 0 12px 28px -10px rgba(67, 56, 202, 0.28);
-            }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
 
-            * { box-sizing: border-box; }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-            body {
-                font-family: 'Inter', sans-serif;
-                background-color: var(--color-background);
-                background-image:
-                    radial-gradient(circle at 8% 0%, rgba(99, 102, 241, 0.10), transparent 42%),
-                    radial-gradient(circle at 92% 8%, rgba(5, 150, 105, 0.07), transparent 40%);
-                background-attachment: fixed;
-                min-height: 100vh;
-                margin: 0;
-                color: var(--color-text-dark);
-            }
+    <style>
+        :root {
+            --color-primary: #4338ca;
+            --color-primary-hover: #3730a3;
+            --color-border: #e2e8f0;
+            --color-bg: #f8fafc;
+        }
 
-            ::selection { background: rgba(67, 56, 202, 0.18); }
+        * {
+            box-sizing: border-box;
+        }
 
-            /* --- Main Container & Typography --- */
-            .main-container {
-                padding: 1rem;
-                max-width: 100%;
-                margin: 0 auto;
-            }
-            @media (min-width: 640px) {
-                .main-container {
-                    padding: 2.5rem 2rem 3rem;
-                }
-            }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--color-bg);
+            color: #0f172a;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
 
-            header {
-                display: flex;
-                flex-direction: column;
-                gap: 0.35rem;
-                margin-bottom: 1.75rem;
-                position: relative;
-                padding-left: 1.1rem;
-            }
-            header::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 0.2rem;
-                bottom: 0.2rem;
-                width: 4px;
-                border-radius: 999px;
-                background: linear-gradient(180deg, var(--color-primary-light), var(--color-secondary));
-            }
+        h1, h2, .font-display {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+        }
 
-            h1 {
-                font-family: var(--font-display);
-                font-size: 1.7rem;
-                font-weight: 700;
-                letter-spacing: -0.01em;
-                color: var(--color-text-dark);
-                margin: 0;
-            }
-            @media (min-width: 640px) {
-                h1 {
-                    font-size: 2.15rem;
-                }
-            }
+        /* Compact DataTables Overrides */
+        .dt-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--color-border);
+            background-color: #ffffff;
+        }
 
-            .subtitle {
-                color: var(--color-text-medium);
-                margin: 0;
-                font-size: 0.95rem;
-                padding-left: 0;
-            }
+        div.dataTables_wrapper div.dataTables_filter {
+            margin: 0;
+        }
 
-            /* --- Control Bar & Buttons --- */
-            .control-bar {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 1.5rem;
-                gap: 1rem;
-                padding: 1.1rem;
-                background: var(--color-white);
-                border: 1px solid var(--color-border);
-                border-radius: 1.1rem;
-                box-shadow: var(--shadow-soft);
-            }
-            @media (min-width: 768px) {
-                .control-bar {
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 0;
-                }
-            }
+        div.dataTables_wrapper div.dataTables_filter label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #64748b;
+            margin: 0;
+        }
 
-            .action-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.6rem;
-                width: 100%;
-            }
-            @media (min-width: 768px) {
-                .action-group {
-                    flex-direction: row;
-                    width: auto;
-                }
-            }
+        div.dataTables_wrapper div.dataTables_filter input {
+            border: 1px solid var(--color-border);
+            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8125rem;
+            color: #0f172a;
+            background-color: #f8fafc;
+            width: 14rem;
+            margin-left: 0 !important;
+            transition: all 150ms ease;
+        }
 
-            /* Filter/Action Group */
-            .filter-action-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-                width: 100%;
-            }
-            @media (min-width: 768px) {
-                .filter-action-group {
-                    flex-direction: row;
-                    width: auto;
-                }
-            }
+        div.dataTables_wrapper div.dataTables_filter input:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+        }
 
-            .filter-select {
-                width: 100%;
-                padding: 0.65rem 2.25rem 0.65rem 1rem;
-                border: 1px solid var(--color-border);
-                border-radius: 0.65rem;
-                transition: all 150ms ease-in-out;
-                background-color: #f8f9fd;
-                appearance: none;
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3e%3cpath d='M7 9l3 3 3-3' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
-                background-repeat: no-repeat;
-                background-position: right 0.75rem center;
-                background-size: 1.25em;
-                font-size: 0.9rem;
-                font-weight: 500;
-                color: var(--color-text-dark);
-                cursor: pointer;
-            }
-            @media (min-width: 768px) {
-                .filter-select {
-                    width: 11rem;
-                }
-            }
-            .filter-select:hover {
-                border-color: #c7cbe6;
-            }
-            .filter-select:focus {
-                border-color: var(--color-primary);
-                outline: 2px solid rgba(67, 56, 202, 0.25);
-                outline-offset: 1px;
-                background-color: var(--color-white);
-            }
+        table.dataTable {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
 
-            .add-button, .requests-button {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--color-white);
-                font-weight: 600;
-                padding: 0.65rem 1.25rem;
-                border-radius: 0.65rem;
-                box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.18);
-                transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out, filter 150ms ease-in-out;
-                border: none;
-                cursor: pointer;
-                line-height: 1.25;
-                position: relative;
-                font-size: 0.88rem;
-                white-space: nowrap;
-            }
-            .add-button {
-                background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-            }
-            .add-button:hover {
-                filter: brightness(1.06);
-                transform: translateY(-1px);
-                box-shadow: var(--shadow-lift);
-            }
-            .requests-button {
-                background-color: var(--color-white);
-                color: var(--color-requests);
-                border: 1px solid #d7e2fb;
-                box-shadow: none;
-            }
-            .requests-button:hover {
-                background-color: #eff4ff;
-                transform: translateY(-1px);
-            }
-            .add-button:active, .requests-button:active {
-                transform: translateY(1px);
-            }
-            .add-button svg, .requests-button svg {
-                height: 1.05rem;
-                width: 1.05rem;
-                margin-right: 0.5rem;
-                flex-shrink: 0;
-            }
+        table.dataTable thead th {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--color-border) !important;
+            padding: 0.625rem 1rem !important;
+            white-space: nowrap;
+        }
 
-            /* The balance pill is informational, not a real button */
-            #balance {
-                background: linear-gradient(135deg, #ecfdf5, #f0fdfa);
-                color: var(--color-secondary);
-                border: 1px solid #bbf0da;
-                cursor: default;
-                font-family: var(--font-display);
-                font-weight: 700;
-                letter-spacing: -0.01em;
-            }
-            #balance:hover { transform: none; }
-            #balance svg { color: var(--color-secondary); }
+        table.dataTable thead th:last-child {
+            text-align: right;
+        }
 
-            /* Badge for request count */
-            .request-badge {
-                position: absolute;
-                top: -8px;
-                right: -8px;
-                background-color: var(--color-red);
-                color: var(--color-white);
-                font-size: 0.65rem;
-                font-weight: 700;
-                border-radius: 9999px;
-                padding: 0.125rem 0.4rem;
-                min-width: 1.25rem;
-                text-align: center;
-                line-height: 1.35;
-                border: 2px solid var(--color-white);
-            }
+        table.dataTable tbody td {
+            padding: 0.625rem 1rem !important;
+            font-size: 0.8125rem;
+            color: #1e293b;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            font-variant-numeric: tabular-nums;
+        }
 
-            /* --- Record List (DataTable) --- */
-            .record-container {
-                background-color: var(--color-white);
-                border: 1px solid var(--color-border);
-                border-radius: 1.1rem;
-                box-shadow: var(--shadow-soft);
-                overflow: hidden;
-                padding: 0.25rem 1.25rem 1rem;
-            }
+        table.dataTable tbody td:last-child {
+            text-align: right;
+        }
 
-            .text-faint {
-                color: var(--color-text-faint);
-                font-style: italic;
-                font-weight: 400;
-            }
+        table.dataTable tbody tr:last-child td {
+            border-bottom: none;
+        }
 
-            .in-review-label {
-                font-size: 0.8rem;
-                color: var(--color-requests);
-                font-weight: 600;
-            }
+        table.dataTable tbody tr:hover td {
+            background-color: #f8fafc !important;
+        }
 
-            /* --- DataTables theme overrides --- */
-            .dt-toolbar {
-                padding: 1rem 0 0.75rem;
-                display: flex;
-                justify-content: flex-end;
-            }
-            div.dataTables_wrapper div.dataTables_filter input {
-                border: 1px solid var(--color-border);
-                border-radius: 0.6rem;
-                padding: 0.55rem 0.9rem;
-                font-size: 0.85rem;
-                font-family: inherit;
-                background-color: #f8f9fd;
-                margin-left: 0.5rem;
-                width: 15rem;
-                max-width: 100%;
-                transition: all 150ms;
-            }
-            div.dataTables_wrapper div.dataTables_filter input:focus {
-                outline: none;
-                border-color: var(--color-primary);
-                box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.14);
-                background-color: var(--color-white);
-            }
-            div.dataTables_wrapper div.dataTables_filter label {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--color-text-medium);
-                display: flex;
-                align-items: center;
-            }
+        table.dataTable.no-footer {
+            border-bottom: none !important;
+        }
 
-            table.dataTable {
-                border-collapse: separate !important;
-                border-spacing: 0;
-                width: 100% !important;
-            }
-            table.dataTable thead th {
-                font-size: 0.72rem;
-                font-weight: 700;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-                color: var(--color-text-medium);
-                background-color: #fafbfe;
-                border-bottom: 1px solid var(--color-border);
-                padding: 0.85rem 0.9rem;
-            }
-            table.dataTable thead th:last-child { text-align: center; }
-            table.dataTable.no-footer { border-bottom: none; }
-            table.dataTable tbody td {
-                padding: 0.85rem 0.9rem;
-                font-size: 0.88rem;
-                font-weight: 500;
-                color: var(--color-text-dark);
-                border-bottom: 1px solid var(--color-border);
-                font-variant-numeric: tabular-nums;
-                vertical-align: middle;
-            }
-            table.dataTable tbody td:last-child { text-align: center; }
-            table.dataTable tbody tr:last-child td { border-bottom: none; }
-            table.dataTable tbody tr:hover td { background-color: #fafbff; }
-            table.dataTable tbody tr.odd, table.dataTable tbody tr.even { background-color: transparent; }
+        /* DataTables Footer */
+        .dt-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            border-top: 1px solid var(--color-border);
+            background-color: #ffffff;
+        }
 
-            table.dataTable thead .sorting,
-            table.dataTable thead .sorting_asc,
-            table.dataTable thead .sorting_desc {
-                cursor: pointer;
-            }
-            table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {
-                color: var(--color-primary);
-            }
+        div.dataTables_wrapper div.dataTables_length label,
+        div.dataTables_wrapper div.dataTables_info {
+            font-size: 0.75rem;
+            color: #64748b;
+            padding-top: 0 !important;
+        }
 
-            /* Responsive extension child row (mobile collapsed details) */
-            table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control::before {
-                background-color: var(--color-primary);
-                border: none;
-                box-shadow: 0 2px 6px -2px rgba(67, 56, 202, 0.6);
-                top: 50%;
-                transform: translateY(-50%);
-            }
-            table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control::before {
-                background-color: var(--color-red);
-            }
-            table.dataTable > tbody > tr.child {
-                background-color: #fafbff;
-            }
-            table.dataTable > tbody > tr.child ul.dtr-details {
-                width: 100%;
-            }
-            table.dataTable > tbody > tr.child ul.dtr-details > li {
-                border-bottom: 1px dashed var(--color-border);
-                padding: 0.5rem 0;
-            }
-            table.dataTable > tbody > tr.child span.dtr-title {
-                font-weight: 600;
-                color: var(--color-text-medium);
-                font-size: 0.78rem;
-            }
+        div.dataTables_wrapper div.dataTables_length select {
+            border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            color: #0f172a;
+            background-color: #f8fafc;
+            margin: 0 0.25rem;
+        }
 
-            .dt-footer {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-                align-items: center;
-                justify-content: space-between;
-                padding: 1rem 0 0.25rem;
-                border-top: 1px solid var(--color-border);
-                margin-top: 0.5rem;
-            }
-            @media (min-width: 640px) {
-                .dt-footer {
-                    flex-direction: row;
-                }
-            }
-            div.dataTables_wrapper div.dataTables_length select {
-                border: 1px solid var(--color-border);
-                border-radius: 0.5rem;
-                padding: 0.35rem 1.75rem 0.35rem 0.6rem;
-                font-size: 0.85rem;
-                font-family: inherit;
-                background-color: #f8f9fd;
-            }
-            div.dataTables_wrapper div.dataTables_length label,
-            div.dataTables_wrapper div.dataTables_info {
-                font-size: 0.82rem;
-                color: var(--color-text-medium);
-                white-space: nowrap;
-            }
-            div.dataTables_wrapper div.dataTables_paginate {
-                margin: 0 !important;
-            }
-            div.dataTables_wrapper div.dataTables_paginate .paginate_button {
-                padding: 0.4rem 0.75rem;
-                margin-left: 0.25rem;
-                border-radius: 0.5rem;
-                border: 1px solid transparent;
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--color-text-medium) !important;
-            }
-            div.dataTables_wrapper div.dataTables_paginate .paginate_button.current {
-                background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)) !important;
-                color: var(--color-white) !important;
-                border: none;
-            }
-            div.dataTables_wrapper div.dataTables_paginate .paginate_button:hover:not(.current) {
-                background: #eef0fb !important;
-                color: var(--color-primary) !important;
-                border: 1px solid #dfe2f5;
-            }
-            div.dataTables_wrapper div.dataTables_paginate .paginate_button.disabled {
-                opacity: 0.4;
-                cursor: not-allowed;
-            }
-            div.dataTables_wrapper .dataTables_processing {
-                color: var(--color-text-medium);
-                font-size: 0.9rem;
-            }
+        div.dataTables_wrapper div.dataTables_paginate {
+            padding-top: 0 !important;
+        }
 
-            /* Badge Styles */
-            .status-badge {
-                padding: 0.32rem 0.8rem 0.32rem 0.7rem;
-                border-radius: 9999px;
-                font-size: 0.72rem;
-                font-weight: 700;
-                letter-spacing: 0.01em;
-                white-space: nowrap;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-            }
-            .status-badge::before {
-                content: '';
-                width: 6px;
-                height: 6px;
-                border-radius: 999px;
-                background: currentColor;
-                flex-shrink: 0;
-            }
-            /* Cleared - Success */
-            .cleared-badge {
-                background-color: rgba(5, 150, 105, 0.09);
-                color: var(--color-secondary);
-                border: 1px solid rgba(5, 150, 105, 0.25);
-            }
-            /* Available - Primary */
-            .available-badge {
-                background-color: rgba(67, 56, 202, 0.08);
-                color: var(--color-primary);
-                border: 1px solid rgba(67, 56, 202, 0.22);
-            }
-            /* To Be Cleared - Warning/Info */
-            .tobe-cleared-badge {
-                background-color: rgba(217, 119, 6, 0.09);
-                color: var(--color-amber);
-                border: 1px solid rgba(217, 119, 6, 0.25);
-            }
+        div.dataTables_wrapper div.dataTables_paginate .paginate_button {
+            padding: 0.25rem 0.625rem !important;
+            margin-left: 0.25rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid transparent !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+        }
 
-            /* Action Buttons (Apply/Clear) */
-            .action-btn {
-                font-size: 0.78rem;
-                padding: 0.42rem 0.9rem;
-                border-radius: 0.55rem;
-                border: none;
-                cursor: pointer;
-                transition: all 0.18s ease-in-out;
-                font-weight: 600;
-            }
+        div.dataTables_wrapper div.dataTables_paginate .paginate_button.current {
+            background: var(--color-primary) !important;
+            color: #ffffff !important;
+            border-color: var(--color-primary) !important;
+        }
 
-            .apply-btn {
-                background-color: rgba(37, 99, 235, 0.1);
-                color: var(--color-requests);
-            }
-            .apply-btn:hover {
-                background-color: var(--color-requests);
-                color: var(--color-white);
-            }
+        div.dataTables_wrapper div.dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+            background: #eef2ff !important;
+            color: var(--color-primary) !important;
+            border-color: #c7d2fe !important;
+        }
 
-            .clear-btn {
-                background-color: rgba(5, 150, 105, 0.1);
-                color: var(--color-secondary);
-            }
-            .clear-btn:hover {
-                background-color: var(--color-secondary);
-                color: var(--color-white);
-            }
+        div.dataTables_wrapper div.dataTables_paginate .paginate_button.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
 
-            /* --- Modal Styles --- */
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background-color: rgba(24, 22, 51, 0.55);
-                backdrop-filter: blur(2px);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-                z-index: 50;
-            }
-            .modal-content {
-                background-color: var(--color-white);
-                border-radius: 1.1rem;
-                box-shadow: 0 30px 60px -15px rgba(30, 27, 58, 0.35);
-                width: 100%;
-                max-width: 30rem;
-                padding: 1.75rem 2rem 2rem;
-                max-height: 90vh;
-                overflow-y: auto;
-                transform: scale(0.96) translateY(6px);
-                opacity: 0;
-                transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
-            }
-            .modal-overlay.active .modal-content {
-                transform: scale(1) translateY(0);
-                opacity: 1;
-            }
+        /* Responsive Child Row */
+        table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control::before {
+            background-color: var(--color-primary);
+            border: none;
+            box-shadow: none;
+        }
 
-            .modal-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.9rem;
-                border-bottom: 1px solid var(--color-border);
-            }
-            .modal-header h2 {
-                font-family: var(--font-display);
-                font-size: 1.3rem;
-                font-weight: 700;
-                letter-spacing: -0.01em;
-                color: var(--color-text-dark);
-                margin: 0;
-            }
+        /* Modal Transitions */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 180ms ease;
+        }
 
-            /* Form Inputs */
-            .form-group {
-                margin-bottom: 1.25rem;
-            }
-            .form-label {
-                display: block;
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--color-text-dark);
-                margin-bottom: 0.4rem;
-            }
-            .form-input, .form-select, .form-textarea {
-                width: 100%;
-                padding: 0.7rem 0.9rem;
-                border: 1px solid var(--color-border);
-                border-radius: 0.6rem;
-                transition: all 150ms;
-                box-sizing: border-box;
-                font-size: 0.9rem;
-                font-family: inherit;
-                background-color: #fbfbfe;
-                color: var(--color-text-dark);
-            }
-            .form-textarea { resize: vertical; }
-            .form-input:hover, .form-select:hover, .form-textarea:hover {
-                border-color: #c7cbe6;
-            }
-            .form-input:focus, .form-select:focus, .form-textarea:focus {
-                border-color: var(--color-primary);
-                box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.14);
-                outline: none;
-                background-color: var(--color-white);
-            }
+        .modal-overlay.active {
+            opacity: 1;
+        }
 
-            /* Modal Action Buttons */
-            .modal-actions {
-                display: flex;
-                justify-content: flex-end;
-                gap: 0.75rem;
-                margin-top: 2rem;
-            }
-            .cancel-btn {
-                padding: 0.65rem 1.25rem;
-                color: var(--color-text-medium);
-                background-color: #f1f2f8;
-                border-radius: 0.6rem;
-                transition: background-color 150ms;
-                border: none;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 0.88rem;
-            }
-            .cancel-btn:hover {
-                background-color: #e5e7f2;
-            }
-            .save-btn {
-                padding: 0.65rem 1.5rem;
-                background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-                color: var(--color-white);
-                font-weight: 600;
-                border-radius: 0.6rem;
-                box-shadow: 0 6px 14px -6px rgba(67, 56, 202, 0.5);
-                transition: all 150ms;
-                border: none;
-                cursor: pointer;
-                font-size: 0.88rem;
-            }
-            .save-btn:hover {
-                filter: brightness(1.06);
-                transform: translateY(-1px);
-            }
-            .save-btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-            }
+        .modal-card {
+            background: #ffffff;
+            border: 1px solid var(--color-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+            width: 100%;
+            max-width: 28rem;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.97) translateY(4px);
+            transition: transform 180ms ease;
+        }
 
-            /* Focus visibility for accessibility, keyboard nav */
-            button:focus-visible, .action-btn:focus-visible, a:focus-visible {
-                outline: 2px solid var(--color-primary);
-                outline-offset: 2px;
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
             }
+        }
+    </style>
+</head>
 
-            @media (prefers-reduced-motion: reduce) {
-                * { transition: none !important; animation: none !important; }
-            }
-        </style>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">
-        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<body class="min-h-screen bg-slate-50 text-slate-900">
+    <!-- Top Navigation / App Header -->
+    <div th:replace="~{includes/header :: header}"></div>
 
-    </head>
-    <head th:replace="includes/header :: header"></head>
-
-    <body class="min-h-screen">
-        <div id="app" class="main-container">
-            <header>
-                <h1>My Compensatory Off </h1>
-                <p class="subtitle">Manage your earned and used compensatory off.</p>
-            </header>
-
-            <div class="control-bar">
-                <div class="filter-action-group">
-                    <select id="month-filter" onchange="applyFilters()" class="filter-select">
-                        <option value="">All Months</option>
-                    </select>
+    <main id="app" class="max-w-[98%] mx-auto px-4 sm:px-6 py-5">
+        <!-- Compact Header & Primary Actions -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">My Compensatory Off</h1>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                        Leave Credits
+                    </span>
                 </div>
-                
-                <div class="action-group">
-                    <button  class="requests-button"  id="balance"disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
-                      
-                    </button>
-                    <button onclick="openRequestsModal()" class="requests-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
-                        View My Requests
-                        <span id="requests-badge" class="request-badge" style="display: none;"></span>
-                    </button>
-                    
-                    <button onclick="openAddModal()" class="add-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        Request Comp-Off
-                    </button>
+                <p class="text-xs text-slate-500 mt-0.5">Track earned comp-off credits, apply for time off, and clear taken leaves.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="openRequestsModal()"
+                    class="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-xs transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>My Requests</span>
+                    <span id="requests-badge" style="display: none;"
+                        class="inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded-full text-[10px] font-bold bg-rose-600 text-white">
+                    </span>
+                </button>
+
+                <button type="button" onclick="openAddModal()"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 shadow-xs transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Request Comp-Off</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Compact KPI Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <!-- Net Balance -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Net Balance</p>
+                    <p id="kpi-balance" class="text-xl font-bold text-emerald-600 mt-0.5 tabular-nums">0</p>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </div>
             </div>
 
-            <div class="record-container">
-                <table id="compoff-table" class="display" style="width:100%">
+            <!-- Available Credits -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Available Credits</p>
+                    <p id="kpi-available" class="text-xl font-bold text-indigo-700 mt-0.5 tabular-nums">0</p>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- To Be Cleared -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">To Be Cleared</p>
+                    <p id="kpi-tobecleared" class="text-xl font-bold text-amber-600 mt-0.5 tabular-nums">0</p>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pending Review</p>
+                    <p id="kpi-pending" class="text-xl font-bold text-slate-700 mt-0.5 tabular-nums">0</p>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main DataTable Card -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+            <!-- Custom Toolbar Injection Container -->
+            <div id="custom-filters-source" class="hidden">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Month Filter -->
+                    <div class="relative">
+                        <select id="month-filter" onchange="applyFilters()"
+                            class="appearance-none bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-medium rounded-lg pl-3 pr-7 py-1.5 focus:outline-none focus:border-indigo-600 focus:bg-white transition cursor-pointer">
+                            <option value="">All Months</option>
+                        </select>
+                        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    <!-- Quick Status Filter Pills -->
+                    <div class="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200/70" role="group">
+                        <button type="button" data-status-filter="ALL" onclick="setStatusFilter('ALL', this)"
+                            class="status-pill px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-2xs transition cursor-pointer">
+                            All
+                        </button>
+                        <button type="button" data-status-filter="Available" onclick="setStatusFilter('Available', this)"
+                            class="status-pill px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition cursor-pointer">
+                            Available
+                        </button>
+                        <button type="button" data-status-filter="To Be Cleared" onclick="setStatusFilter('To Be Cleared', this)"
+                            class="status-pill px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition cursor-pointer">
+                            To Be Cleared
+                        </button>
+                        <button type="button" data-status-filter="Cleared" onclick="setStatusFilter('Cleared', this)"
+                            class="status-pill px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition cursor-pointer">
+                            Cleared
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table id="compoff-table" class="display w-full">
                     <thead>
                         <tr>
                             <th>Worked Date</th>
@@ -696,636 +391,715 @@
                 </table>
             </div>
         </div>
+    </main>
 
-        <!-- ADD WORKED DAY MODAL (Employee Request for Comp-off Credit) -->
-        <div id="add-modal" class="modal-overlay" onclick="closeModal(event, 'add-modal')">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>Request Comp-off </h2>
+    <!-- 1. ADD WORKED DAY MODAL -->
+    <div id="add-modal" class="modal-overlay" onclick="closeModal(event, 'add-modal')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Request Comp-Off Credit</h2>
+                    <p class="text-[11px] text-slate-500">Log an extra worked day or holiday shift for credit.</p>
                 </div>
-                <form id="add-compoff-form" onsubmit="handleFormSubmit(event)">
-                    <div class="form-group">
-                        <label for="workedDate" class="form-label">Worked Date</label>
-                        <input type="date" id="workedDate" name="workedDate" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description" class="form-label">Reason/Description of Work</label>
-                        <textarea id="description" name="description" rows="3" required class="form-textarea" placeholder="Briefly describe the work done and why it qualifies for a comp-off."></textarea>
-                    </div>
-                    
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal(null, 'add-modal')" class="cancel-btn">
-                            Cancel
-                        </button>
-                        <button type="submit" id="submit-button" class="save-btn">
-                            Submit Request
-                        </button>
-                    </div>
-                </form>
+                <button type="button" onclick="closeModal(null, 'add-modal')"
+                    class="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-        </div>
 
-        <!-- APPLY COMP-OFF MODAL (Employee Request to take a day off) -->
-        <div id="apply-modal" class="modal-overlay" onclick="closeModal(event, 'apply-modal')">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>Apply to Take Comp-off Day</h2>
+            <form id="add-compoff-form" onsubmit="handleFormSubmit(event)" class="p-5 space-y-3.5">
+                <div>
+                    <label for="workedDate" class="block text-xs font-semibold text-slate-700 mb-1">Worked Date <span class="text-rose-500">*</span></label>
+                    <input type="date" id="workedDate" name="workedDate" required
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition">
                 </div>
-                <form id="apply-compoff-form" onsubmit="handleApplySubmit(event)">
-                    <input type="hidden" id="applyRecordId" name="recordId">
-                    <div class="form-group">
-                        <label for="applyDate" class="form-label">Desired Comp-off Date</label>
-                        <input type="date" id="applyDate" name="compOffDate" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="applyRemarks" class="form-label">Remarks for Manager (Optional)</label>
-                        <textarea id="applyRemarks" name="remarks" rows="3" class="form-textarea" placeholder="e.g., Requesting to use this comp-off credit on this day."></textarea>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal(null, 'apply-modal')" class="cancel-btn">
-                            Cancel
-                        </button>
-                        <button type="submit" id="apply-submit-button" class="save-btn">
-                            Submit Application
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
-        <!-- CLEAR COMP-OFF MODAL (Uncommon Employee Action - Reporting worked day after comp-off taken) -->
-        <div id="clear-modal" class="modal-overlay" onclick="closeModal(event, 'clear-modal')">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>Clear Comp-off</h2>
+                <div>
+                    <label for="description" class="block text-xs font-semibold text-slate-700 mb-1">Reason / Work Summary <span class="text-rose-500">*</span></label>
+                    <textarea id="description" name="description" rows="3" required
+                        placeholder="Briefly describe the deliverable or task completed on this date..."
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition resize-y"></textarea>
                 </div>
-                <form id="clear-compoff-form" onsubmit="handleClearSubmit(event)">
-                    <input type="hidden" id="clearRecordId" name="recordId">
-                    <div class="form-group">
-                        <label for="clearDate" class="form-label">Worked Date to clear the Comp-off</label>
-                        <input type="date" id="clearDate" name="workedDate" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="clearRemarks" class="form-label">Remarks (Optional)</label>
-                        <textarea id="clearRemarks" name="remarks" rows="3" class="form-textarea"></textarea>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal(null, 'clear-modal')" class="cancel-btn">
-                            Cancel
-                        </button>
-                        <button type="submit" id="clear-submit-button" class="save-btn">
-                            Clear Credit
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
-        <!-- REQUESTS MODAL (Employee View of their own requests) -->
-        <div id="requests-modal" class="modal-overlay" onclick="closeModal(event, 'requests-modal')">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>My Comp-off Requests Status</h2>
-                </div>
-                <div id="requests-list"></div>
-                <div class="modal-actions" style="margin-top: 1rem;">
-                    <button type="button" onclick="closeModal(null, 'requests-modal')" class="cancel-btn">
-                        Close
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal(null, 'add-modal')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-button"
+                        class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 disabled:opacity-60 transition cursor-pointer">
+                        Submit Request
                     </button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. APPLY COMP-OFF MODAL -->
+    <div id="apply-modal" class="modal-overlay" onclick="closeModal(event, 'apply-modal')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Apply Comp-Off Leave</h2>
+                    <p class="text-[11px] text-slate-500">Redeem your earned comp-off credit on a working day.</p>
+                </div>
+                <button type="button" onclick="closeModal(null, 'apply-modal')"
+                    class="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="apply-compoff-form" onsubmit="handleApplySubmit(event)" class="p-5 space-y-3.5">
+                <input type="hidden" id="applyRecordId" name="recordId">
+                <div>
+                    <label for="applyDate" class="block text-xs font-semibold text-slate-700 mb-1">Desired Comp-Off Date <span class="text-rose-500">*</span></label>
+                    <input type="date" id="applyDate" name="compOffDate" required
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition">
+                </div>
+
+                <div>
+                    <label for="applyRemarks" class="block text-xs font-semibold text-slate-700 mb-1">Remarks for Manager <span class="text-slate-400 font-normal">(Optional)</span></label>
+                    <textarea id="applyRemarks" name="remarks" rows="3"
+                        placeholder="Add handover notes or remarks..."
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition resize-y"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal(null, 'apply-modal')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" id="apply-submit-button"
+                        class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 disabled:opacity-60 transition cursor-pointer">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. CLEAR COMP-OFF MODAL -->
+    <div id="clear-modal" class="modal-overlay" onclick="closeModal(event, 'clear-modal')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Clear Comp-Off Deficit</h2>
+                    <p class="text-[11px] text-slate-500">Log the worked date used to offset an advance comp-off.</p>
+                </div>
+                <button type="button" onclick="closeModal(null, 'clear-modal')"
+                    class="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="clear-compoff-form" onsubmit="handleClearSubmit(event)" class="p-5 space-y-3.5">
+                <input type="hidden" id="clearRecordId" name="recordId">
+                <div>
+                    <label for="clearDate" class="block text-xs font-semibold text-slate-700 mb-1">Worked Date <span class="text-rose-500">*</span></label>
+                    <input type="date" id="clearDate" name="workedDate" required
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition">
+                </div>
+
+                <div>
+                    <label for="clearRemarks" class="block text-xs font-semibold text-slate-700 mb-1">Remarks <span class="text-slate-400 font-normal">(Optional)</span></label>
+                    <textarea id="clearRemarks" name="remarks" rows="3"
+                        placeholder="Describe the work completed to clear this comp-off..."
+                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/15 transition resize-y"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal(null, 'clear-modal')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" id="clear-submit-button"
+                        class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 transition cursor-pointer">
+                        Clear Credit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. MY REQUESTS MODAL -->
+    <div id="requests-modal" class="modal-overlay" onclick="closeModal(event, 'requests-modal')">
+        <div class="modal-card max-w-lg" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Pending Comp-Off Requests</h2>
+                    <p class="text-[11px] text-slate-500">Requests currently awaiting manager verification.</p>
+                </div>
+                <button type="button" onclick="closeModal(null, 'requests-modal')"
+                    class="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="requests-list" class="p-4 overflow-y-auto space-y-2.5 max-h-[60vh]"></div>
+
+            <div class="flex items-center justify-end px-5 py-3 border-t border-slate-100 bg-slate-50/60 rounded-b-xl">
+                <button type="button" onclick="closeModal(null, 'requests-modal')"
+                    class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition cursor-pointer">
+                    Close
+                </button>
             </div>
         </div>
-        <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Messenger Chat Widget -->
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-      <script src="https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js"></script>
-      <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let allRecords = [];
-        let pendingRequests = [];
-        const API_ENDPOINT = 'api/compOffApi.php';
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
-        // --- DataTable Initialization ---
-        const compOffTable = $('#compoff-table').DataTable({
-            data: [],
-            columns: [
-                {
-                    data: 'workedDate',
-                    title: 'Worked Date',
-                    render: function(data, type) {
-                        if (type === 'display') {
-                            return data ? data : '<span class="text-faint">N/A</span>';
-                        }
-                        return data || '';
-                    }
-                },
-                {
-                    data: 'compOffDate',
-                    title: 'Comp-off Date',
-                    render: function(data, type) {
-                        if (type === 'display') {
-                            return data ? data : '<span class="text-faint">N/A</span>';
-                        }
-                        return data || '';
-                    }
-                },
-                {
-                    data: 'statusText',
-                    title: 'Status',
-                    render: function(data, type, row) {
-                        if (type === 'display') {
-                            return `<span class="status-badge ${row.statusClass}">${data}</span>`;
-                        }
-                        return data || '';
-                    }
-                },
-                {
-                    data: 'actionHtml',
-                    title: 'Actions',
-                    orderable: false,
-                    searchable: false,
-                    className: 'dt-nowrap',
-                    render: function(data, type) {
-                        return type === 'display' ? data : '';
-                    }
-                }
-            ],
-            order: [],
-            pageLength: 8,
-            lengthMenu: [5, 8, 10, 25, 50],
-            responsive: true,
-            columnDefs: [
-                { responsivePriority: 1, targets: 3 },
-                { responsivePriority: 2, targets: 2 },
-                { responsivePriority: 3, targets: 0 },
-                { responsivePriority: 4, targets: 1 }
-            ],
-            dom: '<"dt-toolbar"f>rt<"dt-footer"lip>',
-            language: {
-                emptyTable: 'Loading comp-off records...',
-                zeroRecords: 'No records match your search.',
-                search: '',
-                searchPlaceholder: 'Search records...',
-                lengthMenu: 'Show _MENU_',
-                info: 'Showing _START_-_END_ of _TOTAL_ records',
-                infoEmpty: 'No records to show',
-                infoFiltered: '(filtered from _MAX_ total)',
-                paginate: { previous: '\u2039', next: '\u203a' }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let allRecords = [];
+            let pendingRequests = [];
+            let activeStatusFilter = 'ALL';
+
+            const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content") || 'X-CSRF-TOKEN';
+
+            // Helper: Format YYYY-MM-DD cleanly for display while keeping raw value for sorting
+            function formatDisplayDate(dateStr) {
+                if (!dateStr) return '<span class="text-slate-400 italic text-xs">Not set</span>';
+                const parts = dateStr.split('-');
+                if (parts.length !== 3) return `<span class="font-medium text-slate-800">${dateStr}</span>`;
+                const d = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                const formatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `<span class="font-medium text-slate-800">${formatted}</span>`;
             }
-        });
 
-        // --- UI & Modal Functions ---
-        function showMessage(text, isSuccess = false) {
-            Swal.fire({
-                title: isSuccess ? 'Success' : 'Error',
-                text: text,
-                icon: isSuccess ? 'success' : 'error',
-                confirmButtonColor: isSuccess ? 'var(--color-primary)' : 'var(--color-red)',
+            // Initialize DataTable
+            const compOffTable = $('#compoff-table').DataTable({
+                data: [],
+                columns: [
+                    {
+                        data: 'workedDate',
+                        title: 'Worked Date',
+                        render: function (data, type) {
+                            return type === 'display' ? formatDisplayDate(data) : (data || '');
+                        }
+                    },
+                    {
+                        data: 'compOffDate',
+                        title: 'Comp-off Date',
+                        render: function (data, type) {
+                            return type === 'display' ? formatDisplayDate(data) : (data || '');
+                        }
+                    },
+                    {
+                        data: 'statusText',
+                        title: 'Status',
+                        render: function (data, type, row) {
+                            if (type === 'display') {
+                                return `
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${row.badgeStyle}">
+                                        <span class="w-1.5 h-1.5 rounded-full ${row.dotStyle}"></span>
+                                        ${data}
+                                    </span>`;
+                            }
+                            return data || '';
+                        }
+                    },
+                    {
+                        data: 'actionHtml',
+                        title: 'Actions',
+                        orderable: false,
+                        searchable: false,
+                        className: 'dt-nowrap',
+                        render: function (data, type) {
+                            return type === 'display' ? data : '';
+                        }
+                    }
+                ],
+                order: [],
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                responsive: true,
+                columnDefs: [
+                    { responsivePriority: 1, targets: 3 },
+                    { responsivePriority: 2, targets: 2 },
+                    { responsivePriority: 3, targets: 0 },
+                    { responsivePriority: 4, targets: 1 }
+                ],
+                dom: '<"dt-toolbar"<"dt-custom-left">f>rt<"dt-footer"lip>',
+                language: {
+                    emptyTable: 'Loading comp-off records...',
+                    zeroRecords: 'No matching comp-off records found.',
+                    search: '',
+                    searchPlaceholder: 'Search dates or status...',
+                    lengthMenu: 'Rows _MENU_',
+                    info: 'Showing _START_–_END_ of _TOTAL_',
+                    infoEmpty: '0 records',
+                    infoFiltered: '(filtered from _MAX_)',
+                    paginate: { previous: 'Prev', next: 'Next' }
+                },
+                initComplete: function () {
+                    const filterHtml = document.getElementById('custom-filters-source').innerHTML;
+                    document.querySelector('.dt-custom-left').innerHTML = filterHtml;
+                    document.getElementById('custom-filters-source').remove();
+                }
             });
-        }
 
-        window.openAddModal = function() {
-            document.getElementById('add-modal').classList.add('active');
-            document.getElementById('add-modal').style.display = 'flex';
-        }
-
-        window.closeModal = function(event, modalId) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-
-            // Only close if the click is on the overlay or a button
-            if (!event || event.target.id === modalId || event.target.tagName === 'BUTTON') {
-                modal.classList.remove('active');
-                // Use a slight delay to allow the transition to complete
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300); 
+            // --- Modal Controls ---
+            function showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.style.display = 'flex';
+                requestAnimationFrame(() => modal.classList.add('active'));
             }
-        }
 
-        window.openRequestsModal = function() {
-            fetchRequests();
-            document.getElementById('requests-modal').classList.add('active');
-            document.getElementById('requests-modal').style.display = 'flex';
-        }
-        
-        // New: Apply Modal Functions
-        window.openApplyModal = function(recordId) {
-            document.getElementById('applyRecordId').value = recordId;
-            document.getElementById('applyDate').value = '';
-            document.getElementById('applyRemarks').value = '';
-            document.getElementById('apply-modal').classList.add('active');
-            document.getElementById('apply-modal').style.display = 'flex';
-        }
+            window.openAddModal = function () {
+                document.getElementById('add-compoff-form').reset();
+                showModal('add-modal');
+            };
 
-        // New: Clear Modal Functions
-        window.openClearModal = function(recordId) {
-            document.getElementById('clearRecordId').value = recordId;
-            document.getElementById('clearDate').value = '';
-            document.getElementById('clearRemarks').value = '';
-            document.getElementById('clear-modal').classList.add('active');
-            document.getElementById('clear-modal').style.display = 'flex';
-        }
+            window.openRequestsModal = function () {
+                fetchRequests(false);
+                showModal('requests-modal');
+            };
 
-        window.toggleRequestsBadge = function(count) {
-            const badge = document.getElementById('requests-badge');
-            if (badge) {
-                if (count > 0) {
-                    badge.style.display = 'block';
-                    badge.textContent = count;
-                } else {
-                    badge.style.display = 'none';
+            window.openApplyModal = function (recordId) {
+                document.getElementById('apply-compoff-form').reset();
+                document.getElementById('applyRecordId').value = recordId;
+                showModal('apply-modal');
+            };
+
+            window.openClearModal = function (recordId) {
+                document.getElementById('clear-compoff-form').reset();
+                document.getElementById('clearRecordId').value = recordId;
+                showModal('clear-modal');
+            };
+
+            window.closeModal = function (event, modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                if (!event || event.target.id === modalId || event.target.closest('button')) {
+                    modal.classList.remove('active');
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 180);
                 }
-            }
-        }
+            };
 
-        // --- Data Rendering and Filtering ---
-        function renderCompOffList(recordsToRender) {
-            let balance = 0;
-            const rows = [];
-
-            compOffTable.settings()[0].oLanguage.sEmptyTable =
-                'No comp-off records found. Use the Request Comp-Off button to start!';
-
-            (recordsToRender || []).forEach(record => {
-                let statusText;
-                let statusClass;
-                let actionHtml = '';
-
-                // This logic is based on the system's current data model:
-                // 1. Worked Date EXISTS, Comp-off Date MISSING: Comp-off is earned/Available. Employee can APPLY to take it.
-                // 2. Worked Date MISSING, Comp-off Date EXISTS: Comp-off has been TAKEN, but the Worked Date is missing (To Be Cleared). Employee must CLEAR it by reporting a worked day.
-                // 3. Both EXIST: Cleared.
-                if (record.workedDate && record.compOffDate) {
-                    statusText = 'Cleared';
-                    statusClass = 'cleared-badge';
-                } else if (record.workedDate && !record.compOffDate) {
-                    balance++;
-                    statusText = 'Available';
-                    statusClass = 'available-badge';
-                    actionHtml = `<button class="action-btn apply-btn" onclick="openApplyModal('${record.id}')" title="Apply to use this Comp-Off Credit">Apply</button>`;
-                } else if (!record.workedDate && record.compOffDate) {
-                    balance--;
-                    statusText = 'To Be Cleared';
-                    statusClass = 'tobe-cleared-badge';
-                    actionHtml = `<button class="action-btn clear-btn" onclick="openClearModal('${record.id}')" title="Report Worked Date to Clear Taken Comp-Off">Clear</button>`;
-                } else {
-                    statusText = 'Pending Approval'; // Default for requests not fitting the above.
-                    statusClass = 'tobe-cleared-badge';
+            // Close active modals on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.active').forEach(m => {
+                        m.classList.remove('active');
+                        setTimeout(() => { m.style.display = 'none'; }, 180);
+                    });
                 }
+            });
 
-                // Add a check for pending request status for the 'Available' or 'To Be Cleared' states
-                const pendingRequest = pendingRequests.find(req => req.recordId === record.id);
-                if (pendingRequest) {
-                    statusText = `Pending (${pendingRequest.requestType})`;
-                    statusClass = 'tobe-cleared-badge';
-                    actionHtml = `<span class="in-review-label">In Review</span>`;
+            window.toggleRequestsBadge = function (count) {
+                const badge = document.getElementById('requests-badge');
+                const kpiPending = document.getElementById('kpi-pending');
+                if (kpiPending) kpiPending.textContent = count;
+                if (badge) {
+                    if (count > 0) {
+                        badge.style.display = 'inline-flex';
+                        badge.textContent = count;
+                    } else {
+                        badge.style.display = 'none';
+                    }
                 }
+            };
 
-                rows.push({
-                    id: record.id,
-                    workedDate: record.workedDate,
-                    compOffDate: record.compOffDate,
-                    statusText: statusText,
-                    statusClass: statusClass,
-                    actionHtml: actionHtml
+            // --- KPI & Table Rendering ---
+            function updateSummaryKPIs(records) {
+                let balance = 0;
+                let availableCount = 0;
+                let toBeClearedCount = 0;
+
+                (records || []).forEach(r => {
+                    if (r.workedDate && !r.compOffDate) {
+                        balance++;
+                        availableCount++;
+                    } else if (!r.workedDate && r.compOffDate) {
+                        balance--;
+                        toBeClearedCount++;
+                    }
                 });
-            });
 
-            compOffTable.clear();
-            compOffTable.rows.add(rows);
-            compOffTable.draw();
+                const balEl = document.getElementById('kpi-balance');
+                balEl.textContent = balance > 0 ? `+${balance}` : balance;
+                balEl.className = `text-xl font-bold mt-0.5 tabular-nums ${
+                    balance > 0 ? 'text-emerald-600' : balance < 0 ? 'text-rose-600' : 'text-slate-800'
+                }`;
 
-            document.getElementById('balance').innerHTML = `Comp-Off Balance : ${balance}`;
-        }
-
-        function renderRequestsList() {
-            const listContainer = document.getElementById('requests-list');
-            listContainer.innerHTML = '';
-
-            if (pendingRequests.length === 0) {
-                listContainer.innerHTML = `
-                    <div style="padding: 1rem; background-color: #f0fdf4; border: 1px solid var(--color-secondary); border-radius: 0.5rem; color: var(--color-secondary);">
-                        <p style="font-weight: 600;">No Pending Requests.</p>
-                        <p style="font-size: 0.875rem; color: var(--color-text-medium);">All your requests have been processed.</p>
-                    </div>`;
-                return;
+                document.getElementById('kpi-available').textContent = availableCount;
+                document.getElementById('kpi-tobecleared').textContent = toBeClearedCount;
             }
 
-            pendingRequests.forEach(req => {
-                console.log(req);
-                const typeText = req.requestType === 'Request' ? 'New Comp-Off Request' : 'Comp-Off clearence Request';
-                
-                const item = document.createElement('div');
-                item.style.cssText = `
-                    padding: 1rem;
-                    border: 1px solid var(--color-border);
-                    border-radius: 0.5rem;
-                    margin-bottom: 0.75rem;
-                    background-color: #fefefe;
-                `;
-            if(req.requestType === 'Request'){
-                item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span style="font-weight: 700; color: var(--color-primary); font-size: 1rem;">
-                            ${typeText}
-                        </span>
-                        <span class="status-badge ${req.status === 0 ? 'tobe-cleared-badge' : 'cleared-badge'}">
-                            ${req.status === 0 ? 'PENDING' : 'APPROVED'}
-                        </span>
-                    </div>
-                    <div style="font-size: 0.875rem; color: var(--color-text-dark); margin-bottom: 0.5rem;">
-                        Worked Date: <span style="font-weight: 600;">${req.workedDate }</span>
-                    </div>
-                    <p style="font-size: 0.875rem; color: #4b5563;">
-                        <span style="font-weight: 600;">Details:</span> ${req.remarks || req.description || 'No description provided.'}
-                    </p>
-                `;
+            function renderCompOffList(recordsToRender) {
+                const rows = [];
+
+                compOffTable.settings()[0].oLanguage.sEmptyTable =
+                    'No comp-off records found. Click "Request Comp-Off" to log a worked day.';
+
+                (recordsToRender || []).forEach(record => {
+                    let statusText = '';
+                    let baseCategory = '';
+                    let badgeStyle = '';
+                    let dotStyle = '';
+                    let actionHtml = '';
+
+                    if (record.workedDate && record.compOffDate) {
+                        statusText = 'Cleared';
+                        baseCategory = 'Cleared';
+                        badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        dotStyle = 'bg-emerald-500';
+                        actionHtml = '<span class="text-xs text-slate-400">—</span>';
+                    } else if (record.workedDate && !record.compOffDate) {
+                        statusText = 'Available';
+                        baseCategory = 'Available';
+                        badgeStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                        dotStyle = 'bg-indigo-600';
+                        actionHtml = `
+                            <button type="button" onclick="openApplyModal('${record.id}')"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-700 hover:text-white border border-indigo-200/80 transition cursor-pointer"
+                                title="Apply to use this Comp-Off Credit">
+                                Apply Leave
+                            </button>`;
+                    } else if (!record.workedDate && record.compOffDate) {
+                        statusText = 'To Be Cleared';
+                        baseCategory = 'To Be Cleared';
+                        badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200';
+                        dotStyle = 'bg-amber-500';
+                        actionHtml = `
+                            <button type="button" onclick="openClearModal('${record.id}')"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 transition cursor-pointer"
+                                title="Report Worked Date to Clear Taken Comp-Off">
+                                Clear Credit
+                            </button>`;
+                    } else {
+                        statusText = 'Pending Approval';
+                        baseCategory = 'Pending';
+                        badgeStyle = 'bg-slate-100 text-slate-700 border-slate-200';
+                        dotStyle = 'bg-slate-500';
+                    }
+
+                    // Override if there is an active pending request for this record
+                    const pendingRequest = pendingRequests.find(req => String(req.recordId) === String(record.id));
+                    if (pendingRequest) {
+                        statusText = `Pending (${pendingRequest.requestType})`;
+                        badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200';
+                        dotStyle = 'bg-amber-500 animate-pulse';
+                        actionHtml = `
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                                In Review
+                            </span>`;
+                    }
+
+                    // Quick status pill filter check
+                    if (activeStatusFilter !== 'ALL' && baseCategory !== activeStatusFilter) {
+                        return;
+                    }
+
+                    rows.push({
+                        id: record.id,
+                        workedDate: record.workedDate,
+                        compOffDate: record.compOffDate,
+                        statusText: statusText,
+                        badgeStyle: badgeStyle,
+                        dotStyle: dotStyle,
+                        actionHtml: actionHtml
+                    });
+                });
+
+                compOffTable.clear();
+                compOffTable.rows.add(rows);
+                compOffTable.draw();
             }
-            else{
-                 item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span style="font-weight: 700; color: var(--color-primary); font-size: 1rem;">
-                            ${typeText}
-                        </span>
-                        <span class="status-badge ${req.status === 0 ? 'tobe-cleared-badge' : 'cleared-badge'}">
-                            ${req.status === 0 ? 'PENDING' : 'APPROVED'}
-                        </span>
-                    </div>
-                   <div style="font-size: 0.875rem; color: var(--color-text-dark); margin-bottom: 0.5rem;">
-                        Comp-Off Date: <span style="font-weight: 600;">${req.compOffDate }</span>
-                    </div>
-                        <div style="font-size: 0.875rem; color: var(--color-text-dark); margin-bottom: 0.5rem;">
-                        Worked Date: <span style="font-weight: 600;">${req.workedDate}</span>
-                    </div>
-                    <p style="font-size: 0.875rem; color: #4b5563;">
-                        <span style="font-weight: 600;">Details:</span> ${req.remarks || req.description || 'No description provided.'}
-                    </p>
-                `;
+
+            function renderRequestsList() {
+                const listContainer = document.getElementById('requests-list');
+                listContainer.innerHTML = '';
+
+                if (pendingRequests.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="p-4 rounded-lg bg-emerald-50/70 border border-emerald-200 text-center">
+                            <p class="text-xs font-semibold text-emerald-800">All Caught Up</p>
+                            <p class="text-[11px] text-emerald-700 mt-0.5">You have no pending comp-off requests awaiting review.</p>
+                        </div>`;
+                    return;
+                }
+
+                pendingRequests.forEach(req => {
+                    const isNewCredit = req.requestType === 'Request';
+                    const typeText = isNewCredit ? 'Comp-Off Credit Request' : 'Comp-Off Clearance / Application';
+                    const badgeClass = req.status === 0
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                    const dateBlock = isNewCredit
+                        ? `<div><span class="text-slate-400">Worked Date:</span> <span class="font-semibold text-slate-800">${req.workedDate || 'N/A'}</span></div>`
+                        : `<div class="flex flex-wrap gap-4">
+                               <div><span class="text-slate-400">Comp-Off Date:</span> <span class="font-semibold text-slate-800">${req.compOffDate || 'N/A'}</span></div>
+                               <div><span class="text-slate-400">Worked Date:</span> <span class="font-semibold text-slate-800">${req.workedDate || 'N/A'}</span></div>
+                           </div>`;
+
+                    const item = document.createElement('div');
+                    item.className = 'p-3.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition';
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-xs font-bold text-indigo-700">${typeText}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass}">
+                                ${req.status === 0 ? 'PENDING' : 'APPROVED'}
+                            </span>
+                        </div>
+                        <div class="text-xs mb-1.5">${dateBlock}</div>
+                        <p class="text-xs text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100">
+                            <span class="font-semibold text-slate-700">Details:</span> ${req.remarks || req.description || 'No description provided.'}
+                        </p>
+                    `;
+                    listContainer.appendChild(item);
+                });
             }
-                listContainer.appendChild(item);
-            });
-        }
 
+            // --- Filters ---
+            window.setStatusFilter = function (status, btnEl) {
+                activeStatusFilter = status;
+                document.querySelectorAll('.status-pill').forEach(pill => {
+                    pill.className = 'status-pill px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition cursor-pointer';
+                });
+                btnEl.className = 'status-pill px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-2xs transition cursor-pointer';
+                applyFilters();
+            };
 
-        window.applyFilters = function() {
-            const monthFilterValue = document.getElementById('month-filter').value;
+            window.applyFilters = function () {
+                const monthEl = document.getElementById('month-filter');
+                const monthFilterValue = monthEl ? monthEl.value : '';
 
-            const filtered = allRecords.filter(record => {
-                let matchesMonth = true;
-                if (monthFilterValue) {
-                    // Check both workedDate and compOffDate for filtering
+                const filtered = allRecords.filter(record => {
+                    if (!monthFilterValue) return true;
                     const recordDate = record.workedDate || record.compOffDate;
-                    if (recordDate) {
-                        const monthYear = recordDate.substring(0, 7);
-                        matchesMonth = monthYear === monthFilterValue;
-                    } else {
-                        matchesMonth = false;
-                    }
-                }
-                return matchesMonth;
-            });
-            renderCompOffList(filtered);
-        }
+                    return recordDate ? recordDate.substring(0, 7) === monthFilterValue : false;
+                });
 
-        function populateMonthFilter() {
-            const monthFilter = document.getElementById('month-filter');
-            // Clear existing options except 'All Months'
-            monthFilter.innerHTML = '<option value="">All Months</option>';
+                renderCompOffList(filtered);
+            };
 
-            const uniqueMonths = new Set();
-            allRecords.forEach(record => {
-                const date = record.workedDate || record.compOffDate;
-                if (date) {
-                    const monthYear = date.substring(0, 7);
-                    uniqueMonths.add(monthYear);
-                }
-            });
-            const sortedMonths = Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a));
-            sortedMonths.forEach(monthYear => {
-                const option = document.createElement('option');
-                option.value = monthYear;
-                const [year, month] = monthYear.split('-');
-                const date = new Date(year, parseInt(month) - 1);
-                option.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-                monthFilter.appendChild(option);
-            });
-        }
+            function populateMonthFilter() {
+                const monthFilter = document.getElementById('month-filter');
+                if (!monthFilter) return;
 
-        // --- Database Fetching Functions ---
-        function fetchRecords() {
-            $.ajax({
-                url:'/getCompOff',
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                //    console.log(data);
-                    allRecords = data;
-                    allRecords.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                    populateMonthFilter();
-                    // Fetch requests before rendering to correctly mark pending items
-                    fetchRequests(true); 
-                },
-                error: function(err) {
-                    console.error(err);
-                    // Display error message inside the table area
-                    compOffTable.clear().draw();
-                    compOffTable.settings()[0].oLanguage.sEmptyTable =
-                        'Could not load your records. Please check your connection.';
-                    compOffTable.draw();
-                }
-            });
-        }
+                const currentVal = monthFilter.value;
+                monthFilter.innerHTML = '<option value="">All Months</option>';
 
-        function fetchRequests(renderAfterFetch = false) {
-            $.ajax({
-                url: '/getMyCoRequests',
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                     console.log(data);
+                const uniqueMonths = new Set();
+                allRecords.forEach(record => {
+                    const date = record.workedDate || record.compOffDate;
+                    if (date) uniqueMonths.add(date.substring(0, 7));
+                });
 
-                    pendingRequests = data.filter(req => req.status === 0); 
-                    
-                    if (renderAfterFetch) {
-                        applyFilters(); // Renders the main list after requests are loaded
-                    } else {
-                        renderRequestsList(); // Renders the modal list
-                    }
-                    toggleRequestsBadge(pendingRequests.length);
-                },
-                error: function(err) {
-                    console.error(err);
-                }
-            });
-        }
+                Array.from(uniqueMonths)
+                    .sort((a, b) => b.localeCompare(a))
+                    .forEach(monthYear => {
+                        const option = document.createElement('option');
+                        option.value = monthYear;
+                        const [year, month] = monthYear.split('-');
+                        const date = new Date(year, parseInt(month, 10) - 1);
+                        option.textContent = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                        monthFilter.appendChild(option);
+                    });
 
-        // --- Database Interaction Functions ---
-
-        // 1. Request Worked Day (Get Credit)
-        window.handleFormSubmit = function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const submitButton = document.getElementById('submit-button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
-            
-            const workedDate = form.workedDate.value;
-            const description = form.description.value.trim();
-
-            if (!workedDate) {
-              //  showMessage("A 'Worked Date' is required to submit a request.", false);
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Request';
-                return;
+                monthFilter.value = currentVal;
             }
-    const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
 
-            $.ajax({
-                url: '/requestCompoff',
-                type: 'POST',
-                dataType: 'json',
-                headers:{'X-CSRF-TOKEN':csrfToken},
-                data: {
-                    workedDate: workedDate,
-                    description: description,
-                },
-                success: function(res) {
-                    console.log(res);
-                    if (res.status) {
-                         Swal.fire({
-                                title: res.status,
-                                text:res.message,
+            // --- AJAX Data Fetching ---
+            function fetchRecords() {
+                $.ajax({
+                    url: '/getCompOff',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        allRecords = data || [];
+                        allRecords.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                        updateSummaryKPIs(allRecords);
+                        populateMonthFilter();
+                        fetchRequests(true);
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        compOffTable.clear();
+                        compOffTable.settings()[0].oLanguage.sEmptyTable =
+                            'Unable to load comp-off records. Please refresh or check your connection.';
+                        compOffTable.draw();
+                    }
+                });
+            }
+
+            function fetchRequests(renderAfterFetch = false) {
+                $.ajax({
+                    url: '/getMyCoRequests',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        pendingRequests = (data || []).filter(req => req.status === 0);
+                        toggleRequestsBadge(pendingRequests.length);
+                        if (renderAfterFetch) {
+                            applyFilters();
+                        } else {
+                            renderRequestsList();
+                        }
+                    },
+                    error: function (err) {
+                        console.error(err);
+                    }
+                });
+            }
+
+            // --- Form Submissions ---
+            window.handleFormSubmit = function (event) {
+                event.preventDefault();
+                const form = event.target;
+                const submitButton = document.getElementById('submit-button');
+                const workedDate = form.workedDate.value;
+                const description = form.description.value.trim();
+
+                if (!workedDate) return;
+
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                $.ajax({
+                    url: '/requestCompoff',
+                    type: 'POST',
+                    dataType: 'json',
+                    headers: { [csrfHeader]: csrfToken },
+                    data: { workedDate, description },
+                    success: function (res) {
+                        if (res.status) {
+                            Swal.fire({
+                                title: res.status === 'success' ? 'Request Submitted' : res.status,
+                                text: res.message,
                                 icon: res.status,
-                                draggable: true
-                                });
-                        form.reset();
-                        closeModal(null, 'add-modal');
-                        fetchRecords();
-                    } else {
-                       // showMessage("Request Submission Failed: " + (response.message || "Unknown error."), false);
+                                confirmButtonColor: '#4338ca'
+                            });
+                            form.reset();
+                            closeModal(null, 'add-modal');
+                            fetchRecords();
+                        }
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        Swal.fire({ title: 'Error', text: 'Failed to submit request.', icon: 'error', confirmButtonColor: '#e11d48' });
+                    },
+                    complete: function () {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Submit Request';
                     }
-                },
-                error: function(err) {
-                    console.error(err);
-                   
-                },
-                complete: function() {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Submit Request';
-                }
-            });
-        }
-        
-        // 2. Apply Comp-off (Use Credit)
-        window.handleApplySubmit = function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const submitButton = document.getElementById('apply-submit-button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting Application...';
+                });
+            };
 
-            const recordId = document.getElementById('applyRecordId').value;
-            const compOffDate = document.getElementById('applyDate').value;
-            const remarks = document.getElementById('applyRemarks').value;
-                const csrfToken=document.querySelector("meta[name='_csrf']").getAttribute("content");
+            window.handleApplySubmit = function (event) {
+                event.preventDefault();
+                const submitButton = document.getElementById('apply-submit-button');
+                const recordId = document.getElementById('applyRecordId').value;
+                const compOffDate = document.getElementById('applyDate').value;
+                const remarks = document.getElementById('applyRemarks').value;
 
-            $.ajax({
-                url: '/applyCompoff',
-                type: 'POST',
-                headers:{'X-CSRF-TOKEN':csrfToken},
-                dataType: 'json',
-                data: {
-                    id: recordId,
-                    compOffDate: compOffDate,
-                    remarks: remarks
-                },
-                success: function(response) {
-                    if (response.status==='success') {
-                           Swal.fire({
-                                title: "Success",
-                                text:'Comp-Off Applied ',
-                                icon: "success",
-                                draggable: true
-                                });
-                        closeModal(null, 'apply-modal');
-                        fetchRecords();
-                    } else {
-                       
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                $.ajax({
+                    url: '/applyCompoff',
+                    type: 'POST',
+                    dataType: 'json',
+                    headers: { [csrfHeader]: csrfToken },
+                    data: { id: recordId, compOffDate, remarks },
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: 'Application Submitted',
+                                text: response.message || 'Your comp-off leave application has been submitted.',
+                                icon: 'success',
+                                confirmButtonColor: '#4338ca'
+                            });
+                            closeModal(null, 'apply-modal');
+                            fetchRecords();
+                        } else {
+                            Swal.fire({
+                                title: 'Notice',
+                                text: response.message || 'Unable to apply comp-off.',
+                                icon: 'warning',
+                                confirmButtonColor: '#4338ca'
+                            });
+                        }
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        Swal.fire({ title: 'Error', text: 'Failed to apply comp-off.', icon: 'error', confirmButtonColor: '#e11d48' });
+                    },
+                    complete: function () {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Submit Application';
                     }
-                },
-                error: function(err) {
-                    console.log(err);
-                 
-                },
-                complete: function() {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Submit Application';
-                }
-            });
-         }
-        
-        // 3. Clear Comp-off (Report Worked Date after taking comp-off - as per existing logic)
-        window.handleClearSubmit = function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const submitButton = document.getElementById('clear-submit-button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Clearing...';
+                });
+            };
 
-            const recordId = document.getElementById('clearRecordId').value;
-            const workedDate = document.getElementById('clearDate').value;
-            const remarks = document.getElementById('clearRemarks').value;
+            window.handleClearSubmit = function (event) {
+                event.preventDefault();
+                const submitButton = document.getElementById('clear-submit-button');
+                const recordId = document.getElementById('clearRecordId').value;
+                const workedDate = document.getElementById('clearDate').value;
+                const remarks = document.getElementById('clearRemarks').value;
 
-// console.log(recordId,workedDate,remarks);
-            $.ajax({
-                url: API_ENDPOINT,
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    action: 'clearCompOff',
-                    id: recordId,
-                    workedDate: workedDate,
-                    remarks: remarks,
-                    csrf: "<?php echo htmlspecialchars($_SESSION['csrf']) ?>"
-                },
-                success: function(response) {
-                    if (response.success) {
-                                Swal.fire({
-                                title: "Success",
-                                text:'Clearence Requested',
-                                icon: "success",
-                                draggable: true
-                                });
-                        closeModal(null, 'clear-modal');
-                        fetchRecords();
-                    } else {
-                      //  showMessage('Failed to clear comp-off: ' + (response.message || "Unknown error."), false);
+                submitButton.disabled = true;
+                submitButton.textContent = 'Clearing...';
+
+                $.ajax({
+                    url: '/clearCompoff',
+                    type: 'POST',
+                    dataType: 'json',
+                    headers: { [csrfHeader]: csrfToken },
+                    data: { id: recordId, workedDate, remarks },
+                    success: function (response) {
+                        if (response.status === 'success' || response.success) {
+                            Swal.fire({
+                                title: 'Clearance Requested',
+                                text: response.message || 'Your comp-off clearance request has been sent.',
+                                icon: 'success',
+                                confirmButtonColor: '#059669'
+                            });
+                            closeModal(null, 'clear-modal');
+                            fetchRecords();
+                        } else {
+                            Swal.fire({
+                                title: 'Notice',
+                                text: response.message || 'Failed to submit clearance.',
+                                icon: 'warning',
+                                confirmButtonColor: '#4338ca'
+                            });
+                        }
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        Swal.fire({ title: 'Error', text: 'Error clearing comp-off. Please try again.', icon: 'error', confirmButtonColor: '#e11d48' });
+                    },
+                    complete: function () {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Clear Credit';
                     }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error("Error clearing comp-off:", textStatus, errorThrown);
-                   // showMessage("Error clearing comp-off. Please try again.", false);
-                },
-                complete: function() {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Clear Credit';
-                }
-            });
-        }
-        
-        // Employee dashboard does not perform admin actions like approve/reject
-        window.handleRequestAction = function(requestId, action) {
-           //  showMessage("You do not have permission to approve/reject requests.", false);
-        }
+                });
+            };
 
-        // Initial Load
-        fetchRecords();
-    });
-</script>
-    </body>
-    </html>
+            // Initial Data Load
+            fetchRecords();
+        });
+    </script>
+</body>
+</html>

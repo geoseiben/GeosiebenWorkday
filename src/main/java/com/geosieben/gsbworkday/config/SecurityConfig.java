@@ -30,11 +30,17 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     // 1. PLACE ALL PERMIT-ALL ROUTES AT THE VERY TOP
                     .requestMatchers("/static/**", "/images/**", "/uploads/**").permitAll()
                     .requestMatchers("/login", "/register").permitAll()
-                    
+                    .requestMatchers("/admin/project/getAssinee").hasAnyAuthority("user","admin")
+                    .requestMatchers("/admin/project/getAllotmentInfo").hasAnyAuthority("user","admin")                
+                    .requestMatchers("/admin/project/getAllocationData").hasAnyAuthority("user","admin")                         
+                    .requestMatchers("/admin/project/deliverTask").hasAnyAuthority("user","admin")
+                    .requestMatchers("/admin/project/assignTask").hasAnyAuthority("user","admin")  
+                    .requestMatchers("/admin/project/updateAllotment").hasAnyAuthority("user","admin")                                                            
                     // 2. Restrictive/Specific routes next
                     .requestMatchers("/admin/addemployee").hasAuthority("admin")
                     .requestMatchers("/admin/**").hasAnyAuthority("admin","hr")
                     .requestMatchers("/user/**").hasAnyAuthority("user","admin","hr","it")
+
                     
                     // 3. Catch-all at the bottom
                     .anyRequest().authenticated()

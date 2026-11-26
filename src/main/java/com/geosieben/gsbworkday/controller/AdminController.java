@@ -118,6 +118,15 @@ public String dayWiseProjectHours() {
 public String getMethodName() {
     return "viewEmployee";
 }
+@GetMapping("/taskHistory")
+public String myTasksHistory() {
+    return "taskHistory";
+}
+
+@GetMapping("/admin/finishedProjects")
+public String finishedProjects() {
+    return "finishedProjects";
+}
 
 
 }

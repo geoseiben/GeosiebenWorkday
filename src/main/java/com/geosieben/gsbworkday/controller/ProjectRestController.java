@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.geosieben.gsbworkday.dto.AllotmentRequestDto;
 import com.geosieben.gsbworkday.dto.BookeHoursProjection;
 import com.geosieben.gsbworkday.dto.ClientWiseProjectResponseDto;
+import com.geosieben.gsbworkday.dto.CompletedProjectInvoiceProjection;
 import com.geosieben.gsbworkday.dto.MonthlyHoursProjection;
 import com.geosieben.gsbworkday.dto.ProjectHoursProjection;
 import com.geosieben.gsbworkday.dto.UpdateAllotmentDto;
@@ -22,16 +23,17 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-@RequestMapping("admin/project")
+@RequestMapping("/admin/project")
 @RestController
 public class ProjectRestController {
 
@@ -102,7 +104,7 @@ public Project  getAllotmentInfo(@RequestParam int projectid) {
         return bookerHoursRepository.getHoursByMonthly();
     }
     @PostMapping("/assignTask")
-    public ResponseEntity<Map<String,String>> assignTask(@RequestParam int allotmentid,@RequestParam String memberId,@RequestParam LocalDate deadline,@RequestParam String qcMemberId,@RequestParam LocalDate qcdeadline) {
+    public ResponseEntity<Map<String,String>> assignTask(@RequestParam int allotmentid,@RequestParam String memberId,@RequestParam LocalDate deadline,@RequestParam String qcMemberId,@RequestParam(value = "qcdeadline",required = false) LocalDate qcdeadline) {
         return projectService.assignTask(allotmentid, memberId, deadline, qcMemberId, qcdeadline);
     }
     
@@ -116,4 +118,43 @@ public List<ProjectHoursProjection> getProjectHoursByMonth(@RequestParam String 
 ) { 
    return bookerHoursRepository.getProjectHoursByMonth(month);
 }
+
+@PostMapping("/deliverTask")
+public ResponseEntity<Map<String,String>> deliverTask(@RequestParam("allotmentid") int allotmnetid,@RequestParam("remarks") String remarks ) {
+return  projectService.markTaskDelivered(allotmnetid, remarks);
+}
+@GetMapping("/getFinishedProjects")
+public  List<CompletedProjectInvoiceProjection> getFinishedProjects() {
+    return projectService.getFinishedProjectsProjectionsService();
+}
+
+
+
+@PostMapping("/updateInvoice")
+    public ResponseEntity<Map<String,String>> updateProjectAndInvoice(
+            @RequestParam("pid") Integer pid,
+            @RequestParam(value = "iid", required = false) Integer iid,
+            @RequestParam("projectName") String projectName,
+            @RequestParam("projectLead") String projectLead,
+            @RequestParam("startdate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startdate,
+            @RequestParam("enddate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate enddate,
+            @RequestParam(value = "invoiceNo", required = false) String invoiceNo,
+            @RequestParam(value = "workorder", required = false) String workorder,
+            @RequestParam(value = "clientHours", required = false) Double clientHours,
+            @RequestParam(value = "prodHours", required = false) Double prodHours) {
+
+        try {
+            projectService.updateProjectAndInvoice(pid, iid, projectName, projectLead, startdate, enddate, invoiceNo, workorder, clientHours, prodHours);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Project and invoice details updated successfully."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
 }

@@ -1,6 +1,4 @@
 package com.geosieben.gsbworkday.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,20 +43,25 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RestController
 @RequestMapping("/course")
 public class CourseRestController {
-    @Autowired
-private CourseService courseService;
-@Autowired
-private CourseContentRepository courseContentRepository;
+private final CourseService courseService;
+private final CourseContentRepository courseContentRepository;
+private final CourseAssignmentRepository courseAssignmentRepository;
+private final HttpSession httpSession;
+private final CourseCompletionRepository courseCompletionRepository;
+private final CourseRepository courseRepository;
 
 
-@Autowired
-private CourseAssignmentRepository courseAssignmentRepository;
-@Autowired
-private HttpSession httpSession;
-@Autowired
-private CourseCompletionRepository courseCompletionRepository;
-@Autowired
-private CourseRepository courseRepository;
+
+ public CourseRestController(CourseService courseService, CourseContentRepository courseContentRepository,
+        CourseAssignmentRepository courseAssignmentRepository, HttpSession httpSession,
+        CourseCompletionRepository courseCompletionRepository, CourseRepository courseRepository) {
+    this.courseService = courseService;
+    this.courseContentRepository = courseContentRepository;
+    this.courseAssignmentRepository = courseAssignmentRepository;
+    this.httpSession = httpSession;
+    this.courseCompletionRepository = courseCompletionRepository;
+    this.courseRepository = courseRepository;
+}
 
  @PostMapping("/addCourse")
     public ResponseEntity<Map<String,String>> addCourse(

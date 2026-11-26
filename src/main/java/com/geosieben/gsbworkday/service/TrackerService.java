@@ -100,7 +100,7 @@ public class TrackerService {
         updateElapsedTime(task, nowMs);
         LocalDate today = LocalDate.now();
 
-        int newStatus;
+        int newStatus=0;
         int qcTrigger = 0;
 var update=updateHours(task, 100,task.getType().equals("Prod")?task.getAllottedTo().getEID():task.getQcAssinee().getEID());
         if (task.getStatus() != null && task.getStatus() == 9) {
@@ -109,7 +109,7 @@ var update=updateHours(task, 100,task.getType().equals("Prod")?task.getAllottedT
             
             if (task.getQcHrs() == null || task.getQcHrs().compareTo(java.math.BigDecimal.ZERO) <= 0) {
                 newStatus = 3; // Prod Completed (No QC required)
-            } else {
+            } else if(task.getQcAssinee()!=null && task.getQcAllotted()==1) {
                 newStatus = 3; // Prod Submitted (QC required)
                 qcTrigger = 1;
                 ProjectAllocation allotment=new ProjectAllocation();

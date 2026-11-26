@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.geosieben.gsbworkday.dto.AllotmentsProjection;
 import com.geosieben.gsbworkday.dto.AssignedTaskProjection;
 import com.geosieben.gsbworkday.dto.EmployeeAttendanceProjection;
+import com.geosieben.gsbworkday.dto.EmployeeDataProjection;
+import com.geosieben.gsbworkday.dto.EmployeeHoursProjection;
 import com.geosieben.gsbworkday.dto.EmployeeProfileProjection;
 import com.geosieben.gsbworkday.dto.EmployeeReportProjection;
 import com.geosieben.gsbworkday.dto.EmployeeStatsProjection;
@@ -220,4 +222,15 @@ public List<AssignedTaskProjection> getMyTasks() {
 public EmployeeReportProjection getEmployeeById(@PathVariable String eid) {
     return employeeService.getEmployeeReportByEidService(eid);
 }
+
+@GetMapping("/admin/getEmployeeList")
+public List<EmployeeDataProjection> getEmployeeList() {
+    return employeeService.getActiveEmployeeProjectionsService();
+}
+
+@GetMapping("/getMyHoursHistory")
+public List<EmployeeHoursProjection> getMyHoursHistory() {
+    return employeeService.employeeHoursProjectionService();
+}
+
 }

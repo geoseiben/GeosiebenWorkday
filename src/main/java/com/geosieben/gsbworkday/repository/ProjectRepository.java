@@ -1,6 +1,8 @@
 package com.geosieben.gsbworkday.repository;
 import com.geosieben.gsbworkday.dto.ActiveAllotments;
 import com.geosieben.gsbworkday.dto.AllotmentReportProjection;
+import com.geosieben.gsbworkday.dto.CompletedProjectInvoiceProjection;
+import com.geosieben.gsbworkday.dto.MyProjectProjection;
 import com.geosieben.gsbworkday.entity.*;
 
 import java.util.List;
@@ -58,4 +60,72 @@ public List<ActiveAllotments> getActiveProjects(@Param("eid") String eid);
     "  e.lastname "+
 "ORDER BY clientId ASC, projectname;",nativeQuery=true)
 public List<AllotmentReportProjection> getAllotmentsReport();
+
+@Query(value = """
+        SELECT 
+            p.pid,
+            pl.EID AS eid,
+            p.allotmentName,
+            p.totalHours,
+            DATE_FORMAT(p.startDate, '%d-%b-%Y') AS startdate,
+            DATE_FORMAT(p.enddate, '%d-%b-%Y') AS enddate,
+            CONCAT(pl.firstname, ' ', pl.lastname) AS projectLeadd,
+            CONCAT(cb.firstname, ' ', cb.lastname) AS createdBy,
+            d.DepartmentShortName AS department,
+            DATE_FORMAT(p.finishedOn, '%d-%b-%Y') AS completionDate,
+            DATE_FORMAT(CONVERT_TZ(p.createdAt, '+00:00', '+05:30'), '%d-%b-%Y') AS createdAt,
+            CASE p.status
+                WHEN 0 THEN 'Created'
+                WHEN 1 THEN 'In-Progress'
+                WHEN 2 THEN 'Completed'
+                WHEN 3 THEN 'On Hold'    
+                WHEN 4 THEN 'Withdrawn'
+            END AS status,
+            COALESCE(bh.bookedhours, 0) AS bookedhours
+        FROM projects p 
+        INNER JOIN employee_basic_info pl ON p.projectLead = pl.EID 
+        INNER JOIN employee_basic_info cb ON p.createdBy = cb.EID 
+        LEFT JOIN departments d ON p.department = d.id
+        LEFT JOIN rootprojects rp ON p.rootid = rp.projid
+        LEFT JOIN (
+            SELECT pa.pid, SUM(b.hoursbooked) AS bookedhours
+            FROM projectallocation pa
+            INNER JOIN bookedhours b ON b.allotmentid = pa.allotmentid
+            GROUP BY pa.pid
+        ) bh ON bh.pid = p.pid
+        WHERE p.status NOT IN (3, 4)
+          AND p.projectLead = :leadId
+          AND (rp.projectType IS NULL OR rp.projectType <> 'Pilot')
+        ORDER BY p.status ASC, p.pid DESC
+        """, nativeQuery = true)
+    List<MyProjectProjection> findActiveProjectsByLead(@Param("leadId") String leadId);
+
+    @Query(value="""
+        SELECT i.*,p.pid,pl.eid,pl.EID,p.projectId,p.allotmentName as projectName,p.totalHours,date_format(p.startdate,'%d-%b-%y') as startdate,
+            date_format(p.enddate,'%d-%b-%y') as enddate,p.startdate as sd,p.enddate as ed,
+                        CONCAT(pl.firstname,' ',pl.lastname) AS projectLead,
+                        CONCAT(cb.firstname,' ',cb.lastname) AS createdBy,
+                        d.DepartmentShortName AS department,
+                        DATE_FORMAT(CONVERT_TZ(p.createdAt, '+00:00', '+05:30'),'%d-%b-%Y') AS createdAt,
+                        p.finishedOn,
+                        cd.clientId,
+                         date_format(p.finishedOn,'%d-%b-%y') as finDate,
+                        CASE p.status
+                                WHEN 0 THEN 'Created'
+                                WHEN 1 THEN 'In-Progress'
+                                WHEN 2 THEN 'Completed'
+                                WHEN 3 THEN 'On Hold'
+                                WHEN 4 THEN 'Withdrawn'
+                        END AS status
+                    FROM projects p 
+                    INNER JOIN rootprojects rp on p.rootId =rp.projId
+                    INNER JOIN clientdata cd on cd.cid=rp.clientId
+                    INNER JOIN employee_basic_info pl ON p.projectLead=pl.EID 
+                    INNER JOIN employee_basic_info cb ON p.createdBy=cb.EID 
+                     left JOIN projectinvoice i on i.projectid=p.pid
+                    left JOIN departments d ON p.department=d.id where p.status=2
+        """,nativeQuery =  true)
+        public  List<CompletedProjectInvoiceProjection> getFinishedProjectsProjections();
+
+
 }

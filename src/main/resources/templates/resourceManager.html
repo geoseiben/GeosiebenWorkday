@@ -1,971 +1,1093 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bench &mdash; Resource Monitoring</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-  :root{
-    --bg: #F6F7FA;
-    --panel: #FFFFFF;
-    --panel-2: #F1F3F7;
-    --line: #E4E7EE;
-    --text: #1B1E27;
-    --muted: #6B7182;
-    --muted-2: #9AA0B0;
-    --accent: #0EA894;
-    --accent-dim: rgba(14,168,148,0.10);
-    --amber: #B9791A;
-    --amber-dim: rgba(185,121,26,0.10);
-    --coral: #D6483C;
-    --coral-dim: rgba(214,72,60,0.10);
-    --violet: #6366F1;
-    --radius: 14px;
-    --shadow: 0 1px 2px rgba(20,24,34,0.04), 0 8px 20px rgba(20,24,34,0.05);
-    --ease: cubic-bezier(.22,1,.36,1);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.06), transparent 60%),
-      radial-gradient(1000px 500px at 100% 0%, rgba(14,168,148,0.06), transparent 55%),
-      var(--bg);
-    color:var(--text);
-    font-family:'Inter', sans-serif;
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
-  }
-  .mono{font-family:'JetBrains Mono', monospace;}
-  .disp{font-family:'Space Grotesk', sans-serif;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bench &mdash; Resource Monitoring</title>
 
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-  @keyframes fadeInUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
-  @keyframes shimmer{ 0%{background-position:-200px 0;} 100%{background-position:200px 0;} }
-  @keyframes popIn{ from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
-  @keyframes toastIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  /* ---- Top bar ---- */
-  .topbar{
-    padding:28px clamp(16px,4vw,48px) 18px;
-    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
-    flex-wrap:wrap;
-    border-bottom:1px solid var(--line);
-  }
-  .brand{display:flex; align-items:center; gap:14px;}
-  .brand .mark{
-    width:38px;height:38px;border-radius:10px;
-    background:linear-gradient(135deg, var(--accent), var(--violet));
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Space Grotesk';font-weight:700;color:#fff;font-size:16px;
-    flex-shrink:0;
-    transition:transform .35s var(--ease);
-  }
-  .brand:hover .mark{ transform:rotate(-8deg) scale(1.06); }
-  .brand h1{font-family:'Space Grotesk';font-weight:600;font-size:20px;margin:0;letter-spacing:-0.01em;}
-  .brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px;}
-  .live{
-    display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;
-    font-family:'JetBrains Mono';padding:6px 12px;border:1px solid var(--line);border-radius:100px;
-    background:var(--panel); box-shadow:var(--shadow);
-    transition:border-color .2s ease;
-  }
-  .live.is-error{ color:var(--coral); border-color:rgba(214,72,60,0.3); }
-  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-dim);animation:pulse 2s infinite;}
-  .live.is-error .dot{ background:var(--coral); box-shadow:0 0 0 4px var(--coral-dim); }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-  /* ---- Analytics strip ---- */
-  .analytics{
-    padding:22px clamp(16px,4vw,48px) 6px;
-    display:grid;
-    grid-template-columns: repeat(4, minmax(180px,1fr)) 1.3fr;
-    gap:14px;
-  }
-  @media (max-width:1100px){ .analytics{grid-template-columns: repeat(2,1fr);} }
-  .kpi, .chart-card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:16px 18px;
-    box-shadow:var(--shadow);
-    animation:fadeInUp .45s var(--ease) both;
-    transition:transform .25s var(--ease), box-shadow .25s var(--ease);
-  }
-  .kpi:hover{ transform:translateY(-2px); box-shadow:0 4px 8px rgba(20,24,34,0.05), 0 14px 26px rgba(20,24,34,0.07); }
-  .kpi .label{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
-  .kpi .value{font-family:'Space Grotesk';font-size:30px;font-weight:600;margin-top:8px;letter-spacing:-0.02em; font-variant-numeric:tabular-nums;}
-  .kpi .sub{font-size:12px;color:var(--muted-2);margin-top:4px;}
-  .kpi .sub.up{color:var(--accent);}
-  .kpi .sub.warn{color:var(--amber);}
-  .chart-card{grid-row: span 1;}
-  .chart-card .label{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:10px;display:block;}
-  .chart-wrap{height:110px; position:relative;}
+    <style>
+        :root {
+            --accent: #0ea894;
+            --amber: #d97706;
+            --coral: #e11d48;
+            --indigo: #4338ca;
+            --ease: cubic-bezier(.22, 1, .36, 1);
+        }
 
-  /* ---- Skeletons ---- */
-  .sk{
-    background:linear-gradient(90deg, var(--panel-2) 25%, #E9ECF1 37%, var(--panel-2) 63%);
-    background-size:400px 100%;
-    animation:shimmer 1.4s ease-in-out infinite;
-    border-radius:6px;
-  }
-  .kpi.skeleton .value{height:28px; width:60%; margin-top:10px;}
-  .kpi.skeleton .label{height:11px; width:70%; border-radius:4px;}
-  .tile.skeleton{ }
-  .tile.skeleton .sk-avatar{width:64px;height:64px;border-radius:50%;}
-  .tile.skeleton .sk-line{height:10px; margin-top:8px; border-radius:4px;}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+        }
 
-  /* ---- Controls ---- */
-  .controls{
-    padding:10px clamp(16px,4vw,48px) 8px;
-    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-  }
-  .search-wrap{ position:relative; flex:1; min-width:220px; }
-  .search-wrap svg{
-    position:absolute; left:12px; top:50%; transform:translateY(-50%);
-    width:15px; height:15px; color:var(--muted-2); pointer-events:none;
-    transition:color .2s ease;
-  }
-  .search-wrap:focus-within svg{ color:var(--accent); }
-  .search{
-    width:100%;
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:10px 34px 10px 34px; color:var(--text); font-size:13.5px; font-family:'Inter';
-    transition:border-color .2s ease, box-shadow .2s ease;
-  }
-  .search::placeholder{color:var(--muted-2);}
-  .search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);}
-  .search-clear{
-    position:absolute; right:8px; top:50%; transform:translateY(-50%) scale(0.7);
-    width:20px; height:20px; border-radius:50%; border:none; background:var(--panel-2);
-    color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none; transition:all .18s var(--ease); font-size:13px; line-height:1;
-  }
-  .search-clear.show{ opacity:1; pointer-events:auto; transform:translateY(-50%) scale(1); }
-  .search-clear:hover{ background:var(--coral-dim); color:var(--coral); }
+        .disp { font-family: 'Space Grotesk', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
 
-  .filters{display:flex; gap:8px; flex-wrap:wrap;}
-  .chip-btn{
-    background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
-    padding:8px 14px; border-radius:100px; font-size:12.5px; cursor:pointer; font-weight:500;
-    transition:transform .15s var(--ease), background .15s ease, border-color .15s ease, color .15s ease;
-    white-space:nowrap;
-  }
-  .chip-btn:hover{color:var(--text); border-color:var(--muted-2); transform:translateY(-1px);}
-  .chip-btn:active{ transform:translateY(0) scale(.96); }
-  .chip-btn.active{background:var(--accent-dim); border-color:var(--accent); color:var(--accent);}
-  select.sortsel{
-    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
-    padding:9px 12px; border-radius:10px; font-size:12.5px; font-family:'Inter'; cursor:pointer;
-    transition:border-color .2s ease;
-  }
-  select.sortsel:focus{ outline:none; border-color:var(--accent); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-  /* Status filter chips reuse .chip-btn but get a small coloured dot */
-  .status-filters{display:flex; gap:8px; flex-wrap:wrap;}
-  .status-filters .chip-btn{display:flex; align-items:center; gap:6px;}
-  .status-filters .chip-btn .swatch{width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--muted-2);}
-  .status-filters .chip-btn[data-status="Available"] .swatch{background:var(--accent);}
-  .status-filters .chip-btn[data-status="Allocated"] .swatch{background:var(--amber);}
-  .status-filters .chip-btn[data-status="On Leave"] .swatch{background:var(--coral);}
+        .tile-enter {
+            animation: fadeInUp 0.4s var(--ease) both;
+        }
 
-  /* View toggle (comfortable / compact) */
-  .view-toggle{
-    display:flex; align-items:center; gap:2px; background:var(--panel-2);
-    border:1px solid var(--line); border-radius:10px; padding:3px; flex-shrink:0;
-  }
-  .view-toggle button{
-    display:flex; align-items:center; justify-content:center;
-    width:32px; height:28px; border:none; background:transparent; border-radius:7px;
-    color:var(--muted); cursor:pointer; transition:background .15s ease, color .15s ease;
-  }
-  .view-toggle button svg{width:15px; height:15px;}
-  .view-toggle button:hover{color:var(--text);}
-  .view-toggle button.active{background:var(--panel); color:var(--accent); box-shadow:var(--shadow);}
+        .ring svg { transform: rotate(-90deg); }
+        .ring .track { fill: none; stroke: #e2e8f0; stroke-width: 4; }
+        .ring .prog {
+            fill: none;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.9s var(--ease), stroke 0.35s ease;
+        }
 
-  /* ---- Grid of tiles ---- */
-  .grid{
-    padding:16px clamp(16px,4vw,48px) 48px;
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap:16px;
-  }
-  .tile{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:18px;
-    position:relative;
-    box-shadow:0 1px 2px rgba(20,24,34,0.03);
-    transition: transform .25s var(--ease), border-color .2s ease, box-shadow .25s var(--ease), padding .2s ease;
-  }
+        .skill-fill {
+            width: 0;
+            transition: width 0.9s var(--ease), background-color 0.35s ease;
+        }
 
-  /* ---- Compact view ---- */
-  .grid.compact{
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap:10px;
-  }
-  .grid.compact .tile{ padding:12px 14px; }
-  .grid.compact .tile:hover{ transform:translateY(-2px); }
-  .grid.compact .status-badge{ top:10px; right:10px; padding:3px 7px; font-size:9.5px; }
-  .grid.compact .status-badge .status-label{ display:none; }
-  .grid.compact .tile-head{ gap:10px; }
-  .grid.compact .ring{ width:40px; height:40px; }
-  .grid.compact .ring svg{ width:40px; height:40px; }
-  .grid.compact .ring .track,
-  .grid.compact .ring .prog{ stroke-width:5; }
-  .grid.compact .ring img{ width:32px; height:32px; top:4px; left:4px; }
-  .grid.compact .ring .pct{ font-size:8.5px; padding:1px 4px; bottom:-4px; right:-6px; }
-  .grid.compact .who h3{ font-size:13px; }
-  .grid.compact .who .role{ font-size:11px; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .grid.compact .who .dept{ display:none; }
-  .grid.compact .skills,
-  .grid.compact .projects{ display:none; }
-  .grid.compact .tile-foot{ margin-top:10px; padding-top:10px; }
-  .grid.compact .util,
-  .grid.compact .loc{ font-size:11px; }
+        /* ---- View Modes: Comfortable (Default), Compact, List ---- */
+        /* Compact Grid Mode */
+        #tileGrid.compact {
+            grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+            gap: 0.625rem;
+        }
+        #tileGrid.compact .tile { padding: 0.75rem 0.875rem; }
+        #tileGrid.compact .status-badge { top: 0.625rem; right: 0.625rem; padding: 0.15rem 0.45rem; }
+        #tileGrid.compact .status-badge .status-label { display: none; }
+        #tileGrid.compact .ring { width: 42px; height: 42px; }
+        #tileGrid.compact .ring svg { width: 42px; height: 42px; }
+        #tileGrid.compact .ring .track,
+        #tileGrid.compact .ring .prog { stroke-width: 5; }
+        #tileGrid.compact .ring img,
+        #tileGrid.compact .ring .avatar-fallback { width: 34px; height: 34px; top: 4px; left: 4px; font-size: 11px; }
+        #tileGrid.compact .ring .pct { font-size: 8.5px; padding: 1px 4px; bottom: -4px; right: -5px; }
+        #tileGrid.compact .who h3 { font-size: 0.8125rem; }
+        #tileGrid.compact .who .role { font-size: 0.6875rem; }
+        #tileGrid.compact .who .dept { display: none; }
+        #tileGrid.compact .skills,
+        #tileGrid.compact .projects { display: none; }
+        #tileGrid.compact .tile-foot { margin-top: 0.625rem; padding-top: 0.5rem; }
 
-  /* ---- List view (single-column scannable rows) ---- */
-  .grid.list{
-    display:flex; flex-direction:column; gap:8px;
-  }
-  .grid.list .tile{
-    display:flex; align-items:center; gap:18px;
-    padding:9px 16px; border-radius:10px;
-  }
-  .grid.list .tile:hover{ transform:translateX(2px); }
-  .grid.list .status-badge{
-    position:static; order:1; flex:0 0 92px; justify-content:center;
-  }
-  .grid.list .tile-head{
-    order:2; flex:1 1 220px; min-width:0; gap:10px;
-  }
-  .grid.list .ring{ width:34px; height:34px; }
-  .grid.list .ring svg{ width:34px; height:34px; }
-  .grid.list .ring .track,
-  .grid.list .ring .prog{ stroke-width:5; }
-  .grid.list .ring img{ width:26px; height:26px; top:4px; left:4px; }
-  .grid.list .ring .pct{ font-size:8.5px; padding:1px 4px; bottom:-4px; right:-6px; }
-  .grid.list .who h3{ font-size:13px; }
-  .grid.list .who .role{
-    font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .grid.list .who .dept{ margin-top:4px; }
+        /* List Row Mode */
+        #tileGrid.list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+        #tileGrid.list .tile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.55rem 1rem;
+            border-radius: 0.625rem;
+        }
+        #tileGrid.list .tile:hover { transform: translateX(2px); }
+        #tileGrid.list .status-badge {
+            position: static;
+            order: 1;
+            flex: 0 0 92px;
+            justify-content: center;
+        }
+        #tileGrid.list .tile-head {
+            order: 2;
+            flex: 1 1 220px;
+            min-width: 0;
+            gap: 0.625rem;
+            padding-right: 0;
+        }
+        #tileGrid.list .ring { width: 36px; height: 36px; }
+        #tileGrid.list .ring svg { width: 36px; height: 36px; }
+        #tileGrid.list .ring .track,
+        #tileGrid.list .ring .prog { stroke-width: 5; }
+        #tileGrid.list .ring img,
+        #tileGrid.list .ring .avatar-fallback { width: 28px; height: 28px; top: 4px; left: 4px; font-size: 10px; }
+        #tileGrid.list .ring .pct { font-size: 8px; padding: 0 4px; bottom: -4px; right: -5px; }
+        #tileGrid.list .who h3 { font-size: 0.8125rem; }
+        #tileGrid.list .who .role { font-size: 0.6875rem; }
+        #tileGrid.list .who .dept { margin-top: 2px; font-size: 9px; padding: 1px 6px; }
 
-  .grid.list .skills{
-    order:3; flex:1 1 200px; min-width:0; margin-top:0;
-    display:flex; flex-direction:row; flex-wrap:nowrap; gap:6px;
-    overflow-x:auto; scrollbar-width:none; padding-bottom:1px;
-  }
-  .grid.list .skills::-webkit-scrollbar{ display:none; }
-  .grid.list .skill-row{
-    flex-shrink:0; gap:5px;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:100px;
-    padding:3px 9px 3px 4px;
-  }
-  .grid.list .skill-name{ font-size:10.5px; width:auto; max-width:84px; }
-  .grid.list .skill-bar{ display:none; }
-  .grid.list .skill-pct{ font-size:10px; width:auto; color:var(--muted); }
+        #tileGrid.list .skills {
+            order: 3;
+            flex: 1 1 210px;
+            min-width: 0;
+            margin-top: 0;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 0.375rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        #tileGrid.list .skills::-webkit-scrollbar { display: none; }
+        #tileGrid.list .skill-row {
+            flex-shrink: 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            padding: 2px 8px;
+            gap: 4px;
+        }
+        #tileGrid.list .skill-name { width: auto; max-width: 82px; font-size: 10.5px; }
+        #tileGrid.list .skill-bar { display: none; }
+        #tileGrid.list .skill-pct { width: auto; font-size: 10px; }
 
-  .grid.list .projects{
-    order:4; flex:1 1 180px; min-width:0; margin-top:0;
-  }
-  .grid.list .projects-label{ display:none; }
-  .grid.list .project-list{
-    flex-direction:row; flex-wrap:nowrap; gap:6px;
-    overflow-x:auto; scrollbar-width:none;
-  }
-  .grid.list .project-list::-webkit-scrollbar{ display:none; }
-  .grid.list .project-chip{
-    flex-shrink:0; padding:3px 9px; font-size:10.5px; max-width:160px;
-  }
-  .grid.list .project-chip .proj-name{ overflow:hidden; text-overflow:ellipsis; }
-  .grid.list .project-chip .proj-role{ display:none; }
-  .grid.list .projects .none{ font-size:11px; white-space:nowrap; }
+        #tileGrid.list .projects {
+            order: 4;
+            flex: 1 1 190px;
+            min-width: 0;
+            margin-top: 0;
+        }
+        #tileGrid.list .projects-label { display: none; }
+        #tileGrid.list .project-list {
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 0.375rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        #tileGrid.list .project-list::-webkit-scrollbar { display: none; }
+        #tileGrid.list .project-chip {
+            flex-shrink: 0;
+            padding: 2px 8px;
+            font-size: 10.5px;
+            max-width: 165px;
+        }
+        #tileGrid.list .project-chip .proj-role { display: none; }
+        #tileGrid.list .projects .none { font-size: 11px; white-space: nowrap; }
 
-  .grid.list .tile-foot{
-    order:5; margin:0; padding:0; border-top:none;
-    flex:0 0 auto; display:flex; gap:22px; justify-content:flex-start;
-  }
-  .grid.list .util,
-  .grid.list .loc{ font-size:12px; white-space:nowrap; }
-  @media (max-width:900px){
-    .grid.list .tile{ flex-wrap:wrap; row-gap:8px; }
-    .grid.list .skills,
-    .grid.list .projects{ flex-basis:100%; order:10; margin-left:110px; }
-    .grid.list .tile-foot{ flex-basis:100%; margin-left:110px; order:11; }
-  }
-  /* Entrance animation is applied only once, only to brand-new tiles.
-     Existing tiles that get patched or reordered never get this class,
-     so a data refresh can never replay the fade-in (the flicker cause). */
-  .tile.tile-enter{
-    animation:fadeInUp .45s var(--ease) both;
-  }
-  .tile:hover{ transform:translateY(-4px); border-color:#C7CCD8; box-shadow:var(--shadow); }
-  .tile-head{display:flex; gap:14px; align-items:center;}
+        #tileGrid.list .tile-foot {
+            order: 5;
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+            flex: 0 0 auto;
+            gap: 1.25rem;
+        }
 
-  .ring{
-    position:relative; width:64px; height:64px; flex-shrink:0;
-  }
-  .ring svg{transform:rotate(-90deg);}
-  .ring .track{fill:none; stroke:var(--line); stroke-width:4;}
-  .ring .prog{fill:none; stroke-width:4; stroke-linecap:round; transition: stroke-dasharray 1s var(--ease), stroke .4s ease;}
-  .ring img{
-    position:absolute; top:5px; left:5px; width:54px; height:54px; border-radius:50%;
-    object-fit:cover; border:2px solid var(--panel);
-    box-shadow:0 0 0 1px var(--line);
-    transition:transform .25s var(--ease);
-  }
-  .tile:hover .ring img{ transform:scale(1.05); }
-  .ring .pct{
-    position:absolute; bottom:-6px; right:-4px;
-    background:var(--panel); border:1px solid var(--line); border-radius:100px;
-    font-family:'JetBrains Mono'; font-size:10px; font-weight:600; padding:2px 5px;
-    box-shadow:var(--shadow);
-  }
-
-  .who h3{margin:0; font-family:'Space Grotesk'; font-size:15.5px; font-weight:600;}
-  .who .role{color:var(--muted); font-size:12.5px; margin-top:2px;}
-  .who .dept{
-    display:inline-block; margin-top:6px; font-size:10.5px; font-weight:600;
-    text-transform:uppercase; letter-spacing:0.05em; color:var(--muted-2);
-    border:1px solid var(--line); border-radius:100px; padding:2px 8px;
-  }
-
-  .status-badge{
-    position:absolute; top:16px; right:16px;
-    font-size:10.5px; font-weight:600; padding:4px 9px; border-radius:100px;
-    display:flex; align-items:center; gap:5px;
-    transition:background-color .3s ease, color .3s ease;
-  }
-  .status-badge .dot{width:6px;height:6px;border-radius:50%;}
-  .status-available{background:var(--accent-dim); color:var(--accent);}
-  .status-available .dot{background:var(--accent); animation:pulse 2s infinite;}
-  .status-allocated{background:var(--amber-dim); color:var(--amber);}
-  .status-allocated .dot{background:var(--amber);}
-  .status-leave{background:var(--coral-dim); color:var(--coral);}
-  .status-leave .dot{background:var(--coral);}
-
-  .skills{margin-top:16px; display:flex; flex-direction:column; gap:9px;}
-  .skill-row{display:flex; align-items:center; gap:10px;}
-  .skill-name{font-size:12px; color:var(--muted); width:92px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .skill-bar{flex:1; height:5px; background:var(--line); border-radius:100px; overflow:hidden;}
-  .skill-fill{height:100%; border-radius:100px; width:0; transition:width 1s var(--ease), background-color .4s ease;}
-  .skill-pct{font-family:'JetBrains Mono'; font-size:11px; color:var(--muted-2); width:32px; text-align:right; flex-shrink:0;}
-
-  .projects{margin-top:14px;}
-  .projects .projects-label{
-    font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
-    color:var(--muted-2); margin-bottom:8px; display:block;
-  }
-  .project-list{display:flex; flex-direction:column; gap:6px;}
-  .project-chip{
-    display:flex; align-items:center; gap:8px;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:9px;
-    padding:7px 10px; font-size:12px;
-  }
-  .project-chip .proj-dot{width:6px;height:6px;border-radius:50%; background:var(--accent); flex-shrink:0; animation:pulse 2s infinite;}
-  .project-chip .proj-name{flex:1; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .project-chip .proj-role{color:var(--muted-2); font-size:11px; flex-shrink:0;}
-  .projects .none{font-size:12px; color:var(--muted-2); font-style:italic;}
-
-  .tile-foot{
-    margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  .util{font-size:11.5px; color:var(--muted-2);}
-  .util b{color:var(--text); font-family:'JetBrains Mono'; font-weight:600;}
-  .loc{font-size:11.5px; color:var(--muted-2); display:flex; align-items:center; gap:5px;}
-
-  .empty{
-    grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--muted);
-    font-size:14px; animation:fadeIn .4s ease;
-  }
-  .empty .icon{ font-size:28px; display:block; margin-bottom:10px; opacity:.6; }
-
-  /* ---- Toast ---- */
-  .toast{
-    position:fixed; bottom:22px; right:22px; z-index:50;
-    background:var(--panel); border:1px solid var(--coral); color:var(--coral);
-    padding:12px 16px; border-radius:10px; font-size:13px; box-shadow:var(--shadow);
-    display:flex; align-items:center; gap:10px; animation:toastIn .3s var(--ease);
-    max-width:320px;
-  }
-  .toast .spinner-dot{ width:8px;height:8px;border-radius:50%; background:var(--coral); flex-shrink:0; }
-
-  ::-webkit-scrollbar{width:8px; height:8px;}
-  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:100px;}
-</style>
-<head th:replace="includes/header :: header"></head>
-
+        @media (max-width: 960px) {
+            #tileGrid.list .tile { flex-wrap: wrap; row-gap: 0.5rem; }
+            #tileGrid.list .skills,
+            #tileGrid.list .projects,
+            #tileGrid.list .tile-foot { flex-basis: 100%; order: 10; }
+        }
+    </style>
 </head>
 
-<body>
-  <div class="topbar">
-    <div class="brand">
-      <div class="mark">G7</div>
-      <div>
-        <h1>Resource Manager</h1>
-      </div>
-    </div>
-  </div>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+    <!-- Top Navigation Include -->
+    <div th:replace="~{includes/header :: header}"></div>
 
-  <div class="analytics" id="analytics"></div>
+    <!-- Page Header Bar -->
+    <header class="bg-white border-b border-slate-200">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-indigo-600 flex items-center justify-center text-white disp font-bold text-sm shadow-xs shrink-0">
+                    G7
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="disp text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-none">Resource & Bench Monitor</h1>
+                        <span id="visibleCountBadge" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 mono">
+                            0
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Real-time workforce allocation, proficiency index, and project bench availability.</p>
+                </div>
+            </div>
 
-  <div class="controls">
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search" id="searchInput" type="text" placeholder="Search by name, designation, skill or project…">
-      <button class="search-clear" id="searchClear" type="button" aria-label="Clear search">✕</button>
-    </div>
-    <div class="filters" id="deptFilters"></div>
-    <div class="status-filters" id="statusFilters"></div>
-    <select class="sortsel" id="sortSelect">
-      <option value="name">Sort: Name (A&ndash;Z)</option>
-      <option value="proficiency">Sort: Proficiency (high&ndash;low)</option>
-      <option value="utilization">Sort: Utilization (high&ndash;low)</option>
-    </select>
-    <div class="view-toggle" id="viewToggle">
-      <button type="button" data-view="comfortable" title="Comfortable view" aria-label="Comfortable view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      </button>
-      <button type="button" data-view="compact" title="Compact view" aria-label="Compact view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="3" width="4.5" height="4.5" rx="1"/><rect x="16.5" y="3" width="4.5" height="4.5" rx="1"/><rect x="3" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="3" y="16.5" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1"/><rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1"/></svg>
-      </button>
-      <button type="button" data-view="list" title="List view" aria-label="List view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-    </div>
-  </div>
+            <!-- Live Sync Status & Refresh Controls -->
+            <div class="flex items-center gap-2">
+                <div id="liveIndicator" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mono font-medium bg-slate-50 border border-slate-200 text-slate-600">
+                    <span id="liveDot" class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                    <span id="liveText">Live &middot; 5s sync</span>
+                </div>
 
-  <div class="grid" id="tileGrid"></div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+                <button type="button" id="togglePollBtn" title="Pause or resume auto-refresh"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+                    <svg id="pollIconPause" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <svg id="pollIconPlay" class="w-3.5 h-3.5 hidden text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="pollBtnLabel" class="hidden md:inline">Pause</span>
+                </button>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-/* -------------------- STATE -------------------- */
-let employees = [];
-let depts = ["All"];
-let activeDept = "All";
-const STATUSES = ["All", "Available", "Allocated", "On Leave"];
-let activeStatus = "All";
-let sortMode = "name";
-let searchTerm = "";
-let deptChart = null;
-
-let hasLoadedOnce = false;   // controls skeleton vs. silent refresh
-let analyticsBuilt = false;  // has the real KPI/chart markup been built yet
-let lastDeptsKey = "";       // used to avoid rebuilding filter chips needlessly
-let toastVisible = false;    // avoid stacking duplicate error toasts
-let viewMode = (['comfortable','compact','list'].includes(localStorage.getItem('benchView')))
-  ? localStorage.getItem('benchView') : 'comfortable'; // persisted view preference
-
-/* -------------------- FALLBACK MOCK DATA -------------------- */
-/* Used only if the API request fails, so the UI still has something to show. */
-const MOCK_EMPLOYEES = [
-  { EID:1, firstName:"Ananya", lastName:"Rao", designation:"Senior Frontend Engineer", departmentShortName:"ENG", status:"Available", image:"https://i.pravatar.cc/150?img=47", util:62, location:"Bengaluru", skills:[{skill:"React",scale:92},{skill:"TypeScript",scale:85},{skill:"CSS",scale:78}], projects:[{projectName:"Nimbus Redesign",role:"Lead FE",status:"Active"}] },
-  { EID:2, firstName:"Rohan", lastName:"Mehta", designation:"Backend Engineer", departmentShortName:"ENG", status:"Allocated", image:"https://i.pravatar.cc/150?img=12", util:95, location:"Pune", skills:[{skill:"Node.js",scale:88},{skill:"PostgreSQL",scale:80},{skill:"Docker",scale:70}], projects:[{projectName:"Payments API v2",role:"Backend",status:"Active"},{projectName:"Internal Tooling",role:"Support",status:"Active"}] },
-  { EID:3, firstName:"Priya", lastName:"Nair", designation:"UX Designer", departmentShortName:"DES", status:"Available", image:"https://i.pravatar.cc/150?img=32", util:40, location:"Chennai", skills:[{skill:"Figma",scale:95},{skill:"Research",scale:82},{skill:"Prototyping",scale:88}], projects:[] },
-  { EID:4, firstName:"Karthik", lastName:"Iyer", designation:"DevOps Engineer", departmentShortName:"ENG", status:"Allocated", image:"https://i.pravatar.cc/150?img=15", util:88, location:"Hyderabad", skills:[{skill:"Kubernetes",scale:90},{skill:"AWS",scale:84},{skill:"Terraform",scale:75}], projects:[{projectName:"Cluster Migration",role:"DevOps Lead",status:"In Progress"}] },
-  { EID:5, firstName:"Sneha", lastName:"Kulkarni", designation:"Data Scientist", departmentShortName:"DATA", status:"Available", image:"https://i.pravatar.cc/150?img=44", util:55, location:"Pune", skills:[{skill:"Python",scale:91},{skill:"ML/AI",scale:86},{skill:"SQL",scale:79}], projects:[{projectName:"Churn Prediction Model",role:"Contributor",status:"Active"}] },
-  { EID:6, firstName:"Vikram", lastName:"Singh", designation:"QA Automation Lead", departmentShortName:"QA", status:"On Leave", image:"https://i.pravatar.cc/150?img=53", util:0, location:"Delhi NCR", skills:[{skill:"Selenium",scale:89},{skill:"Cypress",scale:81},{skill:"CI/CD",scale:72}], projects:[{projectName:"Regression Suite Overhaul",role:"Lead",status:"Completed"}] },
-];
-
-/* -------------------- HELPERS -------------------- */
-function avgSkill(e){
-  if(!e.skills || !e.skills.length) return 0;
-  return Math.round(e.skills.reduce((a,s)=>a+Number(s.scale||0),0)/e.skills.length);
-}
-function colorForPct(p){
-  const css = getComputedStyle(document.documentElement);
-  return p>=85 ? css.getPropertyValue('--accent') : p>=70 ? css.getPropertyValue('--amber') : css.getPropertyValue('--coral');
-}
-function statusClass(s){
-  if(s==="Available") return "status-available";
-  if(s==="On Leave") return "status-leave";
-  return "status-allocated";
-}
-function statusLabel(s){ return s || "Allocated"; }
-function fullName(e){ return [e.firstName, e.lastName].filter(Boolean).join(" "); }
-function utilOf(e){ return (e.util ?? e.utilization ?? Math.max(20, avgSkill(e)-15)); }
-function locOf(e){ return e.location || e.loc || "Unassigned"; }
-function keyOf(e){ return String(e.EID ?? e.id ?? (fullName(e)+'|'+(e.designation||''))); }
-function projectsOf(e){ return e.projects || e.projectList || []; }
-/* Different API responses have used different casings for the project
-   name field (projectName / projectName / name / title). Read them all
-   in one place so display and search never fall out of sync again. */
-function projectNameOf(p){ return p.projectName || p.projectName || p.name || p.title || ""; }
-function projectRoleOf(p){ return p.role || p.allocation || ""; }
-/* A project counts as "active" if it carries a status field saying so,
-   or if it has no status field at all (assume anything listed is current). */
-function isActiveProject(p){
-  if(p.status === undefined || p.status === null || p.status === "") return true;
-  return String(p.status).toLowerCase().includes("active") || String(p.status).toLowerCase().includes("progress");
-}
-function activeProjects(e){ return projectsOf(e).filter(isActiveProject); }
-function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
-
-/* Animate a number from whatever is currently shown to a new target,
-   so periodic refreshes count up/down smoothly instead of jumping. */
-function animateCount(el, target, suffix=""){
-  const current = parseInt(el.textContent, 10);
-  const start = Number.isFinite(current) ? current : 0;
-  if(start === target){ el.textContent = target + suffix; return; }
-  const duration = 700;
-  const startTime = performance.now();
-  function step(now){
-    const p = Math.min((now-startTime)/duration, 1);
-    const eased = 1 - Math.pow(1-p, 3);
-    el.textContent = Math.round(start + (target-start)*eased) + suffix;
-    if(p<1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-/* -------------------- DATA FETCH -------------------- */
-
-
-function getEmployeeData(){
-  if(!hasLoadedOnce){
-    renderSkeleton();
-  }
-  $.ajax({
-    url: '/admin/resourceData',
-    type: 'GET',
-    dataType: 'json',
-    success: function(response){
-    console.log(response);
-      employees = response || [];
-      depts = ["All", ...new Set(employees.map(e=>e.departmentShortName).filter(Boolean))];
-      hasLoadedOnce = true;
-      renderAnalytics();
-      renderFilters();
-      renderStatusFilters();
-      renderTiles();
-    },
-    error: function(xhr, status, error){
-      console.error('Error fetching employee data:', error);
-      setLive('error', 'Offline · showing demo data');
-      if(!hasLoadedOnce) showToast('Could not reach the resource API. Showing demo data instead.');
-      employees = MOCK_EMPLOYEES;
-      depts = ["All", ...new Set(employees.map(e=>e.departmentShortName).filter(Boolean))];
-      hasLoadedOnce = true;
-      renderAnalytics();
-      renderFilters();
-      renderStatusFilters();
-      renderTiles();
-    }
-  });
-} 
-
-function showToast(msg){
-  if(toastVisible) return;
-  toastVisible = true;
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.innerHTML = `<span class="spinner-dot"></span><span>${msg}</span>`;
-  document.body.appendChild(t);
-  setTimeout(()=>{
-    t.style.transition='opacity .3s ease'; t.style.opacity='0';
-    setTimeout(()=>{ t.remove(); toastVisible = false; }, 300);
-  }, 4200);
-}
-
-/* -------------------- SKELETON STATE (first load only) -------------------- */
-function renderSkeleton(){
-  const analytics = document.getElementById('analytics');
-  analytics.innerHTML = Array.from({length:4}).map(()=>`
-    <div class="kpi skeleton">
-      <div class="label sk"></div>
-      <div class="value sk"></div>
-    </div>`).join("") + `<div class="chart-card"><span class="label">Headcount by Department</span><div class="chart-wrap"></div></div>`;
-
-  const grid = document.getElementById('tileGrid');
-  grid.innerHTML = Array.from({length:6}).map(()=>`
-    <div class="tile skeleton">
-      <div class="tile-head">
-        <div class="sk sk-avatar"></div>
-        <div style="flex:1">
-          <div class="sk sk-line" style="width:70%; height:14px;"></div>
-          <div class="sk sk-line" style="width:50%;"></div>
+                <button type="button" onclick="getEmployeeData()" title="Sync now"
+                    class="p-1.5 rounded-lg text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
         </div>
-      </div>
-      <div class="sk sk-line" style="width:100%; margin-top:20px;"></div>
-      <div class="sk sk-line" style="width:100%;"></div>
-      <div class="sk sk-line" style="width:100%;"></div>
-    </div>`).join("");
-}
+    </header>
 
-/* -------------------- TILE BUILD / UPDATE -------------------- */
-function buildSkillRowHTML(s){
-  return `
-    <div class="skill-row" data-skill="${s.skill}">
-      <div class="skill-name">${s.skill}</div>
-      <div class="skill-bar"><div class="skill-fill" data-target="${s.scale}" style="background:${colorForPct(s.scale)};"></div></div>
-      <div class="skill-pct mono">${s.scale}%</div>
-    </div>`;
-}
+    <main class="max-w-[1440px] mx-auto px-4 sm:px-8 py-5 space-y-4">
+        <!-- KPI & Department Chart Strip -->
+        <section id="analytics" class="grid grid-cols-2 lg:grid-cols-12 gap-3.5"></section>
 
-function buildProjectChipHTML(p){
-  const name = projectNameOf(p) || "Untitled project";
-  const role = projectRoleOf(p);
-  return `
-    <div class="project-chip" data-project="${name}">
-      <span class="proj-dot"></span>
-      <span class="proj-name">${name}</span>
-      ${role ? `<span class="proj-role">${role}</span>` : ""}
-    </div>`;
-}
-function buildProjectsSectionHTML(e){
-  const active = activeProjects(e);
-  if(!active.length) return `<span class="projects-label">Active Projects</span><div class="none">No active projects — fully benched</div>`;
-  return `<span class="projects-label">Active Projects (${active.length})</span><div class="project-list">${active.map(buildProjectChipHTML).join("")}</div>`;
-}
+        <!-- Search, Filters & View Controls Bar -->
+        <section class="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2.5">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-2.5">
+                <!-- Search Input -->
+                <div class="relative flex-1 min-w-[240px]">
+                    <svg class="w-4 h-4 text-slate-400 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input id="searchInput" type="text"
+                        placeholder="Search by employee name, designation, skill, or project..."
+                        class="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition">
+                    <button id="searchClear" type="button" aria-label="Clear search"
+                        class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200/80 text-slate-500 hover:bg-rose-100 hover:text-rose-600 items-center justify-center text-xs transition cursor-pointer">
+                        &times;
+                    </button>
+                </div>
 
-function buildTileElement(e, i){
-console.log(e);
-  const avg = avgSkill(e);
-  const circumference = 2*Math.PI*28;
-  const ringColor = colorForPct(avg);
-  const skillsHtml = (e.skills||[]).map(buildSkillRowHTML).join("");
+                <!-- Right Controls: Status Pills + Sort + View Toggle -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Status Filter Chips -->
+                    <div id="statusFilters" class="flex items-center gap-1.5 flex-wrap"></div>
 
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `
-    <div class="tile tile-enter" data-key="${keyOf(e)}" style="animation-delay:${Math.min(i*45,450)}ms">
-      <span class="status-badge ${statusClass(e.status)}"><span class="dot"></span><span class="status-label">${statusLabel(e.status)}</span></span>
-      <div class="tile-head">
-        <div class="ring">
-          <svg width="64" height="64" viewBox="0 0 64 64">
-            <circle class="track" cx="32" cy="32" r="28"></circle>
-            <circle class="prog" cx="32" cy="32" r="28" stroke="${ringColor}"
-              stroke-dasharray="0 ${circumference}" data-target="${(avg/100)*circumference}" data-circ="${circumference}"></circle>
-          </svg>
-          <img src="../${e.image}" alt="${fullName(e)}" loading="lazy">
-          <span class="pct">${avg}%</span>
-        </div>
-        <div class="who">
-          <h3>${fullName(e)}</h3>
-          <div class="role">${e.designation||""}</div>
-          <span class="dept">${e.departmentShortName||"—"}</span>
-        </div>
-      </div>
-      <div class="skills">${skillsHtml}</div>
-      <div class="projects">${buildProjectsSectionHTML(e)}</div>
-      <div class="tile-foot">
-        <div class="util">Utilization <b>${utilOf(e)}%</b></div>
-        <div class="loc">📍 <span class="loc-text">${locOf(e)}</span></div>
-      </div>
-    </div>`;
-  const tile = wrap.firstElementChild;
+                    <div class="h-5 w-px bg-slate-200 hidden sm:block"></div>
 
-  /* Animate ring + bars in from zero only on first paint of this tile. */
-  requestAnimationFrame(()=>{
-    tile.querySelectorAll('.skill-fill').forEach(el=>{ el.style.width = el.dataset.target + '%'; });
-    const prog = tile.querySelector('.prog');
-    prog.setAttribute('stroke-dasharray', `${prog.dataset.target} ${prog.dataset.circ}`);
-  });
-  tile.addEventListener('animationend', ()=> tile.classList.remove('tile-enter'), { once:true });
+                    <!-- Sort Select -->
+                    <div class="relative">
+                        <select id="sortSelect"
+                            class="appearance-none bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-medium rounded-lg pl-2.5 pr-7 py-1.5 focus:outline-none focus:border-teal-600 focus:bg-white transition cursor-pointer">
+                            <option value="name">Sort: Name (A&ndash;Z)</option>
+                            <option value="proficiency">Sort: Proficiency (High&ndash;Low)</option>
+                            <option value="utilization">Sort: Utilization (High&ndash;Low)</option>
+                        </select>
+                        <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
 
-  const projectsContainer = tile.querySelector('.projects');
-  const initialActive = activeProjects(e);
-  projectsContainer.dataset.projKey = initialActive.map(p=>projectNameOf(p)+'|'+projectRoleOf(p)).join(',');
+                    <!-- View Mode Switcher -->
+                    <div id="viewToggle" class="inline-flex items-center gap-0.5 bg-slate-100 border border-slate-200/80 rounded-lg p-0.5">
+                        <button type="button" data-view="comfortable" title="Comfortable grid" aria-label="Comfortable grid"
+                            class="p-1.5 rounded-md text-slate-500 hover:text-slate-900 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                            </svg>
+                        </button>
+                        <button type="button" data-view="compact" title="Compact cards" aria-label="Compact cards"
+                            class="p-1.5 rounded-md text-slate-500 hover:text-slate-900 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="4.5" height="4.5" rx="1" />
+                                <rect x="9.75" y="3" width="4.5" height="4.5" rx="1" />
+                                <rect x="16.5" y="3" width="4.5" height="4.5" rx="1" />
+                                <rect x="3" y="9.75" width="4.5" height="4.5" rx="1" />
+                                <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1" />
+                                <rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1" />
+                                <rect x="3" y="16.5" width="4.5" height="4.5" rx="1" />
+                                <rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1" />
+                                <rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1" />
+                            </svg>
+                        </button>
+                        <button type="button" data-view="list" title="Compact list rows" aria-label="Compact list rows"
+                            class="p-1.5 rounded-md text-slate-500 hover:text-slate-900 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-  return tile;
-}
+            <!-- Department Filter Bar -->
+            <div class="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">Dept:</span>
+                <div id="deptFilters" class="flex items-center gap-1.5 flex-wrap"></div>
+            </div>
+        </section>
 
-function updateTileElement(tile, e){
-  const avg = avgSkill(e);
-  const circumference = 2*Math.PI*28;
+        <!-- Employee Resource Grid -->
+        <section id="tileGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 pb-12"></section>
+    </main>
 
-  // Status badge
-  const badge = tile.querySelector('.status-badge');
-  const newBadgeClass = 'status-badge ' + statusClass(e.status);
-  if(badge.className !== newBadgeClass) badge.className = newBadgeClass;
-  badge.querySelector('.status-label').textContent = statusLabel(e.status);
+    <!-- Chat Widget -->
+    <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
-  // Ring (transitions smoothly via CSS since we're not resetting to 0)
-  const prog = tile.querySelector('.prog');
-  const newDash = (avg/100)*circumference;
-  prog.setAttribute('stroke', colorForPct(avg));
-  prog.setAttribute('stroke-dasharray', `${newDash} ${circumference}`);
-  prog.dataset.target = newDash;
-  tile.querySelector('.ring .pct').textContent = avg + '%';
-  const img = tile.querySelector('.ring img');
-  if(img.getAttribute('src') !== e.image) img.setAttribute('src', "../"+e.image);
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        /* -------------------- STATE -------------------- */
+        let employees = [];
+        let depts = ["All"];
+        let activeDept = "All";
+        const STATUSES = ["All", "Available", "Allocated", "On Leave"];
+        let activeStatus = "All";
+        let sortMode = "name";
+        let searchTerm = "";
+        let deptChart = null;
 
-  // Who
-  tile.querySelector('.who h3').textContent = fullName(e);
-  tile.querySelector('.who .role').textContent = e.designation || "";
-  tile.querySelector('.who .dept').textContent = e.departmentShortName || "—";
+        let hasLoadedOnce = false;
+        let analyticsBuilt = false;
+        let lastDeptsKey = "";
+        let toastVisible = false;
+        let isPollingPaused = false;
+        let pollTimer = null;
 
-  // Skills — update matching rows in place, add new ones, drop stale ones
-  const skillsContainer = tile.querySelector('.skills');
-  const incomingSkills = e.skills || [];
-  const incomingNames = new Set(incomingSkills.map(s=>s.skill));
+        let viewMode = (['comfortable', 'compact', 'list'].includes(localStorage.getItem('benchView')))
+            ? localStorage.getItem('benchView')
+            : 'comfortable';
 
-  incomingSkills.forEach(s=>{
-    const row = skillsContainer.querySelector(`.skill-row[data-skill="${CSS.escape(s.skill)}"]`);
-    if(row){
-      const fill = row.querySelector('.skill-fill');
-      fill.style.width = s.scale + '%';
-      fill.style.background = colorForPct(s.scale);
-      fill.dataset.target = s.scale;
-      row.querySelector('.skill-pct').textContent = s.scale + '%';
-    } else {
-      skillsContainer.insertAdjacentHTML('beforeend', buildSkillRowHTML(s));
-      const newRow = skillsContainer.querySelector(`.skill-row[data-skill="${CSS.escape(s.skill)}"]`);
-      const fill = newRow.querySelector('.skill-fill');
-      requestAnimationFrame(()=>{ fill.style.width = fill.dataset.target + '%'; });
-    }
-  });
-  skillsContainer.querySelectorAll('.skill-row').forEach(row=>{
-    if(!incomingNames.has(row.dataset.skill)) row.remove();
-  });
+        /* -------------------- FALLBACK MOCK DATA -------------------- */
+        const MOCK_EMPLOYEES = [
+            { EID: 1, firstName: "Ananya", lastName: "Rao", designation: "Senior Frontend Engineer", departmentShortName: "ENG", status: "Available", image: "https://i.pravatar.cc/150?img=47", util: 62, location: "Bengaluru", skills: [{ skill: "React", scale: 92 }, { skill: "TypeScript", scale: 85 }, { skill: "CSS", scale: 78 }], projects: [{ projectName: "Nimbus Redesign", role: "Lead FE", status: "Active" }] },
+            { EID: 2, firstName: "Rohan", lastName: "Mehta", designation: "Backend Engineer", departmentShortName: "ENG", status: "Allocated", image: "https://i.pravatar.cc/150?img=12", util: 95, location: "Pune", skills: [{ skill: "Node.js", scale: 88 }, { skill: "PostgreSQL", scale: 80 }, { skill: "Docker", scale: 70 }], projects: [{ projectName: "Payments API v2", role: "Backend", status: "Active" }, { projectName: "Internal Tooling", role: "Support", status: "Active" }] },
+            { EID: 3, firstName: "Priya", lastName: "Nair", designation: "UX Designer", departmentShortName: "DES", status: "Available", image: "https://i.pravatar.cc/150?img=32", util: 40, location: "Chennai", skills: [{ skill: "Figma", scale: 95 }, { skill: "Research", scale: 82 }, { skill: "Prototyping", scale: 88 }], projects: [] },
+            { EID: 4, firstName: "Karthik", lastName: "Iyer", designation: "DevOps Engineer", departmentShortName: "ENG", status: "Allocated", image: "https://i.pravatar.cc/150?img=15", util: 88, location: "Hyderabad", skills: [{ skill: "Kubernetes", scale: 90 }, { skill: "AWS", scale: 84 }, { skill: "Terraform", scale: 75 }], projects: [{ projectName: "Cluster Migration", role: "DevOps Lead", status: "In Progress" }] },
+            { EID: 5, firstName: "Sneha", lastName: "Kulkarni", designation: "Data Scientist", departmentShortName: "DATA", status: "Available", image: "https://i.pravatar.cc/150?img=44", util: 55, location: "Pune", skills: [{ skill: "Python", scale: 91 }, { skill: "ML/AI", scale: 86 }, { skill: "SQL", scale: 79 }], projects: [{ projectName: "Churn Prediction Model", role: "Contributor", status: "Active" }] },
+            { EID: 6, firstName: "Vikram", lastName: "Singh", designation: "QA Automation Lead", departmentShortName: "QA", status: "On Leave", image: "https://i.pravatar.cc/150?img=53", util: 0, location: "Delhi NCR", skills: [{ skill: "Selenium", scale: 89 }, { skill: "Cypress", scale: 81 }, { skill: "CI/CD", scale: 72 }], projects: [{ projectName: "Regression Suite Overhaul", role: "Lead", status: "Completed" }] }
+        ];
 
-  // Active projects — only touch the DOM if the set of projects actually changed
-  const projectsContainer = tile.querySelector('.projects');
-  const incomingActive = activeProjects(e);
-  const incomingProjKey = incomingActive.map(p=>projectNameOf(p)+'|'+projectRoleOf(p)).join(',');
-  if(projectsContainer.dataset.projKey !== incomingProjKey){
-    projectsContainer.innerHTML = buildProjectsSectionHTML(e);
-    projectsContainer.dataset.projKey = incomingProjKey;
-  }
+        /* -------------------- HELPERS -------------------- */
+        function avgSkill(e) {
+            if (!e.skills || !e.skills.length) return 0;
+            return Math.round(e.skills.reduce((a, s) => a + Number(s.scale || 0), 0) / e.skills.length);
+        }
 
-  // Footer
-  tile.querySelector('.util b').textContent = utilOf(e) + '%';
-  tile.querySelector('.loc-text').textContent = locOf(e);
-}
+        function colorForPct(p) {
+            return p >= 85 ? '#0ea894' : p >= 70 ? '#d97706' : '#e11d48';
+        }
 
-/* -------------------- RENDER TILES (keyed diff, no full rebuild) -------------------- */
-function renderTiles(){
-  const grid = document.getElementById('tileGrid');
+        function statusMeta(s) {
+            if (s === "Available") {
+                return {
+                    badge: "bg-teal-50 text-teal-700 border-teal-200/80",
+                    dot: "bg-teal-500 animate-pulse"
+                };
+            }
+            if (s === "On Leave") {
+                return {
+                    badge: "bg-rose-50 text-rose-700 border-rose-200/80",
+                    dot: "bg-rose-500"
+                };
+            }
+            return {
+                badge: "bg-amber-50 text-amber-700 border-amber-200/80",
+                dot: "bg-amber-500"
+            };
+        }
 
-  // Clear the skeleton placeholders the first time real data arrives.
-  grid.querySelectorAll('.tile.skeleton').forEach(n=>n.remove());
+        function statusLabel(s) { return s || "Allocated"; }
+        function fullName(e) { return [e.firstName, e.lastName].filter(Boolean).join(" "); }
+        function initialsOf(e) {
+            return [e.firstName?.[0], e.lastName?.[0]].filter(Boolean).join("").toUpperCase() || "?";
+        }
+        function resolveImageSrc(img) {
+            if (!img) return "";
+            if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("/") || img.startsWith("../")) {
+                return img;
+            }
+            return "../" + img;
+        }
+        function utilOf(e) { return (e.util ?? e.utilization ?? Math.max(20, avgSkill(e) - 15)); }
+        function locOf(e) { return e.location || e.loc || "Unassigned"; }
+        function keyOf(e) { return String(e.EID ?? e.id ?? (fullName(e) + '|' + (e.designation || ''))); }
+        function projectsOf(e) { return e.projects || e.projectList || []; }
+        function projectNameOf(p) { return p.projectName || p.name || p.title || ""; }
+        function projectRoleOf(p) { return p.role || p.allocation || ""; }
+        function isActiveProject(p) {
+            if (p.status === undefined || p.status === null || p.status === "") return true;
+            const st = String(p.status).toLowerCase();
+            return st.includes("active") || st.includes("progress");
+        }
+        function activeProjects(e) { return projectsOf(e).filter(isActiveProject); }
+        function debounce(fn, wait) {
+            let t;
+            return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); };
+        }
 
-  let list = employees.filter(e=>{
-    const matchesDept = activeDept==="All" || e.departmentShortName===activeDept;
-    const matchesStatus = activeStatus==="All" || statusLabel(e.status)===activeStatus;
-    // Search covers ALL projects (not just active ones) so past/completed work is findable too.
-    const projNames = projectsOf(e).map(projectNameOf).join(" ");
-    const hay = (fullName(e)+" "+(e.designation||"")+" "+(e.skills||[]).map(s=>s.skill).join(" ")+" "+projNames).toLowerCase();
-    const matchesSearch = hay.includes(searchTerm.toLowerCase());
-    return matchesDept && matchesStatus && matchesSearch;
-  });
+        function setLive(state, text) {
+            const pill = document.getElementById('liveIndicator');
+            const dot = document.getElementById('liveDot');
+            const label = document.getElementById('liveText');
+            if (!pill || !dot || !label) return;
 
-  if(sortMode==="name") list.sort((a,b)=>fullName(a).localeCompare(fullName(b)));
-  if(sortMode==="proficiency") list.sort((a,b)=>avgSkill(b)-avgSkill(a));
-  if(sortMode==="utilization") list.sort((a,b)=>utilOf(b)-utilOf(a));
+            label.textContent = text;
+            if (state === 'error') {
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mono font-medium bg-rose-50 border border-rose-200 text-rose-700';
+                dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+            } else if (state === 'paused') {
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mono font-medium bg-amber-50 border border-amber-200 text-amber-700';
+                dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+            } else {
+                pill.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mono font-medium bg-slate-50 border border-slate-200 text-slate-600';
+                dot.className = 'w-2 h-2 rounded-full bg-teal-500 animate-pulse';
+            }
+        }
 
-  const emptyEl = grid.querySelector('.empty');
+        function animateCount(el, target, suffix = "") {
+            const current = parseInt(el.textContent, 10);
+            const start = Number.isFinite(current) ? current : 0;
+            if (start === target) { el.textContent = target + suffix; return; }
+            const duration = 650;
+            const startTime = performance.now();
+            function step(now) {
+                const p = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(start + (target - start) * eased) + suffix;
+                if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
 
-  if(list.length===0){
-    grid.querySelectorAll('.tile[data-key]').forEach(n=>n.remove());
-    if(!emptyEl){
-      grid.innerHTML = `<div class="empty"><span class="icon">🔍</span>No resources match these filters.<br>Try a different search or department.</div>`;
-    }
-    return;
-  }
-  if(emptyEl) emptyEl.remove();
+        /* -------------------- DATA FETCH -------------------- */
+        function getEmployeeData() {
+            if (!hasLoadedOnce) {
+                renderSkeleton();
+            }
+            $.ajax({
+                url: '/admin/resourceData',
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    employees = response || [];
+                    depts = ["All", ...new Set(employees.map(e => e.departmentShortName).filter(Boolean))];
+                    hasLoadedOnce = true;
+                    if (!isPollingPaused) setLive('live', 'Live · 5s sync');
+                    renderAnalytics();
+                    renderFilters();
+                    renderStatusFilters();
+                    renderTiles();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching employee data:', error);
+                    setLive('error', 'Offline · demo data');
+                    if (!hasLoadedOnce) showToast('Could not reach /admin/resourceData. Showing demo data instead.');
+                    employees = MOCK_EMPLOYEES;
+                    depts = ["All", ...new Set(employees.map(e => e.departmentShortName).filter(Boolean))];
+                    hasLoadedOnce = true;
+                    renderAnalytics();
+                    renderFilters();
+                    renderStatusFilters();
+                    renderTiles();
+                }
+            });
+        }
 
-  const existing = new Map();
-  const currentOrder = [];
-  grid.querySelectorAll('.tile[data-key]').forEach(t=>{
-    existing.set(t.dataset.key, t);
-    currentOrder.push(t.dataset.key);
-  });
+        function showToast(msg) {
+            if (toastVisible) return;
+            toastVisible = true;
+            const t = document.createElement('div');
+            t.className = 'fixed bottom-5 right-5 z-50 bg-white border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-xs font-medium shadow-lg flex items-center gap-2.5 max-w-xs transition-opacity duration-300';
+            t.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span><span>${msg}</span>`;
+            document.body.appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                setTimeout(() => { t.remove(); toastVisible = false; }, 300);
+            }, 4200);
+        }
 
-  const desiredOrder = list.map(keyOf);
-  // If the set/order of keys is identical to what's already on screen, this
-  // is a plain data refresh — patch each tile in place and touch the DOM
-  // tree itself not at all (no appendChild calls => no reflow, no flicker).
-  const orderChanged =
-    currentOrder.length !== desiredOrder.length ||
-    currentOrder.some((k, i) => k !== desiredOrder[i]);
+        /* -------------------- SKELETON STATE -------------------- */
+        function renderSkeleton() {
+            const analytics = document.getElementById('analytics');
+            analytics.innerHTML = Array.from({ length: 4 }).map(() => `
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 animate-pulse">
+                    <div class="h-3 bg-slate-100 rounded w-2/3"></div>
+                    <div class="h-7 bg-slate-100 rounded w-1/2 mt-3"></div>
+                    <div class="h-2.5 bg-slate-100 rounded w-3/4 mt-2.5"></div>
+                </div>`).join("") + `
+                <div class="col-span-2 lg:col-span-4 bg-white border border-slate-200 rounded-xl p-4 animate-pulse">
+                    <div class="h-3 bg-slate-100 rounded w-1/3 mb-3"></div>
+                    <div class="h-24 bg-slate-100 rounded"></div>
+                </div>`;
 
-  const seen = new Set();
-  list.forEach((e,i)=>{
-    const key = keyOf(e);
-    seen.add(key);
-    let tile = existing.get(key);
-    if(tile){
-      updateTileElement(tile, e);
-      if(orderChanged) grid.appendChild(tile); // only move when position truly changed
-    } else {
-      tile = buildTileElement(e, i);
-      grid.appendChild(tile);
-    }
-  });
+            const grid = document.getElementById('tileGrid');
+            grid.innerHTML = Array.from({ length: 8 }).map(() => `
+                <div class="tile skeleton bg-white border border-slate-200 rounded-xl p-4 animate-pulse">
+                    <div class="flex items-center gap-3">
+                        <div class="w-14 h-14 rounded-full bg-slate-100 shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-3.5 bg-slate-100 rounded w-3/4"></div>
+                            <div class="h-2.5 bg-slate-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-4">
+                        <div class="h-2 bg-slate-100 rounded w-full"></div>
+                        <div class="h-2 bg-slate-100 rounded w-5/6"></div>
+                    </div>
+                </div>`).join("");
+        }
 
-  // Remove tiles for employees no longer present in the filtered list.
-  existing.forEach((tile, key)=>{
-    if(!seen.has(key)) tile.remove();
-  });
-}
+        /* -------------------- TILE BUILD / UPDATE -------------------- */
+        function buildSkillRowHTML(s) {
+            return `
+                <div class="skill-row flex items-center gap-2" data-skill="${s.skill}">
+                    <div class="skill-name text-[11.5px] font-medium text-slate-600 w-24 shrink-0 truncate" title="${s.skill}">${s.skill}</div>
+                    <div class="skill-bar flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="skill-fill h-full rounded-full" data-target="${s.scale}" style="background:${colorForPct(s.scale)};"></div>
+                    </div>
+                    <div class="skill-pct mono text-[11px] font-medium text-slate-500 w-8 text-right shrink-0">${s.scale}%</div>
+                </div>`;
+        }
 
-/* -------------------- FILTER CHIPS -------------------- */
-function renderFilters(){
-  const key = depts.join('|');
-  if(key === lastDeptsKey){
-    // Same set of departments — just keep the active state in sync.
-    document.querySelectorAll('#deptFilters .chip-btn').forEach(btn=>{
-      btn.classList.toggle('active', btn.dataset.dept === activeDept);
-    });
-    return;
-  }
-  lastDeptsKey = key;
+        function buildProjectChipHTML(p) {
+            const name = projectNameOf(p) || "Untitled project";
+            const role = projectRoleOf(p);
+            return `
+                <div class="project-chip flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1 text-[11.5px]" data-project="${name}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
+                    <span class="proj-name flex-1 font-medium text-slate-800 truncate" title="${name}">${name}</span>
+                    ${role ? `<span class="proj-role text-[10.5px] text-slate-400 shrink-0">${role}</span>` : ""}
+                </div>`;
+        }
 
-  const wrap = document.getElementById('deptFilters');
-  wrap.innerHTML = depts.map(d=>`<button class="chip-btn ${d===activeDept?'active':''}" data-dept="${d}">${d}</button>`).join("");
-  wrap.querySelectorAll('.chip-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(btn.dataset.dept === activeDept) return;
-      activeDept = btn.dataset.dept;
-      renderFilters();
-      renderTiles();
-    });
-  });
-}
+        function buildProjectsSectionHTML(e) {
+            const active = activeProjects(e);
+            if (!active.length) {
+                return `
+                    <span class="projects-label block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Active Projects</span>
+                    <div class="none text-[11.5px] text-slate-400 italic bg-slate-50/70 border border-dashed border-slate-200 rounded-lg px-2.5 py-1.5">
+                        Available on bench &mdash; no active project
+                    </div>`;
+            }
+            return `
+                <span class="projects-label block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Active Projects (${active.length})</span>
+                <div class="project-list flex flex-col gap-1.5">${active.map(buildProjectChipHTML).join("")}</div>`;
+        }
 
-/* -------------------- STATUS FILTER CHIPS -------------------- */
-function renderStatusFilters(){
-  const wrap = document.getElementById('statusFilters');
-  if(!wrap.dataset.built){
-    wrap.innerHTML = STATUSES.map(s=>`<button class="chip-btn ${s===activeStatus?'active':''}" data-status="${s}">${s!=="All" ? '<span class="swatch"></span>' : ''}${s}</button>`).join("");
-    wrap.dataset.built = "1";
-    wrap.querySelectorAll('.chip-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        if(btn.dataset.status === activeStatus) return;
-        activeStatus = btn.dataset.status;
-        wrap.querySelectorAll('.chip-btn').forEach(b=>b.classList.toggle('active', b.dataset.status===activeStatus));
-        renderTiles();
-      });
-    });
-  }
-}
+        function buildTileElement(e, i) {
+            const avg = avgSkill(e);
+            const circumference = 2 * Math.PI * 26;
+            const ringColor = colorForPct(avg);
+            const sm = statusMeta(e.status);
+            const skillsHtml = (e.skills || []).map(buildSkillRowHTML).join("");
+            const imgSrc = resolveImageSrc(e.image);
 
-/* -------------------- VIEW TOGGLE (comfortable / compact / list) -------------------- */
-function applyViewMode(){
-  const grid = document.getElementById('tileGrid');
-  grid.classList.toggle('compact', viewMode === 'compact');
-  grid.classList.toggle('list', viewMode === 'list');
-  document.querySelectorAll('#viewToggle button').forEach(b=>{
-    b.classList.toggle('active', b.dataset.view === viewMode);
-  });
-}
-document.getElementById('viewToggle').addEventListener('click', (e)=>{
-  const btn = e.target.closest('button[data-view]');
-  if(!btn) return;
-  const wanted = btn.dataset.view;
-  if(wanted === viewMode) return;
-  viewMode = wanted;
-  localStorage.setItem('benchView', viewMode);
-  applyViewMode();
-});
-applyViewMode();
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+                <article class="tile tile-enter group relative bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
+                    data-key="${keyOf(e)}" style="animation-delay:${Math.min(i * 35, 350)}ms">
 
-const onSearch = debounce((val)=>{
-  searchTerm = val;
-  renderTiles();
-}, 180);
+                    <!-- Status Badge -->
+                    <span class="status-badge absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${sm.badge}">
+                        <span class="w-1.5 h-1.5 rounded-full ${sm.dot}"></span>
+                        <span class="status-label">${statusLabel(e.status)}</span>
+                    </span>
 
-document.getElementById('searchInput').addEventListener('input', (e)=>{
-  document.getElementById('searchClear').classList.toggle('show', e.target.value.length>0);
-  onSearch(e.target.value);
-});
-document.getElementById('searchClear').addEventListener('click', ()=>{
-  const input = document.getElementById('searchInput');
-  input.value = "";
-  input.focus();
-  document.getElementById('searchClear').classList.remove('show');
-  searchTerm = "";
-  renderTiles();
-});
-document.getElementById('sortSelect').addEventListener('change', (e)=>{
-  sortMode = e.target.value;
-  renderTiles();
-});
+                    <div>
+                        <!-- Header: Ring Avatar + Name/Designation -->
+                        <div class="tile-head flex items-center gap-3 pr-20">
+                            <div class="ring relative w-[60px] h-[60px] shrink-0">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle class="track" cx="30" cy="30" r="26"></circle>
+                                    <circle class="prog" cx="30" cy="30" r="26" stroke="${ringColor}"
+                                        stroke-dasharray="0 ${circumference}" data-target="${(avg / 100) * circumference}" data-circ="${circumference}"></circle>
+                                </svg>
+                                <img src="${imgSrc}" alt="${fullName(e)}" loading="lazy"
+                                    onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+                                    class="absolute top-[5px] left-[5px] w-[50px] h-[50px] rounded-full object-cover border-2 border-white shadow-2xs">
+                                <div class="avatar-fallback hidden absolute top-[5px] left-[5px] w-[50px] h-[50px] rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center border-2 border-white">
+                                    ${initialsOf(e)}
+                                </div>
+                                <span class="pct absolute -bottom-1 -right-1 bg-white border border-slate-200 rounded-full mono text-[9.5px] font-bold px-1.5 py-0.2 text-slate-800 shadow-2xs">
+                                    ${avg}%
+                                </span>
+                            </div>
 
-/* -------------------- ANALYTICS -------------------- */
-function buildAnalyticsShell(){
-  const wrap = document.getElementById('analytics');
-  wrap.innerHTML = `
-    <div class="kpi">
-      <div class="label">Total Resources</div>
-      <div class="value mono" id="kpiTotal">0</div>
-      <div class="sub" id="kpiTotalSub"></div>
-    </div>
-    <div class="kpi">
-      <div class="label">Avg. Proficiency</div>
-      <div class="value mono" id="kpiProf">0%</div>
-      <div class="sub up">▲ team skill index</div>
-    </div>
-    <div class="kpi">
-      <div class="label">Avg. Utilization</div>
-      <div class="value mono" id="kpiUtil">0%</div>
-      <div class="sub" id="kpiUtilSub"></div>
-    </div>
-    <div class="kpi">
-      <div class="label">Bench Availability</div>
-      <div class="value mono" id="kpiAvail">0</div>
-      <div class="sub" id="kpiAvailSub"></div>
-    </div>
-    <div class="chart-card">
-      <span class="label">Headcount by Department</span>
-      <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
-    </div>
-  `;
+                            <div class="who min-w-0">
+                                <h3 class="disp text-sm font-bold text-slate-900 truncate" title="${fullName(e)}">${fullName(e)}</h3>
+                                <div class="role text-xs text-slate-500 truncate mt-0.5" title="${e.designation || ''}">${e.designation || ""}</div>
+                                <span class="dept inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200/80 rounded-md px-1.5 py-0.5">
+                                    ${e.departmentShortName || "&mdash;"}
+                                </span>
+                            </div>
+                        </div>
 
-  const ctx = document.getElementById('deptChart');
-  deptChart = new Chart(ctx, {
-    type:'bar',
-    data:{ labels:[], datasets:[{ data:[], backgroundColor:'#0EA894', borderRadius:5, maxBarThickness:22 }] },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      animation:{ duration:500, easing:'easeOutCubic' },
-      plugins:{legend:{display:false}, tooltip:{backgroundColor:'#FFFFFF', titleColor:'#1B1E27', bodyColor:'#1B1E27', borderColor:'#E4E7EE', borderWidth:1}},
-      scales:{
-        x:{ ticks:{color:'#6B7182', font:{size:10}}, grid:{display:false} },
-        y:{ ticks:{color:'#6B7182', font:{size:10}, stepSize:1}, grid:{color:'#EEF0F4'} }
-      }
-    }
-  });
+                        <!-- Skill Bars -->
+                        <div class="skills mt-3.5 flex flex-col gap-2">${skillsHtml}</div>
 
-  analyticsBuilt = true;
-}
+                        <!-- Active Projects -->
+                        <div class="projects mt-3.5">${buildProjectsSectionHTML(e)}</div>
+                    </div>
 
-function renderAnalytics(){
-  if(!analyticsBuilt) buildAnalyticsShell();
+                    <!-- Footer: Utilization & Location -->
+                    <div class="tile-foot mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="util flex items-center gap-1">
+                            <span>Utilization</span>
+                            <b class="mono font-bold text-slate-800">${utilOf(e)}%</b>
+                        </div>
+                        <div class="loc flex items-center gap-1 truncate max-w-[130px]" title="${locOf(e)}">
+                            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span class="loc-text truncate">${locOf(e)}</span>
+                        </div>
+                    </div>
+                </article>`;
 
-  const total = employees.length;
-  const avgProf = total ? Math.round(employees.reduce((a,e)=>a+avgSkill(e),0)/total) : 0;
-  const avgUtil = total ? Math.round(employees.reduce((a,e)=>a+utilOf(e),0)/total) : 0;
-  const available = employees.filter(e=>e.status==="Available").length;
-  const onLeave = employees.filter(e=>e.status==="On Leave").length;
+            const tile = wrap.firstElementChild;
 
-  animateCount(document.getElementById('kpiTotal'), total);
-  animateCount(document.getElementById('kpiProf'), avgProf, '%');
-  animateCount(document.getElementById('kpiUtil'), avgUtil, '%');
-  animateCount(document.getElementById('kpiAvail'), available);
+            requestAnimationFrame(() => {
+                tile.querySelectorAll('.skill-fill').forEach(el => { el.style.width = el.dataset.target + '%'; });
+                const prog = tile.querySelector('.prog');
+                prog.setAttribute('stroke-dasharray', `${prog.dataset.target} ${prog.dataset.circ}`);
+            });
+            tile.addEventListener('animationend', () => tile.classList.remove('tile-enter'), { once: true });
 
-  document.getElementById('kpiTotalSub').textContent = `across ${Math.max(depts.length-1,0)} departments`;
-  document.getElementById('kpiUtilSub').textContent = avgUtil>85 ? 'nearing capacity' : 'healthy headroom';
-  document.getElementById('kpiUtilSub').className = 'sub ' + (avgUtil>85 ? 'warn' : '');
-  document.getElementById('kpiAvailSub').textContent = `${onLeave} on leave right now`;
+            const projectsContainer = tile.querySelector('.projects');
+            const initialActive = activeProjects(e);
+            projectsContainer.dataset.projKey = initialActive.map(p => projectNameOf(p) + '|' + projectRoleOf(p)).join(',');
 
-  const counts = {};
-  employees.forEach(e=> counts[e.departmentShortName||'—'] = (counts[e.departmentShortName||'—']||0)+1 );
-  deptChart.data.labels = Object.keys(counts);
-  deptChart.data.datasets[0].data = Object.values(counts);
-  deptChart.update();
-}
+            return tile;
+        }
 
-getEmployeeData();
-setInterval(getEmployeeData, 5000);
-</script>
+        function updateTileElement(tile, e) {
+            const avg = avgSkill(e);
+            const circumference = 2 * Math.PI * 26;
+            const sm = statusMeta(e.status);
+
+            // Status badge
+            const badge = tile.querySelector('.status-badge');
+            badge.className = `status-badge absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${sm.badge}`;
+            badge.querySelector('span:first-child').className = `w-1.5 h-1.5 rounded-full ${sm.dot}`;
+            badge.querySelector('.status-label').textContent = statusLabel(e.status);
+
+            // Ring
+            const prog = tile.querySelector('.prog');
+            const newDash = (avg / 100) * circumference;
+            prog.setAttribute('stroke', colorForPct(avg));
+            prog.setAttribute('stroke-dasharray', `${newDash} ${circumference}`);
+            prog.dataset.target = newDash;
+            tile.querySelector('.ring .pct').textContent = avg + '%';
+
+            const img = tile.querySelector('.ring img');
+            const resolvedSrc = resolveImageSrc(e.image);
+            if (img.getAttribute('src') !== resolvedSrc) {
+                img.classList.remove('hidden');
+                img.nextElementSibling.classList.add('hidden');
+                img.setAttribute('src', resolvedSrc);
+            }
+
+            // Who
+            tile.querySelector('.who h3').textContent = fullName(e);
+            tile.querySelector('.who .role').textContent = e.designation || "";
+            tile.querySelector('.who .dept').textContent = e.departmentShortName || "—";
+
+            // Skills
+            const skillsContainer = tile.querySelector('.skills');
+            const incomingSkills = e.skills || [];
+            const incomingNames = new Set(incomingSkills.map(s => s.skill));
+
+            incomingSkills.forEach(s => {
+                const row = skillsContainer.querySelector(`.skill-row[data-skill="${CSS.escape(s.skill)}"]`);
+                if (row) {
+                    const fill = row.querySelector('.skill-fill');
+                    fill.style.width = s.scale + '%';
+                    fill.style.background = colorForPct(s.scale);
+                    fill.dataset.target = s.scale;
+                    row.querySelector('.skill-pct').textContent = s.scale + '%';
+                } else {
+                    skillsContainer.insertAdjacentHTML('beforeend', buildSkillRowHTML(s));
+                    const newRow = skillsContainer.querySelector(`.skill-row[data-skill="${CSS.escape(s.skill)}"]`);
+                    const fill = newRow.querySelector('.skill-fill');
+                    requestAnimationFrame(() => { fill.style.width = fill.dataset.target + '%'; });
+                }
+            });
+            skillsContainer.querySelectorAll('.skill-row').forEach(row => {
+                if (!incomingNames.has(row.dataset.skill)) row.remove();
+            });
+
+            // Projects
+            const projectsContainer = tile.querySelector('.projects');
+            const incomingActive = activeProjects(e);
+            const incomingProjKey = incomingActive.map(p => projectNameOf(p) + '|' + projectRoleOf(p)).join(',');
+            if (projectsContainer.dataset.projKey !== incomingProjKey) {
+                projectsContainer.innerHTML = buildProjectsSectionHTML(e);
+                projectsContainer.dataset.projKey = incomingProjKey;
+            }
+
+            // Footer
+            tile.querySelector('.util b').textContent = utilOf(e) + '%';
+            tile.querySelector('.loc-text').textContent = locOf(e);
+        }
+
+        /* -------------------- RENDER TILES (Keyed Diff) -------------------- */
+        function renderTiles() {
+            const grid = document.getElementById('tileGrid');
+            grid.querySelectorAll('.tile.skeleton').forEach(n => n.remove());
+
+            let list = employees.filter(e => {
+                const matchesDept = activeDept === "All" || e.departmentShortName === activeDept;
+                const matchesStatus = activeStatus === "All" || statusLabel(e.status) === activeStatus;
+                const projNames = projectsOf(e).map(projectNameOf).join(" ");
+                const hay = (fullName(e) + " " + (e.designation || "") + " " + (e.skills || []).map(s => s.skill).join(" ") + " " + projNames).toLowerCase();
+                return matchesDept && matchesStatus && hay.includes(searchTerm.toLowerCase());
+            });
+
+            if (sortMode === "name") list.sort((a, b) => fullName(a).localeCompare(fullName(b)));
+            if (sortMode === "proficiency") list.sort((a, b) => avgSkill(b) - avgSkill(a));
+            if (sortMode === "utilization") list.sort((a, b) => utilOf(b) - utilOf(a));
+
+            const countBadge = document.getElementById('visibleCountBadge');
+            if (countBadge) countBadge.textContent = `${list.length} / ${employees.length}`;
+
+            const emptyEl = grid.querySelector('.empty');
+
+            if (list.length === 0) {
+                grid.querySelectorAll('.tile[data-key]').forEach(n => n.remove());
+                if (!emptyEl) {
+                    grid.innerHTML = `
+                        <div class="empty col-span-full bg-white border border-dashed border-slate-200 rounded-xl py-12 px-4 text-center">
+                            <p class="text-sm font-semibold text-slate-700">No matching resources found</p>
+                            <p class="text-xs text-slate-400 mt-1">Adjust your search keywords, department, or status filters.</p>
+                        </div>`;
+                }
+                return;
+            }
+            if (emptyEl) emptyEl.remove();
+
+            const existing = new Map();
+            const currentOrder = [];
+            grid.querySelectorAll('.tile[data-key]').forEach(t => {
+                existing.set(t.dataset.key, t);
+                currentOrder.push(t.dataset.key);
+            });
+
+            const desiredOrder = list.map(keyOf);
+            const orderChanged =
+                currentOrder.length !== desiredOrder.length ||
+                currentOrder.some((k, i) => k !== desiredOrder[i]);
+
+            const seen = new Set();
+            list.forEach((e, i) => {
+                const key = keyOf(e);
+                seen.add(key);
+                let tile = existing.get(key);
+                if (tile) {
+                    updateTileElement(tile, e);
+                    if (orderChanged) grid.appendChild(tile);
+                } else {
+                    tile = buildTileElement(e, i);
+                    grid.appendChild(tile);
+                }
+            });
+
+            existing.forEach((tile, key) => {
+                if (!seen.has(key)) tile.remove();
+            });
+        }
+
+        /* -------------------- FILTER CHIPS -------------------- */
+        function renderFilters() {
+            const key = depts.join('|');
+            const wrap = document.getElementById('deptFilters');
+
+            if (key === lastDeptsKey) {
+                wrap.querySelectorAll('.chip-btn').forEach(btn => {
+                    const isActive = btn.dataset.dept === activeDept;
+                    btn.className = isActive
+                        ? 'chip-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white shadow-2xs transition cursor-pointer'
+                        : 'chip-btn px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition cursor-pointer';
+                });
+                return;
+            }
+            lastDeptsKey = key;
+
+            wrap.innerHTML = depts.map(d => {
+                const isActive = d === activeDept;
+                const cls = isActive
+                    ? 'chip-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white shadow-2xs transition cursor-pointer'
+                    : 'chip-btn px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition cursor-pointer';
+                return `<button type="button" class="${cls}" data-dept="${d}">${d}</button>`;
+            }).join("");
+
+            wrap.querySelectorAll('.chip-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.dept === activeDept) return;
+                    activeDept = btn.dataset.dept;
+                    renderFilters();
+                    renderTiles();
+                });
+            });
+        }
+
+        function renderStatusFilters() {
+            const wrap = document.getElementById('statusFilters');
+            const dotColors = {
+                "Available": "bg-teal-500",
+                "Allocated": "bg-amber-500",
+                "On Leave": "bg-rose-500"
+            };
+
+            const syncButtons = () => {
+                wrap.querySelectorAll('.chip-btn').forEach(b => {
+                    const isActive = b.dataset.status === activeStatus;
+                    b.className = isActive
+                        ? 'chip-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white shadow-2xs transition cursor-pointer'
+                        : 'chip-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer';
+                });
+            };
+
+            if (!wrap.dataset.built) {
+                wrap.innerHTML = STATUSES.map(s => `
+                    <button type="button" class="chip-btn" data-status="${s}">
+                        ${s !== "All" ? `<span class="w-1.5 h-1.5 rounded-full ${dotColors[s]}"></span>` : ''}
+                        <span>${s}</span>
+                    </button>`).join("");
+                wrap.dataset.built = "1";
+                syncButtons();
+
+                wrap.querySelectorAll('.chip-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (btn.dataset.status === activeStatus) return;
+                        activeStatus = btn.dataset.status;
+                        syncButtons();
+                        renderTiles();
+                    });
+                });
+            }
+        }
+
+        /* -------------------- VIEW TOGGLE -------------------- */
+        function applyViewMode() {
+            const grid = document.getElementById('tileGrid');
+            grid.classList.toggle('compact', viewMode === 'compact');
+            grid.classList.toggle('list', viewMode === 'list');
+            document.querySelectorAll('#viewToggle button').forEach(b => {
+                const active = b.dataset.view === viewMode;
+                b.className = active
+                    ? 'p-1.5 rounded-md bg-white text-teal-600 shadow-2xs transition cursor-pointer'
+                    : 'p-1.5 rounded-md text-slate-500 hover:text-slate-900 transition cursor-pointer';
+            });
+        }
+
+        document.getElementById('viewToggle').addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-view]');
+            if (!btn) return;
+            const wanted = btn.dataset.view;
+            if (wanted === viewMode) return;
+            viewMode = wanted;
+            localStorage.setItem('benchView', viewMode);
+            applyViewMode();
+        });
+        applyViewMode();
+
+        /* -------------------- SEARCH & SORT -------------------- */
+        const onSearch = debounce((val) => {
+            searchTerm = val;
+            renderTiles();
+        }, 160);
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const clearBtn = document.getElementById('searchClear');
+            if (e.target.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+                clearBtn.classList.add('inline-flex');
+            } else {
+                clearBtn.classList.add('hidden');
+                clearBtn.classList.remove('inline-flex');
+            }
+            onSearch(e.target.value);
+        });
+
+        document.getElementById('searchClear').addEventListener('click', () => {
+            const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('searchClear');
+            input.value = "";
+            input.focus();
+            clearBtn.classList.add('hidden');
+            clearBtn.classList.remove('inline-flex');
+            searchTerm = "";
+            renderTiles();
+        });
+
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            sortMode = e.target.value;
+            renderTiles();
+        });
+
+        /* -------------------- ANALYTICS & CHART -------------------- */
+        function buildAnalyticsShell() {
+            const wrap = document.getElementById('analytics');
+            wrap.innerHTML = `
+                <!-- KPI 1: Total Resources -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Resources</span>
+                        <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="disp text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums" id="kpiTotal">0</div>
+                    <div class="text-[11px] text-slate-400 mt-1" id="kpiTotalSub">across 0 departments</div>
+                </div>
+
+                <!-- KPI 2: Avg Proficiency -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Avg. Proficiency</span>
+                        <span class="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="disp text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums" id="kpiProf">0%</div>
+                    <div class="text-[11px] font-medium text-teal-600 mt-1">Team skill index</div>
+                </div>
+
+                <!-- KPI 3: Avg Utilization -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Avg. Utilization</span>
+                        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="disp text-2xl sm:text-3xl font-bold text-slate-900 mt-2 tabular-nums" id="kpiUtil">0%</div>
+                    <div class="text-[11px] text-slate-400 mt-1" id="kpiUtilSub">healthy headroom</div>
+                </div>
+
+                <!-- KPI 4: Bench Availability -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">On Bench</span>
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="disp text-2xl sm:text-3xl font-bold text-teal-600 mt-2 tabular-nums" id="kpiAvail">0</div>
+                    <div class="text-[11px] text-slate-400 mt-1" id="kpiAvailSub">0 on leave right now</div>
+                </div>
+
+                <!-- Chart Card -->
+                <div class="col-span-2 lg:col-span-4 bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Headcount by Department</span>
+                        <span class="text-[10.5px] font-medium text-slate-400">Live split</span>
+                    </div>
+                    <div class="h-[92px] relative">
+                        <canvas id="deptChart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            const ctx = document.getElementById('deptChart');
+            deptChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: '#0ea894',
+                        hoverBackgroundColor: '#0d9488',
+                        borderRadius: 5,
+                        maxBarThickness: 22
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 450, easing: 'easeOutCubic' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#f8fafc',
+                            padding: 8,
+                            cornerRadius: 6
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#64748b', font: { size: 10, weight: '600' } },
+                            grid: { display: false },
+                            border: { display: false }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8', font: { size: 10 }, stepSize: 1 },
+                            grid: { color: '#f1f5f9' },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+
+            analyticsBuilt = true;
+        }
+
+        function renderAnalytics() {
+            if (!analyticsBuilt) buildAnalyticsShell();
+
+            const total = employees.length;
+            const avgProf = total ? Math.round(employees.reduce((a, e) => a + avgSkill(e), 0) / total) : 0;
+            const avgUtil = total ? Math.round(employees.reduce((a, e) => a + utilOf(e), 0) / total) : 0;
+            const available = employees.filter(e => e.status === "Available").length;
+            const onLeave = employees.filter(e => e.status === "On Leave").length;
+
+            animateCount(document.getElementById('kpiTotal'), total);
+            animateCount(document.getElementById('kpiProf'), avgProf, '%');
+            animateCount(document.getElementById('kpiUtil'), avgUtil, '%');
+            animateCount(document.getElementById('kpiAvail'), available);
+
+            document.getElementById('kpiTotalSub').textContent = `across ${Math.max(depts.length - 1, 0)} departments`;
+            const utilSub = document.getElementById('kpiUtilSub');
+            utilSub.textContent = avgUtil > 85 ? 'Nearing full capacity' : 'Healthy headroom';
+            utilSub.className = 'text-[11px] mt-1 ' + (avgUtil > 85 ? 'font-semibold text-amber-600' : 'text-slate-400');
+            document.getElementById('kpiAvailSub').textContent = `${onLeave} on leave right now`;
+
+            const counts = {};
+            employees.forEach(e => {
+                const deptKey = e.departmentShortName || '—';
+                counts[deptKey] = (counts[deptKey] || 0) + 1;
+            });
+            deptChart.data.labels = Object.keys(counts);
+            deptChart.data.datasets[0].data = Object.values(counts);
+            deptChart.update();
+        }
+
+        /* -------------------- POLLING & INIT -------------------- */
+        function startPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(() => {
+                if (!isPollingPaused) getEmployeeData();
+            }, 5000);
+        }
+
+        document.getElementById('togglePollBtn').addEventListener('click', () => {
+            isPollingPaused = !isPollingPaused;
+            document.getElementById('pollIconPause').classList.toggle('hidden', isPollingPaused);
+            document.getElementById('pollIconPlay').classList.toggle('hidden', !isPollingPaused);
+            document.getElementById('pollBtnLabel').textContent = isPollingPaused ? 'Resume' : 'Pause';
+
+            if (isPollingPaused) {
+                setLive('paused', 'Paused');
+            } else {
+                setLive('live', 'Live · 5s sync');
+                getEmployeeData();
+            }
+        });
+
+        getEmployeeData();
+        startPolling();
+    </script>
 </body>
 </html>

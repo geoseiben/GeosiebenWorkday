@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -71,6 +72,13 @@ WHERE (((a.type='Prod' or a.type='Pilot' OR a.type='QC') AND a.allottedto = :eid
 AND a.status IN (1, 8)) OR (a.type='QC' AND a.qcAssinee = :eid AND a.status IN (4, 5))) 
   """,nativeQuery = true)
   public List<AssignedTaskProjection> getAssignedTasks(@Param("eid") String eid);
+
+@Modifying(clearAutomatically = true, flushAutomatically = true)
+@Query(
+    value = "UPDATE projectallocation SET isDelivered = :delStatus WHERE feederAlloted = :feeder AND qcHrs IS NOT NULL AND pid = :pid",
+    nativeQuery = true
+)
+int deliveryTask(@Param("delStatus") int status, @Param("feeder") String feeder, @Param("pid") int pid);
  }
  
 

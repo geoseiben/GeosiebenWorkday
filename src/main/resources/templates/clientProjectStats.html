@@ -5,383 +5,796 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="title">Client Project Dashboard</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <style>
-        /* Modern Theme Styling */
-        body { background: #f4f7fa; font-family: 'Inter', sans-serif; }
-        .primary-color { background-color: #1e3a8a; } /* Deep Indigo */
-        .text-primary-color { color: #1e3a8a; }
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              600: '#254b9e',
+              800: '#1e3a8a',
+              900: '#172554',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
-        .card {
-            border-radius: .75rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header { 
-            background-color: #1e3a8a; 
-            background-image: linear-gradient(145deg, #1e3a8a 0%, #254b9e 100%);
-            color: #fff; 
-            font-weight: 700; 
-            font-size: 1.25rem;
-            border-bottom: none;
-            border-radius: .75rem .75rem 0 0;
-            padding: 1rem 1.5rem;
-        }
-        
-        /* Summary Cards Styling */
-        .summary-card {
-            padding: 1rem;
-            border-radius: .5rem;
-            background-color: #ffffff;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid #f0f4f8; 
-            border-left: 4px solid #059669; /* Green Accent (Default) */
-        }
-        .summary-card-red { border-left: 4px solid #ef4444; } /* Red Accent for Finished */
-        .summary-card-blue { border-left: 4px solid #3b82f6; } /* Blue Accent for Active */
-        .summary-card h5 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0;
-        }
-        
-        /* Table Styling */
-        #enhancedDataTable thead th {
-            background-color: #eef2f6; 
-            color: #334155;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            padding: 0.75rem 1rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        #enhancedDataTable tbody tr {
-            font-size: 0.9rem; 
-            border-bottom: 1px solid #e2e8f0; 
-        }
-        #enhancedDataTable tbody tr:hover {
-            background-color: #f0f4f8 !important;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        /* Right alignment for numeric data in the body */
-        #enhancedDataTable tbody td:nth-child(2),
-        #enhancedDataTable tbody td:nth-child(3),
-        #enhancedDataTable tbody td:nth-child(4),
-        #enhancedDataTable tbody td:nth-child(5) {
-            text-align: right;
-        }
-
-
-        /* DataTables Wrapper Styling */
-        .dataTables_wrapper {
-            background-color: #ffffff; 
-            padding: 1rem 1rem 0.5rem 1rem; 
-            border-radius: 0 0 .75rem .75rem;
-        }
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background-color: #1e3a8a !important;
-            border-color: #1e3a8a !important;
-            color: white !important;
-        }
-
-        /* Chart Container Styling */
-        #chartContainer {
-            background: white;
-            padding: 1.5rem;
-            border-radius: .75rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e2e8f0;
-        }
-    </style>
+  <style>
+    body {
+      background-color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom compact scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:hover {
+      background-color: #e2e8f0;
+    }
+  </style>
 </head>
 <head th:replace="includes/header :: header"></head>
 
-<body >
+<body>
 
-  <div class="container-fluid py-4">
-    <div class="card shadow-lg border-0">
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[98%] mx-auto px-3 sm:px-4 py-3 flex-1">
+    
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
       
-      <div class="card-header">
-          <div class="d-flex align-items-center">
-              <span id="header" class="text-truncate">Loading Report...</span>
+      <!-- Slim Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#22429c] to-[#254b9e] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="window.history.back()" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all duration-150 shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 id="headerTitle" class="text-sm sm:text-base font-bold tracking-tight truncate">
+              Client Wise Project Report
+            </h1>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-[11px] font-medium text-indigo-100 border border-white/10">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span id="reportDate">--</span>
+            </span>
           </div>
-      </div>
-      
-      <div class="card-body p-4">
-
-
-
-        
-        <hr/>
-            
-        <div class="table-responsive" id="dataTableWrapper" style="display:none;">
-            <h4 class="text-primary-color mb-3"><i class="fas fa-table me-2"></i> Detailed Client Data</h4>
-          <table id="enhancedDataTable" class="table table-hover w-100">
-            <thead>
-              <tr>
-                <th>Client Name</th>
-                <th class="text-end">Client Id</th>
-                <th class="text-end">Active Projects</th>
-                <th class="text-end">Finished Projects</th>
-                <th class="text-end">Total</th>
-                 <th class="text-end">Action</th>
-              </tr>
-            </thead>
-            <tbody id="root"></tbody>
-          </table>
         </div>
 
-        <div id="messageContainer" class="text-center p-5 font-semibold rounded-lg mb-4" style="display: none;"></div>
-        
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors">
+            <i class="fas fa-file-csv text-emerald-300"></i>
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Body Content -->
+      <div class="p-3 sm:p-4 space-y-3">
+
+        <!-- Alert / Status Banner -->
+        <div id="messageContainer" class="hidden rounded-lg p-3 border text-xs font-medium flex items-center justify-center gap-2"></div>
+
+        <!-- Compact Horizontal KPI Strip -->
+        <div id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <!-- Total Clients -->
+          <div class="bg-slate-50/70 rounded-lg px-3 py-2 border border-slate-200/80 border-l-4 border-l-indigo-600 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Clients</p>
+              <h3 id="summaryClientCount" class="text-lg font-bold text-slate-900 leading-tight mt-0.5">--</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-building text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Active Projects -->
+          <div class="bg-slate-50/70 rounded-lg px-3 py-2 border border-slate-200/80 border-l-4 border-l-blue-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Projects</p>
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <h3 id="summaryActiveProjects" class="text-lg font-bold text-blue-600 leading-tight">--</h3>
+                <span id="summaryActivePct" class="text-[10px] font-medium text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-blue-100/80 text-blue-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-spinner text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Finished Projects -->
+          <div class="bg-slate-50/70 rounded-lg px-3 py-2 border border-slate-200/80 border-l-4 border-l-emerald-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Finished Projects</p>
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <h3 id="summaryFinishedProjects" class="text-lg font-bold text-emerald-600 leading-tight">--</h3>
+                <span id="summaryFinishedPct" class="text-[10px] font-medium text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-check-circle text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Grand Total Projects -->
+          <div class="bg-slate-50/70 rounded-lg px-3 py-2 border border-slate-200/80 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Projects</p>
+              <h3 id="summaryGrandTotal" class="text-lg font-bold text-slate-900 leading-tight mt-0.5">--</h3>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-layer-group text-xs"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Charts Row -->
+        <div id="chartsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- Stacked Bar Chart (2/3 width) -->
+          <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i class="fas fa-chart-bar text-indigo-600"></i>
+                  Project Distribution by Client
+                </h2>
+                <span class="hidden sm:inline text-[11px] text-slate-400">Active vs. Finished</span>
+              </div>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[11px] font-medium">
+                <button type="button" data-limit="10" class="chart-limit-btn px-2 py-0.5 rounded bg-white text-indigo-700 shadow-xs transition-all">Top 10</button>
+                <button type="button" data-limit="20" class="chart-limit-btn px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 transition-all">Top 20</button>
+                <button type="button" data-limit="all" class="chart-limit-btn px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 transition-all">All</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-48 w-full">
+              <canvas id="clientProjectChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Status Ratio Doughnut Chart (1/3 width) -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-indigo-600"></i>
+                Portfolio Ratio
+              </h2>
+              <span class="text-[11px] text-slate-400">Overall status</span>
+            </div>
+            <div class="relative flex-1 h-48 w-full flex items-center justify-center">
+              <canvas id="statusDoughnutChart"></canvas>
+              <!-- Center Doughnut Label -->
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-5">
+                <span id="doughnutCenterPct" class="text-lg font-bold text-slate-800 leading-none">--%</span>
+                <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Completed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Detailed Client Table Card -->
+        <div id="dataTableWrapper" class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Table Toolbar -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-table text-indigo-600"></i>
+                Detailed Client Breakdown
+              </h2>
+              <span id="tableCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 clients</span>
+            </div>
+
+            <!-- Search & Rows Per Page -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative flex-1 sm:w-56">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search client or ID..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="enhancedDataTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2.5 sortable" data-sort="clientName">
+                    <div class="flex items-center gap-1">
+                      <span>Client Name</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="clientId">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Client ID</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="active">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Active</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="finished">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Finished</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="total">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Total</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 hidden md:table-cell w-36 sortable" data-sort="completionPct">
+                    <div class="flex items-center gap-1">
+                      <span>Completion</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="root" class="divide-y divide-slate-100 text-xs">
+                <!-- Skeleton Rows while loading -->
+                <tr class="animate-pulse">
+                  <td colspan="7" class="py-5 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Loading project statistics...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div id="paginationFooter" class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
   <script>
-  $(document).ready(function () {
-      
-      // Mock the current date (as it's PHP in the original)
-      const date = new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}).replace(/ /g, '-');
+    $(document).ready(function () {
+      // Format Current Date
+      const date = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).replace(/ /g, '-');
 
-      const header = $('#header');
-      const root = $('#root');
-      const dataTableWrapper = $('#dataTableWrapper');
-      const chartContainer = $('#chartContainer');
-      const messageContainer = $('#messageContainer');
-      
-      // New summary elements
-      const summaryClientCount = $('#summaryClientCount');
-      const summaryActiveProjects = $('#summaryActiveProjects'); 
-      const summaryFinishedProjects = $('#summaryFinishedProjects'); 
+      $('#reportDate').text(date);
+      $('#headerTitle').text(`Client Wise Project Report as on ${date}`);
 
-      // Function to display an error/info message and hide the table/chart
+      // State Management
+      let rawData = [];
+      let filteredData = [];
+      let currentPage = 1;
+      let pageSize = 15;
+      let sortColumn = 'total';
+      let sortDirection = 'desc';
+      let chartLimit = 10;
+
+      // Chart Instances
+      let barChartInstance = null;
+      let doughnutChartInstance = null;
+
+      // Normalize backend record keys cleanly
+      function normalizeRecord(item) {
+        const active = Number(item.active ?? item.In_Progress ?? item.qcHours ?? 0) || 0;
+        const finished = Number(item.finished ?? item.Finished ?? item.deliveryHours ?? 0) || 0;
+        const total = Number(item.total ?? (active + finished)) || (active + finished);
+        const completionPct = total > 0 ? Math.round((finished / total) * 100) : 0;
+        return {
+          cid: item.cid ?? item.clientId ?? '',
+          clientId: item.clientId ?? item.cid ?? 'N/A',
+          clientName: item.clientName ?? item.clientname ?? 'Unnamed Client',
+          active,
+          finished,
+          total,
+          completionPct
+        };
+      }
+
+      // Display Status or Error Alert
       function displayMessage(message, isError = false) {
-          const colorClass = isError 
-              ? 'bg-danger-subtle text-danger border-danger-subtle' 
-              : 'bg-warning-subtle text-warning-emphasis border-warning-subtle';
-          const iconClass = isError
-              ? 'fas fa-exclamation-circle' 
-              : 'fas fa-info-circle'; 
-          
-          const iconHtml = `<i class="${iconClass} text-2xl me-3 align-middle"></i>`;
+        const container = $('#messageContainer');
+        const styles = isError
+          ? 'bg-red-50 text-red-700 border-red-200'
+          : 'bg-amber-50 text-amber-800 border-amber-200';
+        const icon = isError ? 'fa-exclamation-circle text-red-500' : 'fa-info-circle text-amber-500';
 
-          dataTableWrapper.hide(); 
-          chartContainer.hide();
-          messageContainer.show() 
-                            .html(`<div class="d-flex align-items-center justify-content-center">${iconHtml}<span>${message}</span></div>`)
-                            .removeClass() 
-                            .addClass(`text-center p-4 font-semibold rounded-lg mb-4 border ${colorClass}`);
+        container
+          .removeClass('hidden bg-red-50 text-red-700 border-red-200 bg-amber-50 text-amber-800 border-amber-200')
+          .addClass(styles)
+          .html(`<i class="fas ${icon} text-sm"></i><span>${message}</span>`);
       }
 
-      // Calculate Grand Total hours (Adjusted to calculate project counts based on the assumed data structure)
-      function calculateGrandTotalProjects(dataset) {
-          let totalActive = 0;
-          let totalFinished = 0;
-          let grandTotal = 0;
-          
-          dataset.forEach(p => {
-              // Assume 'qcHours' is Active Projects and 'deliveryHours' is Finished Projects
-              const active = parseFloat(p.qcHours) || 0;
-              const finished = parseFloat(p.deliveryHours) || 0;
-              
-              totalActive += active;
-              totalFinished += finished;
-              grandTotal += active + finished;
-          });
-          
-          return {
-            clientCount: dataset.length,
-            totalActive: totalActive,
-            totalFinished: totalFinished,
-            grandTotal: grandTotal
-          };
+      // Calculate & Render KPI Cards
+      function updateKPIs(dataset) {
+        let totalActive = 0;
+        let totalFinished = 0;
+        let grandTotal = 0;
+
+        dataset.forEach(p => {
+          totalActive += p.active;
+          totalFinished += p.finished;
+          grandTotal += p.total;
+        });
+
+        const activePct = grandTotal > 0 ? Math.round((totalActive / grandTotal) * 100) : 0;
+        const finishedPct = grandTotal > 0 ? Math.round((totalFinished / grandTotal) * 100) : 0;
+
+        $('#summaryClientCount').text(dataset.length.toLocaleString());
+        $('#summaryActiveProjects').text(totalActive.toLocaleString());
+        $('#summaryActivePct').text(`(${activePct}%)`);
+        $('#summaryFinishedProjects').text(totalFinished.toLocaleString());
+        $('#summaryFinishedPct').text(`(${finishedPct}%)`);
+        $('#summaryGrandTotal').text(grandTotal.toLocaleString());
+        $('#doughnutCenterPct').text(`${finishedPct}%`);
+
+        return { totalActive, totalFinished, grandTotal };
       }
-      
-      // 2️⃣ Function to draw the chart
-      let clientChart; // Variable to hold the chart instance
-      function drawChart(dataset) {
-          const labels = dataset.map(p => p.clientname);
-          const activeProjects = dataset.map(p => p.In_Progress); // Active Projects
-          const finishedProjects = dataset.map(p => p.Finished ); // Finished Projects
-          console.log({labels,activeProjects,finishedProjects});
 
-          const ctx = document.getElementById('clientProjectChart').getContext('2d');
+      // Draw Stacked Bar Chart & Portfolio Doughnut Chart
+      function renderCharts(dataset, totals) {
+        if (!dataset.length) {
+          $('#chartsSection').addClass('hidden');
+          return;
+        }
+        $('#chartsSection').removeClass('hidden');
 
-          // Destroy existing chart instance if it exists
-          if (clientChart) {
-              clientChart.destroy();
-          }
+        // Sort by total descending for clearer bar chart visualization
+        const sortedForChart = [...dataset].sort((a, b) => b.total - a.total);
+        const sliced = chartLimit === 'all' ? sortedForChart : sortedForChart.slice(0, Number(chartLimit));
 
-          clientChart = new Chart(ctx, {
-              type: 'bar', // Bar chart for comparison
-              data: {
-                  labels: labels,
-                  datasets: [
-                      {
-                          label: 'Active Projects',
-                          data: activeProjects,
-                          backgroundColor: 'rgba(59, 130, 246, 0.7)', // Blue
-                          borderColor: 'rgba(59, 130, 246, 1)',
-                          borderWidth: 1
-                      },
-                      {
-                          label: 'Finished Projects',
-                          data: finishedProjects,
-                          backgroundColor: 'rgba(239, 68, 68, 0.7)', // Red
-                          borderColor: 'rgba(239, 68, 68, 1)',
-                          borderWidth: 1
-                      }
-                  ]
+        const labels = sliced.map(p => p.clientName.length > 16 ? p.clientName.substring(0, 16) + '…' : p.clientName);
+        const fullNames = sliced.map(p => p.clientName);
+        const activeData = sliced.map(p => p.active);
+        const finishedData = sliced.map(p => p.finished);
+
+        // 1. Stacked Bar Chart
+        const barCtx = document.getElementById('clientProjectChart').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
+
+        barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Active Projects',
+                data: activeData,
+                backgroundColor: '#3b82f6',
+                hoverBackgroundColor: '#2563eb',
+                borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 3, bottomRight: 3 },
+                maxBarThickness: 28
               },
-              options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                      x: {
-                          stacked: true, // Stack active and finished projects
-                          title: {
-                              display: true,
-                              text: 'Client Name'
-                          }
-                      },
-                      y: {
-                          stacked: true,
-                          beginAtZero: true,
-                          title: {
-                              display: true,
-                              text: 'Number of Projects'
-                          },
-                          ticks: {
-                            // Ensure Y-axis is integers for project count
-                            precision: 0
-                          }
-                      }
-                  },
-                  plugins: {
-                      title: {
-                          display: false,
-                          text: 'Project Status by Client'
-                      },
-                      tooltip: {
-                          mode: 'index',
-                          intersect: false
-                      },
-                      legend: {
-                          position: 'bottom',
-                      }
-                  }
+              {
+                label: 'Finished Projects',
+                data: finishedData,
+                backgroundColor: '#10b981',
+                hoverBackgroundColor: '#059669',
+                borderRadius: { topLeft: 3, topRight: 3, bottomLeft: 0, bottomRight: 0 },
+                maxBarThickness: 28
               }
-          });
-          
-          chartContainer.css('height', '400px').show(); // Set height for responsiveness and show
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  font: { family: 'Inter', size: 11, weight: '500' },
+                  color: '#475569',
+                  padding: 10
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 11, weight: '600' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: {
+                  title: (items) => fullNames[items[0].dataIndex],
+                  afterBody: (items) => {
+                    const idx = items[0].dataIndex;
+                    return `Total Projects: ${sliced[idx].total}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: {
+                  font: { family: 'Inter', size: 10 },
+                  color: '#64748b',
+                  maxRotation: 30,
+                  minRotation: 0
+                }
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                border: { display: false },
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  precision: 0,
+                  font: { family: 'Inter', size: 10 },
+                  color: '#64748b'
+                }
+              }
+            }
+          }
+        });
+
+        // 2. Doughnut Chart
+        const doughnutCtx = document.getElementById('statusDoughnutChart').getContext('2d');
+        if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+        doughnutChartInstance = new Chart(doughnutCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Active Projects', 'Finished Projects'],
+            datasets: [{
+              data: [totals.totalActive, totals.totalFinished],
+              backgroundColor: ['#3b82f6', '#10b981'],
+              hoverBackgroundColor: ['#2563eb', '#059669'],
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  padding: 10,
+                  font: { family: 'Inter', size: 11, weight: '500' },
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.parsed;
+                    const pct = totals.grandTotal > 0 ? Math.round((val / totals.grandTotal) * 100) : 0;
+                    return ` ${ctx.label}: ${val.toLocaleString()} (${pct}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
       }
 
+      // Filter, Sort & Render Table
+      function applyFiltersAndSort() {
+        const query = $('#tableSearchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
 
-      // 1️⃣ Fetch data from your backend
-      $.ajax({
-          // NOTE: I am using 'mock_clients_data.json' for demonstration. 
-          // You should revert this to your original endpoint: 'api/projDashboard.php'
-          url: '/admin/project/projectStatsByclient', // Assuming this endpoint is set up
-          type: 'GET',
-          dataType: 'json',
-          success: function (res) {
-            console.log(res);
-              if (res && res.length > 0) {
-                  const totals = calculateGrandTotalProjects(res);
-                  // Update Summary Bar
-                  summaryClientCount.text(totals.clientCount);
-                  summaryActiveProjects.text(totals.totalActive.toFixed(0));
-                  summaryFinishedProjects.text(totals.totalFinished.toFixed(0));
-                  
-                  populateTable(res);
-                  //drawChart(res); // Draw the chart
-                  
+        filteredData = rawData.filter(item =>
+          String(item.clientName).toLowerCase().includes(query) ||
+          String(item.clientId).toLowerCase().includes(query)
+        );
 
-                  // Initialize DataTable *after* data is populated
-                  $('#enhancedDataTable').DataTable({
-                      responsive: true,
-                      paging: true,
-                      searching: true,
-                      ordering: true,
-                      info: true,
-                  });
-                  dataTableWrapper.show(); // Ensure table is visible
-                  messageContainer.hide();
-              } else {
-                  // No data found scenario
-                  header.html(`Project Report as on ${date}`); 
-                  displayMessage("No client data found for this report.", false);
-                  summaryClientCount.text(`0`);
-                  summaryActiveProjects.text(`0`);
-                  summaryFinishedProjects.text(`0`);
-              }
-          },
-          error: function (err) {
-              header.html(`Report Loading Failed as on ${date}`); 
-              displayMessage("Error fetching data. Please check the network connection or API endpoint.", true);
-              summaryClientCount.text(`---`);
-              summaryActiveProjects.text(`---`);
-              summaryFinishedProjects.text(`---`);
+        filteredData.sort((a, b) => {
+          let valA = a[sortColumn];
+          let valB = b[sortColumn];
+
+          if (typeof valA === 'string' && !isNaN(Number(valA)) && !isNaN(Number(valB))) {
+            valA = Number(valA);
+            valB = Number(valB);
           }
+
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        $('#tableCountBadge').text(`${filteredData.length} ${filteredData.length === 1 ? 'client' : 'clients'}`);
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const tbody = $('#root');
+        const totalRows = filteredData.length;
+
+        if (totalRows === 0) {
+          tbody.html(`
+            <tr>
+              <td colspan="7" class="py-6 text-center text-slate-400">
+                <i class="fas fa-folder-open text-lg mb-1 block text-slate-300"></i>
+                No matching client records found.
+              </td>
+            </tr>
+          `);
+          $('#paginationInfo').text('Showing 0 to 0 of 0 entries');
+          $('#paginationControls').empty();
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 100 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredData.slice(startIdx, endIdx);
+
+        let rowsHtml = '';
+        pageSlice.forEach(p => {
+          const encodedName = encodeURIComponent(p.clientName);
+          const clientHref = `/admin/project/projectsByClient?cid=${encodeURIComponent(p.cid)}&clientName=${encodedName}`;
+          const barColor = p.completionPct === 100 ? 'bg-emerald-500' : p.completionPct >= 50 ? 'bg-indigo-600' : 'bg-blue-500';
+
+          rowsHtml += `
+            <tr class="hover:bg-indigo-50/40 transition-colors group">
+              <td class="py-1.5 px-2.5 font-medium text-slate-800">
+                <a href="${clientHref}" class="text-[#1e3a8a] hover:text-indigo-600 font-semibold inline-flex items-center gap-1.5 transition-colors">
+                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/70 shrink-0"></span>
+                  <span class="truncate max-w-[220px] sm:max-w-xs">${p.clientName}</span>
+                </a>
+              </td>
+              <td class="py-1.5 px-2.5 text-right font-mono text-[11px] text-slate-500">
+                #${p.clientId}
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/70">
+                  ${p.active.toLocaleString()}
+                </span>
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                  ${p.finished.toLocaleString()}
+                </span>
+              </td>
+              <td class="py-1.5 px-2.5 text-right font-bold text-slate-900">
+                ${p.total.toLocaleString()}
+              </td>
+              <td class="py-1.5 px-2.5 hidden md:table-cell">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="${barColor} h-full rounded-full" style="width: ${p.completionPct}%"></div>
+                  </div>
+                  <span class="text-[11px] font-medium text-slate-500 w-7 text-right">${p.completionPct}%</span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <a href="/projectsByClient?cid=${encodeURIComponent(p.cid)}" title="View Detailed Time Sheets for ${p.clientName}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1e3a8a] hover:bg-indigo-700 text-white text-[11px] font-medium transition-colors">
+                  <i class="far fa-clock text-[10px]"></i>
+                  <span>View Hours</span>
+                </a>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.html(rowsHtml);
+        $('#paginationInfo').text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $('#paginationControls');
+        container.empty();
+
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-[#1e3a8a] border-[#1e3a8a] text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      // Event Listeners
+      $('#tableSearchInput').on('input', function () {
+        currentPage = 1;
+        applyFiltersAndSort();
       });
 
+      $('#clearSearchBtn').on('click', function () {
+        $('#tableSearchInput').val('');
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
 
-      // 3️⃣ Populate table with processed data
-      function populateTable(dataset) {
-          let output = '';
-          let projectName = 'Client Wise Project Report'; // Better default title
+      $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
 
-          dataset.forEach(p => {
-              // Re-mapping the hours fields to project counts for the table display
-              const active = (p.active) || 0;
-              const finished = (p.finished) || 0;
-              const total = (p.total) || 0;
+      $(document).on('click', '.page-btn:not([disabled])', function () {
+        currentPage = Number($(this).data('page'));
+        renderTablePage();
+      });
 
-              // Link to client category wise data
-              const clientLink = `<a href="/admin/project/projectsByClient?cid=${p.cid}&&clientName=${p.clientName}" class="text-primary-color fw-semibold text-decoration-italic">${p.clientName}</a>`;
-        const viewHoursLink = `<a href="/projectsByClient" class="btn btn-sm btn-primary" title="View Detailed Time Sheets for this Client">
-                                        <i class="far fa-clock me-1"></i> View Hours
-                                     </a>`;
-              output += `
-                  <tr>
-                      <td class="align-middle">${clientLink}</td>
-                      <td class="align-middle">${p.clientId}</td>
-                      <td class="align-middle text-end">${active}</td>
-                      <td class="align-middle text-end">${finished}</td>
-                      <td class="align-middle text-end fw-bold">${total}</td>
-                        <td class="align-middle text-end fw-bold">${viewHoursLink}</td>
-                  </tr>`;
-          });
-                    // Updated header construction
-          header.html(`
-            <div class="d-flex align-items-center">
-              <button class="btn btn-outline-light me-3 border-2" onclick="window.history.back()" title="Go Back">
-                  <i class="fas fa-arrow-left"></i>
-              </button>
-              <span class="text-truncate">${projectName} as on ${date}</span>
-            </div>`);
-          root.html(output);
+      $('th.sortable').on('click', function () {
+        const col = $(this).data('sort');
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = col === 'clientName' ? 'asc' : 'desc';
+        }
+
+        $('th.sortable .sort-icon').removeClass('fa-sort-up fa-sort-down text-indigo-600').addClass('fa-sort text-slate-400');
+        const activeIcon = $(this).find('.sort-icon');
+        activeIcon.removeClass('fa-sort text-slate-400').addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+
+        applyFiltersAndSort();
+      });
+
+      $('.chart-limit-btn').on('click', function () {
+        $('.chart-limit-btn').removeClass('bg-white text-indigo-700 shadow-xs').addClass('text-slate-600');
+        $(this).addClass('bg-white text-indigo-700 shadow-xs').removeClass('text-slate-600');
+        chartLimit = $(this).data('limit');
+        const totals = updateKPIs(rawData);
+        renderCharts(rawData, totals);
+      });
+
+      // CSV Export
+      $('#exportCsvBtn').on('click', function () {
+        if (!filteredData.length) return;
+        const headers = ['Client Name', 'Client ID', 'Active Projects', 'Finished Projects', 'Total Projects', 'Completion %'];
+        const csvRows = [headers.join(',')];
+        filteredData.forEach(r => {
+          csvRows.push([`"${r.clientName.replace(/"/g, '""')}"`, r.clientId, r.active, r.finished, r.total, `${r.completionPct}%`].join(','));
+        });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Client_Project_Report_${date}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Initialize Dashboard with Data
+      function initializeDashboard(dataset, isMock = false) {
+        rawData = dataset.map(normalizeRecord);
+        if (isMock) {
+          $('#mockDataBadge').removeClass('hidden');
+        }
+        const totals = updateKPIs(rawData);
+        renderCharts(rawData, totals);
+        applyFiltersAndSort();
       }
-  });
+
+      // Fetch Data from Backend Endpoint (with fallback preview data if endpoint is unavailable locally)
+      $.ajax({
+        url: '/admin/project/projectStatsByclient',
+        type: 'GET',
+        dataType: 'json',
+        success: function (res) {
+          if (Array.isArray(res) && res.length > 0) {
+            initializeDashboard(res, false);
+          } else {
+            $('#headerTitle').text(`Project Report as on ${date}`);
+            displayMessage('No client data found for this report.', false);
+            $('#chartsSection, #dataTableWrapper').addClass('hidden');
+            $('#summaryClientCount, #summaryActiveProjects, #summaryFinishedProjects, #summaryGrandTotal').text('0');
+          }
+        },
+        error: function () {
+          // Graceful fallback sample data when previewed standalone without the Spring/PHP backend
+          const sampleFallbackData = [
+            { cid: 101, clientId: 'CL-101', clientName: 'Apex Global Logistics', active: 14, finished: 28, total: 42 },
+            { cid: 102, clientId: 'CL-102', clientName: 'Vanguard FinTech Corp', active: 9, finished: 19, total: 28 },
+            { cid: 103, clientId: 'CL-103', clientName: 'Horizon Healthcare Systems', active: 12, finished: 15, total: 27 },
+            { cid: 104, clientId: 'CL-104', clientName: 'Silverline Retail Group', active: 6, finished: 18, total: 24 },
+            { cid: 105, clientId: 'CL-105', clientName: 'BluePeak Energy Solutions', active: 8, finished: 11, total: 19 },
+            { cid: 106, clientId: 'CL-106', clientName: 'NexGen Cloud Technologies', active: 11, finished: 7, total: 18 },
+            { cid: 107, clientId: 'CL-107', clientName: 'Metro Transit Authority', active: 4, finished: 12, total: 16 },
+            { cid: 108, clientId: 'CL-108', clientName: 'Crestview Real Estate', active: 5, finished: 9, total: 14 },
+            { cid: 109, clientId: 'CL-109', clientName: 'Pinnacle Manufacturing', active: 3, finished: 10, total: 13 },
+            { cid: 110, clientId: 'CL-110', clientName: 'Atlas Media & Publishing', active: 7, finished: 4, total: 11 }
+          ];
+          initializeDashboard(sampleFallbackData, true);
+        }
+      });
+    });
   </script>
 </body>
 </html>

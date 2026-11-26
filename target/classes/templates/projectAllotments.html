@@ -1,787 +1,1325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="title">Project Report</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="title">Project Allotments</title>
 
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Google Fonts: Inter & IBM Plex Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              600: '#254b9e',
+              800: '#1e3a8a',
+              900: '#172554',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
-    /* ============================================================
-       Design tokens
-       Subject: internal allotment / hours-tracking console.
-       Palette leans on an ink-navy + amber pairing so status and
-       actions read clearly against neutral data rows.
-    ============================================================ */
-    :root {
-      --bg: #F5F6F8;
-      --surface: #FFFFFF;
-      --ink: #1B2333;
-      --ink-soft: #626B7A;
-      --ink-faint: #9AA2AF;
-      --border: #E4E7EC;
-      --border-strong: #D3D8E0;
-      --primary: #26325C;
-      --primary-dark: #1B2445;
-      --primary-soft: #EEF0F8;
-      --amber: #D98A2B;
-      --amber-dark: #B8721E;
-      --amber-soft: #FBF0DF;
-      --success: #2F9E5B;
-      --success-soft: #E7F6EC;
-      --warning: #C98A1A;
-      --warning-soft: #FBF1DE;
-      --danger: #C7473F;
-      --danger-soft: #FBEAE8;
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
-    }
-
-    * { box-sizing: border-box; }
-
     body {
-      background: var(--bg);
-      font-family: var(--font-sans);
-      color: var(--ink);
+      background-color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
     }
-
-    .page {
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 28px 24px 48px;
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
     }
-
-    /* ---------- Header ---------- */
-    .report-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 20px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border-strong);
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
     }
-    .report-header .title-block {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
     }
-    .back-btn {
-      width: 38px;
-      height: 38px;
-      flex-shrink: 0;
-      border-radius: 10px;
-      border: 1px solid var(--border-strong);
-      background: var(--surface);
-      color: var(--ink-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color .15s ease, color .15s ease;
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
-    .back-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-    #header {
-      font-size: 1.35rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
     }
-    #header .as-of {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 500;
-      color: var(--ink-faint);
-      margin-left: 10px;
+    th.sortable:hover {
+      background-color: #e2e8f0;
     }
-
-    .btn-create {
-      background: var(--amber);
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: background .15s ease;
-      white-space: nowrap;
-    }
-    .btn-create:hover { background: var(--amber-dark); color: #fff; }
-
-    /* ---------- Summary strip (grounded in the actual data) ---------- */
-    .summary-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 28px;
-    }
-    .summary-cell {
-      background: var(--surface);
-      padding: 16px 20px;
-    }
-    .summary-cell .label {
-      font-size: 0.78rem;
-      color: var(--ink-soft);
-      margin-bottom: 6px;
-    }
-    .summary-cell .value {
-      font-family: var(--font-mono);
-      font-size: 1.35rem;
-      font-weight: 600;
-      color: var(--primary);
-    }
-    .summary-cell .value.amber { color: var(--amber-dark); }
-
-    /* ---------- Table ---------- */
-    .table-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .table-panel-head {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      font-weight: 600;
-      color: var(--ink);
-      font-size: 0.95rem;
-    }
-    #enhancedDataTable { margin: 0 !important; width: 100% !important; }
-    #enhancedDataTable thead th {
-      background: var(--bg);
-      color: var(--ink-soft);
-      font-weight: 600;
-      font-size: 0.78rem;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      white-space: nowrap;
-    }
-    #enhancedDataTable tbody td {
-      padding: 13px 16px;
-      font-size: 0.9rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    #enhancedDataTable tbody tr:last-child td { border-bottom: none; }
-    #enhancedDataTable tbody tr:hover { background: var(--primary-soft); }
-    .num { font-family: var(--font-mono); font-weight: 500; }
-    .allotment-link {
-      color: var(--primary);
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .allotment-link:hover { color: var(--amber-dark); text-decoration: underline; }
-
-    /* Status: a dot + label reads status at a glance without a heavy pill */
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 0.84rem;
-      font-weight: 500;
-      color: var(--ink);
-    }
-    .status .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .status.completed .dot { background: var(--success); }
-    .status.in-progress .dot { background: var(--primary); }
-    .status.pending .dot { background: var(--warning); }
-    .status.cancelled .dot { background: var(--danger); }
-    .status.other .dot { background: var(--ink-faint); }
-
-    #messageContainer .alert { border-radius: 10px; border: none; }
-
-    /* ---------- Modal ---------- */
-    .modal-content { border-radius: 14px; border: none; overflow: hidden; }
-    .modal-header.allotment-modal-head {
-      background: var(--primary);
-      color: #fff;
-      padding: 18px 24px;
-      border: none;
-    }
-    .modal-header.allotment-modal-head .btn-close { filter: invert(1) brightness(1.6); }
-    .modal-body { padding: 24px; }
-
-    .form-section + .form-section {
-      margin-top: 22px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-    }
-    .form-section-label {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--ink-soft);
-      margin-bottom: 12px;
-    }
-    .form-label { font-size: 0.85rem; font-weight: 500; color: var(--ink); }
-    .form-control, .form-select {
-      border-color: var(--border-strong);
-      font-size: 0.9rem;
-      border-radius: 8px;
-    }
-    .form-control:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-soft);
-    }
-    .form-control[readonly] { background: var(--bg); }
-
-    .fixed-hours-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .fixed-hours-toggle label {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--ink);
-      margin: 0;
-    }
-    .fixed-hours-toggle small {
-      display: block;
-      color: var(--ink-faint);
-      font-size: 0.75rem;
-      margin-top: 1px;
-    }
-    .form-check-input:checked {
-      background-color: var(--amber);
-      border-color: var(--amber);
-    }
-    .form-check-input:focus { box-shadow: 0 0 0 3px var(--amber-soft); }
-
-    /* Split bar: shows the actual production/QC split, not decoration */
-    .hours-split {
-      margin-top: 14px;
-    }
-    .hours-split-bar {
-      height: 10px;
-      border-radius: 6px;
-      background: var(--border);
-      overflow: hidden;
-      display: flex;
-    }
-    .hours-split-bar .seg-prod { background: var(--primary); height: 100%; transition: width .2s ease; }
-    .hours-split-bar .seg-qc { background: var(--amber); height: 100%; transition: width .2s ease; }
-    .hours-split-legend {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 0.8rem;
-    }
-    .hours-split-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
-    .hours-split-legend .swatch { width: 8px; height: 8px; border-radius: 50%; }
-    .hours-split-legend .num { color: var(--ink); }
-
-    .modal-footer { border: none; padding: 18px 24px; background: var(--bg); }
-    .btn-cancel {
-      background: transparent;
-      border: 1px solid var(--border-strong);
-      color: var(--ink-soft);
-      font-weight: 500;
-      padding: 9px 18px;
-      border-radius: 8px;
-    }
-    .btn-save {
-      background: var(--primary);
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      padding: 9px 20px;
-      border-radius: 8px;
-    }
-    .btn-save:hover { background: var(--primary-dark); color: #fff; }
-    .btn-save:disabled { opacity: 0.7; }
   </style>
 </head>
 <head th:replace="includes/header :: header"></head>
-<body>
 
-<div class="page">
+<body >
 
-  <div class="report-header">
-    <div class="title-block">
-      <button class="back-btn" onclick="history.back()" aria-label="Go back">
-        <i class="fas fa-arrow-left"></i>
-      </button>
-      <h5 id="header">Loading report…</h5>
-    </div>
-    <button class="btn-create" id="openCreateAllotmentBtn">
-      <i class="fas fa-plus"></i> Create allotment
-    </button>
-  </div>
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[98%] mx-auto px-3 sm:px-4 py-3 flex-1">
+    
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
+      
+      <!-- Slim Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#22429c] to-[#254b9e] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="history.back()" aria-label="Go back" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all duration-150 shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 id="header" class="text-sm sm:text-base font-bold tracking-tight truncate">
+              Loading report…
+            </h1>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-[11px] font-medium text-indigo-100 border border-white/10">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span id="reportDate">--</span>
+            </span>
+          </div>
+        </div>
 
-  <div id="messageContainer" style="display:none;"></div>
-
-  <div class="summary-strip" id="summaryStrip" style="display:none;">
-    <div class="summary-cell">
-      <div class="label">Allotments</div>
-      <div class="value" id="summaryCount">0</div>
-    </div>
-    <div class="summary-cell">
-      <div class="label">Total hours</div>
-      <div class="value" id="summaryTotalHours">0.00</div>
-    </div>
-    <div class="summary-cell">
-      <div class="label">Production hours</div>
-      <div class="value" id="summaryProdHours">0.00</div>
-    </div>
-    <div class="summary-cell">
-      <div class="label">QC hours</div>
-      <div class="value amber" id="summaryQcHours">0.00</div>
-    </div>
-  </div>
-
-  <div class="table-panel" id="dataTableWrapper" style="display:none;">
-    <div class="table-panel-head">Detailed allotment data</div>
-    <div class="table-responsive">
-      <table id="enhancedDataTable" class="table align-middle mb-0">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Allotment name</th>
-            <th>Project lead</th>
-            <th>Start date</th>
-            <th>Deadline</th>
-            <th class="text-end">Total hrs</th>
-            <th class="text-end">Prod hrs</th>
-            <th class="text-end">QC hrs</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="root"></tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-<!-- ================= Create Allotment Modal ================= -->
-<div class="modal fade" id="createAllotmentModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header allotment-modal-head">
-        <h5 class="modal-title d-flex align-items-center gap-2 mb-0">
-          <i class="fas fa-boxes-stacked"></i> Create new allotment
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors">
+            <i class="fas fa-file-csv text-emerald-300"></i>
+            <span class="hidden sm:inline">Export CSV</span>
+          </button>
+          <button id="openCreateAllotmentBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-semibold text-white shadow-xs transition-colors">
+            <i class="fas fa-plus text-[11px]"></i>
+            <span>Create Allotment</span>
+          </button>
+        </div>
       </div>
 
-      <div class="modal-body">
+      <!-- Compact Body Content -->
+      <div class="p-3 sm:p-4 space-y-3">
 
+        <!-- Alert / Toast Notification Banner -->
+        <div id="messageContainer" class="hidden rounded-lg p-3 border text-xs font-medium flex items-center justify-between gap-2"></div>
+
+        <!-- 8-Card High-Density Stats Strip (4 Status Cards + 4 Hours/Task Metrics) -->
+        <div id="summaryStrip" class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
+          <!-- Total Allotments (Filter: All) -->
+          <button type="button" data-status-filter="all" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-indigo-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-indigo-600 ring-2 ring-indigo-500/40 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">All Tasks</p>
+              <h3 id="summaryCount" class="text-base font-bold font-mono text-slate-900 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-boxes-stacked text-[10px]"></i>
+            </div>
+          </button>
+
+          <!-- Status 0: Created -->
+          <button type="button" data-status-filter="0" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-sky-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-sky-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Created</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryCreated" class="text-base font-bold font-mono text-sky-600 leading-tight">0</h3>
+                <span id="summaryCreatedPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-folder-plus text-[10px]"></i>
+            </div>
+          </button>
+
+          <!-- Status 1: In Progress -->
+          <button type="button" data-status-filter="1" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-amber-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-amber-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">In Progress</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryInProgress" class="text-base font-bold font-mono text-amber-600 leading-tight">0</h3>
+                <span id="summaryInProgressPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-amber-100/80 text-amber-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-spinner text-[10px]"></i>
+            </div>
+          </button>
+
+          <!-- Status 2: Finished -->
+          <button type="button" data-status-filter="2" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-emerald-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-emerald-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Finished</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryFinished" class="text-base font-bold font-mono text-emerald-600 leading-tight">0</h3>
+                <span id="summaryFinishedPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-check-circle text-[10px]"></i>
+            </div>
+          </button>
+
+          <!-- Status 3: Withdrawn -->
+          <button type="button" data-status-filter="3" class="kpi-filter-card text-left bg-slate-50/80 hover:bg-rose-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-rose-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Withdrawn</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryWithdrawn" class="text-base font-bold font-mono text-rose-600 leading-tight">0</h3>
+                <span id="summaryWithdrawnPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-ban text-[10px]"></i>
+            </div>
+          </button>
+
+          <!-- Total Hours -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-slate-700 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Hrs</p>
+              <h3 id="summaryTotalHours" class="text-base font-bold font-mono text-slate-900 leading-tight mt-0.5">0.00</h3>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-slate-200/80 text-slate-700 flex items-center justify-center shrink-0">
+              <i class="far fa-clock text-[10px]"></i>
+            </div>
+          </div>
+
+          <!-- Production Hours -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-blue-600 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Prod Hrs</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryProdHours" class="text-base font-bold font-mono text-blue-700 leading-tight">0.00</h3>
+                <span id="summaryProdPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-blue-100/80 text-blue-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-gears text-[10px]"></i>
+            </div>
+          </div>
+
+          <!-- QC Hours -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">QC Hrs</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="summaryQcHours" class="text-base font-bold font-mono text-violet-700 leading-tight">0.00</h3>
+                <span id="summaryQcPct" class="text-[9px] text-slate-400"></span>
+              </div>
+            </div>
+            <div class="w-6 h-6 rounded-md bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-clipboard-check text-[10px]"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Analytics Row -->
+        <div id="chartsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- Stacked Production vs QC Hours Bar Chart (2/3 width) -->
+          <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i class="fas fa-chart-bar text-indigo-600"></i>
+                  <span id="barChartTitle">Production vs. QC Hours by Allotment</span>
+                </h2>
+              </div>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[11px] font-medium">
+                <button type="button" data-mode="allotment" class="chart-mode-btn px-2 py-0.5 rounded bg-white text-indigo-700 shadow-xs transition-all">By Allotment</button>
+                <button type="button" data-mode="lead" class="chart-mode-btn px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 transition-all">By Lead</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-44 w-full">
+              <canvas id="hoursBreakdownChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Status Lifecycle & Hours Split Doughnut Chart (1/3 width) -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-indigo-600"></i>
+                <span id="doughnutTitle">Allotment Status Split</span>
+              </h2>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[10px] font-medium">
+                <button type="button" data-dmode="status" class="doughnut-mode-btn px-1.5 py-0.5 rounded bg-white text-indigo-700 shadow-2xs">Status (0–3)</button>
+                <button type="button" data-dmode="hours" class="doughnut-mode-btn px-1.5 py-0.5 rounded text-slate-600">Hours</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-44 w-full flex items-center justify-center">
+              <canvas id="allocationDoughnutChart"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-5">
+                <span id="doughnutCenterMain" class="text-base font-bold font-mono text-slate-800 leading-none">--</span>
+                <span id="doughnutCenterSub" class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Allotments</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Detailed Allotment Table Card -->
+        <div id="dataTableWrapper" class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Table Toolbar -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/70 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mr-1">
+                <i class="fas fa-table text-indigo-600"></i>
+                Detailed Allotment Data
+              </h2>
+
+              <!-- Quick Status Pill Filter (Mapped 0..3) -->
+              <div id="statusPillGroup" class="inline-flex flex-wrap items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg text-[11px] font-medium">
+                <button type="button" data-status-filter="all" class="status-pill-btn px-2 py-0.5 rounded-md bg-white text-indigo-700 shadow-2xs transition-all">All</button>
+                <button type="button" data-status-filter="0" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Created</button>
+                <button type="button" data-status-filter="1" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">In Progress</button>
+                <button type="button" data-status-filter="2" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Finished</button>
+                <button type="button" data-status-filter="3" class="status-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Withdrawn</button>
+              </div>
+
+              <span id="tableCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 items</span>
+            </div>
+
+            <!-- Search & Rows Per Page -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative flex-1 sm:w-56">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search allotment, lead, status..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ultra-Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="enhancedDataTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2.5 w-10 text-center">#</th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="allotmentName">
+                    <div class="flex items-center gap-1">
+                      <span>Allotment Name</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="leadName">
+                    <div class="flex items-center gap-1">
+                      <span>Project Lead</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden sm:table-cell" data-sort="startDate">
+                    <div class="flex items-center gap-1">
+                      <span>Start Date</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden sm:table-cell" data-sort="endDate">
+                    <div class="flex items-center gap-1">
+                      <span>Deadline</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="totalHours">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Total Hrs</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="productionHrs">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Prod Hrs</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="qaHrs">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>QC Hrs</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 hidden lg:table-cell w-28">Prod / QC Split</th>
+                  <th class="py-1.5 px-2.5 text-center sortable" data-sort="statusCode">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Status</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="root" class="divide-y divide-slate-100 text-xs">
+                <tr class="animate-pulse">
+                  <td colspan="10" class="py-5 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Loading project allotments…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div id="paginationFooter" class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Tailwind Create Allotment Modal ================= -->
+  <div id="createAllotmentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
+
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] to-[#254b9e] px-4 py-2.5 text-white flex items-center justify-between shrink-0">
+        <h3 class="text-sm font-bold flex items-center gap-2">
+          <i class="fas fa-boxes-stacked text-amber-300"></i>
+          <span>Create New Allotment</span>
+        </h3>
+        <button type="button" class="close-modal-btn w-6 h-6 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 overflow-y-auto space-y-3.5 text-xs">
         <input type="hidden" id="csrfToken" name="_csrf" th:value="${_csrf.token}" />
 
-        <!-- Basics -->
-        <div class="form-section">
-          <div class="form-section-label">Basics</div>
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label" for="allotmentNameInput">Allotment name</label>
-              <input type="text" id="allotmentNameInput" class="form-control" placeholder="e.g. Q4 Data Processing">
+        <!-- Section 1: Basics -->
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Basics</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <div class="md:col-span-2">
+              <label class="block font-semibold text-slate-700 mb-1" for="allotmentNameInput">Allotment Name <span class="text-red-500">*</span></label>
+              <input type="text" id="allotmentNameInput" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" placeholder="e.g. Q4 Data Processing">
             </div>
-            <div class="col-md-6">
-              <label class="form-label" for="departmentSelect">Category</label>
-              <select id="departmentSelect" class="form-select">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="departmentSelect">Category</label>
+              <select id="departmentSelect" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
                 <option value="" selected disabled>Select category…</option>
               </select>
             </div>
-            <div class="col-md-6">
-              <label class="form-label" for="allotmentLeadSelect">Project lead</label>
-              <select id="allotmentLeadSelect" class="form-select">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="allotmentLeadSelect">Project Lead <span class="text-red-500">*</span></label>
+              <select id="allotmentLeadSelect" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
                 <option value="" selected disabled>Assign lead…</option>
               </select>
             </div>
           </div>
         </div>
 
-        <!-- Schedule -->
-        <div class="form-section">
-          <div class="form-section-label">Schedule</div>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label" for="startDateInput">Start date</label>
-              <input type="date" id="startDateInput" class="form-control">
+        <!-- Section 2: Schedule -->
+        <div class="pt-3 border-t border-slate-100">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Schedule</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="startDateInput">Start Date <span class="text-red-500">*</span></label>
+              <input type="date" id="startDateInput" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
             </div>
-            <div class="col-md-6">
-              <label class="form-label" for="deadlineInput">Deadline</label>
-              <input type="date" id="deadlineInput" class="form-control">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="deadlineInput">Deadline <span class="text-red-500">*</span></label>
+              <input type="date" id="deadlineInput" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
             </div>
           </div>
         </div>
 
-        <!-- Hours -->
-        <div class="form-section">
-          <div class="form-section-label">Hours</div>
-
-          <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-              <label class="form-label" for="totalHoursInput">Total hours</label>
-              <input type="number" id="totalHoursInput" class="form-control" placeholder="0.00" min="0" step="0.5">
+        <!-- Section 3: Hours -->
+        <div class="pt-3 border-t border-slate-100">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Hours Allocation</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-end">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="totalHoursInput">Total Hours <span class="text-red-500">*</span></label>
+              <input type="number" id="totalHoursInput" class="w-full px-3 py-1.5 font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" placeholder="0.00" min="0" step="0.5">
             </div>
-            <div class="col-md-6">
-              <div class="fixed-hours-toggle">
+            <div>
+              <label for="isHoursFixedCheckbox" class="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-slate-100/70 transition-colors">
                 <div>
-                  <label for="isHoursFixedCheckbox">Fixed hours</label>
-                  <small>Enter production and QC hours directly</small>
+                  <span class="font-semibold text-slate-700 block">Fixed Hours Mode</span>
+                  <span class="text-[10px] text-slate-400 block">Enter Prod &amp; QC hours manually</span>
                 </div>
-                <div class="form-check form-switch mb-0">
-                  <input class="form-check-input" type="checkbox" role="switch" id="isHoursFixedCheckbox" style="width: 2.5em; height: 1.4em;">
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-4" id="qcPercentageGroup">
-              <label class="form-label" for="qcPercentageInput">QC percentage</label>
-              <div class="input-group">
-                <input type="number" id="qcPercentageInput" class="form-control" placeholder="0" min="0" max="100">
-                <span class="input-group-text">%</span>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label" for="productionHoursDisplay">Production hours</label>
-              <input type="number" min="0" step="0.5" class="form-control" id="productionHoursDisplay" readonly>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label" for="qcHoursDisplay">QC hours</label>
-              <input type="number" min="0" step="0.5" class="form-control" id="qcHoursDisplay" readonly>
+                <input type="checkbox" id="isHoursFixedCheckbox" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+              </label>
             </div>
           </div>
 
-          <div class="hours-split">
-            <div class="hours-split-bar">
-              <div class="seg-prod" id="splitBarProd" style="width: 0%;"></div>
-              <div class="seg-qc" id="splitBarQc" style="width: 0%;"></div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-2.5">
+            <div id="qcPercentageGroup">
+              <label class="block font-semibold text-slate-700 mb-1" for="qcPercentageInput">QC Percentage</label>
+              <div class="relative">
+                <input type="number" id="qcPercentageInput" class="w-full pl-3 pr-7 py-1.5 font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" placeholder="0" min="0" max="100">
+                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">%</span>
+              </div>
             </div>
-            <div class="hours-split-legend">
-              <span><span class="swatch" style="background: var(--primary);"></span>Production <span class="num" id="legendProdHours">0.00</span></span>
-              <span><span class="swatch" style="background: var(--amber);"></span>QC <span class="num" id="legendQcHours">0.00</span></span>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="productionHoursDisplay">Production Hours</label>
+              <input type="number" min="0" step="0.5" id="productionHoursDisplay" readonly class="w-full px-3 py-1.5 font-mono border border-slate-300 rounded-lg bg-slate-100 read-only:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1" for="qcHoursDisplay">QC Hours</label>
+              <input type="number" min="0" step="0.5" id="qcHoursDisplay" readonly class="w-full px-3 py-1.5 font-mono border border-slate-300 rounded-lg bg-slate-100 read-only:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+            </div>
+          </div>
+
+          <!-- Interactive Production / QC Split Bar -->
+          <div class="mt-3 bg-slate-50 border border-slate-200/80 rounded-lg p-2.5">
+            <div class="h-2 rounded-full bg-slate-200 overflow-hidden flex">
+              <div id="splitBarProd" class="bg-blue-600 h-full transition-all duration-200" style="width: 0%;"></div>
+              <div id="splitBarQc" class="bg-amber-500 h-full transition-all duration-200" style="width: 0%;"></div>
+            </div>
+            <div class="flex items-center justify-between mt-1.5 text-[11px]">
+              <span class="inline-flex items-center gap-1.5 text-slate-600">
+                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                Production: <strong id="legendProdHours" class="font-mono text-slate-800">0.00</strong> hrs
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-slate-600">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                QC: <strong id="legendQcHours" class="font-mono text-slate-800">0.00</strong> hrs
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Reference -->
-        <div class="form-section">
-          <div class="form-section-label">Reference</div>
-          <label class="form-label" for="filePathInput">File path (optional)</label>
-          <div class="input-group">
-            <span class="input-group-text bg-white"><i class="fas fa-link text-muted"></i></span>
-            <input type="text" id="filePathInput" class="form-control" placeholder="\\server\path\to\project">
+        <!-- Section 4: Reference -->
+        <div class="pt-3 border-t border-slate-100">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Reference</p>
+          <label class="block font-semibold text-slate-700 mb-1" for="filePathInput">File Path (optional)</label>
+          <div class="relative">
+            <i class="fas fa-link absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+            <input type="text" id="filePathInput" class="w-full pl-8 pr-3 py-1.5 font-mono text-[11px] border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" placeholder="\\server\path\to\project">
           </div>
         </div>
-
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn-save" id="saveAllotmentBtn">
-          <i class="fas fa-plus-circle me-1"></i> Create allotment
+      <!-- Modal Footer -->
+      <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 shrink-0">
+        <button type="button" class="close-modal-btn px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors">
+          Cancel
+        </button>
+        <button type="button" id="saveAllotmentBtn" class="px-3.5 py-1.5 rounded-lg bg-[#1e3a8a] hover:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5">
+          <i class="fas fa-plus-circle"></i>
+          <span>Create Allotment</span>
         </button>
       </div>
 
     </div>
   </div>
-</div>
 
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      const params = new URLSearchParams(window.location.search);
+      const projectId = params.get("projectId");
+      const projectName = params.get("projectName") || "Project";
 
-<script>
-$(document).ready(function () {
-
-  const params = new URLSearchParams(window.location.search);
-  const projectId = params.get("projectId");
-  const projectName = params.get("projectName");
-  $("#title").text(`${projectName}'s Allotments`);
-
-  const dateToday = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-  /* ---------------- helpers ---------------- */
-
-  function toggleSaveButton(isLoading) {
-    const btn = $("#saveAllotmentBtn");
-    if (isLoading) {
-      btn.attr("disabled", true);
-      btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving…');
-    } else {
-      btn.attr("disabled", false);
-      btn.html('<i class="fas fa-plus-circle me-1"></i> Create allotment');
-    }
-  }
-
-  function showMessage(msg, error = false) {
-    $("#messageContainer")
-      .show()
-      .html(`<div class="alert ${error ? 'alert-danger' : 'alert-warning'}">${msg}</div>`);
-  }
-
-  function getStatusMarkup(status) {
-    status = status || 'Pending';
-    let cls = 'other';
-    if (status.includes('Completed')) cls = 'completed';
-    else if (status.includes('In Progress')) cls = 'in-progress';
-    else if (status.includes('Pending')) cls = 'pending';
-    else if (status.includes('Cancelled')) cls = 'cancelled';
-    return `<span class="status ${cls}"><span class="dot"></span>${status}</span>`;
-  }
-
-  /* ---------------- fetch + render allotments ---------------- */
-
-  $.get("/admin/project/getProjectAllotments",
-    { projectId: projectId },
-    function (res) {
-      const finalData = res.data ? res.data : res;
-
-      if (!Array.isArray(finalData)) {
-        showMessage("Unexpected data format.", true);
-        return;
-      }
-
-      populateTable(finalData);
-      populateSummary(finalData);
-
-      $("#dataTableWrapper").show();
-      $("#summaryStrip").show();
-
-      $("#enhancedDataTable").DataTable({
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        ordering: true,
-        columnDefs: [{ orderable: false, targets: [8] }]
+      $("#title").text(`${projectName}'s Allotments`);
+      const dateToday = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
       });
-    },
-    "json"
-  ).fail(function () {
-    showMessage("Could not load allotments for this project.", true);
-  });
 
-  function populateSummary(data) {
-    let totalHours = 0, prodHours = 0, qcHours = 0;
-    data.forEach(p => {
-      totalHours += parseFloat(p.totalHours || 0);
-      prodHours += parseFloat(p.productionHrs || 0);
-      qcHours += parseFloat(p.qaHrs || 0);
-    });
-    $("#summaryCount").text(data.length);
-    $("#summaryTotalHours").text(totalHours.toFixed(2));
-    $("#summaryProdHours").text(prodHours.toFixed(2));
-    $("#summaryQcHours").text(qcHours.toFixed(2));
-  }
+      $("#reportDate").text(dateToday);
+      $("#header").text(`${projectName}'s Allotment Data`);
 
-  function populateTable(data) {
-    let html = "";
-    let counter = 1;
-
-    data.forEach(p => {
-      html += `
-        <tr>
-          <td>${counter++}</td>
-          <td>
-            <a href="/admin/project/viewProject?id=${p.pid}" class="allotment-link">${p.allotmentName}</a>
-          </td>
-          <td>${(p.projectLead && p.projectLead.firstName) || 'N/A'}</td>
-          <td class="num">${p.starDate || 'N/A'}</td>
-          <td class="num">${p.endDate || 'N/A'}</td>
-          <td class="text-end num">${p.totalHours || '0.00'}</td>
-          <td class="text-end num">${p.productionHrs || '0.00'}</td>
-          <td class="text-end num">${p.qaHrs || '0.00'}</td>
-          <td>${getStatusMarkup(p.Status)}</td>
-        </tr>
-      `;
-    });
-
-    $("#root").html(html);
-    $("#header").html(`${projectName}'s allotment data <span class="as-of">As of ${dateToday}</span>`);
-  }
-
-  /* ---------------- lead / category lookup ---------------- */
-
-  function fetchProjectLeads(selectElement) {
-    $.get("/admin/getprojectrequired",
-      function (data) {
-        const select = selectElement;
-        select.empty().append(`<option value="">-- Select Lead --</option>`);
-        if (Array.isArray(data[0])) {
-          data[0].forEach(l => select.append(`<option value="${l.eid}">${l.name}</option>`));
+      // Explicit Status Map: 0 -> Created, 1 -> In Progress, 2 -> Finished, 3 -> Withdrawn
+      const ALLOTMENT_STATUS_MAP = {
+        0: {
+          code: 0,
+          label: 'Created',
+          badgeClass: 'bg-sky-50 text-sky-700 border-sky-200/90',
+          dotClass: 'bg-sky-500',
+          chartColor: '#0ea5e9'
+        },
+        1: {
+          code: 1,
+          label: 'In Progress',
+          badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/90',
+          dotClass: 'bg-amber-500',
+          chartColor: '#f59e0b'
+        },
+        2: {
+          code: 2,
+          label: 'Finished',
+          badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/90',
+          dotClass: 'bg-emerald-500',
+          chartColor: '#10b981'
+        },
+        3: {
+          code: 3,
+          label: 'Withdrawn',
+          badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/90',
+          dotClass: 'bg-rose-500',
+          chartColor: '#f43f5e'
         }
+      };
 
-        const category = $("#departmentSelect");
-        category.empty().append(`<option value="">-- Select Category --</option>`);
-        if (data[1] && Array.isArray(data[1])) {
-          data[1].forEach(c => category.append(`<option value="${c.categoryId}">${c.categoryName}</option>`));
+      function resolveStatusInfo(rawStatus) {
+        if (rawStatus !== null && rawStatus !== undefined && rawStatus !== '') {
+          const num = Number(rawStatus);
+          if (!Number.isNaN(num) && ALLOTMENT_STATUS_MAP[num]) {
+            return ALLOTMENT_STATUS_MAP[num];
+          }
+          const str = String(rawStatus).trim().toLowerCase();
+          if (str === 'created' || str === 'new') return ALLOTMENT_STATUS_MAP[0];
+          if (str.includes('progress') || str === 'active' || str === 'ongoing') return ALLOTMENT_STATUS_MAP[1];
+          if (str.includes('finish') || str.includes('complete') || str === 'done') return ALLOTMENT_STATUS_MAP[2];
+          if (str.includes('withdraw') || str.includes('cancel')) return ALLOTMENT_STATUS_MAP[3];
         }
-      },
-      "json"
-    );
-  }
-
-  /* ---------------- hours calculation ---------------- */
-
-  function updateSplitVisual(prodHours, qcHours) {
-    const total = prodHours + qcHours;
-    const prodPct = total > 0 ? (prodHours / total) * 100 : 0;
-    const qcPct = total > 0 ? (qcHours / total) * 100 : 0;
-    $("#splitBarProd").css("width", prodPct + "%");
-    $("#splitBarQc").css("width", qcPct + "%");
-    $("#legendProdHours").text(prodHours.toFixed(2));
-    $("#legendQcHours").text(qcHours.toFixed(2));
-  }
-
-  function calculateHours() {
-    // When Fixed Hours is checked, production/QC hours are entered manually
-    // instead of being derived from the QC percentage.
-    if ($("#isHoursFixedCheckbox").is(":checked")) {
-      const prodHours = parseFloat($("#productionHoursDisplay").val()) || 0;
-      const qcHours = parseFloat($("#qcHoursDisplay").val()) || 0;
-      updateSplitVisual(prodHours, qcHours);
-      return;
-    }
-
-    const totalHours = parseFloat($("#totalHoursInput").val()) || 0;
-    const qcPercent = parseFloat($("#qcPercentageInput").val()) || 0;
-
-    if (totalHours <= 0 || qcPercent < 0 || qcPercent > 100) {
-      $("#qcHoursDisplay").val("0.00");
-      $("#productionHoursDisplay").val("0.00");
-      updateSplitVisual(0, 0);
-      return;
-    }
-
-    const qcHours = parseFloat((totalHours * (qcPercent / 100)).toFixed(2));
-    const productionHours = parseFloat((totalHours - qcHours).toFixed(2));
-
-    $("#qcHoursDisplay").val(qcHours.toFixed(2));
-    $("#productionHoursDisplay").val(productionHours.toFixed(2));
-    updateSplitVisual(productionHours, qcHours);
-  }
-
-  function setFixedHoursMode(isFixed) {
-    $("#qcPercentageInput").prop("disabled", isFixed);
-    $("#qcPercentageGroup").css("opacity", isFixed ? 0.5 : 1);
-    $("#qcHoursDisplay, #productionHoursDisplay").prop("readonly", isFixed);
-    calculateHours();
-  }
-
-  $("#totalHoursInput, #qcPercentageInput").on("input", calculateHours);
-  $("#qcHoursDisplay, #productionHoursDisplay").on("input", function () {
-    if ($("#isHoursFixedCheckbox").is(":checked")) calculateHours();
-  });
-  $("#isHoursFixedCheckbox").on("change", function () {
-    setFixedHoursMode($(this).is(":checked"));
-  });
-
-  /* ---------------- open / reset modal ---------------- */
-
-  $("#openCreateAllotmentBtn").click(function () {
-    $("#allotmentNameInput").val("");
-    $("#startDateInput").val("");
-    $("#deadlineInput").val("");
-    $("#totalHoursInput").val("");
-    $("#qcPercentageInput").val("").prop("disabled", false);
-    $("#filePathInput").val("");
-    $("#qcHoursDisplay").val("0.00").prop("readonly", true);
-    $("#productionHoursDisplay").val("0.00").prop("readonly", true);
-    $("#isHoursFixedCheckbox").prop("checked", false);
-    $("#qcPercentageGroup").css("opacity", 1);
-    updateSplitVisual(0, 0);
-
-    fetchProjectLeads($("#allotmentLeadSelect"));
-
-    toggleSaveButton(false);
-    new bootstrap.Modal("#createAllotmentModal").show();
-  });
-
-  /* ---------------- save allotment ---------------- */
-
-  $("#saveAllotmentBtn").click(function () {
-    const allotmentName = $("#allotmentNameInput").val().trim();
-    const startDate = $("#startDateInput").val();
-    const deadline = $("#deadlineInput").val();
-    const totalHours = parseFloat($("#totalHoursInput").val());
-    const qcPercent = parseFloat($("#qcPercentageInput").val());
-    const projectLead = $("#allotmentLeadSelect").val();
-    const filePath = $("#filePathInput").val().trim();
-    const qcHours = $("#qcHoursDisplay").val();
-    const productionHours = $("#productionHoursDisplay").val();
-    const department = $("#departmentSelect").val();
-    const isHoursFixed = $("#isHoursFixedCheckbox").is(":checked") ? 1 : 0;
-
-    const hoursLookOk = isHoursFixed
-      ? (parseFloat(productionHours) >= 0 && parseFloat(qcHours) >= 0)
-      : (!isNaN(qcPercent) && qcPercent >= 0 && qcPercent <= 100);
-
-    if (!allotmentName || !startDate || !deadline || isNaN(totalHours) || totalHours <= 0 || !projectLead || !hoursLookOk) {
-      alert("Please ensure Allotment Name, Start Date, Deadline, Total Hours (>0), Project Lead, and hours breakdown are filled out correctly.");
-      return;
-    }
-
-    toggleSaveButton(true);
-
-    const allotmentData = {
-      rootid: projectId,
-      allotmentName: allotmentName,
-      startDate: startDate,
-      deadline: deadline,
-      totalHours: totalHours,
-      qcHours: qcHours,
-      productionHours: productionHours,
-      projectLeadId: projectLead,
-      filePath: filePath,
-      category: department,
-      isHoursFixed: isHoursFixed
-    };
-
-    const csrfToken = document.getElementById("csrfToken").value;
-    console.log(allotmentData);
-    $.ajax({
-      url: '/admin/project/createAllotment',
-      type: 'POST',
-      data: allotmentData,
-      headers: { 'X-CSRF-TOKEN': csrfToken },
-      success: function (res) {
-        if (res && res.status === "success") {
-          alert("Allotment Created Successfully!");
-          $("#createAllotmentModal").modal("hide");
-        } else {
-          alert(`Error creating allotment: ${res ? res.message : 'Unknown error'}`);
-        }
-        toggleSaveButton(false);
-      },
-      error: function () {
-        toggleSaveButton(false);
-        alert("API call failed. Please check the network tab and the endpoint.");
+        return {
+          code: -1,
+          label: String(rawStatus || 'Unknown'),
+          badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+          dotClass: 'bg-slate-400',
+          chartColor: '#64748b'
+        };
       }
+
+      // State
+      let rawData = [];
+      let filteredData = [];
+      let currentPage = 1;
+      let pageSize = 15;
+      let sortColumn = 'pid';
+      let sortDirection = 'desc';
+      let barChartMode = 'allotment'; // 'allotment' | 'lead'
+      let doughnutMode = 'status'; // 'status' | 'hours'
+      let activeStatusFilter = 'all';
+
+      // Chart Instances
+      let barChartInstance = null;
+      let doughnutChartInstance = null;
+
+      /* ---------------- helpers ---------------- */
+
+      function toggleSaveButton(isLoading) {
+        const btn = $("#saveAllotmentBtn");
+        if (isLoading) {
+          btn.attr("disabled", true);
+          btn.html('<i class="fas fa-circle-notch fa-spin"></i><span>Saving…</span>');
+        } else {
+          btn.attr("disabled", false);
+          btn.html('<i class="fas fa-plus-circle"></i><span>Create Allotment</span>');
+        }
+      }
+
+      function showMessage(msg, error = false) {
+        const container = $("#messageContainer");
+        const styles = error
+          ? 'bg-red-50 text-red-700 border-red-200'
+          : 'bg-amber-50 text-amber-800 border-amber-200';
+        const icon = error ? 'fa-exclamation-circle text-red-500' : 'fa-info-circle text-amber-500';
+        container
+          .removeClass('hidden bg-red-50 text-red-700 border-red-200 bg-amber-50 text-amber-800 border-amber-200')
+          .addClass(styles)
+          .html(`<div class="flex items-center gap-2"><i class="fas ${icon} text-sm"></i><span>${msg}</span></div>
+                 <button type="button" onclick="$('#messageContainer').addClass('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>`);
+      }
+
+      function renderStatusBadge(statusInfo) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusInfo.badgeClass}">
+            <span class="w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}"></span>
+            <span>${statusInfo.label}</span>
+          </span>
+        `;
+      }
+
+      function normalizeAllotment(p, idx) {
+        const totalHours = parseFloat(p.totalHours || 0) || 0;
+        const productionHrs = parseFloat(p.productionHrs || 0) || 0;
+        const qaHrs = parseFloat(p.qaHrs || 0) || 0;
+        const leadName = p.projectLead?.firstName
+          ? `${p.projectLead.firstName}${p.projectLead.lastName ? ' ' + p.projectLead.lastName : ''}`
+          : 'N/A';
+        const statusInfo = resolveStatusInfo(p.Status ?? p.status);
+
+        return {
+          idx: idx + 1,
+          pid: p.pid ?? idx + 1,
+          allotmentName: p.allotmentName || 'Untitled Allotment',
+          leadName,
+          startDate: p.starDate || p.startDate || 'N/A',
+          endDate: p.endDate || 'N/A',
+          totalHours,
+          productionHrs,
+          qaHrs,
+          statusCode: statusInfo.code,
+          statusLabel: statusInfo.label,
+          statusInfo
+        };
+      }
+
+      /* ---------------- stats & charts ---------------- */
+
+      function populateSummary(data) {
+        let totalHours = 0, prodHours = 0, qcHours = 0;
+        const statusCounts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+
+        data.forEach(p => {
+          totalHours += p.totalHours;
+          prodHours += p.productionHrs;
+          qcHours += p.qaHrs;
+          if (statusCounts[p.statusCode] !== undefined) {
+            statusCounts[p.statusCode]++;
+          }
+        });
+
+        const count = data.length;
+        const pctTask = (n) => (count > 0 ? `(${Math.round((n / count) * 100)}%)` : '');
+        const prodPct = totalHours > 0 ? Math.round((prodHours / totalHours) * 100) : 0;
+        const qcPct = totalHours > 0 ? Math.round((qcHours / totalHours) * 100) : 0;
+
+        $("#summaryCount").text(count.toLocaleString());
+        $("#summaryCreated").text(statusCounts[0].toLocaleString());
+        $("#summaryCreatedPct").text(pctTask(statusCounts[0]));
+        $("#summaryInProgress").text(statusCounts[1].toLocaleString());
+        $("#summaryInProgressPct").text(pctTask(statusCounts[1]));
+        $("#summaryFinished").text(statusCounts[2].toLocaleString());
+        $("#summaryFinishedPct").text(pctTask(statusCounts[2]));
+        $("#summaryWithdrawn").text(statusCounts[3].toLocaleString());
+        $("#summaryWithdrawnPct").text(pctTask(statusCounts[3]));
+
+        $("#summaryTotalHours").text(totalHours.toFixed(2));
+        $("#summaryProdHours").text(prodHours.toFixed(2));
+        $("#summaryProdPct").text(`(${prodPct}%)`);
+        $("#summaryQcHours").text(qcHours.toFixed(2));
+        $("#summaryQcPct").text(`(${qcPct}%)`);
+
+        return { totalHours, prodHours, qcHours, prodPct, qcPct, statusCounts };
+      }
+
+      function renderCharts(data, stats) {
+        if (!data.length) {
+          $("#chartsSection").addClass("hidden");
+          return;
+        }
+        $("#chartsSection").removeClass("hidden");
+
+        // 1. Stacked Bar Chart: Production vs QC Hours
+        const barCtx = document.getElementById("hoursBreakdownChart").getContext("2d");
+        if (barChartInstance) barChartInstance.destroy();
+
+        let labels = [], fullLabels = [], prodSeries = [], qcSeries = [];
+
+        if (barChartMode === 'allotment') {
+          $("#barChartTitle").text("Production vs. QC Hours by Allotment (Top 12)");
+          const top = [...data].sort((a, b) => b.totalHours - a.totalHours).slice(0, 12);
+          labels = top.map(p => p.allotmentName.length > 15 ? p.allotmentName.substring(0, 15) + '…' : p.allotmentName);
+          fullLabels = top.map(p => p.allotmentName);
+          prodSeries = top.map(p => p.productionHrs);
+          qcSeries = top.map(p => p.qaHrs);
+        } else {
+          $("#barChartTitle").text("Production vs. QC Hours by Project Lead");
+          const leadMap = {};
+          data.forEach(p => {
+            if (!leadMap[p.leadName]) leadMap[p.leadName] = { prod: 0, qc: 0 };
+            leadMap[p.leadName].prod += p.productionHrs;
+            leadMap[p.leadName].qc += p.qaHrs;
+          });
+          const entries = Object.entries(leadMap).sort((a, b) => (b[1].prod + b[1].qc) - (a[1].prod + a[1].qc));
+          labels = entries.map(e => e[0]);
+          fullLabels = entries.map(e => e[0]);
+          prodSeries = entries.map(e => Number(e[1].prod.toFixed(2)));
+          qcSeries = entries.map(e => Number(e[1].qc.toFixed(2)));
+        }
+
+        barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Production Hrs',
+                data: prodSeries,
+                backgroundColor: '#2563eb',
+                hoverBackgroundColor: '#1d4ed8',
+                maxBarThickness: 28
+              },
+              {
+                label: 'QC Hrs',
+                data: qcSeries,
+                backgroundColor: '#f59e0b',
+                hoverBackgroundColor: '#d97706',
+                maxBarThickness: 28
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#475569',
+                  padding: 8
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 11, weight: '600' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: {
+                  title: (items) => fullLabels[items[0].dataIndex],
+                  afterBody: (items) => {
+                    const idx = items[0].dataIndex;
+                    const tot = (prodSeries[idx] + qcSeries[idx]).toFixed(2);
+                    return `Total: ${tot} hrs`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { font: { family: 'Inter', size: 10 }, color: '#64748b', maxRotation: 25, minRotation: 0 }
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                border: { display: false },
+                grid: { color: '#f1f5f9' },
+                ticks: { font: { family: 'IBM Plex Mono', size: 10 }, color: '#64748b' }
+              }
+            }
+          }
+        });
+
+        // 2. Doughnut Chart: Status (0-3) vs Hours Split
+        const doughnutCtx = document.getElementById("allocationDoughnutChart").getContext("2d");
+        if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+        let dLabels = [], dData = [], dColors = [];
+        if (doughnutMode === 'status') {
+          $("#doughnutTitle").text("Allotment Status Split");
+          $("#doughnutCenterMain").text(`${data.length}`);
+          $("#doughnutCenterSub").text("Allotments");
+          const codes = [0, 1, 2, 3];
+          dLabels = codes.map(c => ALLOTMENT_STATUS_MAP[c].label);
+          dData = codes.map(c => stats.statusCounts[c]);
+          dColors = codes.map(c => ALLOTMENT_STATUS_MAP[c].chartColor);
+        } else {
+          $("#doughnutTitle").text("Hours Allocation Split");
+          $("#doughnutCenterMain").text(`${stats.prodPct}%`);
+          $("#doughnutCenterSub").text("Prod Share");
+          dLabels = ['Production Hrs', 'QC Hrs'];
+          dData = [Number(stats.prodHours.toFixed(2)), Number(stats.qcHours.toFixed(2))];
+          dColors = ['#2563eb', '#f59e0b'];
+        }
+
+        doughnutChartInstance = new Chart(doughnutCtx, {
+          type: 'doughnut',
+          data: {
+            labels: dLabels,
+            datasets: [{
+              data: dData,
+              backgroundColor: dColors,
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  padding: 8,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6
+              }
+            }
+          }
+        });
+      }
+
+      /* ---------------- filter sync & table render ---------------- */
+
+      function setStatusFilter(filterVal) {
+        activeStatusFilter = String(filterVal);
+
+        // Sync KPI Cards active ring
+        $(".kpi-filter-card").removeClass("ring-2 ring-indigo-500/40 bg-indigo-50/40");
+        $(`.kpi-filter-card[data-status-filter="${activeStatusFilter}"]`).addClass("ring-2 ring-indigo-500/40 bg-indigo-50/40");
+
+        // Sync Toolbar Pills
+        $(".status-pill-btn").removeClass("bg-white text-indigo-700 shadow-2xs").addClass("text-slate-600");
+        $(`.status-pill-btn[data-status-filter="${activeStatusFilter}"]`).addClass("bg-white text-indigo-700 shadow-2xs").removeClass("text-slate-600");
+
+        currentPage = 1;
+        applyFiltersAndSort();
+      }
+
+      function applyFiltersAndSort() {
+        const query = $("#tableSearchInput").val().trim().toLowerCase();
+        $("#clearSearchBtn").toggleClass("hidden", query.length === 0);
+
+        filteredData = rawData.filter(item => {
+          const matchesStatus = activeStatusFilter === 'all' || String(item.statusCode) === activeStatusFilter;
+          const matchesQuery = !query ||
+            item.allotmentName.toLowerCase().includes(query) ||
+            item.leadName.toLowerCase().includes(query) ||
+            item.statusLabel.toLowerCase().includes(query) ||
+            String(item.startDate).toLowerCase().includes(query) ||
+            String(item.endDate).toLowerCase().includes(query);
+          return matchesStatus && matchesQuery;
+        });
+
+        filteredData.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        $("#tableCountBadge").text(`${filteredData.length} ${filteredData.length === 1 ? 'item' : 'items'}`);
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const tbody = $("#root");
+        const totalRows = filteredData.length;
+
+        if (totalRows === 0) {
+          tbody.html(`
+            <tr>
+              <td colspan="10" class="py-6 text-center text-slate-400">
+                <i class="fas fa-folder-open text-lg mb-1 block text-slate-300"></i>
+                No matching allotments found.
+              </td>
+            </tr>
+          `);
+          $("#paginationInfo").text("Showing 0 to 0 of 0 entries");
+          $("#paginationControls").empty();
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 100 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredData.slice(startIdx, endIdx);
+
+        let html = "";
+        pageSlice.forEach((p, i) => {
+          const rowNum = startIdx + i + 1;
+          const prodPct = p.totalHours > 0 ? Math.min(100, Math.round((p.productionHrs / p.totalHours) * 100)) : 0;
+          const qcPct = p.totalHours > 0 ? Math.max(0, 100 - prodPct) : 0;
+          const initials = p.leadName !== 'N/A'
+            ? p.leadName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+            : '--';
+          const isWithdrawn = p.statusCode === 3;
+
+          html += `
+            <tr class="hover:bg-indigo-50/40 transition-colors ${isWithdrawn ? 'bg-rose-50/20 opacity-85' : ''}">
+              <td class="py-1.5 px-2.5 text-center font-mono text-[11px] text-slate-400">${rowNum}</td>
+              <td class="py-1.5 px-2.5 font-medium">
+                <a href="/admin/project/viewProject?id=${encodeURIComponent(p.pid)}" class="text-[#1e3a8a] hover:text-amber-600 font-semibold inline-flex items-center gap-1.5 transition-colors ${isWithdrawn ? 'line-through decoration-rose-400/70 text-slate-500' : ''}">
+                  <span class="w-1.5 h-1.5 rounded-full ${p.statusInfo.dotClass} shrink-0"></span>
+                  <span class="truncate max-w-[200px] sm:max-w-xs" title="${p.allotmentName}">${p.allotmentName}</span>
+                </a>
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-700">
+                <div class="inline-flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 text-[9px] font-bold inline-flex items-center justify-center shrink-0">${initials}</span>
+                  <span class="truncate max-w-[120px]">${p.leadName}</span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-500 hidden sm:table-cell">${p.startDate}</td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-500 hidden sm:table-cell">${p.endDate}</td>
+              <td class="py-1.5 px-2.5 text-right font-mono font-bold text-slate-900">${p.totalHours.toFixed(2)}</td>
+              <td class="py-1.5 px-2.5 text-right font-mono text-blue-700">${p.productionHrs.toFixed(2)}</td>
+              <td class="py-1.5 px-2.5 text-right font-mono text-amber-600">${p.qaHrs.toFixed(2)}</td>
+              <td class="py-1.5 px-2.5 hidden lg:table-cell">
+                <div class="flex items-center gap-1.5" title="Prod: ${prodPct}% | QC: ${qcPct}%">
+                  <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+                    <div class="bg-blue-600 h-full" style="width: ${prodPct}%"></div>
+                    <div class="bg-amber-500 h-full" style="width: ${qcPct}%"></div>
+                  </div>
+                  <span class="text-[10px] font-mono text-slate-400 w-7 text-right">${prodPct}%</span>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5 text-center">${renderStatusBadge(p.statusInfo)}</td>
+            </tr>
+          `;
+        });
+
+        tbody.html(html);
+        $("#paginationInfo").text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $("#paginationControls");
+        container.empty();
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-[#1e3a8a] border-[#1e3a8a] text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      /* ---------------- fetch + render allotments ---------------- */
+
+      function loadAllotments() {
+        $.get("/admin/project/getProjectAllotments",
+          { projectId: projectId },
+          function (res) {
+            const finalData = res && res.data ? res.data : res;
+            if (!Array.isArray(finalData)) {
+              showMessage("Unexpected data format.", true);
+              return;
+            }
+            rawData = finalData.map(normalizeAllotment);
+            const stats = populateSummary(rawData);
+            renderCharts(rawData, stats);
+            applyFiltersAndSort();
+          },
+          "json"
+        ).fail(function () {
+          // Graceful standalone preview data mapped with status codes 0, 1, 2, 3
+          const fallbackData = [
+            { pid: 101, allotmentName: 'Phase 1 LiDAR Point Cloud Classification', projectLead: { firstName: 'Rohan', lastName: 'Sharma' }, starDate: '02-Nov-2026', endDate: '18-Nov-2026', totalHours: 120, productionHrs: 96, qaHrs: 24, Status: 2 },
+            { pid: 102, allotmentName: '3D City Mesh Topology Cleanup', projectLead: { firstName: 'Priya', lastName: 'Nair' }, starDate: '10-Nov-2026', endDate: '28-Nov-2026', totalHours: 85, productionHrs: 68, qaHrs: 17, Status: 1 },
+            { pid: 103, allotmentName: 'Utility Corridor GIS Vectorization', projectLead: { firstName: 'Karthik', lastName: 'Rao' }, starDate: '15-Nov-2026', endDate: '05-Dec-2026', totalHours: 150, productionHrs: 127.5, qaHrs: 22.5, Status: 1 },
+            { pid: 104, allotmentName: 'Photogrammetry Orthomosaic Tile QA', projectLead: { firstName: 'Sneha', lastName: 'Menon' }, starDate: '01-Nov-2026', endDate: '12-Nov-2026', totalHours: 60, productionHrs: 45, qaHrs: 15, Status: 2 },
+            { pid: 105, allotmentName: 'BIM Asset Attribute Schema Mapping', projectLead: { firstName: 'Arjun', lastName: 'Das' }, starDate: '22-Nov-2026', endDate: '10-Dec-2026', totalHours: 95, productionHrs: 76, qaHrs: 19, Status: 0 },
+            { pid: 106, allotmentName: 'Legacy CAD Contour Conversion', projectLead: { firstName: 'Meera', lastName: 'Iyer' }, starDate: '05-Nov-2026', endDate: '15-Nov-2026', totalHours: 40, productionHrs: 32, qaHrs: 8, Status: 3 }
+          ];
+          $("#mockDataBadge").removeClass("hidden");
+          rawData = fallbackData.map(normalizeAllotment);
+          const stats = populateSummary(rawData);
+          renderCharts(rawData, stats);
+          applyFiltersAndSort();
+        });
+      }
+
+      loadAllotments();
+
+      /* ---------------- UI interactions ---------------- */
+
+      $(document).on("click", ".kpi-filter-card, .status-pill-btn", function () {
+        setStatusFilter($(this).data("status-filter"));
+      });
+
+      $("#tableSearchInput").on("input", function () {
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $("#clearSearchBtn").on("click", function () {
+        $("#tableSearchInput").val("");
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $("#pageSizeSelect").on("change", function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
+
+      $(document).on("click", ".page-btn:not([disabled])", function () {
+        currentPage = Number($(this).data("page"));
+        renderTablePage();
+      });
+
+      $("th.sortable").on("click", function () {
+        const col = $(this).data("sort");
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = ['allotmentName', 'leadName'].includes(col) ? 'asc' : 'desc';
+        }
+        $("th.sortable .sort-icon").removeClass("fa-sort-up fa-sort-down text-indigo-600").addClass("fa-sort text-slate-400");
+        $(this).find(".sort-icon").removeClass("fa-sort text-slate-400").addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+        applyFiltersAndSort();
+      });
+
+      $(".chart-mode-btn").on("click", function () {
+        $(".chart-mode-btn").removeClass("bg-white text-indigo-700 shadow-xs").addClass("text-slate-600");
+        $(this).addClass("bg-white text-indigo-700 shadow-xs").removeClass("text-slate-600");
+        barChartMode = $(this).data("mode");
+        const stats = populateSummary(rawData);
+        renderCharts(rawData, stats);
+      });
+
+      $(".doughnut-mode-btn").on("click", function () {
+        $(".doughnut-mode-btn").removeClass("bg-white text-indigo-700 shadow-2xs").addClass("text-slate-600");
+        $(this).addClass("bg-white text-indigo-700 shadow-2xs").removeClass("text-slate-600");
+        doughnutMode = $(this).data("dmode");
+        const stats = populateSummary(rawData);
+        renderCharts(rawData, stats);
+      });
+
+      // CSV Export
+      $("#exportCsvBtn").on("click", function () {
+        if (!filteredData.length) return;
+        const headers = ['Allotment Name', 'Project Lead', 'Start Date', 'Deadline', 'Total Hours', 'Prod Hours', 'QC Hours', 'Status Code', 'Status'];
+        const rows = [headers.join(',')];
+        filteredData.forEach(r => {
+          rows.push([
+            `"${r.allotmentName.replace(/"/g, '""')}"`,
+            `"${r.leadName.replace(/"/g, '""')}"`,
+            `"${r.startDate}"`,
+            `"${r.endDate}"`,
+            r.totalHours.toFixed(2),
+            r.productionHrs.toFixed(2),
+            r.qaHrs.toFixed(2),
+            r.statusCode,
+            `"${r.statusLabel}"`
+          ].join(','));
+        });
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${projectName.replace(/\s+/g, '_')}_Allotments_${dateToday.replace(/\s+/g, '-')}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      /* ---------------- lead / category lookup ---------------- */
+
+      function fetchProjectLeads(selectElement) {
+        $.get("/admin/getprojectrequired",
+          function (data) {
+            const select = selectElement;
+            select.empty().append(`<option value="">-- Select Lead --</option>`);
+            if (Array.isArray(data[0])) {
+              data[0].forEach(l => select.append(`<option value="${l.eid}">${l.name}</option>`));
+            }
+
+            const category = $("#departmentSelect");
+            category.empty().append(`<option value="">-- Select Category --</option>`);
+            if (data[1] && Array.isArray(data[1])) {
+              data[1].forEach(c => category.append(`<option value="${c.categoryId}">${c.categoryName}</option>`));
+            }
+          },
+          "json"
+        );
+      }
+
+      /* ---------------- hours calculation ---------------- */
+
+      function updateSplitVisual(prodHours, qcHours) {
+        const total = prodHours + qcHours;
+        const prodPct = total > 0 ? (prodHours / total) * 100 : 0;
+        const qcPct = total > 0 ? (qcHours / total) * 100 : 0;
+        $("#splitBarProd").css("width", prodPct + "%");
+        $("#splitBarQc").css("width", qcPct + "%");
+        $("#legendProdHours").text(prodHours.toFixed(2));
+        $("#legendQcHours").text(qcHours.toFixed(2));
+      }
+
+      function calculateHours() {
+        if ($("#isHoursFixedCheckbox").is(":checked")) {
+          const prodHours = parseFloat($("#productionHoursDisplay").val()) || 0;
+          const qcHours = parseFloat($("#qcHoursDisplay").val()) || 0;
+          updateSplitVisual(prodHours, qcHours);
+          return;
+        }
+
+        const totalHours = parseFloat($("#totalHoursInput").val()) || 0;
+        const qcPercent = parseFloat($("#qcPercentageInput").val()) || 0;
+
+        if (totalHours <= 0 || qcPercent < 0 || qcPercent > 100) {
+          $("#qcHoursDisplay").val("0.00");
+          $("#productionHoursDisplay").val("0.00");
+          updateSplitVisual(0, 0);
+          return;
+        }
+
+        const qcHours = parseFloat((totalHours * (qcPercent / 100)).toFixed(2));
+        const productionHours = parseFloat((totalHours - qcHours).toFixed(2));
+
+        $("#qcHoursDisplay").val(qcHours.toFixed(2));
+        $("#productionHoursDisplay").val(productionHours.toFixed(2));
+        updateSplitVisual(productionHours, qcHours);
+      }
+
+      function setFixedHoursMode(isFixed) {
+        $("#qcPercentageInput").prop("disabled", isFixed);
+        $("#qcPercentageGroup").css("opacity", isFixed ? 0.5 : 1);
+        $("#qcHoursDisplay, #productionHoursDisplay").prop("readonly", !isFixed);
+        calculateHours();
+      }
+
+      $("#totalHoursInput, #qcPercentageInput").on("input", calculateHours);
+      $("#qcHoursDisplay, #productionHoursDisplay").on("input", function () {
+        if ($("#isHoursFixedCheckbox").is(":checked")) calculateHours();
+      });
+      $("#isHoursFixedCheckbox").on("change", function () {
+        setFixedHoursMode($(this).is(":checked"));
+      });
+
+      /* ---------------- modal controls ---------------- */
+
+      function openModal() {
+        $("#createAllotmentModal").removeClass("hidden").addClass("flex");
+      }
+      function closeModal() {
+        $("#createAllotmentModal").addClass("hidden").removeClass("flex");
+      }
+
+      $(".close-modal-btn").on("click", closeModal);
+      $("#createAllotmentModal").on("click", function (e) {
+        if (e.target === this) closeModal();
+      });
+
+      $("#openCreateAllotmentBtn").click(function () {
+        $("#allotmentNameInput").val("");
+        $("#startDateInput").val("");
+        $("#deadlineInput").val("");
+        $("#totalHoursInput").val("");
+        $("#qcPercentageInput").val("").prop("disabled", false);
+        $("#filePathInput").val("");
+        $("#qcHoursDisplay").val("0.00").prop("readonly", true);
+        $("#productionHoursDisplay").val("0.00").prop("readonly", true);
+        $("#isHoursFixedCheckbox").prop("checked", false);
+        $("#qcPercentageGroup").css("opacity", 1);
+        updateSplitVisual(0, 0);
+
+        fetchProjectLeads($("#allotmentLeadSelect"));
+        toggleSaveButton(false);
+        openModal();
+      });
+
+      /* ---------------- save allotment ---------------- */
+
+      $("#saveAllotmentBtn").click(function () {
+        const allotmentName = $("#allotmentNameInput").val().trim();
+        const startDate = $("#startDateInput").val();
+        const deadline = $("#deadlineInput").val();
+        const totalHours = parseFloat($("#totalHoursInput").val());
+        const qcPercent = parseFloat($("#qcPercentageInput").val());
+        const projectLead = $("#allotmentLeadSelect").val();
+        const filePath = $("#filePathInput").val().trim();
+        const qcHours = $("#qcHoursDisplay").val();
+        const productionHours = $("#productionHoursDisplay").val();
+        const department = $("#departmentSelect").val();
+        const isHoursFixed = $("#isHoursFixedCheckbox").is(":checked") ? 1 : 0;
+
+        const hoursLookOk = isHoursFixed
+          ? (parseFloat(productionHours) >= 0 && parseFloat(qcHours) >= 0)
+          : (!isNaN(qcPercent) && qcPercent >= 0 && qcPercent <= 100);
+
+        if (!allotmentName || !startDate || !deadline || isNaN(totalHours) || totalHours <= 0 || !projectLead || !hoursLookOk) {
+          alert("Please ensure Allotment Name, Start Date, Deadline, Total Hours (>0), Project Lead, and hours breakdown are filled out correctly.");
+          return;
+        }
+
+        toggleSaveButton(true);
+
+        const allotmentData = {
+          rootid: projectId,
+          allotmentName: allotmentName,
+          startDate: startDate,
+          deadline: deadline,
+          totalHours: totalHours,
+          qcHours: qcHours,
+          productionHours: productionHours,
+          projectLeadId: projectLead,
+          filePath: filePath,
+          category: department,
+          isHoursFixed: isHoursFixed
+        };
+
+        const csrfToken = document.getElementById("csrfToken")?.value || "";
+        $.ajax({
+          url: '/admin/project/createAllotment',
+          type: 'POST',
+          data: allotmentData,
+          headers: { 'X-CSRF-TOKEN': csrfToken },
+          success: function (res) {
+            if (res && res.status === "success") {
+              closeModal();
+              loadAllotments();
+            } else {
+              alert(`Error creating allotment: ${res ? res.message : 'Unknown error'}`);
+            }
+            toggleSaveButton(false);
+          },
+          error: function () {
+            toggleSaveButton(false);
+            alert("API call failed. Please check the network tab and the endpoint.");
+          }
+        });
+      });
+
     });
-  });
-
-});
-</script>
-
+  </script>
 </body>
 </html>

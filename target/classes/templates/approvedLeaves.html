@@ -1,297 +1,1075 @@
-
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />   
-    <title>Active Employees</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <title>Approved Leaves | Admin Portal</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css"/>
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <style>
-        :root {
-            --primary-blue: #0d6efd;
-            --table-header-bg: #e9ecef;
-            --table-border: #dee2e6;
-            --text-main: #334155;
-        }
+  <!-- Tailwind CSS, Chart.js & jQuery -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-        body {
-            background-color: #f1f4f9;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--text-main);
-        }
-
-        .main-content { padding: 1.5rem; }
-
-        .report-card {
-            background: white;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .section-label {
-            padding: 1rem 1.25rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #fff;
-        }
-
-        #leaveTable { width: 100% !important; border-collapse: collapse; }
-
-        #leaveTable thead th {
-            background-color: var(--table-header-bg);
-            color: #475569;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            padding: 10px 15px;
-            border-bottom: 1px solid var(--table-border);
-            border-top: 1px solid var(--table-border);
-        }
-
-        #leaveTable tbody td {
-            padding: 12px 15px;
-            font-size: 13px;
-            border-bottom: 1px solid #edf2f7;
-            vertical-align: middle;
-        }
-
-        .emp-link {
-            color: #2563eb;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .emp-link:hover { text-decoration: underline; }
-
-        .dt-buttons { margin-bottom: 15px; }
-        .btn-excel {
-            background-color: #198754 !important;
-            border-color: #198754 !important;
-            color: white !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-        }
-        .group:hover .group-hover\:visible {
-            visibility: visible !important;
-            opacity: 1 !important;
-            z-index: 9999 !important;
-            display: block !important;
-        }
-
-        /* Fix for potential Tailwind Preflight conflict */
-        .invisible {
-            display: none;
-        }
-        .group:hover .invisible {
-            display: block;
-        }
-    </style>
-</head>
-<body>    <head th:replace="includes/header :: header"></head>
-
-<div class="main-content">
-    <div class="report-card">
-        <div class="section-label">
-            <i class="fa-solid fa-table-list"></i> Active Employees Report As On <p th:text="${#dates.format(#dates.createNow(), 'DD-MMM-YYYY')}"></p>
-
-        </div>
-
-        <div class="p-4 pt-0">
-            <table id="leaveTable" class="table">
-                <thead>
-                <tr>
-                    <th width="40">Sl No</th>
-                    <th>Employee Name</th>
-                    <th>Employee Id</th>
-                    <th>Leave Type</th>
-                     <th>Reason</th>
-                    <th>From </th>
-                    <th>To</th>
-                    <th>Applied On</th>
-                    <th>Applied By</th>
-                    <th>No Of Days</th>
-                    <th>Approved By </th>
-                    <th class="text-center">Approved On</th>
-                    <th>Actions</th>
-
-
-                </tr>
-                </thead>
-                <tbody id="dataRoot">
-                <tr>
-                    <td colspan="13" class="text-center py-10 text-slate-400">
-                        <div class="spinner-border spinner-border-sm me-2"></div> Fetching data...
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<div th:replace="~{fragments/messenger :: chat-widget}"></div>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
-
-<script>
-    $(document).ready(function () {
-        const today = new Date();
-        const options = { day: '2-digit', month: 'short', year: 'numeric' };
-        const formattedDate = today.toLocaleDateString('en-GB', options);
-
-        // 1. Fetch Data
-        $.get("/admin/getApprovedLeaves", function (res) {
-            console.log(res);
-            let rows = res.data ? res.data : res;
-            let html = "";
-
-            if(rows.length > 0) {
-                rows.forEach((r, index) => {
-                    html += `
-                    <tr>
-                        <td class="text-slate-400">${index + 1}</td>
-                        <td><a href="#" class="emp-link">${r.employeeBasicInfo.firstName+' '+r.employeeBasicInfo.lastName}</a></td>
-                        <td class="text-slate-600">${r.employeeBasicInfo.eid}</td>
-                        <td class="text-slate-600">${r.leaveType}</td>
-                        <td class="text-slate-600">${r.description}</td>
-                        <td class="text-slate-500">${r.fromDate+'('+r.fromsession+')'}</td>
-                        <td class="text-slate-500">${r.toDate+'('+r.toSession+')'}</td>
-                        <td class="text-center fw-bold text-dark">${r.noofDays}</td>
-                        <td class="text-slate-500">${r.postingdate}</td>
-                        <td class="text-slate-600 font-medium">${r.appliedby.firstName+' '+r.appliedby.lastName}</td>
-                        <td class="text-slate-600 font-medium">${r.approvedby.firstName+' '+r.approvedby.lastName}</td>
-                        <td class="text-slate-600 font-medium">${r.adminRemarkDate}</td>
-                         <td>
-                            <button type="button" 
-                                    class="btn-cancel-leave text-white bg-red-600 hover:bg-red-700 font-medium rounded-full text-xs px-3 py-1.5 transition-colors" 
-                                    data-id="${r.id}" 
-                                    data-name="${r.employeeBasicInfo.firstName+' '+r.employeeBasicInfo.lastName}">
-                                Cancel Leave
-                            </button>
-                        </td>
-                    </tr>`;
-                });
-            } else {
-                html = '<tr><td colspan="13" class="text-center py-10">No approved records found.</td></tr>';
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#1e3a8a',
             }
-
-            $("#dataRoot").html(html);
-
-            // 2. Initialize DataTable
-            $('#leaveTable').DataTable({
-                pageLength: 20,
-                layout: {
-                    topStart: {
-                        buttons: [
-                            {
-                                extend: 'excelHtml5',
-                                text: '<i class="fa-solid fa-file-excel me-1"></i> Export Excel',
-                                className: 'btn-excel',
-                                title: `Active Employees Report  As On ${formattedDate}`,
-                                exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] }
-                            }
-                        ]
-                    }
-                }
-            });
-        }, "json").fail(function() {
-            $("#dataRoot").html('<tr><td colspan="13" class="text-center py-10 text-danger">Failed to load data.</td></tr>');
-        });
-
-        // 3. Handle Cancel Click (Event Delegation)
-        $(document).on('click', '.btn-cancel-leave', function() {
-            const leaveId = $(this).data('id');
-            const empName = $(this).data('name');
-            const $btn = $(this);
-            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-
-
-            const swalWithBootstrapButtons = Swal.mixin({
-                customClass: {
-                    confirmButton: "btn btn-success",
-                    cancelButton: "btn btn-danger mr-4"
-                },
-                buttonsStyling: false
-            });
-            swalWithBootstrapButtons.fire({
-                title: "Warning!",
-                text: `Are You Sure To Cancel ${empName}'s Leave Application`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $btn.prop('disabled', true).text('Processing...');
-
- $.ajax({
-    url: "/admin/cancelLeave",
-    type: "POST", // Specify the method (likely POST for a cancellation)
-    data: { leaveId: leaveId },
-    headers: { 'X-CSRF-TOKEN': csrfToken },
-    dataType: "json",
-    success: function(response) {
-        console.log(response);
-        if (response.status === 'success') {
-            Swal.fire({
-                title: "Cancelled",
-                text: `${empName}'s Leave Application Cancelled`,
-                icon: "success"
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            Swal.fire({
-                title: "Failed", // Fixed typo "Fialed"
-                text: `Failed To Cancel ${empName}'s Leave Application`,
-                icon: "error"
-            }).then(() => {
-                location.reload();
-            });
+          }
         }
-    },
-    error: function(xhr, status, error) {
-        alert("Network error. Please try again.");
-        $btn.prop('disabled', false).text('Cancel Leave');
+      }
     }
-});
+  </script>
 
-                } else if (
-                    result.dismiss === Swal.DismissReason.cancel
-                ) {
-                    swalWithBootstrapButtons.fire({
-                        title: "Cancelled",
-                        text: "Leave Cancel Withdrawn",
-                        icon: "error"
-                    });
-                }
-            });
+  <style>
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header-font {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:hover {
+      background-color: #e2e8f0;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: modalIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-toast {
+      animation: toastIn 0.2s ease-out;
+    }
+  </style>
+</head>
+<head th:replace="includes/header :: header"></head>
 
+<body >
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3 sm:px-0"></div>
+
+  <!-- Main Compact Container -->
+  <div class="w-full max-w-[99%] mx-auto px-3 sm:px-4 py-3 flex-1">
+
+    <!-- Main Card Wrapper -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
+
+      <!-- Compact Indigo Header Banner -->
+      <div class="bg-gradient-to-r from-[#1e3a8a] via-[#254b9e] to-[#4f46e5] px-4 py-2.5 text-white flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <button onclick="history.back()" title="Go Back" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors shrink-0">
+            <i class="fas fa-arrow-left text-xs"></i>
+          </button>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h1 class="header-font text-sm sm:text-base font-bold truncate">Approved Leaves Register</h1>
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/15 border border-white/20 text-[11px] font-medium text-indigo-100">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span th:text="${#dates.format(#dates.createNow(), 'dd-MMM-yyyy')}" id="reportDateLabel">--</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="mockDataBadge" class="hidden inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/20 text-amber-200 border border-amber-300/30">
+            <i class="fas fa-flask text-[10px]"></i> Preview Data
+          </span>
+          <button id="toggleChartsBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors" title="Toggle Analytics">
+            <i class="fas fa-chart-pie text-indigo-200 text-[11px]"></i>
+            <span class="hidden sm:inline">Analytics</span>
+          </button>
+          <button id="refreshBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors" title="Reload Data">
+            <i class="fas fa-rotate-right text-[11px]"></i>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+          <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-xs font-semibold text-white shadow-xs transition-colors">
+            <i class="fas fa-file-excel text-[11px]"></i>
+            <span>Export Excel / CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Body Content -->
+      <div class="p-3 sm:p-4 space-y-3">
+
+        <!-- 6-Card High-Density KPI Strip (Click Type Cards to Filter) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <!-- Total Approved -->
+          <button type="button" data-type-filter="all" class="kpi-type-card text-left bg-slate-50/80 hover:bg-indigo-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-indigo-600 ring-2 ring-indigo-500/40 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Approved Leaves</p>
+              <h3 id="kpiTotalCount" class="text-base font-bold font-mono text-slate-900 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-indigo-100/80 text-indigo-700 flex items-center justify-center shrink-0">
+              <i class="fas fa-check-double text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Total Approved Days -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-emerald-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Days</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <h3 id="kpiTotalDays" class="text-base font-bold font-mono text-emerald-600 leading-tight">0</h3>
+                <span class="text-[10px] text-slate-400">days</span>
+              </div>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+              <i class="far fa-calendar-check text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Casual Leave (CL) -->
+          <button type="button" data-type-filter="CL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-sky-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-sky-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Casual (CL)</p>
+              <h3 id="kpiClCount" class="text-base font-bold font-mono text-sky-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-umbrella-beach text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Sick Leave (SL) -->
+          <button type="button" data-type-filter="SL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-rose-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-rose-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sick (SL)</p>
+              <h3 id="kpiSlCount" class="text-base font-bold font-mono text-rose-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-notes-medical text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Earned Leave (EL) -->
+          <button type="button" data-type-filter="EL" class="kpi-type-card text-left bg-slate-50/80 hover:bg-teal-50/50 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-teal-500 flex items-center justify-between transition-all">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Earned (EL)</p>
+              <h3 id="kpiElCount" class="text-base font-bold font-mono text-teal-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-teal-100/80 text-teal-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-plane-departure text-xs"></i>
+            </div>
+          </button>
+
+          <!-- Unique Employees -->
+          <div class="bg-slate-50/80 rounded-lg px-2.5 py-2 border border-slate-200/90 border-l-4 border-l-violet-500 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Employees</p>
+              <h3 id="kpiUniqueEmployees" class="text-base font-bold font-mono text-violet-600 leading-tight mt-0.5">0</h3>
+            </div>
+            <div class="w-7 h-7 rounded-md bg-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-users text-xs"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Visual Insights Row -->
+        <div id="analyticsSection" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- Approved Days by Employee / Approver -->
+          <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-bar text-indigo-600"></i>
+                <span id="barChartTitle">Approved Leave Days by Employee (Top 10)</span>
+              </h2>
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[10px] font-medium">
+                <button type="button" data-bmode="employee" class="bar-mode-btn px-2 py-0.5 rounded bg-white text-indigo-700 shadow-2xs">By Employee</button>
+                <button type="button" data-bmode="approver" class="bar-mode-btn px-2 py-0.5 rounded text-slate-600">By Approver</button>
+              </div>
+            </div>
+            <div class="relative flex-1 h-36 w-full">
+              <canvas id="approvedDaysChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Leave Type Distribution Doughnut -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-1.5">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i class="fas fa-chart-pie text-indigo-600"></i>
+                Leave Type Distribution
+              </h2>
+              <span class="text-[10px] text-slate-400">By days</span>
+            </div>
+            <div class="relative flex-1 h-36 w-full flex items-center justify-center">
+              <canvas id="leaveTypeChart"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                <span id="doughnutCenterDays" class="text-base font-bold font-mono text-slate-800 leading-none">0</span>
+                <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Total Days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approved Leaves Data Table Panel -->
+        <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <!-- Slim Toolbar -->
+          <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/70 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mr-1">
+                <i class="fas fa-table-list text-indigo-600"></i>
+                Approved Leave Records
+              </h2>
+
+              <!-- Leave Type Quick Filter Pills -->
+              <div id="typeFilterGroup" class="inline-flex flex-wrap items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg text-[11px] font-medium">
+                <button type="button" data-type-filter="all" class="type-pill-btn px-2 py-0.5 rounded-md bg-white text-indigo-700 shadow-2xs transition-all">All</button>
+                <button type="button" data-type-filter="CL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Casual</button>
+                <button type="button" data-type-filter="SL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Sick</button>
+                <button type="button" data-type-filter="EL" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Earned</button>
+                <button type="button" data-type-filter="RH" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">RH</button>
+                <button type="button" data-type-filter="CO" class="type-pill-btn px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 transition-all">Comp-Off</button>
+              </div>
+
+              <span id="filteredBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">0 records</span>
+            </div>
+
+            <!-- Month Filter, Search & Rows Per Page -->
+            <div class="flex flex-wrap items-center gap-2">
+              <select id="monthFilterSelect" class="bg-white border border-slate-300 rounded-md px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                <option value="all">All Months</option>
+              </select>
+
+              <div class="relative flex-1 sm:w-56">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
+                <input id="tableSearchInput" type="text" placeholder="Search employee, EID, approver..." class="w-full pl-7 pr-6 py-1 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" />
+                <button id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px]">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 text-[11px] text-slate-600">
+                <span>Rows:</span>
+                <select id="pageSizeSelect" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:border-indigo-500">
+                  <option value="15">15</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ultra-Compact Table -->
+          <div class="overflow-x-auto">
+            <table id="leaveTable" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/90 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-1.5 px-2 w-9 text-center">#</th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="empName">
+                    <div class="flex items-center gap-1">
+                      <span>Employee</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="leaveType">
+                    <div class="flex items-center gap-1">
+                      <span>Leave Type</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 hidden xl:table-cell">Reason</th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="fromDate">
+                    <div class="flex items-center gap-1">
+                      <span>From</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable" data-sort="toDate">
+                    <div class="flex items-center gap-1">
+                      <span>To</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right sortable" data-sort="noofDays">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Days</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden lg:table-cell" data-sort="postingdate">
+                    <div class="flex items-center gap-1">
+                      <span>Applied On</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden xl:table-cell" data-sort="appliedByName">
+                    <div class="flex items-center gap-1">
+                      <span>Applied By</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 sortable hidden md:table-cell" data-sort="approvedByName">
+                    <div class="flex items-center gap-1">
+                      <span>Approved By</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-center sortable hidden lg:table-cell" data-sort="adminRemarkDate">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Approved On</span>
+                      <i class="fas fa-sort text-slate-400 sort-icon text-[9px]"></i>
+                    </div>
+                  </th>
+                  <th class="py-1.5 px-2.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dataRoot" class="divide-y divide-slate-100 text-xs">
+                <tr class="animate-pulse">
+                  <td colspan="12" class="py-6 text-center text-slate-400 text-xs">
+                    <i class="fas fa-circle-notch fa-spin mr-1.5 text-indigo-600"></i> Fetching approved leaves...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Slim Pagination Footer -->
+          <div class="px-3 py-1.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
+            <div id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <div id="paginationControls" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Tailwind Cancel Leave Confirmation Modal (Replaces SweetAlert2) -->
+  <div id="cancelLeaveModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-modal">
+      <!-- Header -->
+      <div class="bg-rose-600 px-4 py-3 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
+            <i class="fas fa-triangle-exclamation text-xs"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold leading-tight">Cancel Approved Leave</h3>
+            <p class="text-[11px] text-rose-100">This will revoke the approved leave entry</p>
+          </div>
+        </div>
+        <button type="button" class="close-cancel-modal w-6 h-6 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-4 space-y-3 text-xs">
+        <p class="text-slate-600 leading-relaxed">
+          Are you sure you want to cancel <strong id="cancelModalEmpName" class="text-slate-900">--</strong>'s approved leave application?
+        </p>
+
+        <div class="bg-slate-50 border border-slate-200/90 rounded-lg p-2.5 flex items-center justify-between gap-2">
+          <div>
+            <p id="cancelModalDates" class="font-semibold text-slate-800">--</p>
+            <p id="cancelModalReason" class="text-[11px] text-slate-500 mt-0.5 truncate max-w-[240px]">--</p>
+          </div>
+          <span id="cancelModalBadge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">--</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button type="button" class="close-cancel-modal px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors">
+          Keep Approved
+        </button>
+        <button type="button" id="confirmCancelLeaveBtn" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition-colors inline-flex items-center gap-1.5">
+          <i class="fas fa-ban"></i>
+          <span>Yes, Cancel Leave</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preserved Thymeleaf Chat Fragment -->
+  <div th:replace="~{fragments/messenger :: chat-widget}"></div>
+
+  <script>
+    $(document).ready(function () {
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).replace(/ /g, '-');
+
+      if ($('#reportDateLabel').text().trim() === '--' || $('#reportDateLabel').text().trim() === '') {
+        $('#reportDateLabel').text(formattedDate);
+      }
+
+      // State
+      let rawRecords = [];
+      let filteredRecords = [];
+      let currentPage = 1;
+      let pageSize = 20;
+      let sortColumn = 'id';
+      let sortDirection = 'desc';
+      let activeTypeFilter = 'all';
+      let activeMonthFilter = 'all';
+      let barMode = 'employee'; // 'employee' | 'approver'
+
+      // Chart Instances
+      let approvedDaysChart = null;
+      let leaveTypeChart = null;
+
+      // Cancel Modal State
+      let pendingCancelRecord = null;
+
+      /* ---------------- Toast Notification ---------------- */
+      function showToast(title, message = '', type = 'success') {
+        const cfg = {
+          success: { border: 'border-emerald-200', iconBg: 'bg-emerald-100 text-emerald-600', icon: 'fa-check-circle' },
+          error: { border: 'border-rose-200', iconBg: 'bg-rose-100 text-rose-600', icon: 'fa-exclamation-circle' },
+          info: { border: 'border-indigo-200', iconBg: 'bg-indigo-100 text-indigo-600', icon: 'fa-info-circle' }
+        }[type] || { border: 'border-slate-200', iconBg: 'bg-slate-100 text-slate-600', icon: 'fa-info-circle' };
+
+        const toastId = `toast-${Date.now()}`;
+        const html = `
+          <div id="${toastId}" class="pointer-events-auto animate-toast bg-white border ${cfg.border} rounded-xl shadow-lg p-3 flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-lg ${cfg.iconBg} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fas ${cfg.icon} text-xs"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-slate-800">${title}</p>
+              ${message ? `<p class="text-[11px] text-slate-500 mt-0.5 leading-snug">${message}</p>` : ''}
+            </div>
+            <button type="button" onclick="$('#${toastId}').remove()" class="text-slate-400 hover:text-slate-600 text-xs">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+        $('#toastContainer').append(html);
+        setTimeout(() => $(`#${toastId}`).fadeOut(250, function () { $(this).remove(); }), 3200);
+      }
+
+      /* ---------------- Helpers & Normalization ---------------- */
+      function getLeaveTypeCode(typeStr) {
+        const s = String(typeStr || '').toUpperCase();
+        if (s.includes('CASUAL') || s === 'CL') return 'CL';
+        if (s.includes('SICK') || s === 'SL') return 'SL';
+        if (s.includes('EARNED') || s.includes('PRIVILEGE') || s === 'EL') return 'EL';
+        if (s.includes('RESTRICTED') || s === 'RH') return 'RH';
+        if (s.includes('COMP') || s === 'CO') return 'CO';
+        return 'OTHER';
+      }
+
+      function getLeaveBadgeMarkup(typeStr) {
+        const code = getLeaveTypeCode(typeStr);
+        const styles = {
+          CL: 'bg-sky-50 text-sky-700 border-sky-200/80',
+          SL: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          EL: 'bg-teal-50 text-teal-700 border-teal-200/80',
+          RH: 'bg-violet-50 text-violet-700 border-violet-200/80',
+          CO: 'bg-amber-50 text-amber-700 border-amber-200/80',
+          OTHER: 'bg-slate-100 text-slate-700 border-slate-200'
+        }[code];
+        return `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${styles}">${typeStr || 'Leave'}</span>`;
+      }
+
+      function extractMonthKey(dateStr) {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+        }
+        const match = String(dateStr).match(/([A-Za-z]{3})[-/ ](\d{4})/);
+        return match ? `${match[1]} ${match[2]}` : null;
+      }
+
+      function normalizeRecord(r, idx) {
+        const empFirst = r.employeeBasicInfo?.firstName || '';
+        const empLast = r.employeeBasicInfo?.lastName || '';
+        const empName = `${empFirst} ${empLast}`.trim() || 'Unknown Employee';
+        const eid = r.employeeBasicInfo?.eid || '--';
+
+        const appFirst = r.appliedby?.firstName || '';
+        const appLast = r.appliedby?.lastName || '';
+        const appliedByName = `${appFirst} ${appLast}`.trim() || '--';
+
+        const apprFirst = r.approvedby?.firstName || '';
+        const apprLast = r.approvedby?.lastName || '';
+        const approvedByName = `${apprFirst} ${apprLast}`.trim() || '--';
+
+        const noofDays = parseFloat(r.noofDays) || 0;
+        const leaveType = r.leaveType || 'Leave';
+        const typeCode = getLeaveTypeCode(leaveType);
+        const monthKey = extractMonthKey(r.fromDate) || 'Other';
+
+        return {
+          id: r.id ?? idx + 1,
+          empName,
+          eid,
+          leaveType,
+          typeCode,
+          description: r.description || '--',
+          fromDate: r.fromDate || '--',
+          fromSession: r.fromsession || r.fromSession || 'S1',
+          toDate: r.toDate || '--',
+          toSession: r.toSession || r.tosession || 'S2',
+          noofDays,
+          postingdate: r.postingdate || '--',
+          appliedByName,
+          approvedByName,
+          adminRemarkDate: r.adminRemarkDate || '--',
+          monthKey
+        };
+      }
+
+      /* ---------------- Fetch Data ---------------- */
+      function fetchApprovedLeaves() {
+        $.get('/admin/getApprovedLeaves', function (res) {
+          const rows = res && res.data ? res.data : res;
+          if (!Array.isArray(rows)) {
+            $('#dataRoot').html('<tr><td colspan="12" class="py-8 text-center text-rose-500 text-xs">Unexpected response format.</td></tr>');
+            return;
+          }
+          initializePage(rows, false);
+        }, 'json').fail(function () {
+          // Standalone preview fallback if endpoint isn't reachable locally
+          const fallbackRows = [
+            { id: 401, employeeBasicInfo: { firstName: 'Rohan', lastName: 'Sharma', eid: 'GSB-0104' }, leaveType: 'Earned Leave (EL)', description: 'Annual family trip to Kerala', fromDate: '12-Nov-2026', fromsession: 'S1', toDate: '15-Nov-2026', toSession: 'S2', noofDays: 4, postingdate: '02-Nov-2026', appliedby: { firstName: 'Rohan', lastName: 'Sharma' }, approvedby: { firstName: 'Vikram', lastName: 'Menon' }, adminRemarkDate: '03-Nov-2026' },
+            { id: 402, employeeBasicInfo: { firstName: 'Priya', lastName: 'Nair', eid: 'GSB-0118' }, leaveType: 'Casual Leave (CL)', description: 'Personal bank and documentation work', fromDate: '18-Nov-2026', fromsession: 'S1', toDate: '18-Nov-2026', toSession: 'S2', noofDays: 1, postingdate: '14-Nov-2026', appliedby: { firstName: 'Priya', lastName: 'Nair' }, approvedby: { firstName: 'Vikram', lastName: 'Menon' }, adminRemarkDate: '15-Nov-2026' },
+            { id: 403, employeeBasicInfo: { firstName: 'Karthik', lastName: 'Rao', eid: 'GSB-0129' }, leaveType: 'Sick Leave (SL)', description: 'Viral fever recovery', fromDate: '20-Nov-2026', fromsession: 'S1', toDate: '21-Nov-2026', toSession: 'S2', noofDays: 2, postingdate: '20-Nov-2026', appliedby: { firstName: 'Karthik', lastName: 'Rao' }, approvedby: { firstName: 'Anita', lastName: 'Desai' }, adminRemarkDate: '20-Nov-2026' },
+            { id: 404, employeeBasicInfo: { firstName: 'Sneha', lastName: 'Kulkarni', eid: 'GSB-0136' }, leaveType: 'Comp-Off (CO)', description: 'Weekend LiDAR QA deployment support', fromDate: '24-Nov-2026', fromsession: 'S1', toDate: '24-Nov-2026', toSession: 'S1', noofDays: 0.5, postingdate: '21-Nov-2026', appliedby: { firstName: 'Sneha', lastName: 'Kulkarni' }, approvedby: { firstName: 'Anita', lastName: 'Desai' }, adminRemarkDate: '22-Nov-2026' },
+            { id: 405, employeeBasicInfo: { firstName: 'Arjun', lastName: 'Das', eid: 'GSB-0152' }, leaveType: 'Casual Leave (CL)', description: 'Attending cousin convocation', fromDate: '05-Oct-2026', fromsession: 'S1', toDate: '06-Oct-2026', toSession: 'S2', noofDays: 2, postingdate: '29-Sep-2026', appliedby: { firstName: 'Arjun', lastName: 'Das' }, approvedby: { firstName: 'Vikram', lastName: 'Menon' }, adminRemarkDate: '30-Sep-2026' }
+          ];
+          initializePage(fallbackRows, true);
         });
+      }
+
+      function initializePage(rows, isMock = false) {
+        if (isMock) $('#mockDataBadge').removeClass('hidden');
+        rawRecords = rows.map(normalizeRecord);
+        populateMonthFilter();
+        refreshDashboard();
+      }
+
+      function populateMonthFilter() {
+        const months = [...new Set(rawRecords.map(r => r.monthKey).filter(Boolean))];
+        const select = $('#monthFilterSelect');
+        select.find('option:not(:first)').remove();
+        months.forEach(m => select.append(`<option value="${m}">${m}</option>`));
+      }
+
+      function refreshDashboard() {
+        updateKPIs();
+        renderCharts();
+        applyFiltersAndSort();
+      }
+
+      /* ---------------- KPIs & Charts ---------------- */
+      function updateKPIs() {
+        const total = rawRecords.length;
+        let totalDays = 0, clCount = 0, slCount = 0, elCount = 0;
+        const empSet = new Set();
+
+        rawRecords.forEach(r => {
+          totalDays += r.noofDays;
+          empSet.add(r.eid);
+          if (r.typeCode === 'CL') clCount++;
+          else if (r.typeCode === 'SL') slCount++;
+          else if (r.typeCode === 'EL') elCount++;
+        });
+
+        $('#kpiTotalCount').text(total.toLocaleString());
+        $('#kpiTotalDays').text(Number.isInteger(totalDays) ? totalDays : totalDays.toFixed(1));
+        $('#doughnutCenterDays').text(Number.isInteger(totalDays) ? totalDays : totalDays.toFixed(1));
+        $('#kpiClCount').text(clCount);
+        $('#kpiSlCount').text(slCount);
+        $('#kpiElCount').text(elCount);
+        $('#kpiUniqueEmployees').text(empSet.size);
+      }
+
+      function renderCharts() {
+        if (!rawRecords.length) {
+          $('#analyticsSection').addClass('hidden');
+          return;
+        }
+        $('#analyticsSection').removeClass('hidden');
+
+        // 1. Bar Chart: Approved Days by Employee or Approver
+        const barCtx = document.getElementById('approvedDaysChart').getContext('2d');
+        if (approvedDaysChart) approvedDaysChart.destroy();
+
+        const aggMap = {};
+        rawRecords.forEach(r => {
+          const key = barMode === 'employee' ? r.empName : r.approvedByName;
+          aggMap[key] = (aggMap[key] || 0) + r.noofDays;
+        });
+
+        const sortedEntries = Object.entries(aggMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        $('#barChartTitle').text(barMode === 'employee'
+          ? 'Approved Leave Days by Employee (Top 10)'
+          : 'Approved Leave Days by Approver');
+
+        approvedDaysChart = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: sortedEntries.map(e => e[0]),
+            datasets: [{
+              label: 'Approved Days',
+              data: sortedEntries.map(e => e[1]),
+              backgroundColor: '#4f46e5',
+              hoverBackgroundColor: '#3730a3',
+              borderRadius: 4,
+              maxBarThickness: 26
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 11, weight: '600' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: { label: (ctx) => ` Approved: ${ctx.parsed.y} Day(s)` }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Inter', size: 10 }, color: '#64748b' }
+              },
+              y: {
+                beginAtZero: true,
+                border: { display: false },
+                grid: { color: '#f1f5f9' },
+                ticks: { font: { family: 'IBM Plex Mono', size: 10 }, color: '#64748b' }
+              }
+            }
+          }
+        });
+
+        // 2. Doughnut Chart: Days by Leave Type
+        const dCtx = document.getElementById('leaveTypeChart').getContext('2d');
+        if (leaveTypeChart) leaveTypeChart.destroy();
+
+        const typeDays = {};
+        rawRecords.forEach(r => {
+          typeDays[r.typeCode] = (typeDays[r.typeCode] || 0) + r.noofDays;
+        });
+
+        const colorMap = { CL: '#0ea5e9', SL: '#f43f5e', EL: '#14b8a6', RH: '#8b5cf6', CO: '#f59e0b', OTHER: '#64748b' };
+        const dLabels = Object.keys(typeDays);
+        const dValues = Object.values(typeDays);
+        const dColors = dLabels.map(k => colorMap[k] || '#64748b');
+
+        leaveTypeChart = new Chart(dCtx, {
+          type: 'doughnut',
+          data: {
+            labels: dLabels,
+            datasets: [{
+              data: dValues,
+              backgroundColor: dColors,
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 6,
+                  boxHeight: 6,
+                  padding: 8,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 8,
+                cornerRadius: 6,
+                callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed} Day(s)` }
+              }
+            }
+          }
+        });
+      }
+
+      /* ---------------- Filter, Sort & Render ---------------- */
+      function setTypeFilter(typeVal) {
+        activeTypeFilter = typeVal;
+        $('.type-pill-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(`.type-pill-btn[data-type-filter="${typeVal}"]`).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+
+        $('.kpi-type-card').removeClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+        $(`.kpi-type-card[data-type-filter="${typeVal}"]`).addClass('ring-2 ring-indigo-500/40 bg-indigo-50/40');
+
+        currentPage = 1;
+        applyFiltersAndSort();
+      }
+
+      function applyFiltersAndSort() {
+        const query = $('#tableSearchInput').val().trim().toLowerCase();
+        $('#clearSearchBtn').toggleClass('hidden', query.length === 0);
+
+        filteredRecords = rawRecords.filter(r => {
+          const matchesType = activeTypeFilter === 'all' || r.typeCode === activeTypeFilter;
+          const matchesMonth = activeMonthFilter === 'all' || r.monthKey === activeMonthFilter;
+          const matchesQuery = !query ||
+            r.empName.toLowerCase().includes(query) ||
+            r.eid.toLowerCase().includes(query) ||
+            r.leaveType.toLowerCase().includes(query) ||
+            r.description.toLowerCase().includes(query) ||
+            r.approvedByName.toLowerCase().includes(query);
+          return matchesType && matchesMonth && matchesQuery;
+        });
+
+        filteredRecords.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+          if (typeof valA === 'string') {
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        });
+
+        $('#filteredBadge').text(`${filteredRecords.length} ${filteredRecords.length === 1 ? 'record' : 'records'}`);
+        renderTablePage();
+      }
+
+      function renderTablePage() {
+        const tbody = $('#dataRoot');
+        const totalRows = filteredRecords.length;
+
+        if (totalRows === 0) {
+          tbody.html(`
+            <tr>
+              <td colspan="12" class="py-8 text-center text-slate-400">
+                <i class="fas fa-folder-open text-lg mb-1 block text-slate-300"></i>
+                No approved leave records found.
+              </td>
+            </tr>
+          `);
+          $('#paginationInfo').text('Showing 0 to 0 of 0 entries');
+          $('#paginationControls').empty();
+          return;
+        }
+
+        const effectivePageSize = pageSize >= 100 ? totalRows : pageSize;
+        const totalPages = Math.ceil(totalRows / effectivePageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * effectivePageSize;
+        const endIdx = Math.min(startIdx + effectivePageSize, totalRows);
+        const pageSlice = filteredRecords.slice(startIdx, endIdx);
+
+        let html = '';
+        pageSlice.forEach((r, idx) => {
+          const slNo = startIdx + idx + 1;
+          const initials = r.empName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+          html += `
+            <tr class="hover:bg-indigo-50/40 transition-colors">
+              <td class="py-1.5 px-2 text-center font-mono text-[11px] text-slate-400">${slNo}</td>
+              <td class="py-1.5 px-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center justify-center shrink-0">${initials}</span>
+                  <div class="min-w-0">
+                    <a href="#" class="text-[#1e3a8a] hover:text-indigo-600 font-semibold truncate block transition-colors">${r.empName}</a>
+                    <span class="text-[10px] font-mono text-slate-400 leading-none block">${r.eid}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="py-1.5 px-2.5">
+                ${getLeaveBadgeMarkup(r.leaveType)}
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-600 max-w-[190px] truncate hidden xl:table-cell" title="${r.description}">
+                ${r.description}
+              </td>
+              <td class="py-1.5 px-2.5 whitespace-nowrap">
+                <span class="font-medium text-slate-700 text-[11px]">${r.fromDate}</span>
+                <span class="ml-1 px-1 py-0.2 rounded bg-slate-100 border border-slate-200 text-[9px] font-bold text-slate-600">${r.fromSession}</span>
+              </td>
+              <td class="py-1.5 px-2.5 whitespace-nowrap">
+                <span class="font-medium text-slate-700 text-[11px]">${r.toDate}</span>
+                <span class="ml-1 px-1 py-0.2 rounded bg-slate-100 border border-slate-200 text-[9px] font-bold text-slate-600">${r.toSession}</span>
+              </td>
+              <td class="py-1.5 px-2.5 text-right font-mono font-bold text-indigo-700">
+                ${r.noofDays} <span class="text-[10px] font-sans font-normal text-slate-400">d</span>
+              </td>
+              <td class="py-1.5 px-2.5 font-mono text-[11px] text-slate-500 hidden lg:table-cell whitespace-nowrap">
+                ${r.postingdate}
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-600 hidden xl:table-cell">
+                ${r.appliedByName}
+              </td>
+              <td class="py-1.5 px-2.5 text-slate-700 font-medium hidden md:table-cell">
+                ${r.approvedByName}
+              </td>
+              <td class="py-1.5 px-2.5 text-center font-mono text-[11px] text-slate-500 hidden lg:table-cell whitespace-nowrap">
+                ${r.adminRemarkDate}
+              </td>
+              <td class="py-1.5 px-2.5 text-right">
+                <button type="button"
+                        class="btn-cancel-leave inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 text-[11px] font-semibold transition-colors"
+                        data-id="${r.id}">
+                  <i class="fas fa-ban text-[9px]"></i>
+                  <span>Cancel</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.html(html);
+        $('#paginationInfo').text(`Showing ${startIdx + 1}–${endIdx} of ${totalRows}`);
+        renderPaginationButtons(totalPages);
+      }
+
+      function renderPaginationButtons(totalPages) {
+        const container = $('#paginationControls');
+        container.empty();
+        if (totalPages <= 1) return;
+
+        const btnBase = 'px-2 py-0.5 rounded border text-[11px] font-medium transition-colors';
+        const btnNormal = `${btnBase} bg-white border-slate-300 text-slate-700 hover:bg-slate-100`;
+        const btnActive = `${btnBase} bg-indigo-600 border-indigo-600 text-white`;
+        const btnDisabled = `${btnBase} bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed`;
+
+        container.append(`<button class="page-btn ${currentPage === 1 ? btnDisabled : btnNormal}" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>`);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            container.append(`<button class="page-btn ${i === currentPage ? btnActive : btnNormal}" data-page="${i}">${i}</button>`);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            container.append(`<span class="px-1 text-slate-400">…</span>`);
+          }
+        }
+
+        container.append(`<button class="page-btn ${currentPage === totalPages ? btnDisabled : btnNormal}" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`);
+      }
+
+      /* ---------------- Custom Cancel Leave Modal Logic ---------------- */
+      function openCancelModal(record) {
+        pendingCancelRecord = record;
+        $('#cancelModalEmpName').text(`${record.empName} (${record.eid})`);
+        $('#cancelModalDates').text(`${record.fromDate} (${record.fromSession}) → ${record.toDate} (${record.toSession}) • ${record.noofDays} Day(s)`);
+        $('#cancelModalReason').text(record.description);
+        $('#cancelModalBadge').text(record.leaveType);
+
+        $('#confirmCancelLeaveBtn')
+          .prop('disabled', false)
+          .html('<i class="fas fa-ban"></i><span>Yes, Cancel Leave</span>');
+
+        $('#cancelLeaveModal').removeClass('hidden').addClass('flex');
+      }
+
+      function closeCancelModal() {
+        $('#cancelLeaveModal').addClass('hidden').removeClass('flex');
+        pendingCancelRecord = null;
+      }
+
+      $(document).on('click', '.btn-cancel-leave', function () {
+        const leaveId = $(this).data('id');
+        const record = rawRecords.find(r => String(r.id) === String(leaveId));
+        if (record) openCancelModal(record);
+      });
+
+      $('.close-cancel-modal').on('click', closeCancelModal);
+      $('#cancelLeaveModal').on('click', function (e) {
+        if (e.target === this) closeCancelModal();
+      });
+      $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$('#cancelLeaveModal').hasClass('hidden')) closeCancelModal();
+      });
+
+      $('#confirmCancelLeaveBtn').on('click', function () {
+        if (!pendingCancelRecord) return;
+        const record = pendingCancelRecord;
+        const $btn = $(this);
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+        $btn.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i><span>Cancelling...</span>');
+
+        $.ajax({
+          url: '/admin/cancelLeave',
+          type: 'POST',
+          data: { leaveId: record.id },
+          headers: { [csrfHeader]: csrfToken },
+          dataType: 'json',
+          success: function (response) {
+            if (response && response.status === 'success') {
+              rawRecords = rawRecords.filter(r => String(r.id) !== String(record.id));
+              closeCancelModal();
+              refreshDashboard();
+              showToast('Leave Cancelled', `${record.empName}'s leave application has been cancelled.`, 'success');
+            } else {
+              closeCancelModal();
+              showToast('Cancellation Failed', (response && response.message) || `Failed to cancel ${record.empName}'s leave.`, 'error');
+            }
+          },
+          error: function () {
+            $btn.prop('disabled', false).html('<i class="fas fa-ban"></i><span>Yes, Cancel Leave</span>');
+            showToast('Network Error', 'Unable to reach server. Please try again.', 'error');
+          }
+        });
+      });
+
+      /* ---------------- Filter, Sort, Chart & Export Listeners ---------------- */
+      $(document).on('click', '.kpi-type-card, .type-pill-btn', function () {
+        setTypeFilter($(this).data('type-filter'));
+      });
+
+      $('#monthFilterSelect').on('change', function () {
+        activeMonthFilter = $(this).val();
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#tableSearchInput').on('input', function () {
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#clearSearchBtn').on('click', function () {
+        $('#tableSearchInput').val('');
+        currentPage = 1;
+        applyFiltersAndSort();
+      });
+
+      $('#pageSizeSelect').on('change', function () {
+        pageSize = Number($(this).val());
+        currentPage = 1;
+        renderTablePage();
+      });
+
+      $(document).on('click', '.page-btn:not([disabled])', function () {
+        currentPage = Number($(this).data('page'));
+        renderTablePage();
+      });
+
+      $('th.sortable').on('click', function () {
+        const col = $(this).data('sort');
+        if (sortColumn === col) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col;
+          sortDirection = ['empName', 'leaveType', 'appliedByName', 'approvedByName'].includes(col) ? 'asc' : 'desc';
+        }
+        $('th.sortable .sort-icon').removeClass('fa-sort-up fa-sort-down text-indigo-600').addClass('fa-sort text-slate-400');
+        $(this).find('.sort-icon').removeClass('fa-sort text-slate-400').addClass(sortDirection === 'asc' ? 'fa-sort-up text-indigo-600' : 'fa-sort-down text-indigo-600');
+        applyFiltersAndSort();
+      });
+
+      $('.bar-mode-btn').on('click', function () {
+        $('.bar-mode-btn').removeClass('bg-white text-indigo-700 shadow-2xs').addClass('text-slate-600');
+        $(this).addClass('bg-white text-indigo-700 shadow-2xs').removeClass('text-slate-600');
+        barMode = $(this).data('bmode');
+        renderCharts();
+      });
+
+      $('#toggleChartsBtn').on('click', function () {
+        $('#analyticsSection').toggleClass('hidden');
+      });
+
+      $('#refreshBtn').on('click', function () {
+        const icon = $(this).find('i').addClass('fa-spin');
+        fetchApprovedLeaves();
+        setTimeout(() => icon.removeClass('fa-spin'), 500);
+      });
+
+      // CSV / Excel Export (Exports filtered rows cleanly)
+      $('#exportCsvBtn').on('click', function () {
+        if (!filteredRecords.length) return;
+        const headers = ['Sl No', 'Employee Name', 'Employee ID', 'Leave Type', 'Reason', 'From', 'To', 'No Of Days', 'Applied On', 'Applied By', 'Approved By', 'Approved On'];
+        const rows = [headers.join(',')];
+        filteredRecords.forEach((r, idx) => {
+          rows.push([
+            idx + 1,
+            `"${r.empName.replace(/"/g, '""')}"`,
+            `"${r.eid}"`,
+            `"${r.leaveType.replace(/"/g, '""')}"`,
+            `"${r.description.replace(/"/g, '""')}"`,
+            `"${r.fromDate} (${r.fromSession})"`,
+            `"${r.toDate} (${r.toSession})"`,
+            r.noofDays,
+            `"${r.postingdate}"`,
+            `"${r.appliedByName.replace(/"/g, '""')}"`,
+            `"${r.approvedByName.replace(/"/g, '""')}"`,
+            `"${r.adminRemarkDate}"`
+          ].join(','));
+        });
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Approved_Leaves_Report_${formattedDate}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Initial Load
+      fetchApprovedLeaves();
     });
-</script>
+  </script>
 </body>
 </html>
